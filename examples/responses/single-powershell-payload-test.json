@@ -1,0 +1,8 @@
+{
+  "success": false,
+  "error": {
+    "code": "NO_RESPONSE",
+    "message": "Resposta nao gerada",
+    "details": ""
+  }
+}

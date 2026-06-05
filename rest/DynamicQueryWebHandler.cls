@@ -1,6 +1,7 @@
 /*
 WebHandler HTTP para validacao REST real no PASOE.
 URLs esperadas:
+  GET  /web/SursumDynamicQuery
   POST /web/SursumDynamicQuery/query
   GET  /web/SursumDynamicQuery/jobs/{jobId}
   GET  /web/SursumDynamicQuery/jobs/{jobId}/result
@@ -43,7 +44,10 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                         ASSIGN joRet = THIS-OBJECT:buildError("NOT_FOUND", "Endpoint nao encontrado", cMethod + " " + cPath).
                 END.
                 WHEN "GET" THEN DO:
-                    IF cPath MATCHES "*/benchmarks/customer-count" THEN DO:
+                    IF THIS-OBJECT:isRootPath(cPath) THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleIndex().
+                    END.
+                    ELSE IF cPath MATCHES "*/benchmarks/customer-count" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleCustomerCountBenchmark().
                     END.
                     ELSE IF cPath MATCHES "*/jobs/*/result" THEN DO:
@@ -97,6 +101,27 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DELETE OBJECT oRequest NO-ERROR.
         DELETE OBJECT oContext NO-ERROR.
         DELETE OBJECT oService NO-ERROR.
+
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleIndex():
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joEndpoints AS JsonObject NO-UNDO.
+
+        ASSIGN joRet = NEW JsonObject()
+               joEndpoints = NEW JsonObject().
+
+        joEndpoints:Add("query", "POST /web/SursumDynamicQuery/query").
+        joEndpoints:Add("drain", "POST /web/SursumDynamicQuery/jobs/drain").
+        joEndpoints:Add("jobStatus", "GET /web/SursumDynamicQuery/jobs/:jobId").
+        joEndpoints:Add("jobResult", "GET /web/SursumDynamicQuery/jobs/:jobId/result").
+        joEndpoints:Add("customerCountBenchmark", "GET /web/SursumDynamicQuery/benchmarks/customer-count").
+
+        joRet:Add("success", TRUE).
+        joRet:Add("service", "SursumDynamicQuery").
+        joRet:Add("runtime", "PASOE-WEB").
+        joRet:Add("endpoints", joEndpoints).
 
         RETURN joRet.
     END METHOD.
@@ -209,6 +234,20 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
             ASSIGN cPath = SUBSTRING(cPath, 1, iResult - 1).
 
         RETURN cPath.
+    END METHOD.
+
+    METHOD PRIVATE LOGICAL isRootPath(INPUT pcPath AS CHARACTER):
+        IF pcPath = ? THEN
+            RETURN TRUE.
+        IF pcPath = "" THEN
+            RETURN TRUE.
+        IF pcPath = "/" THEN
+            RETURN TRUE.
+        IF pcPath = "/SursumDynamicQuery" THEN
+            RETURN TRUE.
+        IF pcPath = "/SursumDynamicQuery/" THEN
+            RETURN TRUE.
+        RETURN FALSE.
     END METHOD.
 
     METHOD PRIVATE VOID writeJson(INPUT poJson AS JsonObject):

@@ -1,0 +1,1 @@
+{"orderBy":[{"field":"CustNum","direction":"ASC","sourceAlias":"customer"}],"execution":"sync","sources":[{"alias":"customer","nome":"Customer","campos":"CustNum,Name"}],"select":[{"field":"CustNum","sourceAlias":"customer","outputAlias":"codigo"},{"field":"Name","sourceAlias":"customer","outputAlias":"nome"}],"page":8,"pageSize":500}
