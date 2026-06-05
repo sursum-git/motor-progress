@@ -264,6 +264,7 @@ CLASS DynamicQueryRequestSerializer:
                     THIS-OBJECT:getChar(joItem, "payload"),
                     THIS-OBJECT:getChar(joItem, "raw")
                 ).
+                THIS-OBJECT:materializePipelineStep(oRequest, joItem).
             END.
         END.
 
@@ -325,6 +326,103 @@ CLASS DynamicQueryRequestSerializer:
         IF pcB <> "" AND pcB <> ? THEN
             RETURN pcB.
         RETURN "".
+    END METHOD.
+
+    METHOD PRIVATE VOID materializePipelineStep(INPUT poRequest AS DynamicQueryRequestModel, INPUT poStep AS JsonObject):
+        DEFINE VARIABLE cType AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cPayload AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE joPayload AS JsonObject NO-UNDO.
+        DEFINE VARIABLE jaFields AS JsonArray NO-UNDO.
+        DEFINE VARIABLE joField AS JsonObject NO-UNDO.
+        DEFINE VARIABLE iItem AS INTEGER NO-UNDO.
+
+        ASSIGN cType = LC(THIS-OBJECT:getChar(poStep, "type"))
+               cPayload = THIS-OBJECT:getChar(poStep, "payload").
+
+        IF cPayload = "" THEN
+            RETURN.
+
+        ASSIGN joPayload = THIS-OBJECT:parsePayload(cPayload).
+        IF NOT VALID-OBJECT(joPayload) THEN
+            RETURN.
+
+        CASE cType:
+            WHEN "source" THEN
+                poRequest:addSource(
+                    THIS-OBJECT:firstNonEmpty(THIS-OBJECT:getChar(joPayload, "nome"), THIS-OBJECT:getChar(joPayload, "tableName")),
+                    THIS-OBJECT:getChar(joPayload, "alias"),
+                    THIS-OBJECT:getChar(joPayload, "banco"),
+                    THIS-OBJECT:getChar(joPayload, "campos")
+                ).
+            WHEN "join" THEN DO:
+                IF THIS-OBJECT:getChar(joPayload, "leftAlias") <> "" THEN
+                    poRequest:addJoin(
+                        THIS-OBJECT:getChar(joPayload, "type"),
+                        THIS-OBJECT:getChar(joPayload, "leftAlias"),
+                        THIS-OBJECT:getChar(joPayload, "leftField"),
+                        THIS-OBJECT:getChar(joPayload, "rightAlias"),
+                        THIS-OBJECT:getChar(joPayload, "rightField")
+                    ).
+            END.
+            WHEN "select" THEN DO:
+                IF joPayload:Has("fields") THEN DO:
+                    ASSIGN jaFields = joPayload:GetJsonArray("fields").
+                    DO iItem = 1 TO jaFields:Length:
+                        ASSIGN joField = jaFields:GetJsonObject(iItem).
+                        poRequest:addSelectField(
+                            THIS-OBJECT:getChar(joField, "sourceAlias"),
+                            THIS-OBJECT:getChar(joField, "field"),
+                            THIS-OBJECT:getChar(joField, "outputAlias")
+                        ).
+                    END.
+                END.
+            END.
+            WHEN "filter" THEN
+                poRequest:addFilter(
+                    THIS-OBJECT:getChar(joPayload, "sourceAlias"),
+                    THIS-OBJECT:getChar(joPayload, "field"),
+                    THIS-OBJECT:getChar(joPayload, "operator"),
+                    THIS-OBJECT:getChar(joPayload, "value"),
+                    THIS-OBJECT:getChar(joPayload, "valueTo")
+                ).
+            WHEN "sort" THEN DO:
+                IF joPayload:Has("fields") THEN DO:
+                    ASSIGN jaFields = joPayload:GetJsonArray("fields").
+                    DO iItem = 1 TO jaFields:Length:
+                        ASSIGN joField = jaFields:GetJsonObject(iItem).
+                        poRequest:addOrder(
+                            THIS-OBJECT:getChar(joField, "sourceAlias"),
+                            THIS-OBJECT:getChar(joField, "field"),
+                            THIS-OBJECT:getChar(joField, "direction")
+                        ).
+                    END.
+                END.
+            END.
+            WHEN "limit" THEN
+                poRequest:setPagination(
+                    THIS-OBJECT:getInt(joPayload, "page", poRequest:getPage()),
+                    THIS-OBJECT:getInt(joPayload, "pageSize", poRequest:getPageSize())
+                ).
+        END CASE.
+
+        DELETE OBJECT joPayload NO-ERROR.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject parsePayload(INPUT pcPayload AS CHARACTER):
+        DEFINE VARIABLE oParser AS ObjectModelParser NO-UNDO.
+        DEFINE VARIABLE oConstruct AS JsonConstruct NO-UNDO.
+        DEFINE VARIABLE joPayload AS JsonObject NO-UNDO.
+
+        ASSIGN oParser = NEW ObjectModelParser().
+        ASSIGN oConstruct = oParser:Parse(pcPayload) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            DELETE OBJECT oParser NO-ERROR.
+            RETURN ?.
+        END.
+
+        ASSIGN joPayload = CAST(oConstruct, JsonObject) NO-ERROR.
+        DELETE OBJECT oParser NO-ERROR.
+        RETURN joPayload.
     END METHOD.
 
 END CLASS.

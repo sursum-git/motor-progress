@@ -16,7 +16,7 @@ CLASS DynamicQueryValidationService:
     DEFINE PRIVATE VARIABLE cBlockedFieldPatterns AS CHARACTER NO-UNDO INIT "*senha*,*password*,*token*,*secret*,*hash*,*api_key*".
     DEFINE PRIVATE VARIABLE cForbiddenTokens AS CHARACTER NO-UNDO INIT ";,'""(){}[]\`~!@\#$%^&+=".
     DEFINE PRIVATE VARIABLE cAllowedJoinTypes AS CHARACTER NO-UNDO INIT "inner,left".
-    DEFINE PRIVATE VARIABLE cAllowedPipeline AS CHARACTER NO-UNDO INIT "source,join,select,filter,sort,limit,output".
+    DEFINE PRIVATE VARIABLE cAllowedPipeline AS CHARACTER NO-UNDO INIT "source,join,select,filter,sort,limit,output,map,distinct,group,aggregate".
     DEFINE PRIVATE VARIABLE iMinPage AS INTEGER NO-UNDO INIT 1.
     DEFINE PRIVATE VARIABLE iMinPageSize AS INTEGER NO-UNDO INIT 1.
 
@@ -226,6 +226,16 @@ CLASS DynamicQueryValidationService:
         END.
 
         poRequest:getJoins(OUTPUT TABLE ttReqJoin).
+        IF iSourceCnt = 2 AND NOT CAN-FIND(FIRST ttReqJoin) THEN DO:
+            THIS-OBJECT:inferJoin(poRequest, OUTPUT pcErrorCode, OUTPUT pcErrorMessage, OUTPUT pcErrorDetail).
+            IF pcErrorCode <> "" THEN DO:
+                ASSIGN lValidated = NO.
+                RETURN NO.
+            END.
+            EMPTY TEMP-TABLE ttReqJoin.
+            poRequest:getJoins(OUTPUT TABLE ttReqJoin).
+        END.
+
         FOR EACH ttReqJoin:
             ASSIGN lHasJoin = YES.
             IF NOT THIS-OBJECT:isAllowedJoinType(ttReqJoin.joinType) THEN DO:
@@ -447,6 +457,70 @@ CLASS DynamicQueryValidationService:
         IF pcAlias = "" THEN
             RETURN NO.
         RETURN CAN-FIND(FIRST ttAliasMap WHERE sourceAlias = pcAlias).
+    END METHOD.
+
+    METHOD PRIVATE VOID inferJoin(
+        INPUT poRequest AS DynamicQueryRequestModel,
+        OUTPUT pcErrorCode AS CHARACTER,
+        OUTPUT pcErrorMessage AS CHARACTER,
+        OUTPUT pcErrorDetail AS CHARACTER):
+
+        DEFINE VARIABLE cAlias1 AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cAlias2 AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cField AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cBestField AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iCommon AS INTEGER NO-UNDO.
+        DEFINE BUFFER bLeftField FOR ttResolvedField.
+        DEFINE BUFFER bRightField FOR ttResolvedField.
+
+        ASSIGN pcErrorCode = ""
+               pcErrorMessage = ""
+               pcErrorDetail = "".
+
+        FOR EACH ttAliasMap:
+            IF cAlias1 = "" THEN
+                ASSIGN cAlias1 = ttAliasMap.sourceAlias.
+            ELSE IF cAlias2 = "" THEN
+                ASSIGN cAlias2 = ttAliasMap.sourceAlias.
+        END.
+
+        IF cAlias1 = "" OR cAlias2 = "" THEN
+            RETURN.
+
+        FIND FIRST bLeftField
+            WHERE bLeftField.sourceAlias = cAlias1
+              AND LC(bLeftField.fieldName) = "custnum"
+            NO-ERROR.
+        IF AVAILABLE bLeftField THEN DO:
+            FIND FIRST bRightField
+                WHERE bRightField.sourceAlias = cAlias2
+                  AND LC(bRightField.fieldName) = "custnum"
+                NO-ERROR.
+            IF AVAILABLE bRightField THEN
+                ASSIGN cBestField = "CustNum".
+        END.
+
+        IF cBestField = "" THEN DO:
+            FOR EACH bLeftField WHERE bLeftField.sourceAlias = cAlias1:
+                ASSIGN cField = bLeftField.fieldName.
+                FIND FIRST bRightField
+                    WHERE bRightField.sourceAlias = cAlias2
+                      AND bRightField.fieldName = cField
+                    NO-ERROR.
+                IF AVAILABLE bRightField THEN DO:
+                    ASSIGN iCommon = iCommon + 1
+                           cBestField = cField.
+                END.
+            END.
+            IF iCommon <> 1 THEN DO:
+                ASSIGN pcErrorCode = "JOIN_INFERENCE_AMBIGUOUS"
+                       pcErrorMessage = "Join inferido exige exatamente um campo comum seguro."
+                       pcErrorDetail = cAlias1 + "/" + cAlias2 + " commonFields=" + STRING(iCommon).
+                RETURN.
+            END.
+        END.
+
+        poRequest:addJoin("INNER", cAlias1, cBestField, cAlias2, cBestField).
     END METHOD.
 
     METHOD PRIVATE LOGICAL isAllowedJoinType(INPUT pcType AS CHARACTER):

@@ -201,7 +201,7 @@ CLASS DynamicQueryPlanBuilder:
                 CREATE ttPlanFilter.
                 ASSIGN ttPlanFilter.filterOrder = ttReqFilter.filterOrder
                        ttPlanFilter.sourceAlias = cAlias
-                       ttPlanFilter.sourceTable = ttSourceMap.sourceAlias
+                       ttPlanFilter.sourceTable = ttSourceMap.tableName
                        ttPlanFilter.sourceField = cField
                        ttPlanFilter.operator = ttReqFilter.operator
                        ttPlanFilter.valueChar = ttReqFilter.valueChar
@@ -213,7 +213,7 @@ CLASS DynamicQueryPlanBuilder:
                 IF AVAILABLE ttResolvedField THEN
                     ASSIGN ttPlanFilter.dataType = ttResolvedField.dataType.
                 ASSIGN cExpr = THIS-OBJECT:buildFilterClause(
-                    ttSourceMap.sourceAlias,
+                    ttSourceMap.tableName,
                     cField,
                     ttReqFilter.operator,
                     ttReqFilter.valueChar,
@@ -234,12 +234,12 @@ CLASS DynamicQueryPlanBuilder:
             FIND FIRST ttSourceMap WHERE ttSourceMap.requestAlias = ttReqJoin.leftSource OR ttSourceMap.sourceAlias = ttReqJoin.leftSource NO-ERROR.
             IF NOT AVAILABLE ttSourceMap THEN NEXT.
             ASSIGN cLeftAlias = ttSourceMap.sourceAlias
-                   cLeftTable = ttSourceMap.sourceAlias.
+                   cLeftTable = ttSourceMap.tableName.
 
             FIND FIRST ttSourceMap WHERE ttSourceMap.requestAlias = ttReqJoin.rightSource OR ttSourceMap.sourceAlias = ttReqJoin.rightSource NO-ERROR.
             IF NOT AVAILABLE ttSourceMap THEN NEXT.
             ASSIGN cRightAlias = ttSourceMap.sourceAlias
-                   cRightTable = ttSourceMap.sourceAlias.
+                   cRightTable = ttSourceMap.tableName.
 
             CREATE ttPlanJoin.
             ASSIGN ttPlanJoin.joinOrder = ttReqJoin.joinOrder
@@ -274,13 +274,13 @@ CLASS DynamicQueryPlanBuilder:
             CREATE ttPlanOrder.
             ASSIGN ttPlanOrder.orderOrder = ttReqOrder.orderOrder
                    ttPlanOrder.sourceAlias = cAlias
-                   ttPlanOrder.sourceTable = ttSourceMap.sourceAlias
+                   ttPlanOrder.sourceTable = ttSourceMap.tableName
                    ttPlanOrder.sourceField = cField
                    ttPlanOrder.direction = THIS-OBJECT:normalizeDirection(ttReqOrder.direction).
             IF cOrderClause = "" THEN
-                ASSIGN cOrderClause = THIS-OBJECT:qualifyField(ttPlanOrder.sourceTable, cField) + " " + ttPlanOrder.direction.
+                ASSIGN cOrderClause = THIS-OBJECT:buildOrderExpression(ttPlanOrder.sourceTable, cField, ttPlanOrder.direction).
             ELSE
-                ASSIGN cOrderClause = cOrderClause + ", " + THIS-OBJECT:qualifyField(ttPlanOrder.sourceTable, cField) + " " + ttPlanOrder.direction.
+                ASSIGN cOrderClause = cOrderClause + " BY " + THIS-OBJECT:buildOrderExpression(ttPlanOrder.sourceTable, cField, ttPlanOrder.direction).
         END.
     END METHOD.
 
@@ -307,7 +307,7 @@ CLASS DynamicQueryPlanBuilder:
             ASSIGN iPos = ttPlanSelect.fieldOrder + 1.
 
         FIND FIRST ttSourceMap WHERE ttSourceMap.sourceAlias = pcSourceAlias NO-ERROR.
-        ASSIGN cTable = IF AVAILABLE ttSourceMap THEN ttSourceMap.sourceAlias ELSE "".
+        ASSIGN cTable = IF AVAILABLE ttSourceMap THEN ttSourceMap.tableName ELSE "".
         IF cTable = "" THEN
             RETURN.
 
@@ -335,8 +335,6 @@ CLASS DynamicQueryPlanBuilder:
         INPUT pcBanco  AS CHARACTER):
         DEFINE VARIABLE cSourceExpr AS CHARACTER NO-UNDO.
         ASSIGN cSourceExpr = IF pcBanco = "" THEN pcTable ELSE pcBanco + "." + pcTable.
-        IF pcAlias <> "" AND pcAlias <> pcTable THEN
-            ASSIGN cSourceExpr = cSourceExpr + " " + pcAlias.
         RETURN cSourceExpr.
     END METHOD.
 
@@ -352,8 +350,16 @@ CLASS DynamicQueryPlanBuilder:
 
     METHOD PRIVATE CHARACTER normalizeDirection(INPUT pcDirection AS CHARACTER):
         IF LC(TRIM(pcDirection)) = "desc" THEN
-            RETURN "DESC".
-        RETURN "ASC".
+            RETURN "DESCENDING".
+        RETURN "".
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER buildOrderExpression(INPUT pcTable AS CHARACTER, INPUT pcField AS CHARACTER, INPUT pcDirection AS CHARACTER):
+        DEFINE VARIABLE cExpr AS CHARACTER NO-UNDO.
+        ASSIGN cExpr = THIS-OBJECT:qualifyField(pcTable, pcField).
+        IF pcDirection <> "" THEN
+            ASSIGN cExpr = cExpr + " " + pcDirection.
+        RETURN cExpr.
     END METHOD.
 
     METHOD PRIVATE CHARACTER buildFilterClause(
