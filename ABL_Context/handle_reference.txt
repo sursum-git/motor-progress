@@ -1,0 +1,2526 @@
+﻿
+
+
+
+
+
+
+
+
+
+
+
+
+
+Handle Reference
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1
+Handle Reference
+
+
+This section contains reference entries that describe the ABL handle-based objects (other than widgets). Handle-based objects represent built-in object types in ABL that you can reference using object handles.
+These objects include widgets, which encapsulate user interface capabilities, and other object types that provide access to a variety of ABL session capabilities. Object handles are essentially addresses that provide access to handle-based objects in memory. These handles allow you to access attributes and methods that ABL defines for each object that you can use to interact with an object's state and behavior.
+
+Note: Handle-based objects are conceptually analogous to but different from class-based objects. The types and capabilities of handle-based objects are defined entirely by ABL. However class-based objects represent instances of classes whose capabilities you can define as user-defined data types. For more information on class-based objects, see the CLASS statement reference entry.
+
+You can define static or create dynamic instances of many handle-based object types using appropriate DEFINE and CREATE statements. You can reference a static instance by the defined object name or its handle, and you can reference a dynamic instance only by its handle. ABL also automatically creates instances of certain other handle-based object types in various ways, including system objects that you can access using an appropriate keyword-defined system handle.
+Thus, ABL makes object handles available in two ways:
+• Directly, as system handle values. A system handle is an ABL keyword that evaluates to an object handle whose object type is implied by the keyword. For example, the CURRENT-WINDOW system handle is a handle to a particular window widget. To access the attributes and methods of a system handle, you can
+
+use the keyword directly, or you can assign the keyword value to a HANDLE variable and use the variable to reference the attributes and methods:
+
+
+• Indirectly, as values output from various CREATE and other ABL statements, including other handle attributes and methods. You can access the attributes and methods of any object by assigning its handle to a HANDLE variable, which can hold handle values of any type. You can then use this variable to reference the attributes and methods of the object:
+
+
+The reference entries throughout this section include both system handles and handles for object types not necessarily referenced using system handles. Each system handle is listed by its keyword (all upper case, for example: SESSION system handle), and each handle for other object types is listed by its object type (upper and lower case, for example: Server object handle).
+Each entry lists the attributes and methods supported by the handle or refers you to a more general entry with the same list. For example, the attributes and methods of the CURRENT-WINDOW system handle appear under the WINDOW widget entry. Widgets share a common set of user interface capabilities as well as capabilities unique to each widget type. For a list of the attributes and methods supported by each widget, see the Widget Reference.
+For more information on how to use the list attributes and methods for all handle-based object types, see the Handle Attributes and Methods Reference, which includes a complete reference entry for each attribute and method.
+
+Note: You may consider an object handle to be supported for all interfaces, on all operating systems, and for SpeedScript unless otherwise indicated in the reference entry.
+
+The following descriptions refer to both compile-time and run-time behavior, features that the language generally supports and determines at compile time and actions directed by using these features at run time. When describing compile-time features or actions, this section references ABL or the ABL compiler. When describing ABL-directed actions taken at run time, this section references the ABL Virtual Machine (AVM).
+
+For details, see the following topics:
+• ACTIVE-WINDOW system handle
+• Asynchronous request object handle
+• AUDIT-CONTROL system handle
+• AUDIT-POLICY system handle
+• Buffer object handle
+
+
+
+• Buffer-field object handle
+• Call object handle
+• Client-principal object handle
+• CLIPBOARD system handle
+• CODEBASE-LOCATOR system handle
+• COLOR-TABLE system handle
+• COM-SELF system handle
+• COMPILER system handle
+• CURRENT-WINDOW system handle
+• Data-relation object handle
+• Data-source object handle
+• DEBUGGER system handle
+• DEFAULT-WINDOW system handle
+• DSLOG-MANAGER system handle
+• ERROR-STATUS system handle
+• FILE-INFO system handle
+• FOCUS system handle
+• FONT-TABLE system handle
+• LAST-EVENT system handle
+• LOG-MANAGER system handle
+• Procedure object handle
+• ProDataSet object handle
+• PROFILER system handle
+• Query object handle
+• RCODE-INFO handle
+• SAX-attributes object handle
+• SAX-reader object handle
+• SAX-writer object handle
+• SECURITY-POLICY system handle
+• SELF system handle
+• Server object handle
+• Server socket object handle
+• SESSION system handle
+
+• SOAP-fault object handle
+• SOAP-fault-detail object handle
+• SOAP-header object handle
+• SOAP-header-entryref object handle
+• Socket object handle
+• SOURCE-PROCEDURE system handle
+• Stream object handle
+• TARGET-PROCEDURE system handle
+• Temp-table object handle
+• THIS-PROCEDURE system handle
+• Transaction object handle
+• WEB-CONTEXT system handle
+• X-document object handle
+• X-noderef object handle
+
+
+ACTIVE-WINDOW system handle
+A handle to the last ABL application window to receive an ENTRY event. You cannot set the ACTIVE-WINDOW handle, but you can read and write values for the attributes of the ACTIVE-WINDOW.
+
+Syntax
+
+
+attribute
+An attribute of the ACTIVE-WINDOW.
+
+Attributes
+The ACTIVE-WINDOW handle has all the attributes of a window widget.
+
+Notes
+• In a character interface, the ACTIVE-WINDOW, CURRENT-WINDOW, and DEFAULT-WINDOW handles return the handle of the static window for the current ABL session.
+• The initial value of the ACTIVE-WINDOW handle is the CURRENT-WINDOW handle.
+• The ACTIVE-WINDOW handle monitors the active window in the ABL session only. It does not monitor the active window for the window system. Accessing a non-ABL window does not affect the state of the ACTIVE-WINDOW handle.
+• You can enable or disable the current window by changing ACTIVE-WINDOW:SENSITIVE.
+
+• You can set the menu bar for the active window by assigning the handle of a menu bar to ACTIVE-WINDOW:MENUBAR.
+
+See also
+CURRENT-WINDOW system handle on page 37, DEFAULT-WINDOW system handle on page 43
+
+
+Asynchronous request object handle
+Maintains the status of an asynchronous request running on an OpenEdge application server or Web service.
+
+Syntax
+
+
+async-request-handle
+A handle variable that references an asynchronous request object. This object is instantiated when you execute an asynchronous remote procedure using the RUN statement specified with the ASYNCHRONOUS option. You can get the handle value by doing one of the following:
+• Use the ASYNCHRONOUS SET option on the same RUN statement that instantiates the asynchronous request.
+• Reference the LAST-ASYNC-REQUEST attribute on the server handle for the OpenEdge application server where the request is running. To ensure that you are referencing a specific request, you must reference the attribute after the associated RUN statement executes and before you instantiate another asynchronous request on the same OpenEdge application server connection.
+• You can also locate the asynchronous request handle by walking the chain between the FIRST-ASYNC-REQUEST and LAST-ASYNC-REQUEST attributes of the associated server handle. Search on the PROCEDURE-NAME attribute of each request handle to identify the specific request.
+
+attribute
+An attribute of the asynchronous request handle.
+
+Attributes
+
+CANCELLED attributeCOMPLETE attributeERROR attributeERROR-OBJECT attributeEVENT-HANDLER attributeEVENT-HANDLER-OBJECT
+attributeEVENT-PROCEDURE attributeEVENT-PROCEDURE-CONTEXT
+attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeNAME attributeNEXT-SIBLING attribute
+
+PERSISTENT-PROCEDURE
+attributePREV-SIBLING attributePRIVATE-DATA attributePROCEDURE-NAME attributeQUIT attributeREQUEST-INFO attributeRESPONSE-INFO attributeSERVER attributeSTOP attributeSTOP-OBJECT attributeTYPE attributeEvents
+
+PROCEDURE-COMPLETE–Notes
+• When the OpenEdge application server completes and returns the results of the asynchronous request associated with this handle, the client application that executed the request receives the PROCEDURE-COMPLETE event. This event triggers execution of the associated event procedure or method (if specified) in the context of an input-blocking statement, such as the WAIT-FOR statement, UPDATE statement, or a PROCESS EVENTS statement.
+• You can access this handle anywhere in the client application that executes the associated request. However, it is especially useful for reference in the event procedure or method specified for the asynchronous request. In the associated event procedure or method, you can access this handle as the value of the SELF system handle.
+• When checking for ERROR and STOP conditions raised from the application server in a
+PROCEDURE-COMPLETE event procedure or method, check the ERROR-OBJECT and STOP-OBJECT attributes (instead of the STOP and ERROR error attributes) to handle these conditions. For example:
+
+Note that references to all objects that implement the Progress.Lang.Error interface are returned using the ERROR-OBJECT attribute, including Progress.Lang.StopError. The STOP-OBJECT attribute returns only stop object references for Progress.Lang.Stop or one of its subclasses, such as Progress.Lang.StopAfter in the example.
+• The EVENT-PROCEDURE and EVENT-PROCEDURE-CONTEXT attributes will return the Unknown value (?) if the EVENT-HANDLER-CONTEXT is specified as an object.
+
+See also
+RUN statement, Server object handle on page 72, SELF system handle on page 70, WAIT-FOR statement (ABL only)
+
+
+
+AUDIT-CONTROL system handle
+A handle to the audit control settings for managing application auditing context and events for the current ABL session.
+
+Syntax
+
+
+attribute
+An attribute of the AUDIT-CONTROL system handle.
+
+method
+A method of the AUDIT-CONTROL system handle.
+
+Attributes
+
+APPL-CONTEXT-ID attributeEVENT-GROUP-ID attributeHANDLE attributeINSTANTIATING-PROCEDURE attributeTYPE attribute–Methods
+
+BEGIN-EVENT-GROUP( ) methodCLEAR-APPL-CONTEXT( ) methodEND-EVENT-GROUP( ) methodLOG-AUDIT-EVENT( ) methodSET-APPL-CONTEXT( ) method–See also
+AUDIT-POLICY system handle on page 9, Client-principal object handle on page 20, SECURITY-POLICY system handle on page 68
+
+
+AUDIT-POLICY system handle
+A handle that lets you update current audit policy settings for processing audit events and securing audit data for an audit-enabled database.
+
+Syntax
+
+
+method
+A method of the AUDIT-POLICY system handle.
+
+Methods
+
+ENCRYPT-AUDIT-MAC-KEY( ) methodHANDLE attributeINSTANTIATING-PROCEDURE attributeREFRESH-AUDIT-POLICY( ) methodTYPE attribute–For information about audit-enabling a database, or creating and activating an audit policy for a database, see
+Learn about Security and Auditing.
+
+See also
+AUDIT-CONTROL system handle on page 9, AUDIT-ENABLED function, Client-principal object handle on page 20, SECURITY-POLICY system handle on page 68
+
+
+Buffer object handle
+A handle to a buffer object, corresponding to an underlying ABL buffer, which can be static or dynamic. An example of a static underlying buffer is one you define at compile time by using the DEFINE BUFFER statement, or by implicitly referencing a table in an ABL construct such as Customer.CustNum. An example of a dynamic underlying buffer is one you create at run time with the CREATE BUFFER statement.
+
+Syntax
+
+
+buffer-handle
+An item of type HANDLE representing a handle to a buffer object.
+
+attribute
+An attribute of the buffer object.
+
+method
+A method of the buffer object.
+
+Attributes
+
+ADM-DATA attributeAFTER-BUFFER attributeAFTER-ROWID attributeAMBIGUOUS attributeATTACHED-PAIRLIST attributeAUTO-DELETE attributeAUTO-SYNCHRONIZE attributeAVAILABLE attributeBATCH-SIZE attributeBEFORE-BUFFER attributeBEFORE-ROWID attributeBUFFER-GROUP-ID attributeBUFFER-GROUP-NAME attributeBUFFER-PARTITION-ID attributeBUFFER-TENANT-ID attributeBUFFER-TENANT-NAME attributeCAN-CREATE attributeCAN-DELETE attributeCAN-READ attributeCAN-WRITE attributeCRC-VALUE attributeCURRENT-CHANGED attributeCURRENT-ITERATION attribute (Data Objects)DATASET attributeDATA-SOURCE attributeDATA-SOURCE-COMPLETE-MAP
+attributeDATA-SOURCE-MODIFIED
+attributeDATA-SOURCE-ROWID attributeDBNAME attributeDYNAMIC attributeERROR attributeERROR-STRING attributeFILL-MODE attributeHANDLE attributeHAS-LOBS attributeINSTANTIATING-PROCEDURE
+attributeIS-MULTI-TENANT attributeIS-PARTITIONED attributeKEYS attributeLAST-BATCH attributeLOCKED attributeNAME attributeNAMESPACE-PREFIX attributeNAMESPACE-URI attributeNEW attributeNEXT-SIBLING attributeNUM-CHILD-RELATIONS attributeNUM-FIELDS attributeNUM-ITERATIONS attribute (data objects)NUM-REFERENCES attributeORIGIN-ROWID attributePARENT-RELATION attributePRIMARY attributePRIVATE-DATA attributeQUERY attributeRECID attributeRECORD-LENGTH attributeREJECTED attributeROWID attributeROW-STATE attributeSERIALIZE-NAME attributeTABLE attributeTABLE-HANDLE attributeTABLE-NUMBER attributeTYPE attributeUNIQUE-ID attributeXML-NODE-NAME attribute––
+Methods
+
+ACCEPT-CHANGES( ) methodACCEPT-ROW-CHANGES( ) methodAPPLY-CALLBACK( ) methodATTACH-DATA-SOURCE( ) methodBUFFER-COMPARE( ) methodBUFFER-COPY( ) methodBUFFER-CREATE( ) methodBUFFER-DELETE( ) methodBUFFER-EXPORT( ) methodBUFFER-EXPORT-FIELDS( ) methodBUFFER-FIELD( ) methodBUFFER-IMPORT( ) methodBUFFER-IMPORT-FIELDS( ) methodBUFFER-RELEASE( ) methodBUFFER-VALIDATE( ) methodCOPY-TEMP-TABLE( ) methodDETACH-DATA-SOURCE( ) methodDISABLE-DUMP-TRIGGERS( ) methodDISABLE-LOAD-TRIGGERS( ) methodEMPTY-TEMP-TABLE( ) methodFILL( ) methodFIND-BY-ROWID( ) methodFIND-CURRENT( ) methodFIND-FIRST( ) methodFIND-LAST( ) methodFIND-UNIQUE( ) methodGET-CALLBACK-PROC-CONTEXT( ) methodGET-CALLBACK-PROC-NAME( ) methodGET-CHANGES( ) methodGET-CHILD-RELATION( ) methodGET-ITERATION( ) method (Data Objects)INDEX-INFORMATION( ) methodMARK-NEW( ) methodMARK-ROW-STATE( ) methodMERGE-CHANGES( ) methodMERGE-ROW-CHANGES( ) methodRAW-TRANSFER( ) methodREAD-JSON( ) methodREAD-XML( ) methodREAD-XMLSCHEMA( ) methodREJECT-CHANGES( ) methodREJECT-ROW-CHANGES( ) methodSAVE-ROW-CHANGES( ) methodSERIALIZE-ROW( ) methodSET-CALLBACK( ) methodSET-CALLBACK-PROCEDURE( ) methodSYNCHRONIZE( ) methodWRITE-JSON( ) methodWRITE-XML( ) methodWRITE-XMLSCHEMA( ) method
+Events
+
+AFTER-FILL eventAFTER-ROW-FILL eventBEFORE-FILL eventBEFORE-ROW-FILL eventFIND-FAILED eventOFF-END eventROW-CREATE eventROW-DELETE eventSYNCHRONIZE event–For information on these events, see the ProDataSet events.
+For more information on the buffer object, see Develop ABL Applications.
+
+See also
+Buffer-field object handle on page 13, CREATE BUFFER statement, DEFINE BUFFER statement, ProDataSet object handle on page 58, Query object handle on page 62, Temp-table object handle on page 90
+
+
+Buffer-field object handle
+A handle to a buffer-field object. Buffer-field objects let you examine and modify the fields of a record. They also let you examine the schema properties of the field.
+
+Syntax
+
+
+buffer-field-handle
+A handle to a buffer-field object.
+
+attribute
+An attribute of the buffer-field object.
+
+Attributes
+
+ADM-DATA attributeAVAILABLE attributeBUFFER-HANDLE attributeBUFFER-NAME attributeBUFFER-VALUE attributeCAN-READ attributeCAN-WRITE attributeCASE-SENSITIVE attributeCOLUMN-LABEL attributeDATA-TYPE attributeDBNAME attributeDECIMALS attributeDEFAULT-STRING attributeDEFAULT-VALUE attributeEXTENT attribute
+
+FORMAT attributeHANDLE attributeHELP attributeINITIAL attributeINSTANTIATING-PROCEDURE
+attributeKEY attributeLABEL attributeLITERAL-QUESTION attributeMANDATORY attributeNAME attributePOSITION attributePRIVATE-DATA attributeREAD-ONLY attributeSERIALIZE-HIDDEN attributeSERIALIZE-NAME attributeSTRING-VALUE attributeTABLE attributeTYPE attributeUNIQUE-ID attributeVALIDATE-EXPRESSION attributeVALIDATE-MESSAGE attributeVIEW-AS attributeWIDTH-CHARS attributeXML-DATA-TYPE attributeXML-NODE-NAME attributeXML-NODE-TYPE attribute–Methods
+
+BUFFER-VALUE( ) methodSTRING-VALUE( ) method—For more information on the buffer-field object, see Develop ABL Applications.
+
+See also
+Buffer object handle on page 10, Query object handle on page 62
+
+
+Call object handle
+A handle to a call object allows you to do the following dynamically:
+• Invoke an external procedure, internal procedure, or user-defined function
+• Invoke a Windows DLL routine or Unix shared library routine
+• Get or set an attribute on a handle-based object, such as a buffer or socket
+• Run a method on a handle-based object
+
+Syntax
+
+
+call-object-handle
+The handle to a call object.
+
+attribute
+An attribute of the call object.
+
+method
+A method of the call object. The methods let you set parameters, reset attributes to their default values, and invoke the call object.
+
+Attributes
+
+ADM-DATA attributeASYNCHRONOUS attributeASYNC-REQUEST-HANDLE
+attributeCALL-NAME attributeCALL-TYPE attributeEVENT-PROCEDURE attributeEVENT-PROCEDURE-CONTEXT
+attributeHANDLE attributeIN-HANDLE attributeINSTANTIATING-PROCEDURE
+attributeIS-PARAMETER-SET attributeLIBRARY attributeLIBRARY-CALLING-CONVENTION
+attributeNUM-PARAMETERS attributeORDINAL attributePERSISTENT attributePRIVATE-DATA attributePROCEDURE-TYPE attributeRETURN-VALUE attributeRETURN-VALUE-DATA-TYPE
+attributeRETURN-VALUE-DLL-TYPE
+attributeSERVER attributeTHREAD-SAFE attributeTYPE attributeMethods
+
+CLEAR( ) method (Call Object Handle)INVOKE( ) method (Handle)SET-PARAMETER( ) method (Handle)–Examples
+The following fragment dynamically invokes an external procedure non-persistently:
+
+
+The following fragment dynamically invokes an external procedure persistently, then dynamically invokes one of its internal procedures:
+
+As an alternative to setting the PERSISTENT attribute, a procedure can be run persistently by setting the PROCEDURE-TYPE to "PERSISTENT". Regardless of which attribute is used, the other will automatically be set.
+The following fragment dynamically invokes an external procedure as single-run, then dynamically invokes one of its internal procedures:
+
+The previous fragment could also be used to dynamically invoke an external procedure as singleton by changing PROCEDURE-TYPE to "SINGLETON".
+
+The following fragment uses a single call object handle multiple times:
+
+The following fragment gets an attribute:
+
+
+The following fragment sets an attribute:
+
+The following fragment drives the call object's INVOKE( ) method from a TEMP-TABLE:
+
+
+The following fragment implements an ABL function, sleep, which causes the AVM to sleep for a specified number of milliseconds:
+
+Note that the code checks to determine on which OS it is running, and invokes the appropriate Windows DLL or UNIX shared library.
+
+Notes
+• Invoking logic dynamically requires many more lines of code and is less efficient than invoking it statically. You typically use the call object when you cannot use the RUN statement, the DYNAMIC-FUNCTION() function, or widget:attribute or widget:method syntax, as in the following situations:
+• To invoke an internal or external procedure whose calling sequence (number of parameters and the data type of each) is unknown at compile time.
+
+Note: If only the name of the procedure is unknown at compile time, use the RUN statement with the VALUE option—and avoid the call object altogether.
+
+
+• To invoke a function whose calling sequence is unknown at compile time.
+
+Note: If only the name of the function is unknown at compile time, use the DYNAMIC-FUNCTION() function—and avoid the call object altogether.
+
+
+• To reference a widget attribute or method whose name is unknown at compile time.
+• To invoke a Windows DLL routine or Unix shared library routine when:
+• The number of parameters and their data type is only known at run time
+• The routine exists in both a Windows DLL and a Unix shared library
+• The routine has a variable number of parameters
+
+If you already know the name of the attribute or procedure, you know its syntax, since the name implies certain syntax. And if you know the syntax, you know the calling sequence, since the syntax defines the calling sequence. And if you know the calling sequence, you can use widget:attribute or widget:method syntax—and avoid the call object altogether.
+
+• To create a call object, use the following syntax:
+
+For example:
+
+
+Note: Unlike most ABL objects, the call object, by default, goes into the SESSION widget pool, not into the closest unnamed widget pool.
+
+
+• To delete a call object, use the following syntax:
+
+For example:
+
+Since the call object, by default, goes into the SESSION widget pool, not into the closest unnamed widget pool, to delete a call object created when the IN widget-pool option is not used, use the DELETE OBJECT handle syntax explicitly.
+• Setting the PROCEDURE-TYPE attribute to "PERSISTENT" will automatically set the PERSISTENT attribute to TRUE. Likewise, setting the PERSISTENT attribute to TRUE will automatically set PROCEDURE-TYPE to "PERSISTENT". Setting the PROCEDURE-TYPE and PERSISTENT attributes to conflicting values, e.g., PERSISTENT as TRUE and PROCEDURE-TYPE as "SINGLE-RUN", will result in a run-time error.
+
+See also
+RUN statement
+
+
+Client-principal object handle
+A handle to a client-principal object. Each client-principal object is an ABL security token. This security token contains user credentials that are used to establish a user identity for an ABL session or database connection, and additional information related to that identity. Once an identity is established, it can be used to authorize such actions as accessing resources (run-time permissions checking) and providing an auditing identity, among other things. For a multi-tenant database connection, establishing its identity also establishes the user's database tenancy.
+
+You can use a client-principal to establish identity in one of two ways, depending on its state. If the object is unsealed (required attributes can be modified), you can set the identity that the security token asserts (through user authentication) for an ABL session or database connection by authenticating this identity against specified user accounts and creating a login session for the authenticated user, which also seals the object against any changes to its identity.
+If the object is sealed, you can set the identity that the security token represents (through single sign-on, or SSO) for an ABL session or database connection by validating the object's existing identity and login session for use by the particular ABL session or database connection.
+While the basic states of an ABL security token are unsealed or sealed, there are actually several different states that a client-principal object can represent. You can create an ABL security token at run time using the CREATE CLIENT-PRINCIPAL statement. For more information on the states and uses of a client-principal object, see the Notes of this reference entry.
+
+Syntax
+
+
+client-principal-handle
+A variable of type HANDLE that references a client-principal object.
+
+attribute
+An attribute of the client-principal object handle.
+
+method
+A method of the client-principal object handle.
+
+Attributes
+
+AUDIT-EVENT-CONTEXT attributeCLIENT-TTY attributeCLIENT-WORKSTATION attributeDB-LIST attributeDOMAIN-DESCRIPTION attributeDOMAIN-NAME attributeDOMAIN-TYPE attributeHANDLE attributeINSTANTIATING-PROCEDURE attributeLOGIN-EXPIRATION-TIMESTAMP attributeLOGIN-HOST attributeLOGIN-STATE attributePRIMARY-PASSPHRASE attributeQUALIFIED-USER-ID attributeROLES attributeSEAL-TIMESTAMP attributeSESSION-ID attributeSTATE-DETAIL attributeTYPE attributeUSER-ID attribute
+Methods
+
+AUTHENTICATION-FAILED( ) methodEXPORT-PRINCIPAL( ) methodGET-PROPERTY( ) methodIMPORT-PRINCIPAL( ) methodINITIALIZE( ) methodLIST-PROPERTY-NAMES( ) methodLOGOUT( ) methodSEAL( ) methodSET-PROPERTY( ) methodTENANT-ID( ) methodTENANT-NAME( ) methodVALIDATE-SEAL( ) methodNotes
+• You can set the values of writable attributes and invoke methods (such as SET-PROPERTY( )) that write data values to a client-principal object only while the object is not sealed (unsealed). An unsealed security token is one that has not yet been used to authenticate a user identity and is in the INITIAL state. A sealed security token is one that is in a state other than the INITIAL state. For more information on the possible states of a security token, see the LOGIN-STATE attribute entry.
+• To set the user identity for an ABL session or OpenEdge database connection, you can use a client-principal object together with either the SECURITY-POLICY:SET-CLIENT( ) method or the SET-DB-CLIENT function in a user authentication or SSO operation. The SETUSERID function also authenticates and sets the user identity for an OpenEdge database connection and creates a security token to store this identity. You can have only one active identity set for each ABL session or database connection at any given point in time, and the identity of an ABL session can be different from the identities of any and all of its database connections. You can also retrieve the existing security token as a client-principal object for any ABL session or database connection identity using the SECURITY-POLICY:GET-CLIENT( ) method or GET-DB-CLIENT function.
+
+Note: The SETUSERID function provides limited support for user authentication and no support for SSO. It is supported for backward compatibility. For the most complete user authentication and SSO support, use the SET-DB-CLIENT function or the SET-CLIENT( ) method, instead.
+
+
+• A client-principal object can be used to establish identity through user authentication or SSO, depending on its login state (value of the LOGIN-STATE attribute). As long as the client-principal is unsealed in the INITIAL state, it can establish identity through user authentication. Once it is sealed in the LOGIN state, it can establish identity through SSO. If it is sealed in the LOGOUT, EXPIRED, or FAILED state, you can no
+
+longer use the object to establish identity. The following figure shows the state transitions that can occur during object operations.
+Figure 1: Client-principal login state transitions
+
+• The identity to be established by a client-principal must be authenticated or validated (for SSO) using an authentication system associated with the user's assigned OpenEdge security domain. This domain must be enabled and registered in a trusted domain registry, which can be one of the following:
+• An ABL session registry that you construct using methods of the SECURITY-POLICY system handle on page 68
+• The local registry provided by a connected OpenEdge RDBMS
+The authentication system associated with the user's domain must support each operation (user authentication or SSO) that you use to establish the user's identity. For more information on authentication systems, OpenEdge security domains, and domain registries, see Learn about Identity Management.
+• OpenEdge supports two basic forms of user authentication in ABL using a client-principal object:
+• OpenEdge-performed — OpenEdge performs all the steps required to authenticate a user's identity. Thus, in one ABL operation OpenEdge:
+1. Submits the user's asserted identity for authentication by the user account system defined for the authentication system associated with the user's domain.
+2. Seals the client-principal object with the user's asserted identity and (if authentication is successful in Step 1) begins a login session for the user.
+3. Assigns the user's identity to an ABL session or database connection.
+
+Note: Step 1 can include use of an ABL authentication callback to implement or extend this user authentication step. For more information, see the sections on ABL authentication callbacks in OpenEdge Programming Interfaces.
+
+
+• Application-performed — The ABL application performs all steps required to authenticate a user's identity. Thus, the ABL application:
+1. Determines and applies the criteria required to authenticate the user identity.
+2. In one ABL operation, seals the client-principal object with the user's asserted identity and (if authentication is successful in Step 1) begins a login session for the user.
+3. In another ABL operation, assigns the user's identity to an ABL session or database connection.
+
+• To establish identity through an OpenEdge-performed user authentication operation, you must first set up a trusted domain registry, which can be the local registry of a connected OpenEdge database or a registry that you create in the ABL session, as described previously in these notes.
+Set the following required attributes of an unsealed client-principal object (some of which have defaults):
+• USER-ID attribute — The user name, which can be set from the user name (unqualified user ID) of the QUALIFIED-USER-ID attribute value.
+• DOMAIN-NAME attribute — The user's domain name, which can be set from the domain name of the QUALIFIED-USER-ID attribute value. The specified domain must be authentication-enabled—that is, an OpenEdge domain that is enabled for run-time access, supports a valid source of user accounts, and is configured with an authentication system that supports OpenEdge-performed user authentication, such as the built-in _oeusertable or _oslocal authentication system, or a user-defined authentication system that is enabled for authentication using an authentication callback (see OpenEdge Programming Interfaces).
+• PRIMARY-PASSPHRASE attribute — The user's password, which can have the default value of blank ("") if no passphrase is required for authentication.
+• SESSION-ID attribute — A unique login session identifier, which must have a value other than blank or the Unknown value (?) that uniquely identifies the login session.
+You can set all of these attributes in one step using the INITIALIZE( ) method. You then execute the SECURITY-POLICY:SET-CLIENT( ) method or SET-DB-CLIENT function to invoke the authentication operation, passing the unsealed client-principal as input. Each ABL operation authenticates the asserted user identity, and if successful, implicitly seals the client-principal using the domain access code that is registered for the user's domain in the trusted domain registry, begins the user's login session, and sets the ABL session, a database connection, or both to the authenticated identity. If successful for the SET-CLIENT( ) method, the operation establishes the identity for the ABL session and for any existing database connection that has not already had an identity established using the SET-DB-CLIENT (or SETUSERID) function. If successful for the SET-DB-CLIENT function, the operation establishes the identity for the specified database connection and locks that database connection against any subsequent change in identity using the
+SET-CLIENT( ) method. If authentication fails for any reason, including a client-principal that has exceed any setting of its LOGIN-EXPIRATION-TIMESTAMP attribute, the operation implicitly seals the client-principal in the appropriate non-LOGIN state (FAILED or EXPIRED).
+
+Note: OpenEdge never stores the value of the PRIMARY-PASSPHRASE attribute in a security token or anywhere else. Once passed, together with other required user credentials, to the authentication system for user authentication, OpenEdge destroys all memory of its value.
+
+
+• To establish identity through an application-performed user authentication operation, you must first set up a trusted domain registry, which can be the local registry of a connected OpenEdge database or a separate registry that you create in the ABL session, as described previously in these notes.
+Your application determines the requirements for authenticating a user identity, which might involve passwords, biometric profiles, and so on. Whatever the requirements, they must result in values you can use to set the following required attributes of an unsealed client-principal object (some of which have defaults):
+
+• USER-ID attribute — The user name, which can be set from the user name (unqualified user ID) of the QUALIFIED-USER-ID attribute value.
+• DOMAIN-NAME attribute — The user's domain name, which can be set from the domain name of the QUALIFIED-USER-ID attribute value. The specified domain can be configured for an authentication system that requires application-performed user authentication and supports only OpenEdge-performed SSO, such as _extsso or any user-defined authentication system that is not enabled for authentication using an authentication callback.
+• SESSION-ID attribute — A unique login session identifier, which must have a value other than blank or the Unknown value (?) that uniquely identifies the login session.
+You can set all of these attributes in one operation using the INITIALIZE( ) method. Note that the PRIMARY-PASSPHRASE attribute is not required to initialize the client-principal. Again, your application determines the requirements for authenticating user identity and OpenEdge does not need to know about them.
+If the application authentication is successful, you then call the SEAL( ) method on the client-principal object, which explicitly seals the client-principal in the LOGIN state using the domain access code that is registered for the user's domain in the trusted domain registry and begins the user's login session. However, if the client-principal exceeds any setting of its LOGIN-EXPIRATION-TIMESTAMP attribute, this method implicitly seals the object in the EXPIRED state. If the application authentication is not successful for any reason, you can then call the AUTHENTICATION-FAILED( ) method to explicitly seal the client-principal in the FAILED state.
+To set the successfully asserted and sealed identity for the current ABL session, a database connection, or both, you pass the sealed client-principal to the SECURITY-POLICY:SET-CLIENT( ) method or
+SET-DB-CLIENT function, as appropriate. If successful for the SET-CLIENT( ) method, the operation establishes the identity for the ABL session and for any existing database connection that has not already had an identity established using the SET-DB-CLIENT (or SETUSERID) function. If successful for the SET-DB-CLIENT function, the operation establishes the identity for the specified database connection and locks that database connection against any subsequent change in identity using the SET-CLIENT( ) method.
+• To establish identity through an SSO operation, you first need an implicitly or explicitly sealed client-principal object that represents the user identity. You then invoke the SECURITY-POLICY:SET-CLIENT( ) method or the SET-DB-CLIENT function with the sealed client-principal object as input. This SSO operation validates the domain specified for the client-principal against the domain's access code in the trusted domain registry. If successful for the SET-CLIENT( ) method, the operation establishes the identity for the ABL session and for any existing database connection that has not already had an identity established using the
+SET-DB-CLIENT (or SETUSERID) function. If successful for the SET-DB-CLIENT function, the operation establishes the identity for the specified database connection and locks that database connection against any subsequent change in identity using the SET-CLIENT( ) method.
+• When any user authentication or SSO operation successfully sets the user identity for a multi-tenant database connection, the operation also establishes the user's database tenant organization as defined by the user's domain. In addition, this operation stores the tenant information for this database connection in the
+client-principal object, including the database name, tenant name, and a tenant ID, which together uniquely identify the tenant for this particular database connection. This unique tenancy thus distinguishes tenants among connections to multiple multi-tenant databases that share the same user identity for more than one connection. This tenant information can be returned using the DB-LIST attribute, TENANT-ID( ) method, and TENANT-NAME( ) method of the client-principal object for every database connection that has been set to the user identity using this instance of the client-principal object only. This information can be returned for a database that has nothing to do with the current ABL session, because the same client-principal instance can be used to establish identity in multiple ABL sessions where it can accumulate tenant information for multi-tenant database connections across sessions.
+• In addition to the invoking the SET-CLIENT( ) method or SET-DB-CLIENT function with an unsealed client-principal, OpenEdge performs a user authentication operation that creates a sealed security token for a specified database connection from asserted user credentials using the SETUSERID function or when
+
+asserting identity with the User ID (-U) and Password (-P) connection parameters to the CONNECT statement and the AVM startup command line. During any OpenEdge-performed user authentication operation, OpenEdge assigns the values of the following attributes (if not already set) from the domain configuration before sealing the associated security token:
+• AUDIT-EVENT-CONTEXT attribute
+• DOMAIN-DESCRIPTION attribute
+• DOMAIN-TYPE attribute
+• STATE-DETAIL attribute (if the authentication operation fails)
+
+• At any point during a user login session, you can log the user out by invoking the LOGOUT( ) method on the sealed client-principal object (in the LOGIN state) that represents the user's identity. This method thus changes the object's state from LOGIN to LOGOUT.
+• You can use the EXPORT-PRINCIPAL( ) method and IMPORT-PRINCIPAL( ) method to transport a sealed or unsealed security token from one ABL session to another, where its identity can be authenticated during login or validated during SSO operations, as appropriate. For an unsealed client-principal that you export outside the current session, you can also encrypt any setting of the PRIMARY-PASSPHRASE attribute. For more information, see the description of how to encrypt passwords in the ENCRYPT-AUDIT-MAC-KEY(
+) method entry.
+• Certain methods invoked on or using a client-principal object generate audit events. For more information, see the AUDIT-EVENT-CONTEXT attribute entry.
+
+See also
+AUDIT-CONTROL system handle on page 9, AUDIT-POLICY system handle on page 9, CREATE CLIENT-PRINCIPAL statement, SECURITY-POLICY system handle on page 68, SET-CLIENT( ) method, SETUSERID function, SET-DB-CLIENT function
+
+
+CLIPBOARD system handle
+A handle to the system clipboard widget. The CLIPBOARD handle allows you to implement interactions that allow the user to transfer data between ABL field-level widgets, or between ABL field-level widgets and the widgets of other applications running on the system. ABL can interpret the data read from or written to the system clipboard widget as a single item or as a group of multiple items. These data transfers are typically invoked as cut, copy, and paste operations.
+
+Syntax
+
+
+attribute
+An attribute of the clipboard widget.
+
+Attributes
+
+AVAILABLE-FORMATS attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attribute
+
+ITEMS-PER-ROW attributeMULTIPLE attributeNUM-FORMATS attributeTYPE attributeVALUE attribute–Examples
+The following code fragment implements cut, copy, and paste operations for the EM_Cut, EM_Copy, and EM_Paste items on the EditMenu menu. It uses the FOCUS handle to reference the widget that has the current input focus.
+Note that the fragment tests the widget type of the FOCUS widget in two instances: once when EditMenu is opened during the MENU-DROP event to determine what clipboard operations are valid for the widget, and once again when a clipboard operation is chosen from the menu to determine how the operation is executed for the widget. During the MENU-DROP event, if a particular operation is valid for the FOCUS widget the menu item for that operation is enabled. Otherwise, it is disabled.
+During the CHOOSE event for a n enabled menu item, the fragment executes the corresponding clipboard operation in a way that accounts for the unique features of the FOCUS widget. For example, the copy operation (EM_Copy) copies the selected text from an editor widget, copies the label text from a radio set item, and copies a composed true or false message for a toggle box. Your own implementation of these operations for the same widgets can be quite different.
+For a complete description of this example, see the topics on the system clipboard in OpenEdge Programming Interfaces.
+
+
+DEFINE VARIABLE lStat AS LOGICAL NO-UNDO.
+. . .
+ON MENU-DROP OF MENU EditMenu DO: IF FOCUS:TYPE = "EDITOR" THEN DO:
+MENU-ITEM EM_Cut:SENSITIVE IN MENU EditMenu =
+  IF LENGTH(FOCUS:SELECTION-TEXT) > 0 THEN TRUE ELSE FALSE. MENU-ITEM Em_Copy:SENSITIVE IN MENU EditMenu =
+  IF LENGTH(FOCUS:SELECTION-TEXT) > 0 THEN TRUE ELSE FALSE. MENU-ITEM EM_Paste:SENSITIVE IN MENU EditMenu =
+     IF CLIPBOARD:NUM-FORMATS > 0 THEN TRUE ELSE FALSE. END.
+ELSE IF FOCUS:TYPE = "RADIO-SET" OR FOCUS:TYPE = "SELECTION-LIST" OR FOCUS:TYPE = "SLIDER" OR FOCUS:TYPE = "TOGGLE-BOX" THEN DO:
+MENU-ITEM EM_Cut:SENSITIVE IN MENU EditMenu = FALSE. MENU-ITEM Em_Copy:SENSITIVE IN MENU EditMenu = TRUE. MENU-ITEM Em_Paste:SENSITIVE IN MENU EditMenu = FALSE.
+END.
+ELSE IF FOCUS:TYPE = "FILL-IN" THEN DO:
+MENU-ITEM EM_Cut:SENSITIVE IN MENU EditMenu =
+  IF LENGTH(FOCUS:SCREEN-VALUE) > 0 THEN TRUE ELSE FALSE. MENU-ITEM Em_Copy:SENSITIVE IN MENU EditMenu =
+  IF LENGTH(FOCUS:SCREEN-VALUE) > 0 THEN TRUE ELSE FALSE. MENU-ITEM EM_Paste:SENSITIVE IN MENU EDitMenu =
+     IF CLIPBOARD:NUM-FORMATS > 0 THEN TRUE ELSE FALSE. END.
+ELSE DO:
+MENU-ITEM EM_Cut:SENSITIVE IN MENU EditMenu = FALSE. MENU-ITEM EM_Copy:SENSITIVE IN MENU EditMenu = FALSE. MENU-ITEM EM_Paste:SENSITIVE IN MENU EditMenu = FALSE.
+END.
+END. /* ON MENU-DROP IN EditMenu */
+ON CHOOSE OF MENU-ITEM EM_Cut IN MENU EditMenu DO: IF FOCUS:TYPE = "EDITOR" THEN DO:
+IF FOCUS:SELECTION-START <> FOCUS:SELECTION-END THEN ASSIGN
+CLIPBOARD:VALUE = FOCUS:SELECTION-TEXT
+
+
+lStat	= FOCUS:REPLACE-SELECTION-TEXT("").
+ELSE ASSIGN
+CLIPBOARD:VALUE	= FOCUS:SCREEN-VALUE
+FOCUS:SCREEN-VALUE = "".
+END.
+ELSE ASSIGN /* For FILL-IN */ CLIPBOARD:VALUE	= FOCUS:SCREEN-VALUE FOCUS:SCREEN-VALUE = "".
+END. /* ON CHOOSE OF MENU-ITEM EM_Cut */
+ON CHOOSE OF MENU-ITEM EM_Copy IN MENU EditMenu DO: IF FOCUS:TYPE = "EDITOR" THEN
+IF FOCUS:SELECTION-START <> FOCUS:SELECTION-END THEN
+CLIPBOARD:VALUE = FOCUS:SELECTION-TEXT.
+ELSE
+  CLIPBOARD:VALUE = FOCUS:SCREEN-VALUE. ELSE IF FOCUS:TYPE = "RADIO-SET" THEN
+CLIPBOARD:VALUE = ENTRY(LOOKUP(FOCUS:SCREEN-VALUE, FOCUS:RADIO-BUTTONS) - 1, FOCUS:RADIO-BUTTONS).
+ELSE IF FOCUS:TYPE = "TOGGLE-BOX" THEN IF FOCUS:SCREEN-VALUE = "yes" THEN
+CLIPBOARD:VALUE = FOCUS:LABEL + " selected.".
+ELSE
+CLIPBOARD:VALUE = FOCUS:LABEL + " not selected.".
+ELSE /* For FILL-IN */
+CLIPBOARD:VALUE = FOCUS:SCREEN-VALUE.
+END. /* ON CHOOSE OF MENU-ITEM EM_Copy */
+ON CHOOSE OF MENU-ITEM EM_Paste IN MENU EditMenu DO: IF FOCUS:TYPE = "EDITOR" THEN DO:
+IF FOCUS:SELECTION-START <> FOCUS:SELECTION-END THEN lStat = FOCUS:REPLACE-SELECTION-TEXT(CLIPBOARD:VALUE).
+ELSE
+aResult = FOCUS:INSERT-STRING(CLIPBOARD:VALUE).
+END.
+ELSE /* For FILL-IN */
+FOCUS:SCREEN-VALUE = CLIPBOARD:VALUE.
+END. /* ON CHOOSE OF MENU-ITEM EM_Paste */
+. . .
+
+
+The following r-clpmul.p procedure demonstrates interaction with the clipboard using multiple items. The procedure copies out four rows of five numbers to the clipboard. It first displays the clipboard data as a single item, and then as a list of multiple items.
+As a further demonstration of how the CLIPBOARD handle works with multiple items, try the following experiment:
+1. Run the procedure, and at the pause, paste the result into an edit tool in your window system, such as Notepad in Windows.
+2. You may have to select and copy text in the edit tool to activate the system clipboard before running the procedure.
+3. Modify the text in the edit tool, leaving at least one tab or newline character, and copy it back to the clipboard from the edit tool.
+4. Respond to the pause in the procedure to see how the modified clipboard data is displayed.
+
+r-clpmul.p
+
+Notes
+• In character mode environments where there is no system clipboard, ABL supports CLIPBOARD handle operations within a single ABL application. You can cut and paste among fields in one ABL application, but not between one ABL application and another ABL or non-ABL application.
+• In graphical window systems, ABL supports CLIPBOARD handle operations using the system clipboard. This allows data transfers among ABL and non-ABL applications as well as within a single ABL application.
+• The AVAILABLE-FORMATS attribute returns a comma-delimited string containing the names of the available formats for the data stored in the clipboard. ABL currently supports two formats:
+• PRO_TEXT — Specifies the standard text format on your system (CF_TEXT in Windows).
+• PRO_MULTIPLE — Specifies that the data in the clipboard contains tab or newline characters, and thus can be read as multiple items.
+
+• The ITEMS-PER-ROW attribute specifies how the AVM writes multiple items to the clipboard. Set the MULTIPLE attribute to TRUE before specifying ITEMS-PER-ROW. Then when you set ITEMS-PER-ROW to any integer value n greater than 1, the AVM terminates every nth value you assign to the VALUE attribute with a newline character and terminates all other values with a tab character. This formats the output in the clipboard into newline-terminated rows of n items separated by tabs. The default value for the
+ITEMS-PER-ROW attribute is 1.
+
+During a MULTIPLE write, you can set and reset ITEMS-PER-ROW at any time until you set the MULTIPLE attribute to FALSE. When you set the MULTIPLE attribute to FALSE, the AVM uses the current value of ITEMS-PER-ROW to format and flush the data to the clipboard, and resets the ITEMS-PER-ROW attribute to 1.
+The value of ITEMS-PER-ROW has no effect when reading data from the clipboard.
+• The MULTIPLE attribute specifies whether the AVM reads data from, and writes data to, the clipboard as a single item or as multiple items.
+When you set MULTIPLE to FALSE, the AVM treats all data in the clipboard as a single item. Thus, any character string you assign to the VALUE attribute replaces all data in the clipboard, and whenever you read the VALUE attribute it returns all the data in the clipboard.
+When you set MULTIPLE to TRUE, the AVM treats the data in the clipboard as multiple items separated by tab or newline characters.
+When you set the MULTIPLE attribute to TRUE and write values to the clipboard (assign values to the VALUE attribute), the AVM stores the values in a buffer until you set MULTIPLE to FALSE. At this time the AVM assigns the values to the clipboard separated from each other by tab or newline characters according to the value of the ITEMS-PER-ROW attribute. Note that the clipboard data itself does not change until you set MULTIPLE to FALSE. When you do set MULTIPLE to FALSE, all data previously in the clipboard is replaced by the items you have written.
+When you set the MULTIPLE attribute to TRUE and read values from the clipboard (assign values from the VALUE attribute), each read returns the next item in the clipboard (starting with the first one). After all items have been read, the VALUE attribute returns the Unknown value (?). Setting the MULTIPLE attribute to FALSE and then to TRUE restarts the item pointer to read the first item of data in the clipboard.
+Until you (or another application) write data to the clipboard, changing the value of the MULTIPLE attribute itself has no effect on clipboard contents. It only affects the way you can access the clipboard for reading and writing.
+The default value for the MULTIPLE attribute is FALSE.
+• The NUM-FORMATS attribute returns the number of formats available to read data from the clipboard. If no data is in the clipboard, the value is 0. If data is in the clipboard, the value is 1 (for PRO_TEXT) unless there are tab or newline characters in the data, in which case the value is 2 (for both PRO_TEXT and PRO_MULTIPLE).
+• The VALUE attribute accesses the data in the clipboard. Reading the VALUE attribute has no effect on the clipboard contents. However, the exact value read or written depends on the setting of the MULTIPLE attribute.
+When the MULTIPLE attribute is FALSE, reading the VALUE attribute returns the current value in the clipboard as a single item. If there is no data in the clipboard, the VALUE attribute returns the Unknown value (?). Writing to the VALUE attribute immediately changes the current value in the clipboard to the value that is written.
+When the MULTIPLE attribute is TRUE, reading the VALUE attribute either references one of the multiple data items in the clipboard, or references the Unknown value (?) if all items have been read or there is no data in the clipboard. Writing to the VALUE attribute buffers each assignment and replaces the current data in the clipboard with the multiple values assigned when the MULTIPLE attribute is set to FALSE. See the previous description of the MULTIPLE attribute for more information.
+
+Note: Windows provides clipboard storage for a maximum of 64K of data.
+
+Assigning the Unknown value (?) to the VALUE attribute has no effect. To write a null item or clear the system clipboard when writing a single item, assign the null string ("") to the VALUE attribute.
+
+• To cut or copy an ABL data item to the clipboard, set the CLIPBOARD:VALUE attribute to the value of the appropriate field or variable. A cut or copy operation replaces all data in the clipboard with the data from the specified ABL field or variable.
+• To paste data from the clipboard to an ABL data item, assign the value of the CLIPBOARD:VALUE attribute to the appropriate the field or variable. If there is no data in the clipboard, a paste operation assigns the Unknown value (?) to the data item.
+• To implement clipboard operations, use the FOCUS system handle, which identifies the ABL field-level widget that has the current input focus. Depending on the type of widget (for example, EDITOR or RADIO-ITEM) and its input state, you use one of several possible widget attributes as the source or destination for the data. For example, when working with selected text in an editor widget, use the SELECTION-TEXT attribute to cut or copy and the REPLACE-SELECTION-TEXT method to paste, but
+when working with the value of the entire editor field, use the SCREEN-VALUE attribute for all operations.
+• Do not interrupt an ABL clipboard operation with input-blocking statements like UPDATE or WAIT-FOR. In general, make any ABL clipboard cut, copy, or paste operation with the CLIPBOARD handle a one-step operation. Any interruption gives the user an opportunity to access and modify the clipboard from outside ABL, in the middle of the ABL clipboard operation.
+• Windows provides default clipboard operations through control keys, whether or not you implement them with the CLIPBOARD handle. These operations are available in editor and fill-in widgets, and are completely compatible with CLIPBOARD handle operations. They are single-item operations without any interaction with the MULTIPLE attribute. They also can occur in the middle of an ABL clipboard operation, if it is interrupted. (See the previous bullet on interrupting ABL clipboard operations.) The operations and control keys to activate them include:
+• Cut — CTRL+X and SHIFT+DEL
+• Copy — CTRL+C and CTRL+INS
+• Paste — CTRL+V and SHIFT+INS
+
+• The TYPE attribute returns the widget type, PSEUDO-WIDGET.
+• For more information on implementing clipboard operations with the CLIPBOARD handle, see OpenEdge Programming Interfaces.
+
+See also
+FOCUS system handle on page 51
+
+
+CODEBASE-LOCATOR system handle
+(Windows only; Graphical interfaces only)
+A handle to the CODEBASE-LOCATOR object. A CODEBASE-LOCATOR object specifies the location and authentication information for a client application's codebase (that is, an application's files) stored on an application server or a web server. This object allows the WebClient to access application files for download. It also allows WebClient and the client application to share authentication information.
+
+Note: Does not apply to SpeedScript programming.
+
+
+Syntax
+
+
+attribute
+Specifies an attribute of the CODEBASE-LOCATOR handle.
+
+Attributes
+
+APPSERVER-INFO attributeAPPSERVER-PASSWORD
+attributeAPPSERVER-USERID attributeEND-USER-PROMPT attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeKEEP-CONNECTION-OPEN
+attributeKEEP-SECURITY-CACHE attributeLOCATOR-TYPE attributeNEEDS-APPSERVER-PROMPT
+attributeNEEDS-PROMPT attributePERSISTENT-CACHE-DISABLED
+attributeSERVER attributeTYPE attributeURL attributeURL-PASSWORD attributeURL-USERID attribute–Notes
+• The CODEBASE-LOCATOR handle applies only to WebClient.
+• The following attributes represent the security cache: APPSERVER-INFO, APPSERVER-PASSWORD, APPSERVER-USERID, URL-PASSWORD, URL-USERID, and KEEP-SECURITY-CACHE. These attributes
+are readable and writable.
+• WebClient sets the following read-only attributes based on values stored in the application configuration (.ProwcApp) file: END-USER-PROMPT, KEEP-CONNECTION-OPEN, LOCATOR-TYPE,
+NEEDS-APPSERVER-PROMPT, NEEDS-PROMPT, PERSISTENT-CACHE-DISABLED, and URL.
+• Valid URL protocols depend on the LOCATOR-TYPE. If LOCATOR-TYPE is "AppServer", valid URL protocols include: HTTP, HTTPS, and AppServer. If LOCATOR-TYPE is "InternetServer", valid URL protocols include: HTTP, HTTPS, and FILE.
+• The TYPE attribute returns the widget type, PSEUDO-WIDGET.
+
+See also
+CONNECT( ) method (AppServer)
+
+
+COLOR-TABLE system handle
+(Windows only; Graphical interfaces only)
+A handle to the current color table.
+
+
+
+Note: Does not apply to SpeedScript programming.
+
+
+Syntax
+
+
+attribute
+An attribute of the COLOR-TABLE handle.
+
+method
+A method of the COLOR-TABLE handle.
+
+Attributes
+
+HANDLE attributeINSTANTIATING-PROCEDURE
+attributeNUM-ENTRIES attributeTYPE attribute––Methods
+
+GET-BLUE-VALUE( ) methodGET-DYNAMIC( ) methodGET-GREEN-VALUE( ) methodGET-RED-VALUE( ) methodGET-RGB-VALUE( ) methodSET-BLUE-VALUE( ) methodSET-DYNAMIC( ) methodSET-GREEN-VALUE( ) methodSET-RED-VALUE( ) methodSET-RGB-VALUE( ) methodExample
+This procedure sets the number of entries in the color table, makes color ix + 1 dynamic, then sets the red, green, and blue values for this entry:
+
+r-colhan.p
+
+
+Note: In this procedure, you can replace the SET-RED-VALUE( ), SET-GREEN-VALUE( ), and SET-BLUE-VALUE( ) methods with the SET-RGB-VALUE( ) method as follows:
+COLOR-TABLE:SET-RGB-VALUE(ix, RGB-VALUE(red, green, blue)).
+
+
+Notes
+• The current color table is the color table in the startup environment or the environment most recently specified in a USE statement.
+• To determine the number of entries in the color table, access the NUM-ENTRIES attribute. For character interfaces, the value of this attribute is zero.
+• To change the number of entries in the color table, modify the NUM-ENTRIES attribute.
+• To let users modify color table entries at run time, display the System Color dialog box by coding the SYSTEM-DIALOG COLOR statement.
+• To specify a red, green, or blue value for a dynamic color, supply an integer expression that returns a value between 0 and 255 inclusive.
+• To save a color definition from the color table to the current environment, use the PUT-KEY-VALUE statement. To retrieve a color definition from the current environment, use the GET-KEY-VALUE statement.
+• The value of COLOR-TABLE:TYPE is "PSEUDO-WIDGET."
+• The SET-RGB-VALUE() and GET-RGB-VALUE() methods can be used as an alternative to specifying each individual red, green, and blue color value with the individual SET-RED-VALUE(), SET-GREEN-VALUE(), SET-BLUE-VALUE() methods, and GET-RED-VALUE(), GET-GREEN-VALUE(), and GET-BLUE-VALUE()
+methods, respectively.
+• The SET-RGB-VALUE() and GET-RGB-VALUE() methods to set or retrieve colors are primarily used for Active X controls.
+• The index is zero based. For example, the statement COLOR-TABLE:GET-BLUE-VALUE(2) returns the color of the 3rd entry.
+
+See also
+GET-KEY-VALUE statement, PUT-KEY-VALUE statement, SYSTEM-DIALOG COLOR statement, USE statement
+
+
+
+COM-SELF system handle
+(Windows only)
+A component handle to the ActiveX object (ActiveX control or ActiveX automation object) that generated the event being handled by the currently executing ActiveX event procedure.
+
+Note: Does not apply to SpeedScript programming.
+
+
+Syntax
+
+
+OCX-property-reference | OCX-method-reference
+A reference to a valid property or method associated with the ActiveX control.
+
+Example
+The following code fragment displays the name and position of the ActiveX control that generates a Click event:
+
+Notes
+• Unlike ABL widget handles that have the HANDLE data type, the component handle returned by COM-SELF has the COM-HANDLE data type.
+• You can reference the COM-SELF handle only within an ActiveX control (OCX) event procedure.
+• The syntax for referencing ActiveX control properties and methods extends the syntax for referencing widget attributes and methods. For more information, see the Handle Attributes and Methods Reference.
+
+See also
+PROCEDURE statement, SELF system handle on page 70
+
+
+COMPILER system handle
+A handle to information on a preceding COMPILE statement.
+
+Syntax
+
+
+attribute
+Specifies an attribute of the COMPILER system handle.
+
+Attributes
+
+CLASS-TYPE attributeERROR attributeERROR-COLUMN attributeERROR-ROW attributeFILE-NAME attributeFILE-OFFSET attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeMULTI-COMPILE attributeNUM-MESSAGES attributeOPTIONS attributeSTOPPED attributeTYPE attributeWARNING attribute–Methods
+
+GET-COLUMN( ) methodGET-ERROR-COLUMN( ) methodGET-ERROR-ROW( ) methodGET-FILE-NAME( ) methodGET-FILE-OFFSET( ) methodGET-MESSAGE( ) method (Handle)GET-MESSAGE-TYPE( ) methodGET-NUMBER( ) methodGET-ROW( ) method–Example
+The input for the example procedure is a comma-separated list of source files. It compiles each of these procedures. If a compilation error occurs, an appropriate message is written to the compile.msgs file.
+r-cmpchk.p
+
+
+Notes
+• If a compilation is successful, the COMPILER:ERROR attribute is set to FALSE.
+• After a COMPILE statement, check the COMPILER:ERROR and COMPILER:WARNING attributes to determine whether the compilation was successful. If the value of ERROR is TRUE, you can use the FILE-NAME to determine in which source file the error occurred. You can use either the ERROR-ROW and ERROR-COLUMN attributes or the FILE-OFFSET attribute to determine where in the source file an error occurred. You can use this information to compose a message to display or write to a log file. To find the specific error and warning messages, check the ERROR-STATUS handle.
+• The TYPE attribute returns the widget type, PSEUDO-WIDGET.
+
+See also
+COMPILE statement
+
+
+CURRENT-WINDOW system handle
+A handle to the default window for the current ABL session. This window is the default parent for all frames, dialog boxes, alert boxes, and messages. Set or examine the attributes of the CURRENT-WINDOW handle to modify or get information on the current default window.
+
+Syntax
+
+
+attribute
+An attribute of the CURRENT-WINDOW.
+
+Attributes
+The CURRENT-WINDOW handle has all the attributes of a window widget.
+
+Notes
+• The default value of the CURRENT-WINDOW handle is the static session window referenced by the DEFAULT-WINDOW handle. You can change the default window for the current session by assigning the handle of a window to CURRENT WINDOW.
+• The IN WINDOW phrase allows you to explicitly assign a window as a parent for a frame, dialog box, alert box, or message.
+• In a character interface, the ACTIVE-WINDOW, CURRENT-WINDOW, and DEFAULT-WINDOW handles return the handle of the static window for the current ABL session.
+• The CURRENT-WINDOW attribute of a procedure allows you to specify a default window for the procedure block. The CURRENT-WINDOW attribute of a procedure overrides the CURRENT-WINDOW handle for the procedure block.
+• You can enable or disable the current window by changing CURRENT-WINDOW:SENSITIVE.
+• You can set the menu bar for the current window by assigning the handle of a menu bar to CURRENT-WINDOW:MENUBAR.
+
+• You can make the current window visible or invisible by changing the value of CURRENT-WINDOW:VISIBLE.
+• Because CURRENT-WINDOW is the general default parent for ABL frames, you cannot set CURRENT-WINDOW to the handle of a .NET form's shadow window. If allowed, this would make the
+associated .NET form a default parent for ABL frames, and ABL cannot parent ABL frames to .NET forms. A .NET form's shadow window handle is provided by the ProWinHandle property of the Progress.Windows.Form class, which an OpenEdge .NET class designed for instantiating .NET forms in an ABL session. Therefore, any attempt to set CURRENT-WINDOW to a ProWinHandle property value raises a run-time error.
+
+See also
+ACTIVE-WINDOW system handle on page 6, DEFAULT-WINDOW system handle on page 43
+
+
+Data-relation object handle
+A handle to a data-relation object. A data-relation object defines one relation between a pair of parent and child buffers in a ProDataSet object that have a one-to-one or one-to-many parent-child relationship. A data-relation object identifies the parent and child buffers, and the fields in each buffer that define the primary and foreign key fields of the relation.
+A data-relation object can be static or dynamic. A static data-relation object is one you define at compile time as part of the DEFINE DATASET statement using the data-relation option. A dynamic data-relation object is one you create at run time for a dynamic ProDataSet object using the ADD-PARENT-ID-RELATION( ) method. Use this handle to access the data-relation object's attributes.
+
+Note: Does not apply to SpeedScript programming.
+
+
+Syntax
+
+
+data-relation-handle
+A handle variable that references a data-relation object.
+
+attribute
+An attribute of the data-relation object.
+
+Attributes
+
+ACTIVE attributeADM-DATA attributeCHILD-BUFFER attributeCURRENT-QUERY( ) methodFOREIGN-KEY-HIDDEN attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeMAXIMUM-LEVEL attributeNAME attributeNESTED attributePARENT-BUFFER attributePRIVATE-DATA attribute
+
+PARENT-FIELDS-AFTER attributePARENT-FIELDS-BEFORE
+attributePARENT-ID-RELATION attributeQUERY attributeRECURSIVE attributeRELATION-FIELDS attributeREPOSITION attributeTYPE attributeWHERE-STRING attributeNotes
+• You cannot define multiple data-relation objects for the same pair of parent and child buffers.
+• You cannot delete a data-relation object. When the ProDataSet object is deleted or cleared, the data-relation objects are automatically deleted.
+
+See also
+ADD-PARENT-ID-RELATION( ) method, DEFINE DATASET statement
+
+
+Data-source object handle
+A handle to a data-source object. A data-source object supports the automatic filling of a ProDataSet object member table, as well as applying updates back to one or more database tables. There is a distinct data-source object for each member buffer, which allows a single ProDataSet object and a single fill operation on that object to combine data from multiple databases. A data-source object is defined independently of any ProDataSet object.
+A data-source object can be static or dynamic. A static data-source object is one you define at compile time with the DEFINE DATA-SOURCE statement. A dynamic data-source object is one you create at run time with the CREATE DATA-SOURCE statement. Use this handle to access the data-source object's attributes and methods.
+
+Note: Does not apply to SpeedScript programming.
+
+
+Syntax
+
+
+data-source-handle
+A handle variable that references a data-source object.
+
+attribute
+An attribute of the data-source object.
+
+method
+A method of the data-source object.
+
+Attributes
+
+ADM-DATA attributeFILL-WHERE-STRING attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeKEYS attributeMERGE-BY-FIELD attributeNAME attributeNEXT-ROWID attributeNEXT-SIBLING attributeNUM-SOURCE-BUFFERS attributePREFER-DATASET attributePRIVATE-DATA attributeQUERY attributeRESTART-ROW attributeRESTART-ROWID attributeSAVE-WHERE-STRING attributeTYPE attribute–Methods
+
+ADD-SOURCE-BUFFER( ) methodGET-DATASET-BUFFER( ) methodGET-SOURCE-BUFFER( ) method–Notes
+• To associate a query with a dynamic data-source object, use the QUERY attribute. To disassociate the query and data-source object, set the QUERY attribute to the Unknown value (?).
+• To override the WHERE clause in the query, use the FILL-WHERE-STRING attribute.
+
+Note: The FILL-WHERE-STRING attribute of the data source object only applies to the default data source query. It does not apply when a named query is specified using the QUERY attribute.
+
+
+See also
+CREATE DATA-SOURCE statement, DEFINE DATA-SOURCE statement
+
+
+DEBUGGER system handle
+A handle that lets ABL procedures initialize and control the Application Debugger.
+To use the DEBUGGER handle, you must have the Application Debugger installed in your OpenEdge environment.
+
+Note: Does not apply to SpeedScript programming.
+
+
+Syntax
+
+
+attribute
+Specifies an attribute of the DEBUGGER handle.
+
+method
+Specifies a method of the DEBUGGER handle.
+
+Attributes
+
+HANDLE attributeINSTANTIATING-PROCEDURE
+attributeTYPE attributeVISIBLE attribute––Methods
+
+CANCEL-BREAK( ) methodCLEAR( ) method (DEBUGGER Handle)DEBUG( ) methodDISPLAY-MESSAGE( ) methodINITIATE( ) methodSET-BREAK( ) methodExample
+The following example displays Orders for each Customer in the Sports2020 database using two procedure files. The r-cusbug.p file initializes the Debugger and sets a breakpoint at line 6 of the r-ordbug.p file.
+Thus, each time r-ordbug.p displays an Order, the Debugger takes control before it displays the Order Lines. Just before completing execution, r-cusbug.p clears the debugging session before returning.
+r-cusbug.p
+
+
+r-ordbug.p
+
+Notes
+• You must initialize the Debugger using either the DEBUG( ) or INITIATE( ) method before using any of the remaining methods in a procedure.
+The DEBUG( ) and INITIATE( ) methods provide separate means to invoke the Debugger, and do not depend on each other to start a debugging session. The DEBUG( ) method initializes and gives control to the Debugger whether or not the INITIATE( ) method has been executed.
+• The TYPE attribute returns the widget type, PSEUDO-WIDGET.
+• The VISIBLE attribute specifies whether the Debugger window is visible on the screen. When set to FALSE, if the Debugger window is currently visible, it is removed from the screen. When set to TRUE, if the Debugger window is currently invisible, it is displayed. Note that making the Debugger window visible does not, in itself, give control to the Debugger.
+
+Note: The ABL code that initiates the Debugger and displays it on the screen is responsible for removing the Debugger from the screen when it is no longer needed by setting the VISIBLE attribute to FALSE.
+
+
+• After invoking the INITIATE method, execution continues in the procedure until it encounters a breakpoint or a statement invoking the DEBUG method. If the procedure encounters a breakpoint, the Debugger takes control running in application mode (with control over the invoking application). If the procedure invokes the DEBUG method, the Debugger takes control running in stand-alone mode (with control only over applications started from the Debugger).
+• References to line numbers in internal procedures must be relative to the debug listing in which they are contained.
+• When you set or cancel a breakpoint, you must distinguish between a line number value less than 1 and a value of 1 or greater. Any value for line-number less than 1 (for example, 0 or -1) specifies the first executable line of the main procedure in the file specified by procedure. However, a positive value for line-number specifies the first executable line on or after line-number in the file specified by procedure. For example, suppose procedure specifies a file like this:
+
+
+If you specify a breakpoint at line 0, -1, or any negative value, the breakpoint actually occurs at line 6, the first line that executes in the main procedure. If you specify a breakpoint at line 1 or 2, the breakpoint occurs at line 3, the first executable line in the file, which happens to be the first executable line of an internal procedure.
+This distinction also affects procedures containing the Trigger phrase used to define triggers in widget definitions. For example, suppose procedure specifies this file:
+
+Again, if you specify a breakpoint at line -1, the breakpoint occurs on line 6, but if you specify the breakpoint at line 1, it actually occurs at line 4, which is the first executable line of a trigger block.
+
+Note: You cannot set a watchpoint programmatically using the DEBUGGER system handle. A watchpoint is a form of breakpoint which tells the Debugger to interrupt program execution when the value of a variable, buffer field, or attribute reference changes.
+
+For more information on the Debugger, its features and functions, and its modes of execution, see Troubleshoot ABL Applications.
+
+See also
+LOG-MANAGER system handle on page 56
+
+
+DEFAULT-WINDOW system handle
+A handle to the static window of the current ABL session. Every ABL session has one static window. This window displays all frames until the CURRENT-WINDOW system handle is set to the handle of another [dynamic] window or unless a displayed frame is explicitly parented to another window. Its message area also displays messages that have no other available display destination. Use the DEFAULT-WINDOW handle to set or examine the attributes of this unnamed session window.
+
+Syntax
+
+
+attribute
+An attribute of the DEFAULT-WINDOW.
+
+Attributes
+The DEFAULT-WINDOW handle has all the attributes of a window widget.
+
+Notes
+• If you display or view a frame without the IN WINDOW option and without first explicitly or implicitly setting CURRENT-WINDOW to the handle of a non-default window, the ABL virtual machine (AVM) displays the frame in the default window.
+• If the CURRENT-WINDOW does not have a message area and you execute the MESSAGE statement without an explicit or implicit VIEW-AS ALERT-BOX option, the AVM displays the default window in order to display the message in its own message area.
+• In a character interface, or at the start of a GUI client session, the ACTIVE-WINDOW, CURRENT-WINDOW, and DEFAULT-WINDOW handles all return the handle of the static window for the current ABL session.
+• You can make the default window the current window by assigning DEFAULT-WINDOW to CURRENT-WINDOW.
+• You can enable or disable the default window by changing the value of DEFAULT-WINDOW:SENSITIVE (the SENSITIVE attribute).
+• You can set the menu bar for the default window by assigning the handle of a menu bar to DEFAULT-WINDOW:MENUBAR (the MENUBAR attribute).
+• You can make the default window visible or invisible by changing the value of DEFAULT-WINDOW:VISIBLE (the VISIBLE attribute).
+• Because DEFAULT-WINDOW is the initial default parent for ABL frames, you cannot set DEFAULT-WINDOW to the handle of a .NET form's shadow window. If allowed, this would make the associated .NET form a possible parent for ABL frames, and ABL cannot parent ABL frames to .NET forms. A .NET form's shadow window handle is provided by the ProWinHandle property of the Progress.Windows.Form class, which an OpenEdge .NET class designed for instantiating .NET forms in an ABL session. Therefore, any attempt to set DEFAULT-WINDOW to a ProWinHandle property value raises a run-time error.
+
+See also
+ACTIVE-WINDOW system handle on page 6, CURRENT-WINDOW system handle on page 37
+
+
+DSLOG-MANAGER system handle
+A handle to logging settings for the DataServers in the current session. The DataServers use a separate log file which you can specify with the DataServer Logging (-dslog) startup parameter. The default filename is dataserv.lg.
+
+Note: This system handle applies to the DataServer for Microsoft SQL Server as well as the DataServer for Oracle.
+
+
+Syntax
+
+
+attribute
+An attribute of the DSLOG-MANAGER system handle.
+
+method
+A method of the DSLOG-MANAGER system handle.
+
+Attributes
+
+DB-CONTEXT attributeENTRY-TYPES-LIST attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeLOG-ENTRY-TYPES attributeLOG-THRESHOLD attributeLOGFILE-NAME attributeLOGGING-LEVEL attributeNUM-LOG-FILES attributeTYPE attribute––The following table lists the DSLOG-MANAGER system handle attributes.
+Table 1: DSLOG-MANAGER system handle attributes
+
+AttributeAccessFunctionDB-CONTEXT1Readable/ WritableSpecifies the logical database name of a valid and connected data source for a supported db-type. It sets the system handle to a specific server context to enable access to other DSLOG-MANAGER attributes and methods. You can also set it to the alias of a connected data source.ENTRY-TYPES-LISTReadableReturns a list of all valid entry types.LOG-ENTRY-TYPESReadable/ WritableReturns/Writes a list of one or more types of log entries. The default value returned by the LOG-ENTRY-TYPES attribute are the logentrytypes specified in the -Dsrv parameter when the foreign data source is connected.LOGFILE-NAME2ReadableReturns the name of the log file. By default, the
+DSLOG-MANAGER uses the dataserv.lg log file. You can change the file name by using the -dslog startup parameter from the OpenEdge client. The server context cannot work without a log file opened so it cannot be changed at runtime. This would risk having no log file opened in the event that the new log file name failed to open.LOGGING-LEVELReadable/ WritableReturns/Writes the level at which log entries are written. The default value returned by the LOGGING-LEVEL attribute is the logginglevel specified in the -Dsrv parameter when the foreign data source is connected.
+
+1 Each connection to a DataServer is its own entity. The DB-CONTEXT attribute enables you to provide different logging settings for each data source connection. The DB-CONTEXT attribute must be set to the logical database name or alias which is currently connected, prior to setting any other attributes. The attribute defaults to the unknown value. If DB-CONTEXT does not contain the value of a valid logical database name, any attempt to access other attributes of DSLOG-MANAGER fails.
+2 The value returned by the LOGFILE-NAME is the default name dataserv.lg or the name specified by the -dslog client startup parameter for self-service clients or the name specified by the -dslog startup parameter when ProBroker is started.
+
+
+AttributeAccessFunctionLOG-THRESHOLD3ReadableReturns the file size threshold of log files. When the current log file becomes equal to or greater than the specified size, OpenEdge renames and saves the log file and creates a new log file.NUM-LOG-FILES4ReadableReturns the number of rolled over log files to keep on disk at any one time, for OpenEdge session, including the current log file.HANDLEReadableReturns a handle.INSTANTIATING- PROCEDUREReadableReturns a procedure handle for the first, or instantiating, procedure.TYPEReadableReturns the type of handle.Methods
+
+CLEAR-LOG( ) methodWRITE-MESSAGE( ) methodFor more information about DataServer logging, see Troubleshoot ABL Applications, Use the Microsoft SQL Data Server, and Use the Oracle Data Server.
+
+
+ERROR-STATUS system handle
+A handle to error information on the last statement executed with the NO-ERROR option.
+
+Syntax
+
+
+attribute
+Specifies an attribute of the ERROR-STATUS handle.
+
+method
+Specifies a method of the ERROR-STATUS handle.
+
+
+
+
+
+3 The value returned by the LOG-THRESHOLD is the name specified by the -logthreshold client startup parameter for self-service clients or the name specified by the -logthreshold startup parameter when ProBroker is started.
+4 The value returned by the NUM-LOG-FILES is the name specified by the -numlogfiles client startup parameter for self-service clients or the value specified by the -numlogfiles startup parameter when ProBroker is started.
+
+Attributes
+
+ERROR attributeERROR-OBJECT-DETAIL attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeNUM-MESSAGES attributeTYPE attributeMethods
+
+GET-MESSAGE( ) method (Handle)GET-NUMBER( ) methodExamples
+The following example uses the NO-ERROR and the ERROR-STATUS handle extensively to demonstrate when ERROR-STATUS attributes are reset:
+r-errst1.p
+
+Within the internal procedure, chk-connect, the first reference to ERROR-STATUS:ERROR returns status on the CONNECT statement from the main procedure. The second reference returns status on the assignment statement. The reference to ERROR-STATUS:ERROR in the main procedure returns status on the RUN statement. Note that the ERROR-STATUS attributes are set only after the statement with NO-ERROR completes. Therefore the references in the internal procedure are not affected by the RUN statement itself.
+The following procedure accepts a character string value and lets you convert it to one of several data types. The internal convert procedure attempts the conversion. If the conversion is successful, it displays the converted value. If the conversion is unsuccessful, the ERROR-STATUS handle holds error information. After running convert, the CHOOSE trigger checks ERROR-STATUS:ERROR and ERROR-STATUS:NUM-MESSAGES to determine if either error information is available or messages have been returned, even if ERROR is not raised. If either condition is true, this lets you view this information. ABL includes many errors that generate messages, but do not raise the ERROR condition, such as most errors generated by ABL built-in functions and handle methods.
+r-errsts.p
+
+
+
+
+DEFINE BUTTON b_int LABEL "Integer". DEFINE BUTTON b_date LABEL "Date".
+DEFINE BUTTON b_dec LABEL "Decimal". DEFINE BUTTON b_log LABEL "Logical".
+DEFINE BUTTON b_quit LABEL "Quit" AUTO-ENDKEY.
+DEFINE FRAME butt-frame
+b_int b_date b_dec b_log b_quit WITH CENTERED ROW SCREEN-LINES - 2.
+DEFINE FRAME get-info
+txt LABEL "Enter Data To Convert"
+WITH ROW 2 CENTERED SIDE-LABELS TITLE "Data Conversion - Error Check".
+ON CHOOSE OF b_int, b_date, b_dec, b_log IN FRAME butt-frame DO: IF txt:MODIFIED IN FRAME get-info THEN DO:
+ASSIGN txt.
+RUN convert(txt).
+IF ERROR-STATUS:ERROR OR ERROR-STATUS:NUM-MESSAGES > 0 THEN DO: MESSAGE ERROR-STATUS:NUM-MESSAGES
+" errors occurred during conversion." SKIP "Do you want to view them?"
+VIEW-AS ALERT-BOX QUESTION BUTTONS YES-NO
+  UPDATE view-errs AS LOGICAL. IF view-errs THEN
+DO ix = 1 TO ERROR-STATUS:NUM-MESSAGES:
+MESSAGE ERROR-STATUS:GET-NUMBER(ix) ERROR-STATUS:GET-MESSAGE(ix).
+  END. END.
+END. /* IF txt:MODIFIED... */ ELSE
+     MESSAGE "Please enter data to be converted, then choose the type of conversion to perform."
+VIEW-AS ALERT-BOX MESSAGE BUTTONS OK.
+END.
+ENABLE ALL WITH FRAME butt-frame. ENABLE txt WITH FRAME get-info.
+WAIT-FOR CHOOSE OF b_quit IN FRAME butt-frame FOCUS txt IN FRAME get-info.
+PROCEDURE convert:
+DEFINE INPUT PARAMETER cText AS CHARACTER NO-UNDO.
+DEFINE VARIABLE dValue AS DATE NO-UNDO. DEFINE VARIABLE fValue AS DECIMAL NO-UNDO. DEFINE VARIABLE iValue AS INTEGER NO-UNDO. DEFINE VARIABLE lValue AS LOGICAL NO-UNDO.
+MESSAGE SELF:LABEL.
+CASE SELF:LABEL:
+WHEN "Integer" THEN DO:
+ASSIGN iValue = INTEGER(cText) NO-ERROR.
+MESSAGE "Converted value:" iValue.
+END.
+WHEN "Date" THEN DO:
+ASSIGN dValue = DATE(INTEGER(SUBSTRING(cText,1,2)),
+INTEGER(SUBSTRING(cText,4,2)), INTEGER(SUBSTRING(cText,7)) ) NO-ERROR.
+MESSAGE "Converted value:" dValue.
+END.
+WHEN "Decimal" THEN DO:
+ASSIGN fValue = DECIMAL(cText) NO-ERROR.
+MESSAGE "Converted value:" fValue.
+END.
+WHEN "Logical" THEN DO:
+ASSIGN lValue = (cText = "yes" OR cText = "true") NO-ERROR. MESSAGE "Converted value:" lValue.
+END.
+
+
+
+Notes
+• The ERROR attribute indicates whether the ERROR condition was raised during the execution of the last statement that contained the NO-ERROR option. Some errors may occur without raising the ERROR condition. For example, compiler errors do not raise the ERROR condition.
+• The NUM-MESSAGES attribute indicates the total number of errors that occurred during that statement.
+• The ERROR-OBJECT-DETAIL attribute identifies a SOAP-fault object that contains SOAP fault message detail.
+If a Web service operation generates a SOAP fault message, the AVM generates the following error:
+
+The complete SOAP fault error message is returned to the AVM as part of the ERROR-STATUS system handle.
+If the ABL application invokes the Web service operation with the NO-ERROR option on the RUN statement, any errors that occur as a result of the operation are suppressed. In this case, the application can access the SOAP fault message detail using the SOAP-fault and SOAP-fault-detail object handles. Otherwise, the AVM displays the error message to the end user.
+• The TYPE attribute returns the widget type, PSEUDO-WIDGET.
+• The GET-MESSAGE method and the GET-NUMBER method let you access the error numbers and messages for all errors that occurred during the execution of the last statement with the NO-ERROR option.
+• Usually, the NO-ERROR option on a statement suppresses the display of error messages. However, if a STOP condition occurs, the error message is written to the windows. These messages are also available through the ERROR-STATUS attributes. For example, the STOP condition is raised when a procedure to be run is not found. Two specific instances of this are:
+• If you use NO-ERROR on a RUN statement and the procedure is not found or cannot compile.
+• If you execute a data handling statement, such as DELETE with the NO-ERROR option and the corresponding trigger procedure is not found or cannot compile.
+
+See also
+SOAP-fault object handle on page 80, SOAP-fault object handle on page 80
+
+
+FILE-INFO system handle
+A handle to an operating system file.
+
+Syntax
+
+
+attribute
+Specifies an attribute of the FILE-INFO handle.
+
+Attributes
+
+FILE-CREATE-DATE attributeFILE-CREATE-TIME attributeFILE-MOD-DATE attributeFILE-MOD-TIME attributeFILE-NAME attributeFILE-SIZE attributeFILE-TYPE attributeFULL-PATHNAME attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributePATHNAME attributeTYPE attributeExample
+After you set the value of the FILE-NAME attribute, you can read the values of the other attributes. For example:
+r-osfile.p
+
+Notes
+• The FILE-NAME, FULL-PATHNAME, and PATHNAME attributes can hold names that contain Unicode characters. See Internationalize ABL Applications for more information about Unicode.
+• You cannot use the FILE-INFO handle to by-pass operating system security. You must have read access to the file and the directory that contains it to obtain information through FILE-INFO.
+• These attributes return the Unknown value (?) until they are set, and also if the specified file cannot be found or you do not have permission to access the file.
+• If you set the FILE-NAME attribute to a relative pathname, the FILE-INFO handle searches the current
+PROPATH to locate the file.
+• The FILE-TYPE attribute returns a string containing exactly one of the following file type characters:
+• D — If the file is a directory
+• F — If the file is a standard file or FIFO pipe (UNIX systems)
+• M — If the file is a member of an ABL library
+
+• S — If the file is a special device (UNIX systems)
+• X — If the file type is unknown (contact your Progress Software Corporation Technical Support representative when you receive this value)
+The attribute string can contain any of the following file type characters:
+• H — If the file is hidden
+• L — If the file is a symbolic link (UNIX systems)
+• P — If the file is a pipe file (UNIX systems)
+• R — If the file is readable
+• W — If the file is writable
+
+• The FULL-PATHNAME attribute returns the absolute pathname of the file specified in the FILE-NAME
+attribute.
+• If the FILE-NAME attribute contains a simple filename or relative pathname, the PATHNAME attribute contains the pathname of the specified file starting with the directory on the PROPATH where it is found. Otherwise, the PATHNAME attribute contains the absolute pathname specified in the FILE-NAME attribute.
+• The TYPE attribute returns the widget type, PSEUDO-WIDGET.
+
+
+FOCUS system handle
+A handle to the field-level widget that is the current field.
+
+Note: Does not apply to SpeedScript programming.
+
+
+Syntax
+
+
+attribute
+An attribute of the widget that has current input focus.
+
+Attributes
+The specific attributes available depend on the type of the widget. You can determine the widget type by examining the FOCUS:TYPE attribute.
+
+Example
+The following example uses the FOCUS handle to provide helpful information to the user. The procedure displays an interface that contains several different types of widgets. If you type ?, the procedure displays a message specifying the type of widget that has focus and whether VALUE-CHANGED event is a valid event for that widget.
+
+r-focus.p
+
+Note that this example prevents you from entering the question mark character (?) in any field. This does not cause a problem in r-focus.p because a question mark is not a valid input character for any field in the interface.
+
+Notes
+• A typical use of the FOCUS handle identifies the widget that contains the current text selection for reference by the system clipboard. For an example of this usage, see OpenEdge Programming Interfaces.
+• Within a WAIT-FOR statement, you can specify the field that receives initial input focus.
+• You must give input focus to any fill-in widget where you want to set the AUTO-ZAP attribute. For more information, see the SAX-reader object handle on page 66 reference entry.
+
+See also
+SELF system handle on page 70, WAIT-FOR statement (ABL only)
+
+
+FONT-TABLE system handle
+(Windows only; Graphical interfaces only)
+A handle to the current font table.
+
+Note: Does not apply to SpeedScript programming.
+
+
+Syntax
+
+
+attribute
+Specifies an attribute of the FONT-TABLE handle.
+
+method
+Specifies a method of the FONT-TABLE handle.
+
+Attributes
+
+HANDLE attributeINSTANTIATING-PROCEDURE
+attributeNUM-ENTRIES attributeTYPE attribute––Methods
+
+GET-TEXT-HEIGHT-CHARS( ) methodGET-TEXT-HEIGHT-PIXELS( ) methodGET-TEXT-WIDTH-CHARS( ) methodGET-TEXT-WIDTH-PIXELS( ) methodExample
+This code shows how to query and set the integer attribute, NUM-ENTRIES:
+
+Notes
+• Unlike the COLOR-TABLE system handle, the FONT-TABLE system handle does not allow you to set fonts dynamically. Font entries can only be changed by the user through the font system dialog box. Fonts are always dynamic.
+• The current font table is the font table in the current environment, which is the startup environment or the environment most recently specified in a USE statement.
+• To determine the number of font entries in the font table, query the NUM-ENTRIES attribute.
+• To change the number of font entries in the font table, set the NUM-ENTRIES attribute.
+• To allow users to set dynamic font table entries at run time, an application can display a font common dialog with the SYSTEM-DIALOG FONT statement.
+
+• To save font definitions from the font table to the current environment file, use the PUT-KEY-VALUE statement. To retrieve the font definition specified in the current environment file, use the GET-KEY-VALUE statement.
+• The TYPE attribute returns the widget type, PSEUDO-WIDGET.
+
+See also
+GET-KEY-VALUE statement, PUT-KEY-VALUE statement, SYSTEM-DIALOG FONT statement, USE statement
+
+
+LAST-EVENT system handle
+A handle to the last event the application received.
+
+Syntax
+
+
+attribute
+An attribute of the LAST-EVENT.
+
+Attributes
+
+CODE attributeCOLUMN attributeEVENT-TYPE attributeFUNCTION attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeLABEL attributeON-FRAME-BORDER attributeROW attributeTYPE attributeWIDGET-ENTER attributeWIDGET-LEAVE attributeX attributeY attribute–Example
+This procedure creates a variety of widgets and a frame that acts as a message area. As you move around the widgets the procedure tells you what events ABL generates.
+
+r-lstevt.p
+
+Notes
+• For keyboard events, the CODE, FUNCTION, and LABEL attributes return the key code, key function, and key label of the event, respectively. For all other events the CODE attribute returns the numeric event code.
+For mouse events, the FUNCTION attribute returns the names of portable mouse events and the LABEL attribute returns the names of three-button mouse events.
+For high-level ABL events, the FUNCTION attribute returns the name of the event. If the ABL event is triggered by a key press, the LABEL attribute returns the key label. Otherwise, it returns the event name, as with the FUNCTION attribute.
+• The EVENT-TYPE attribute returns the category of the event: KEYPRESS, MOUSE, or ABL.
+• The ON-FRAME-BORDER attribute indicates whether a MOUSE event occurred in the border of a frame.
+• The TYPE attribute returns the widget type, PSEUDO-WIDGET.
+• The X and Y attributes return the pixel position of a MOUSE event relative to the current frame.
+• For browse widgets, WIDGET-ENTER and WIDGET-LEAVE are different depending on whether the browse is editable or read-only. For editable browse widgets, WIDGET-ENTER contains the handle of the column with focus. For read-only browse widgets, WIDGET-ENTER contains the handle of the browse. For editable brows widgets, WIDGET-LEAVE contains the handle of the column the user just left. For read-only browse widgets, WIDGET-LEAVE contains the handle of the field-level widget the user just left.
+
+See also
+LIST-EVENTS function, LIST-WIDGETS function, SELF system handle on page 70, VALID-EVENT function
+
+
+LOG-MANAGER system handle
+A handle to logging settings for the current ABL session.
+
+Syntax
+
+
+attribute
+An attribute of the LOG-MANAGER system handle.
+
+method
+A method of the LOG-MANAGER system handle.
+
+Attributes
+
+ENTRY-TYPES-LIST attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeLOG-ENTRY-TYPES attributeLOGFILE-NAME attributeLOGGING-LEVEL attributeLOG-THRESHOLD attributeNUM-LOG-FILES attributeTYPE attributeMethods
+
+CLEAR-LOG( ) methodCLOSE-LOG( ) methodWRITE-MESSAGE( ) method–Example
+
+For more information about logging, see Troubleshoot ABL Applications.
+
+
+
+Procedure object handle
+A handle that can reference the context of one of the following procedure object instances:
+• A persistent procedure in the current session
+• A persistent procedure in a remote session (on an application server)
+• A single-run or singleton procedure in a remote session (on an application server)
+• A running procedure in the current session, including the currently executing procedure or any other procedure currently on the session call stack
+• A procedure object that encapsulates a Web service operation (Web service procedure object)
+This object allows you to read and modify the context of the specified procedure according to the type of procedure object instance.
+
+Syntax
+
+
+procedure-handle
+A handle variable that references a procedure object.
+For Web services, this object is instantiated when you execute the RUN ON statement that references a Web service server object.
+
+attribute
+An attribute of a procedure handle.
+
+method
+Specifies a method of a procedure handle.
+
+Attributes
+
+ADM-DATA attributeASYNC-REQUEST-COUNT
+attributeCURRENT-WINDOW attributeDB-REFERENCES attributeFILE-NAME attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeINTERNAL-ENTRIES attributeNAME attributeNEXT-SIBLING attributePERSISTENT attributePREV-SIBLING attributePRIVATE-DATA attributePROXY attributePUBLISHED-EVENTS attributeREMOTE attributeSERVER attributeSUPER-PROCEDURES attribute
+
+SINGLE-RUN attributeSINGLETON attributeTRANSACTION attributeTYPE attributeUNIQUE-ID attribute–Methods
+
+ADD-SUPER-PROCEDURE( ) methodGET-SIGNATURE( ) methodREMOVE-SUPER-PROCEDURE( ) methodSET-CALLBACK( ) methodSET-CALLBACK-PROCEDURE( ) method–Example
+The following procedure runs another procedure (r-thispr.p) persistently, setting a procedure object handle for it, and displays the value of its PRIVATE-DATA attribute as a message:
+r-run-thispr-pers.p
+
+For more information on the r-thispr.p example procedure, see the reference entry for the THIS-PROCEDURE system handle on page 92 in this section.
+
+Notes
+• You can also define triggers for procedure object handles.
+• To create an instance of a persistent procedure, use the PERSISTENT option of the RUN statement, as shown for the r-run-thispr-pers.p example procedure. For other examples of creating persistent procedures, see the reference entry for the RUN statement.
+• You can access the handles and attributes of all persistent procedure instances in a session using the FIRST-PROCEDURE or LAST-PROCEDURE attribute of the SESSION handle.
+
+See also
+RUN statement, SESSION system handle on page 74, THIS-PROCEDURE system handle on page 92
+
+
+ProDataSet object handle
+A handle to a ProDataSet object. A ProDataSet object is a collection of one or more related temp-tables. Each temp-table in a ProDataSet object can attach to a data-source object that allows filling of the temp-table from the data source, or updating the data source from the temp-table. A ProDataSet object can optionally contain a set of data relations between the temp-tables.
+
+A ProDataSet object can be static or dynamic. A static ProDataSet object is one you define at compile time with the DEFINE DATASET statement. A dynamic ProDataSet object is one you create at run time with the CREATE DATASET statement. Use this handle to access the ProDataSet object's attributes and methods, and its sub-elements (its temp-table buffers, data relations, data sources, and so on) and their attributes and methods.
+
+Syntax
+
+
+dataset-object-handle
+An item of type HANDLE representing a handle to a ProDataSet object.
+
+attribute
+An attribute of the ProDataSet object.
+
+method
+A method of the ProDataSet object.
+
+Attributes
+
+ADM-DATA attributeDATA-SOURCE-MODIFIED
+attributeDYNAMIC attributeERROR attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeNAME attributeNAMESPACE-PREFIX attributeNAMESPACE-URI attributeNEXT-SIBLING attributeNUM-BUFFERS attributeNUM-REFERENCES attributeNUM-RELATIONS attributeNUM-TOP-BUFFERS attributePRIVATE-DATA attributeREJECTED attributeRELATIONS-ACTIVE attributeSERIALIZE-NAME attributeTOP-NAV-QUERY attributeTYPE attributeUNIQUE-ID attributeXML-NODE-NAME attributeXML-NODE-TYPE attribute–Methods
+
+ACCEPT-CHANGES( ) methodADD-BUFFER( ) methodADD-PARENT-ID-RELATION( ) methodADD-RELATION( ) methodAPPLY-CALLBACK( ) methodCLEAR( ) method (ProDataSet Object Handle)COPY-DATASET( ) methodCOPY-TEMP-TABLE( ) method
+
+CREATE-LIKE( ) methodEMPTY-DATASET( ) methodFILL( ) methodGET-BUFFER-HANDLE( ) methodGET-CALLBACK-PROC-CONTEXT( ) methodGET-CALLBACK-PROC-NAME( ) methodGET-CHANGES( ) methodGET-RELATION( ) methodGET-TOP-BUFFER( ) methodMERGE-CHANGES( ) methodREAD-JSON( ) methodREAD-XML( ) methodREAD-XMLSCHEMA( ) methodREJECT-CHANGES( ) methodSET-BUFFERS( ) methodSET-CALLBACK( ) methodSET-CALLBACK-PROCEDURE( ) methodWRITE-JSON( ) methodWRITE-XML( ) methodWRITE-XMLSCHEMA( ) methodEvents
+
+AFTER-FILL eventBEFORE-FILL eventFor information on these FILL events, see the ProDataSet events.
+
+Notes
+For information about dynamically accessing the data in a ProDataSet object, see the reference entries related to the TEMP-TABLE, BUFFER, BUFFER-FIELD, and QUERY objects.
+
+See also
+Buffer object handle on page 10, CREATE DATASET statement, DEFINE DATASET statement, EMPTY-TEMP-TABLE( ) method, Temp-table object handle on page 90
+
+
+PROFILER system handle
+A handle to initialize and control the profiler. The output from the profiler provides processing time and call-tree information to locate bottlenecks. Developers can quickly identify where an application is spending the most processing time and navigate through the call tree to the potential bottlenecks.
+
+Syntax
+
+
+attribute
+Specifies an attribute of the PROFILER handle.
+
+method
+Specifies a method of the PROFILER handle.
+
+Attributes
+
+COVERAGE attributeDESCRIPTION attributeDIRECTORY attributeENABLED attributeFILE-NAME attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeLISTINGS attributePROFILING attributeSTATISTICS attributeTRACE-FILTER attributeTRACING attributeTYPE attributeMethods
+
+USER-DATA ( ) methodWRITE-DATA( ) methodNotes
+The best practice for profiling applications during development is to use the Run > Run Configurations in Progress Developer Studio to enable and set the profiler properties on the Profiler tab. This automatically sets the profiler attributes and writes the output to a file which automatically opens in the Profiler view. For more information, see Profiler View.
+Developers who want to instrument the profiler using the PROFILER system handle must set mandatory attributes, optional attributes, enable profiling, and write the profiler data to the designated output file. The order in which the attributes are set matters.
+1. Set the ENABLED attribute.
+
+Note: Enabling and disabling profiling triggers the following actions on the profiler data output file, as listed below:
+• If you set PROFILER:ENABLED = FALSE, then profiling is disabled and the AVM writes the accumulated profiling data to the output file, and discards the registry of entries containing the list of active procedures and their module identifiers.
+• Profiling is automatically disabled if the ABL session exits while PROFILER:ENABLED = TRUE or if the AVM shutsdown. This ensures that the profiling information is written to the output file.
+
+
+2. Set the FILE-NAME attribute.
+
+Note: If you do not want the profiler information in the file to be overwritten by a subsequent call to WRITE-DATA() then ensure that you provide a new FILE-NAME for the next profiling session and subsequent invocation of WRITE-DATA(). WRITE-DATA() can be called explicitly or by setting PROFILER:ENABLED
+= FALSE.
+
+
+3. Set the DESCRIPTION attribute
+
+4. Set the optional attributes: COVERAGE attribute, DIRECTORY attribute, LISTINGS attribute, STATISTICS attribute TRACE-FILTER attribute and TRACING attribute.
+5. Turn on profiling with the PROFILING attribute.
+6. Run the application you want to profile.
+7. You can write the profiling information to an output file in one of two ways:
+• Disable profiling by setting PROFILER:ENABLED = FALSE to automatically write the profiler data to the output file.
+• Use the WRITE-DATA( ) method.
+
+Note: If you wish to capture subsequent profiler data, then ensure that you change the file name using PROFILER:FILE-NAME attribute. If you don't provide a new file name, then the previous file with the profiler data is overwritten.
+
+
+8. Turn off profiling when no longer needed with the PROFILING attribute.
+The output file can be opened in the Profiler view in Progress Developer Studio.
+
+See also
+Profiler View, Profiler (-profile), Server-side profiling
+
+
+Query object handle
+A handle to a query object. A query object corresponds to an underlying ABL query, which can be static or dynamic. An example of a static underlying query is one you define at compile time with the DEFINE QUERY statement. An example of a dynamic underlying query is one you create at run time with the new CREATE QUERY statement.
+
+Syntax
+
+
+query-handle
+An item of type HANDLE representing a handle to a query object.
+
+attribute
+An attribute of the query object.
+
+method
+A method of the query object.
+
+Attributes
+
+ADM-DATA attributeBASIC-LOGGING attributeCACHE attribute
+
+CURRENT-RESULT-ROW attributeDYNAMIC attributeFORWARD-ONLY attributeHANDLE attributeINDEX-INFORMATION attributeINSTANTIATING-PROCEDURE
+attributeIS-OPEN attributeNAME attributeNUM-BUFFERS attributeNUM-RESULTS attributePREPARE-STRING attributePRIVATE-DATA attributeQUERY-OFF-END attributeSKIP-DELETED-RECORD attributeTYPE attributeUNIQUE-ID attribute——Methods
+
+ADD-BUFFER( ) methodAPPLY-CALLBACK( ) methodCREATE-RESULT-LIST-ENTRY( ) methodDELETE-RESULT-LIST-ENTRY( ) methodDUMP-LOGGING-NOW( ) methodFIRST-OF( ) methodGET-BUFFER-HANDLE( ) methodGET-CALLBACK-PROC-CONTEXT( ) methodGET-CALLBACK-PROC-NAME( ) methodGET-CURRENT( ) methodGET-FIRST( ) methodGET-LAST( ) methodGET-NEXT( ) methodGET-PREV( ) methodLAST-OF( ) methodQUERY-CLOSE( ) methodQUERY-OPEN( ) methodQUERY-PREPARE( ) methodREPOSITION-BACKWARD( ) methodREPOSITION-FORWARD( ) methodREPOSITION-TO-ROW( ) methodREPOSITION-TO-ROWID( ) methodSET-BUFFERS( ) methodSET-CALLBACK( ) methodSET-CALLBACK-PROCEDURE( ) method–See also
+Buffer object handle on page 10, Buffer-field object handle on page 13
+
+
+RCODE-INFO handle
+A handle to a specific ABL r-code file.
+
+Syntax
+
+
+attribute
+Specifies an attribute of the RCODE-INFO handle.
+
+Attributes
+
+CODEPAGE attributeCRC-VALUE attributeDB-REFERENCES attributeDISPLAY-TYPE attributeFILE-NAME attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeIS-CLASS attributeLABELS-HAVE-COLONS attributeLANGUAGES attributeSIGNATURE-VALUE attributeTABLE-CRC-LIST attributeTABLE-LIST attributeTYPE attributeUNDO-THROW-SCOPE attributeExample
+The following example prompts for the name of an r-code file and returns its CRC code and the languages for which it is compiled:
+r-rcode.p
+
+Notes
+• In Windows, the filename cannot contain characters outside of the non-Unicode code page. See
+Internationalize ABL Applications for more information about Unicode and code pages.
+• ABL generates an r-code file when you compile a procedure with the SAVE option of the COMPILE statement. You cannot use the RCODE-INFO handle to get information on session compiles.
+• To use the RCODE-INFO handle, you must first set the FILE-NAME attribute to the name of an r-code file (with or without a .r or .p extension). If you do not provide a full pathname, ABL searches your PROPATH to find the file. You can then read the CRC-VALUE attribute and LANGUAGES attribute to get information on the file. If the r-code file is not found, both LANGUAGES and CRC-VALUE are set to the Unknown value (?).
+• The LANGUAGES attribute holds a comma-separated list of language names supported by the r-code. The default segment appears in the list as the value <unnamed>.
+
+• The CRC-VALUE attribute returns the r-code CRC value stored in the r-code. The calculation for this value is based on the filename and contents of the procedure file during compilation. This value is different from any database CRCs that are stored in the r-code. For more information on CRCs, see Manage ABL Applications.
+• The TYPE attribute returns the widget type, PSEUDO-WIDGET.
+• The DISPLAY-TYPE attribute holds a value of "GUI" for a graphical display, "TTY" for a character-mode display, or a blank string ("") for code that does not contain any display-specific statements. Use of this attribute allows developers to determine if the r-code contains statements that make it executable only in the same display environment on which it was compiled.
+
+
+SAX-attributes object handle
+Contains the list of attribute names, values, and optional namespaces of an XML element for use in the
+SAX-reader or SAX-writer object. The purpose of the object is to hold values needed by the SAX parser to set the attribute values of a new XML element as it reads the element into a SAX-reader object or prepares an XML object for writing in a SAX-writer object.
+SAX-attributes objects used by the SAX-reader object are automatically created, populated, and deleted in the context of the startElement callback handler. In that context, a programmer may use the methods and attributes of the SAX-attributes object and modify it. However, if the programmer wants to use the contents of this SAX-attributes object outside of the short scope of the startElement callback, then the programmer must create another SAX-attributes object outside this scope and copy the SAX-reader's SAX-attributes object to the new object.
+A SAX-attributes object is an optional parameter for SAX-writer methods that create new XML elements. In this context, a programmer creates a new SAX-attributes object with the CREATE SAX-ATTRIBUTES statement. Typically, a programmer populates the object by using the COPY-SAX-ATTRIBUTES method to save the contents of an automatically created SAX-attributes object. A programmer can also use the other attributes and methods to build up the attributes list from scratch. Either way, once the SAX-attributes object is populated, it can be used as an optional parameter on the START-ELEMENT( ) method, WRITE-DATA-ELEMENT( ) method, or the WRITE-EMPTY-ELEMENT( ) method of the SAX-writer object.
+You must explicitly delete all SAX-attributes objects created with the CREATE SAX-ATTRIBUTES statement.
+
+Syntax
+
+
+SAX-attributes-handle
+A variable of type HANDLE.
+
+attribute
+An attribute of the SAX-attributes object.
+
+method
+A method of the SAX-attributes object.
+
+Attributes
+
+ADM-DATA attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeNUM-ITEMS attributePRIVATE-DATA attributeTYPE attributeUNIQUE-ID attribute––Methods
+
+COPY-SAX-ATTRIBUTES( ) methodGET-INDEX-BY-NAMESPACE-NAME( ) methodGET-INDEX-BY-QNAME( ) methodGET-LOCALNAME-BY-INDEX( ) methodGET-QNAME-BY-INDEX( ) methodGET-TYPE-BY-INDEX( ) methodGET-TYPE-BY-NAMESPACE-NAME( ) methodGET-TYPE-BY-QNAME( ) methodGET-URI-BY-INDEX( ) methodGET-VALUE-BY-INDEX( ) methodGET-VALUE-BY-NAMESPACE-NAME( ) methodGET-VALUE-BY-QNAME( ) methodINSERT-ATTRIBUTE( ) methodREMOVE-ATTRIBUTE( ) methodUPDATE-ATTRIBUTE( ) method–See also
+CREATE SAX-READER statement, CREATE SAX-WRITER statement, SAX-reader object handle on page 66, SAX-writer object handle on page 67
+
+
+SAX-reader object handle
+Provides access to the SAX parser to stream an XML document into the object. The SAX-reader object, used with the SAX interface, corresponds to the X-document object of the Document Object Model (DOM) interface, but presents a very different programming interface.
+
+Syntax
+
+
+SAX-reader-handle
+A variable of type HANDLE.
+
+attribute
+An attribute of the SAX-reader object.
+
+method
+A method of the SAX-reader object.
+
+Attributes
+
+ADM-DATA attributeENTITY-EXPANSION-LIMIT
+attributeEVENT-HANDLER-OBJECT
+attributeHANDLE attributeHANDLER attributeINSTANTIATING-PROCEDURE
+attributeLOCATOR-COLUMN-NUMBER
+attributeLOCATOR-LINE-NUMBER attributeLOCATOR-PUBLIC-ID attributeLOCATOR-SYSTEM-ID attributeNONAMESPACE-SCHEMA-
+LOCATION attributePARSE-STATUS attributePRIVATE-DATA attributeSCHEMA-LOCATION attributeSCHEMA-PATH attributeSTRICT-ENTITY-RESOLUTION
+attributeSUPPRESS-NAMESPACE-
+PROCESSING attributeTYPE attributeUNIQUE-ID attributeVALIDATION-ENABLED attribute–Methods
+
+ADD-SCHEMA-LOCATION( ) methodSAX-PARSE( ) methodSAX-PARSE-FIRST( ) methodSAX-PARSE-NEXT( ) methodSET-INPUT-SOURCE( ) methodSTOP-PARSING( ) methodSee also
+CREATE SAX-READER statement, SAX-attributes object handle on page 65
+
+
+SAX-writer object handle
+A handle to the SAX-writer object. You create the handle and assign it to a handle variable with the CREATE SAX-WRITER statement.
+
+Syntax
+
+
+SAX-writer-handle
+A variable of type HANDLE.
+
+attribute
+An attribute of the SAX-writer object.
+
+method
+A method of the SAX-writer object.
+
+Attributes
+
+ENCODING attributeFORMATTED attributeFRAGMENT attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeSTANDALONE attributeSTRICT attributeTYPE attributeVERSION attributeWRITE-STATUS attribute––Methods
+
+DECLARE-NAMESPACE( ) methodEND-DOCUMENT( ) methodEND-ELEMENT( ) methodINSERT-ATTRIBUTE( ) methodRESET( ) methodSET-OUTPUT-DESTINATION( ) methodSTART-DOCUMENT( ) methodSTART-ELEMENT( ) methodWRITE-CDATA( ) methodWRITE-CHARACTERS( ) methodWRITE-COMMENT( ) methodWRITE-DATA-ELEMENT( ) methodWRITE-EMPTY-ELEMENT( ) methodWRITE-ENTITY-REF( ) methodWRITE-EXTERNAL-DTD( ) methodWRITE-FRAGMENT( ) methodWRITE-PROCESSING-INSTRUCTION( ) method–See also
+CREATE SAX-WRITER statement
+
+
+SECURITY-POLICY system handle
+A handle to security policy settings and operations for the current ABL session. These settings and operations support session data cryptography, creating a session registry for trusted security domains, and user authentication and validation.
+
+Syntax
+
+
+attribute
+An attribute of the SECURITY-POLICY handle.
+
+method
+A method of the SECURITY-POLICY handle.
+
+Attributes
+
+ALLOW-PREV-DESERIALIZATION attributeXCODE-SESSION-KEY attributeENCRYPTION-SALT attributeCAN-DO-DOMAIN-SUPPORT attributeINSTANTIATING-PROCEDURE attributeHANDLE attributePBE-KEY-ROUNDS attributePBE-HASH-ALGORITHM attributeSYMMETRIC-ENCRYPTION-AAD attributeSYMMETRIC-ENCRYPTION-ALGORITHM attributeSYMMETRIC-ENCRYPTION-IV attributeSYMMETRIC-ENCRYPTION-KEY attributeSYMMETRIC-SUPPORT attributeTYPE attributeMethods
+
+ENCODE-DOMAIN-ACCESS-CODE( ) methodGET-CLIENT( ) methodGET-SAFE-USER( ) methodLOAD-DOMAINS( ) methodLOCK-REGISTRATION( ) methodREGISTER-DOMAIN( ) methodSET-CLIENT( ) methodSET-SAFE-USER( ) methodVALIDATE-DOMAIN-ACCESS-CODE( ) method—Notes
+• The LOAD-DOMAINS( ) method loads and locks a trusted domain registry for the session from the local domain registry of a single connected OpenEdge RDBMS. This type of registry supports domains for multi-tenant databases and is the most secure way to create a trusted domain registry for the session.
+• The REGISTER-DOMAIN( ) and LOCK-REGISTRATION( ) methods allow you to build and lock an application-defined trusted domain registry for the session. This type of registry requires the non-secure exposure of critical domain information as the domain registry is being built, and is therefore less secure than using the LOAD-DOMAINS( ) method. It also does not support domains for multi-tenant databases.
+• The SET-CLIENT( ) method can authenticate (or validate) and set the user identity for a security token represented by a client-principal object using a session trusted domain registry that you have previously
+
+loaded. This single method can set the user identity for both the session and existing database connections, depending on the user's domain definition and the design of your application authentication model. (Setting a database connection identity, alone, does not set the session identity.) The method can also set an audit-able session identity. The GET-CLIENT( ) method retrieves the client-principal object previously used to set the current session identity using the SET-CLIENT( ) method. For more information on managing identity, domains, and domain registries, see Learn about Identity Management.
+• The following attributes set initial encryption values for use by the GENERATE-PBE-KEY function:
+• ENCRYPTION-SALT attribute
+• PBE-HASH-ALGORITHM attribute
+• PBE-KEY-ROUNDS attribute
+
+• The following attributes allow you to set defaults for the ENCRYPT function and the DECRYPT function:
+• SYMMETRIC-ENCRYPTION-ALGORITHM attribute
+• SYMMETRIC-ENCRYPTION-AAD attribute
+• SYMMETRIC-ENCRYPTION-IV attribute
+• SYMMETRIC-ENCRYPTION-KEY attribute
+• SYMMETRIC-SUPPORT attribute
+
+• The XCODE-SESSION-KEY attribute contains the encryption key used by the COMPILE statement for the current session. This must be the same value used by the XCODE utility.
+• The ENCODE-DOMAIN-ACCESS-CODE( ) method allows you to create an encrypted value suitable for storing as the domain access code in the OpenEdge database's domain records. Use the
+VALIDATE-DOMAIN-ACCESS-CODE( ) method to verify that the encrypted value matches the clear text value.
+• The SET-SAFE-USER( ) method sets a multi-tenant database connection's current user identity to the stored safe user identity for the database. The GET-SAFE-USER( ) method returns the handle to a copy of the sealed client-principal object that represents the safe user identity for the specified database connection. Both methods are only applicable to a Progress Application Server (PAS) for OpenEdge application server.
+
+See also
+Client-principal object handle on page 20, DECRYPT function, ENCRYPT function, GENERATE-PBE-KEY function, GENERATE-PBE-SALT function, GENERATE-RANDOM-KEY function, MESSAGE-DIGEST function
+
+
+SELF system handle
+A handle to the built-in object or widget whose event is being handled by the current trigger or event handler.
+
+Syntax
+
+
+attribute
+An attribute of the built-in object or widget whose event is being handled by the current trigger or event handler.
+
+Attributes
+The specific attributes available depend on the type of the object or widget. You can determine the object or widget type by examining the SELF:TYPE attribute.
+
+Example
+The following example uses the SELF handle to display the starting and ending positions of an object you move:
+r-self.p
+
+
+Notes
+• In user-interface triggers, SELF is not automatically the widget that has input focus. To give input focus to the widget referenced by SELF, you must apply the ENTRY event to SELF within the trigger block. Note that you must do this for fill-in widgets whose AUTO-ZAP attribute you want to set, as in this fragment:
+
+This makes SELF = FOCUS, which allows the new AUTO-ZAP value to take effect. For more information on the AUTO-ZAP attribute, see the Handle Attributes and Methods Reference.
+• In the handler for a PROCEDURE-COMPLETE event, SELF returns the associated asynchronous request handle.
+• In the event procedure of an ActiveX control, SELF returns the control-frame handle and the COM-SELF system handle returns the control-frame COM-HANDLE value.
+• If referenced within a READ-RESPONSE event procedure or method then SELF is the socket handle associated with the connection that received the message.
+
+See also
+Asynchronous request object handle on page 7, COM-SELF system handle on page 35, FOCUS system handle on page 51, LAST-EVENT system handle on page 54
+
+
+Server object handle
+Allows you to connect and execute remote procedures on an application server or Web service.
+
+Note: This handle does not provide direct access to an application server session context as does a SESSION handle for the current context. Rather, it provides access to a server object in the current context that allows you to connect, disconnect, and retrieve a variety of information on a connected application server.
+
+
+Syntax
+
+
+server-handle
+A handle variable that references a server object created by the CREATE SERVER statement that, in turn, allows you to connect to and access an application server instance or a Web service application.
+
+attribute
+An attribute of the server handle.
+
+method
+A method of the server handle.
+
+Attributes
+
+ASYNC-REQUEST-COUNT
+attributeCLIENT-CONNECTION-ID
+attribute5FIRST-ASYNC-REQUEST attributeFIRST-PROCEDURE attribute5HANDLE attributeINSTANTIATING-PROCEDURE
+attributeLAST-ASYNC-REQUEST attributeLAST-PROCEDURE attribute5NAME attributeNEXT-SIBLING attributePREV-SIBLING attributePRIVATE-DATA attributeREQUEST-INFO attributeRESPONSE-INFO attributeSOAP-VERSION attributeSSL-SERVER-NAME attributeSUBTYPE attributeTYPE attributeMethods
+
+CANCEL-REQUESTS( ) methodCANCEL-REQUESTS-AFTER( ) methodCONNECT( ) method (AppServer)CONNECT( ) method (Progress Application Server for OpenEdge)CONNECT( ) method (Web service)CONNECTED( ) methodDISCONNECT( ) method (Handle)–Note
+For SpeedScript, as in any ABL client, a WebSpeed Agent can use a valid server handle to access and run remote procedures on an application server. However, it does not access or affect the state of any WebSpeed Transaction Server.
+
+
+Server socket object handle
+A handle to a server socket object. This object allows you to listen for and accept TCP/IP socket connections on a given port.
+
+Note: Does not apply to SpeedScript programming.
+
+
+
+5 For this attribute to be valid, the handle must have an application server or Web service connection (the CONNECTED( ) method must return TRUE).
+
+Syntax
+
+
+server-socket-handle
+A handle variable that references a server socket object created by the CREATE SERVER-SOCKET statement that, in turn, allows you to listen for and accept multiple connections on a given port.
+
+attribute
+An attribute of the server socket handle.
+
+method
+A method of the server socket handle.
+
+Attributes
+
+HANDLE attributeINSTANTIATING-PROCEDURE
+attributeNAME attributeNEXT-SIBLING attributePREV-SIBLING attributePRIVATE-DATA attributeSENSITIVE attributeTYPE attribute–Methods
+
+DISABLE-CONNECTIONS( ) methodENABLE-CONNECTIONS( ) methodSET-CALLBACK( ) methodSET-CONNECT-PROCEDURE( ) methodEvents
+
+CONNECT event–Note
+The server socket object is used to enable the AVM to listen to and accept new connections from socket clients; it is via the socket object that clients and servers communicate. For more information on using sockets, see OpenEdge Programming Interfaces.
+
+
+SESSION system handle
+A handle to the current ABL session object. This object allows you to read and modify the current ABL session context.
+
+Syntax
+
+
+attribute
+Specifies an attribute of the SESSION system handle.
+
+method
+Specifies a method of the SESSION system handle.
+
+Attributes
+
+APPL-ALERT-BOXES attributeBASE-ADE attributeBATCH-MODE attributeCHARSET attributeCLIENT-TYPE attributeCONTEXT-HELP-FILE attributeCPCASE attributeCPCOLL attributeCPINTERNAL attributeCPLOG attributeCPPRINT attributeCPRCODEIN attributeCPRCODEOUT attributeCPSTREAM attributeCPTERM attributeCURRENT-REQUEST-INFO attributeCURRENT-RESPONSE-INFO attributeDATA-ENTRY-RETURN attributeDATE-FORMAT attributeDEBUG-ALERT attributeDISPLAY-TIMEZONE attributeDISPLAY-TYPE attributeERROR-STACK-TRACE attributeEXECUTION-LOG attributeEXIT-CODE attributeFIRST-BUFFER attributeFIRST-CHILD attributeFIRST-DATASET attributeFIRST-DATA-SOURCE attributeFIRST-FORM attributeFIRST-OBJECT attributeFIRST-PROCEDURE attributeFIRST-QUERY attributeFIRST-SERVER attributeFIRST-SERVER-SOCKET attributeFIRST-SOCKET attributeFRAME-SPACING attributeHANDLE attribute
+
+HEIGHT-CHARS attributeHEIGHT-PIXELS attributeICFPARAMETER attributeIMMEDIATE-DISPLAY attributeINHERIT-BGCOLOR attributeINHERIT-FGCOLOR attributeINSTANTIATING-PROCEDURE attributeLAST-CHILD attributeLAST-FORM attributeLAST-OBJECT attributeLAST-PROCEDURE attributeLAST-SERVER attributeLAST-SERVER-SOCKET attributeLAST-SOCKET attributeLOCAL-VERSION-INFO attributeMULTITASKING-INTERVAL attributeNEXT-SIBLING attributeNUMERIC-DECIMAL-POINT attributeNUMERIC-FORMAT attributeNUMERIC-SEPARATOR attributePARAMETER attributePIXELS-PER-COLUMN attributePIXELS-PER-ROW attributePRINTER-CONTROL-HANDLE attributePRINTER-HDC attributePRINTER-NAME attributePRINTER-PORT attributePROXY-PASSWORD attributePROXY-USERID attributeREMOTE attributeSCHEMA-CHANGE attributeSERVER-CONNECTION-BOUND attributeSERVER-CONNECTION-BOUND-REQUEST attributeSERVER-CONNECTION-CONTEXT attributeSERVER-CONNECTION-ID attributeSERVER-OPERATING-MODE attributeSTARTUP-PARAMETERS attributeSTREAM attributeSUPER-PROCEDURES attributeSUPPRESS-WARNINGS attributeSUPPRESS-WARNINGS-LIST attributeSYSTEM-ALERT-BOXES attributeTHREE-D attributeTIME-SOURCE attributeTIMEZONE attributeTOOLTIPS attributeTYPE attributeV6DISPLAY attributeWC-ADMIN-APP attributeWIDTH-CHARS attributeWIDTH-PIXELS attributeWINDOW-SYSTEM attributeWORK-AREA-HEIGHT-PIXELS attributeWORK-AREA-WIDTH-PIXELS attribute
+
+WORK-AREA-X attributeWORK-AREA-Y attributeYEAR-OFFSET attributeTEMP-DIRECTORY attributeMethods
+
+ADD-SUPER-PROCEDURE( ) methodEXPORT( ) methodGET-PRINTERS( ) methodGET-WAIT-STATE( ) methodREMOVE-SUPER-PROCEDURE( ) methodSET-NUMERIC-FORMAT( ) methodSET-WAIT-STATE( ) method–Example
+The following example uses the SESSION:IMMEDIATE-DISPLAY attribute. When dumping or loading records from the database, the procedure displays a running count of records. If IMMEDIATE-DISPLAY is false, no value is shown until all records are dumped or loaded. At that point, the total is shown. To prevent this, IMMEDIATE-DISPLAY is set to true just before the dump or load and then reset to false afterwards.
+r-dstrig.p
+
+
+
+
+Notes
+• Several attributes of the SESSION handle control the execution of ABL code during the current ABL session. This means that the SESSION handle controls the behavior of any code that you are developing and testing, and the OpenEdge ADE toolset. While the tools of the OpenEdge ADE monitor and set the attributes of the SESSION handle to meet their needs, it is possible that the execution of a procedure that sets attributes of the SESSION handle may affect the display and behavior of the OpenEdge ADE toolset.
+• The FIRST-PROCEDURE and LAST-PROCEDURE attributes are set or reset when you create or delete the first or last persistent procedure in a session. You can use procedure attributes to navigate the procedure entries, reference information, and manage the user interface for each persistent procedure in the procedure chain accessed by FIRST-PROCEDURE and LAST-PROCEDURE.
+For more information on the attributes of procedure handles, see the Procedure object handle on page 57 reference entry. For information on creating a persistent procedure, see the RUN statement. For information on deleting a persistent procedure, see the DELETE PROCEDURE statement reference entry.
+• The FIRST-SERVER and LAST-SERVER attributes are set or reset when you create or delete the first or last server handle in a session. You can use server handle attributes and methods to navigate the current
+
+chain of server handles, connect to a running application server, reference information on a connected application server, access remote persistent procedures running on a connected application server, and disconnect from a connected application server for each server handle in the chain accessed by
+FIRST-SERVER and LAST-SERVER.
+For more information on the attributes and methods of server handles, see the Server object handle on page 72 reference entry. For information on creating server handles, see the CREATE SERVER statement reference entry.
+• Setting the IMMEDIATE-DISPLAY attribute to TRUE can significantly slow performance. However, some code segments may not execute properly with IMMEDIATE-DISPLAY set to FALSE. If a segment of code requires that IMMEDIATE-DISPLAY is TRUE, you should set the attribute to TRUE immediately before the code segment and change it back to FALSE immediately after the segment.
+• In Windows, when execution is blocked for input (by a WAIT-FOR statement, for example), the AVM listens for messages from the windowing system. This allows the AVM to multitask properly with other Windows applications. However, if your ABL application performs long processing without blocking for input, then it may not multitask properly because the AVM does not automatically check for messages from the windowing system. To force the AVM to poll for windowing system messages during this time, you can set the MULTITASKING-INTERVAL attribute to a non-zero value. The lower the value, the more often the AVM checks for messages. This may decrease ABL performance. The maximum value is 9999. A value of 0 inhibits polling until ABL blocks for input.
+If you set MULTITASKING-INTERVAL to a non-zero value for a code segment, reset it to 0 immediately after that code.
+• The AVM sets the TEMP-DIRECTORY attribute to the value you specify for the Temporary Directory (-T) parameter. If you omit the -T parameter, TEMP-DIRECTORY is set to your current working directory.
+• The TYPE attribute returns the widget type, PSEUDO-WIDGET.
+• Use the SET-WAIT-STATE method to prevent user and system input, and provide visual feedback during a long computation or other background process. The value you pass determines the type of wait message or cursor the windowing system displays for the user. Passing the value "" to SET-WAIT-STATE ends the wait state. Use this method only for long computations or other processes that force the user to wait significantly longer than the usual response time.
+• If you set a wait state for your application, the AVM automatically ends the wait state if it displays an alert box, a dialog box, or message update.
+• For SpeedScript, the invalid attributes are: APPL-ALERT-BOXES, CONTEXT-HELP-FILE, DATA-ENTRY-RETURN, FIRST-CHILD, HEIGHT-PIXELS, LAST-CHILD, PARAMETER,
+PIXELS-PER-COLUMN, PIXELS-PER-ROW, SUPPRESS-WARNINGS, SUPPRESS-WARNINGS-LIST, SYSTEM-ALERT-BOXES, THREE-D, TOOLTIPS, V6DISPLAY, WIDTH-PIXELS. The GET-PRINTERS( )
+method is invalid for SpeedScript.
+• To access the list of all forms created in a session, use the SESSION handle FIRST-FORM and LAST-FORM attributes along with the NextForm and PrevForm properties of the Progress.Windows.IForm interface. In addition, to .NET forms, this list also contains Progress.Windows.FormProxy object references to all ABL windows created in a session, allowing you to manage .NET forms and ABL windows in a common manner. The SESSION handle FIRST-CHILD attribute, NEXT-SIBLING attribute, LAST-CHILD attribute, and PREV-SIBLING attribute only reference the list of ABL windows in a session.
+• EXIT-CODE attribute can be used to set an exit code, from within the application, so it's available to the operating system when the AVM process ends. However, the value returned may be modified by the shell the user is calling the AVM process from.
+
+See also
+NextForm property, PrevForm property, Progress.Windows.FormProxy class, Progress.Windows.Form class, Progress.Windows.IForm interface
+
+
+
+SOAP-fault object handle
+A handle to a SOAP-fault object. A SOAP-fault object contains information specific to a SOAP fault.
+
+Note: Does not apply to SpeedScript programming.
+
+
+Syntax
+
+
+soap-fault-handle
+A handle variable that references a SOAP-fault object.
+
+attribute
+An attribute of the SOAP-fault object.
+
+Attributes
+
+HANDLE attributeINSTANTIATING-PROCEDURE
+attributeSOAP-FAULT-ACTOR attributeSOAP-FAULT-CODE attributeSOAP-FAULT-DETAIL attributeSOAP-FAULT-STRING attributeSOAP-FAULT- MISUNDERSTOOD-HEADER
+attributeSOAP-FAULT-NODE attributeSOAP-FAULT-ROLE attributeSOAP-FAULT-SUBCODE attributeTYPE attribute–Notes
+• When the AVM detects a SOAP fault message, it converts the SOAP fault message to an ABL error message and creates a SOAP-fault object (identified by the ERROR-OBJECT-DETAIL attribute on the ERROR-STATUS system handle). A SOAP-fault object exists only as long as its related ERROR-STATUS entry (that is, until the execution of another statement containing the NO-ERROR option).
+• Use the SOAP-FAULT-DETAIL object handle to access the SOAP fault message detail.
+
+See also
+ERROR-STATUS system handle on page 46, SOAP-fault-detail object handle on page 80
+
+
+SOAP-fault-detail object handle
+A handle to a SOAP-fault-detail object.
+
+
+
+Note: Does not apply to SpeedScript programming.
+
+
+Syntax
+
+
+soap-fault-detail-handle
+A handle variable that references a SOAP-fault-detail object.
+
+attribute
+An attribute of the SOAP-fault-detail object.
+
+method
+A method of the SOAP–FAULT-DETAIL object.
+
+Attributes
+
+HANDLE attributeINSTANTIATING-PROCEDURE
+attributeTYPE attributeMethods
+
+GET-NODE( ) methodGET-SERIALIZED( ) methodNotes
+You can use the GET-NODE( ) method to get an X-noderef object handle that refers to the XML that underlies a SOAP-fault-detail object. The application can then use this X-noderef object handle to access the underlying XML. The only restriction is that the application cannot use the X-noderef object handle retrieved from the SOAP-fault-detail object to access the X-document associated with the SOAP-fault object.
+
+
+SOAP-header object handle
+A handle to a SOAP-header object. The object maintains a list of entries. Each entry is associated with an existing SOAP-header-entryref object. A SOAP-header object is passed as an input parameter to a response callback procedure and as an output parameter to a request callback procedure.
+
+Note: Does not apply to SpeedScript programming.
+
+
+Syntax
+
+
+soap-header-handle
+A handle variable that references a SOAP-header object.
+
+attribute
+An attribute of the SOAP-header object.
+
+method
+A method of the SOAP-header object.
+
+Attributes
+
+ADM-DATA attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeNAME attributeNUM-HEADER-ENTRIES attributePRIVATE-DATA attributeTYPE attributeUNIQUE-ID attribute–Methods
+
+ADD-HEADER-ENTRY( ) methodGET-HEADER-ENTRY( ) methodNote
+The SOAP-header object is either implicitly created by ABL or explicitly created by the application using the CREATE SOAP-HEADER statement. In either case, the application is responsible for deleting this object. Use the DELETE OBJECT statement to delete a SOAP-header object and its underlying XML.
+
+See also
+CREATE SOAP-HEADER statement, SOAP-header-entryref object handle on page 82
+
+
+SOAP-header-entryref object handle
+A handle to a SOAP-header-entryref object.
+
+Note: Does not apply to SpeedScript programming.
+
+
+Syntax
+
+
+soap-header-entryref-handle
+A handle variable that references a SOAP-header-entryref object.
+
+attribute
+An attribute of the SOAP-header-entryref object.
+
+method
+A method of the SOAP-header-entryref object.
+
+Attributes
+
+ACTOR attributeADM-DATA attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeLOCAL-NAME attributeMUST-UNDERSTAND attributeNAME attributeNAMESPACE-URI attributePRIVATE-DATA attributeROLE attributeTYPE attributeUNIQUE-ID attributeMethods
+
+DELETE-HEADER-ENTRY( ) methodGET-NODE( ) methodGET-SERIALIZED( ) methodSET-ACTOR( ) methodSET-MUST-UNDERSTAND( ) methodSET-NODE( ) methodSET-ROLE( ) methodSET-SERIALIZED( ) methodNotes
+• The application is responsible for deleting this object. Use the DELETE OBJECT statement to delete a SOAP-header-entryref object without deleting its underlying XML. To delete the XML underlying the SOAP-header-entryref object, without deleting the object, use the DELETE-HEADER-ENTRY() method.
+• You can use the GET-NODE( ) method to get an X-noderef object handle that refers to the XML that underlies a SOAP-header-entryref object. The application can then use this X-noderef object handle to access the underlying XML. The only restriction is that the application cannot use the X-noderef object handle retrieved from the SOAP-header-entryref object to access the X-document associated with the SOAP-header object.
+
+See also
+CREATE SOAP-HEADER-ENTRYREF statement, SOAP-header object handle on page 81
+
+
+Socket object handle
+A handle to a socket object. This object allows you to read or write data on a TCP/IP socket and to perform other TCP/IP socket actions.
+
+Syntax
+
+
+socket-handle
+A handle variable that references a socket object created by the CREATE SOCKET statement and that allows you to connect to, read from and write to a socket.
+
+attribute
+An attribute of the socket handle.
+
+method
+A method of the socket handle.
+
+Attributes
+
+BYTES-READ attributeBYTES-WRITTEN attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeLOCAL-HOST attributeLOCAL-PORT attributeNAME attributeNEXT-SIBLING attributePREV-SIBLING attributePRIVATE-DATA attributeREMOTE-HOST attributeREMOTE-PORT attributeSENSITIVE attributeSSL-SERVER-NAME attributeTYPE attributeMethods
+
+CONNECT( ) method (Socket object)CONNECTED( ) methodDISCONNECT( ) method (Handle)GET-BYTES-AVAILABLE( ) methodGET-SOCKET-OPTION( ) methodREAD( ) method (Socket)SET-CALLBACK( ) methodSET-READ-RESPONSE-PROCEDURE( ) methodSET-SOCKET-OPTION( ) methodWRITE( ) method (Socket)Events
+
+READ-RESPONSE event–Note
+The server socket object is used to enable connections from socket clients; it is via the socket object that clients and servers communicate. For more information on using sockets, see OpenEdge Programming Interfaces.
+
+
+
+SOURCE-PROCEDURE system handle
+A handle to the procedure file that contains the original invocation (RUN statement or function invocation) of the current internal procedure or user-defined function.
+
+Syntax
+
+
+attribute
+An attribute of the SOURCE-PROCEDURE handle.
+
+method
+A method of the SOURCE-PROCEDURE handle.
+
+Attributes
+The SOURCE-PROCEDURE handle supports all the attributes of the procedure object handle. For a list of these attributes, see the reference entry for the Procedure object handle on page 57 in this section.
+
+Methods
+The SOURCE-PROCEDURE handle supports all the methods of the procedure object handle. For a list of these methods, see the reference entry for the Procedure object handle on page 57 in this section.
+
+Example
+The following scenarios illustrate using SOURCE-PROCEDURE without procedure overriding, with procedure overriding, and with super and non-super RUNs:
+Scenario 1: Using SOURCE-PROCEDURE without procedure overriding
+The following scenario uses SOURCE-PROCEDURE without procedure overriding:
+1. A and B are handles of procedure files running persistently.
+2. proc1 is an internal procedure that resides in B.
+3. A says "RUN proc1 IN B," which runs B's proc1. In this scenario:
+• The original run statement for proc1 occurs in Step 3.
+• Within B's proc1 (and within any proc1 that runs as a result of its original RUN statement), SOURCE-PROCEDURE is A.
+Scenario 2: Using SOURCE-PROCEDURE with procedure overriding
+The following scenario uses SOURCE-PROCEDURE with procedure overriding:
+1. A, B, and C, and X are handles of procedure files running persistently.
+2. B is a super procedure of A, and C is a super procedure of B.
+3. proc1 is an internal procedure different versions of which reside in A, B, and C.
+
+
+
+Note: This is an example of procedure overriding.
+
+
+4. X says "RUN proc1 IN A," which runs A's proc1.
+5. A's proc1 says "RUN SUPER," which runs B's proc1.
+6. B's proc1 says "RUN SUPER," which runs C's proc1. In this scenario:
+• The original run statement for proc1 occurs in Step 4.
+• Within any version of proc1 that runs as a result of its original RUN statement, SOURCE-PROCEDURE is X.
+Scenario 3: With SUPER and non-SUPER RUNs
+The following scenario shows how the value of SOURCE-PROCEDURE changes when a non-super RUN occurs:
+1. A, B, and C are handles of procedure files running persistently.
+2. B is a super procedure of A, and C is a super procedure of B.
+3. proc1 is an internal procedure different versions of which reside in A, B, and C.
+4. proc2 is an internal procedure different versions of which reside in A, B, and C.
+5. A says "RUN proc1," which runs A's proc1.
+6. A's proc1 says "RUN SUPER," which runs B's proc1.
+7. B's proc1 says "RUN SUPER," which runs C's proc1.
+
+Note: At this point, within any proc1 that runs as a result of its original RUN statement, the value of SOURCE-PROCEDURE is A.
+
+
+8. C's proc1 says "RUN proc2," which runs C's proc2.
+
+Note: This is a non-super RUN.
+
+
+In this scenario:
+• The original RUN statement for proc1 occurs in Step 5.
+• Within any proc1 that runs as a result of its original RUN statement, SOURCE-PROCEDURE is A.
+• The original RUN statement for proc2 occurs in Step 8.
+• Within any proc2 that runs as a result of its original RUN statement, SOURCE-PROCEDURE is C.
+For a sample program that uses SOURCE-PROCEDURE, see the reference entry for the RUN SUPER statement.
+
+Notes
+• You can use SOURCE-PROCEDURE in applications that do not use super procedures.
+• In the main block of a procedure, the value of SOURCE-PROCEDURE is the handle of the procedure that ran the current ABL source code or r-code file. This allows any ABL program to identify its caller, and to perform a "callback" to its caller.
+
+• If an ABL or other client runs a procedure on an application server, then in the procedure running on the application server, the value of SOURCE-PROCEDURE is the Unknown value (?).
+
+See also
+ADD-SUPER-PROCEDURE( ) method, REMOVE-SUPER-PROCEDURE( ) method, RUN SUPER statement,
+SUPER function, SUPER-PROCEDURES attribute, TARGET-PROCEDURE system handle on page 88
+
+
+Stream object handle
+The AVM creates a stream object when an application first tries to get the handle to a given stream. The AVM automatically deletes the stream object when the procedure or class that defines the stream terminates.
+
+Syntax
+
+
+stream-name
+The valid name of a stream. If the stream name is invalid, ABL raises a compiler error.
+
+attribute
+An attribute of the Stream object.
+
+Attributes
+
+ADM-DATA attributeNAME attributeHANDLE attributePRIVATE-DATA attributeINSTANTIATING-PROCEDURE attributeTYPE attributeExample
+This example shows how the HANDLE attribute of the stream object is assigned to hStream:
+
+See also
+DEFINE STREAM statement
+
+
+
+TARGET-PROCEDURE system handle
+From within an internal procedure: A handle to the procedure file mentioned, explicitly or implicitly, by the original RUN statement that invoked (perhaps through a chain of super procedures) the current internal procedure.
+From within a user-defined function: A handle to the procedure file mentioned, explicitly or implicitly, by the original function invocation that invoked (perhaps through a chain of super versions of functions) the current user-defined function.
+
+Syntax
+
+
+attribute
+An attribute of the TARGET-PROCEDURE handle.
+
+method
+A method of the TARGET-PROCEDURE handle.
+
+Attributes
+The TARGET-PROCEDURE handle supports all the attributes of the procedure object handle. For a list of these attributes, see the reference entry for the Procedure object handle on page 57 in this section.
+
+Methods
+The TARGET-PROCEDURE handle supports all the methods of the procedure object handle. For a list of these methods, see the reference entry for the Procedure object handle on page 57 in this section.
+
+Examples
+The following scenarios illustrate using TARGET-PROCEDURE without procedure overriding, with procedure overriding, and with super and non-super RUNs:
+Scenario 1: Using TARGET-PROCEDURE without procedure overriding
+The following scenario uses TARGET-PROCEDURE without procedure overriding:
+1. A and B are handles of procedure files running persistently.
+2. proc1 is an internal procedure that resides in B.
+3. A says "RUN proc1 IN B," which runs B's proc1. In this scenario:
+• The original RUN statement for proc1 occurs in Step 3.
+• Within proc1 (and any proc1 that runs as a result its original RUN statement), the value of TARGET-PROCEDURE is B.
+Scenario 2: Using TARGET-PROCEDURE with procedure overriding
+The following scenario uses TARGET-PROCEDURE with procedure overriding:
+
+1. A, B, and C, and X are handles of procedure files running persistently.
+2. B is a super procedure of A, and C is a super procedure of B.
+3. proc1 is an internal procedure, different versions of which reside in A, B, and C.
+
+Note: This is an example of procedure overriding.
+
+
+4. X says "RUN proc1 in A," which runs A's proc1.
+5. A's proc1 says "RUN SUPER," which runs B's proc1.
+6. B's proc1 says "RUN SUPER," which runs C's proc1. In this scenario:
+• The original RUN statement for proc1 occurs in Step 4.
+• Within any version of proc1 that runs as a result of the original RUN statement, the value of TARGET-PROCEDURE is A.
+Scenario 3: With procedure overriding and additional complications
+The following scenario uses TARGET-PROCEDURE with procedure overriding:
+1. A, B, and C, and X are handles of procedure files running persistently.
+2. B is a super procedure of A, and C is a super procedure of B.
+3. proc1 is an internal procedure, different versions of which reside in B and C.
+
+Note: proc1 does not reside in A.
+
+
+4. X says "RUN proc1 in A," which runs B's proc1 (since A has no proc1 and B is a super procedure of A).
+5. B's proc1 says "RUN SUPER," which runs C's proc1. In this scenario:
+• The original RUN statement for proc1 occurs in Step 4.
+• Within any version of proc1 that runs as a result of its original RUN statement, the value of TARGET-PROCEDURE is A.
+Scenario 4: With SUPER and non-SUPER RUNs
+The following scenario shows how the value of TARGET-PROCEDURE changes when a non-super RUN occurs:
+1. A, B, and C are handles of procedure files running persistently.
+2. B is a super procedure of A, and C is a super procedure of B.
+3. proc1 is an internal procedure different versions of which reside in A, B, and C.
+4. proc2 is an internal procedure different versions of which reside in A, B, and C.
+5. A says "RUN proc1," which runs A's proc1.
+6. A's proc1 says "RUN SUPER," which runs B's proc1.
+
+
+
+Note: At this point, within any version of proc1 that runs as a result of its original RUN statement, the value of TARGET-PROCEDURE is A.
+
+
+7. B's proc1 says "RUN proc2," which runs B's proc2.
+
+Note: This is a non-super RUN.
+
+
+In this scenario:
+• The original RUN statement for proc2 occurs in Step 7.
+• Within any proc2 that runs as a result of its original RUN statement, the value of TARGET-PROCEDURE is B.
+For a sample program that uses TARGET-PROCEDURE, see the reference entry for the RUN SUPER statement.
+
+Notes
+• You can use TARGET-PROCEDURE in applications that do not use super procedures.
+• The value of TARGET-PROCEDURE becomes THIS-PROCEDURE in the following places:
+• Within the main block of a procedure file.
+• Within an internal procedure that is not a super version of another internal procedure.
+• Within a user-defined function that is not a super version of another user-defined function.
+
+See also
+ADD-SUPER-PROCEDURE( ) method, REMOVE-SUPER-PROCEDURE( ) method, RUN SUPER statement,
+SOURCE-PROCEDURE system handle on page 85, SUPER function, SUPER-PROCEDURES attribute, THIS-PROCEDURE system handle on page 92
+
+
+Temp-table object handle
+A handle to a temp-table object. A temp-table object handle corresponds to an underlying ABL temp-table, which can be static or dynamic. A static temp-table is one you define at compile time with the DEFINE
+TEMP-TABLE statement. A dynamic temp-table is one you create at run time with the CREATE TEMP-TABLE statement.
+
+Syntax
+
+
+temp-table-handle
+An item of type HANDLE representing a handle to a temp-table object.
+
+attribute
+An attribute of the temp-table object.
+
+method
+A method of the temp-table object.
+
+Attributes
+
+ADM-DATA attributeAFTER-TABLE attributeBEFORE-TABLE attributeDATA-SOURCE-MODIFIED
+attributeDEFAULT-BUFFER-HANDLE
+attributeDYNAMIC attributeERROR attributeERROR-STRING attributeHANDLE attributeHAS-RECORDS attributeINSTANTIATING-PROCEDURE
+attributeMIN-SCHEMA-MARSHAL attributeNAME attributeNAMESPACE-PREFIX attributeNAMESPACE-URI attributeNO-SCHEMA-MARSHAL attributeNUM-REFERENCES attributeORIGIN-HANDLE attributePREPARED attributePRIMARY attributePRIVATE-DATA attributeREJECTED attributeSCHEMA-MARSHAL attributeSERIALIZE-NAME attributeTRACKING-CHANGES attributeTYPE attributeUNDO attributeUNIQUE-ID attributeXML-NODE-NAME attribute–Methods
+
+ADD-FIELDS-FROM( ) methodADD-INDEX-FIELD( ) methodADD-LIKE-FIELD( ) methodADD-LIKE-INDEX( ) methodADD-NEW-FIELD( ) methodADD-NEW-INDEX( ) methodCLEAR( ) method (Temp-Table Object Handle)COPY-TEMP-TABLE( ) methodCREATE-LIKE( ) methodCREATE-LIKE-SEQUENTIAL( ) methodEMPTY-TEMP-TABLE( ) methodREAD-JSON( ) methodREAD-XML( ) methodREAD-XMLSCHEMA( ) methodTEMP-TABLE-PREPARE( ) methodWRITE-JSON( ) methodWRITE-XML( ) methodWRITE-XMLSCHEMA( ) method
+Example
+The following code fragment demonstrates the creation, definition and use of a temp-table object:
+
+Notes
+• The temp-table object has three states, CLEAR, UNPREPARED and PREPARED. The temp-table is in a CLEAR state either when the temp-table is first created or immediately after the CLEAR( ) method is applied. The temp-table is in an UNPREPARED state during the period after the first definitional method has been applied and before the TEMP-TABLE-PREPARE( ) method is applied. The temp-table is in a PREPARED state after the TEMP-TABLE-PREPARE( ) method has been applied.
+• The user can discern whether the temp-table is in an UNPREPARED or PREPARED state by using the PREPARED attribute.
+
+See also
+Buffer object handle on page 10, CREATE TEMP-TABLE statement, DEFINE TEMP-TABLE statement, ProDataSet object handle on page 58
+
+
+THIS-PROCEDURE system handle
+A handle to the procedure object for the currently executing procedure. This object allows you to read and modify the context of the current procedure.
+
+Syntax
+
+
+attribute
+An attribute of THIS-PROCEDURE.
+
+method
+Specifies a method of THIS-PROCEDURE.
+
+Attributes
+The THIS-PROCEDURE handle supports all the attributes of the procedure object handle. For a list of these attributes, see the reference entry for the Procedure object handle on page 57 in this section.
+
+Methods
+The THIS-PROCEDURE handle supports all the methods of the procedure object handle. For a list of these methods, see the reference entry for the Procedure object handle on page 57 in this section.
+
+Example
+The following procedure is designed to run both persistently and non-persistently. It sets up a query on the Customer table of the Sports2020 database that is selectable by Name or Balance.
+r-thispr.p
+
+
+
+
+The procedure uses the THIS-PROCEDURE handle to distinguish between persistent and non-persistent instances of execution. When r-thispr.p is persistent (THIS-PROCEDURE:PERSISTENT = TRUE), it:
+• Sets the PRIVATE-DATA attribute to help identify it to other procedures.
+• Creates a private widget pool to maintain its dynamic window for as long as the procedure instance persists.
+• Defines a trigger to delete the procedure when it is terminated. Note that the trigger calls the internal procedure destroy-query, which can be executed by other external procedures to delete r-thispr.p when it is persistent. This destroy-query routine references the THIS-PROCEDURE handle to delete its persistent parent. It also deletes the widget pool that maintains the dynamic window.
+When r-thispr.p is non-persistent (THIS-PROCEDURE:PERSISTENT = FALSE), it invokes a WAIT-FOR statement rather than defining a trigger to terminate the procedure. It does not need to create a widget pool or maintain any other persistent context.
+Note that because both persistent and non-persistent instances of this procedure use a dynamic window separate from the default window, r-thispr.p assigns the window's handle to the procedure's CURRENT-WINDOW attribute. This makes the dynamic window current whether or not the procedure is
+persistent. However, when the procedure is persistent, the CURRENT-WINDOW attribute keeps the dynamic window current while other procedures execute using different windows. Because the persistent procedure has its own current window, its triggers and internal procedures do not have to reset the current window every time they execute.
+
+Notes
+• By determining if the current procedure is persistent, you can decide whether or not to perform certain actions. An action that you might perform during a non-persistent procedure is to execute a WAIT-FOR statement to provide input-blocking. Actions that you might execute during a persistent procedure include creating a new window to parent all other widgets created in the procedure, or maintaining an unscoped record buffer that lasts as long as the procedure persists.
+• To create an instance of a persistent procedure, use the PERSISTENT option of the RUN statement. For an example, see the reference entry for the Procedure object handle on page 57 in this section.
+• If THIS-PROCEDURE is persistent and the NEXT-SIBLING or PREV-SIBLING attributes are invalid, THIS-PROCEDURE specifies the last or first persistent procedure instance (respectively) in the session persistent procedure chain. To check the validity of these attributes, use the VALID-HANDLE function.
+
+See also
+Procedure object handle on page 57, RUN statement, SESSION system handle on page 74, VALID-HANDLE function
+
+
+
+Transaction object handle
+Provides access to the current transaction object. This object allows you to query status of and control the current transaction context.
+
+Syntax
+
+
+transaction-handle
+A handle variable whose value you return from the TRANSACTION attribute on a procedure object handle.
+
+attribute
+An attribute of the transaction handle.
+
+method
+A method of the transaction handle.
+
+Attributes
+
+DEFAULT-COMMIT attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeIS-OPEN attributeTRANS-INIT-PROCEDURE
+attributeTYPE attributeMethods
+
+SET-COMMIT( ) methodSET-ROLLBACK( ) methodNotes
+• In an application server session, if a transaction initiating procedure is active, this handle allows you to control the (automatic) transaction using all of the supported attributes and methods. For more information on automatic transactions, see the TRANSACTION-MODE AUTOMATIC statement reference entry.
+• In an ABL client session or in an application server session with no active transaction initiating procedure, only the IS-OPEN attribute is available.
+• If a transaction initiating procedure is deleted, any open transaction is committed or rolled back according to the value of the DEFAULT-COMMIT attribute.
+• The value of this attribute remains the same (references the same transaction context) for the duration of an ABL session. This is true in the following instances:
+• Whether or not a transaction is opened or closed.
+• In an application server session, whether or not a transaction initiating procedure is created or deleted.
+
+See also
+TRANSACTION-MODE AUTOMATIC statement
+
+
+WEB-CONTEXT system handle
+Provides access to information on the current connection to the Web server.
+
+Note: Applies to SpeedScript programming, not ABL.
+
+
+Syntax
+
+
+attribute
+An attribute of the WEB-CONTEXT handle.
+
+method
+A method of the WEB-CONTEXT handle.
+
+Attributes
+
+AUTO-DELETE-XML attributeCONFIG-NAME attributeCURRENT-ENVIRONMENT
+attributeEXCLUSIVE-ID attributeFORM-INPUT attributeFORM-LONG-INPUT attributeHANDLE attributeHTML-CHARSET attributeHTML-END-OF-LINE attributeHTML-END-OF-PAGE attributeHTML-FRAME-BEGIN attributeHTML-FRAME-END attributeHTML-HEADER-BEGIN attributeHTML-HEADER-END attributeHTML-TITLE-BEGIN attributeHTML-TITLE-END attributeINSTANTIATING-PROCEDURE
+attributeIS-JSON attributeIS-XML attributeSESSION-END attributeTYPE attributeVALIDATE-XML attributeX-DOCUMENT attributeXML-ENTITY-EXPANSION-LIMIT
+attributeXML-SCHEMA-PATH attributeXML-STRICT-ENTITY-RESOLUTION
+attributeXML-SUPPRESS-NAMESPACE-PROCESSING
+attributeMethods
+
+GET-BINARY-DATA( ) methodGET-CGI-LIST( ) method
+
+GET-CGI-LONG-VALUE( ) methodGET-CGI-VALUE( ) methodGET-CONFIG-VALUE( ) methodINCREMENT-EXCLUSIVE-ID( ) methodURL-DECODE( ) methodURL-ENCODE( ) method
+
+X-document object handle
+A handle to an X-document object. You create the handle and assign it to a handle variable with the CREATE X-DOCUMENT statement.
+
+Syntax
+
+
+x-document-handle
+A handle variable that references an X-document object.
+
+attribute
+An attribute of the X-document object.
+
+method
+A method of the X-document object.
+
+Attributes
+
+ENCODING attributeENTITY-EXPANSION-LIMIT
+attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeNAME attributeNAMESPACE-PREFIX attributeNAMESPACE-URI attributeNONAMESPACE-SCHEMA-
+LOCATION attributeNUM-CHILDREN attributePUBLIC-ID attributeSCHEMA-LOCATION attributeSCHEMA-PATH attributeSTRICT-ENTITY-RESOLUTION
+attributeSUBTYPE attributeSUPPRESS-NAMESPACE-
+PROCESSING attributeSYSTEM-ID attributeTYPE attributeUNIQUE-ID attributeMethods
+
+ADD-SCHEMA-LOCATION( ) methodAPPEND-CHILD( ) method
+
+CREATE-NODE( ) methodCREATE-NODE-NAMESPACE( ) methodGET-CHILD( ) methodGET-DOCUMENT-ELEMENT( ) methodIMPORT-NODE( ) methodINITIALIZE-DOCUMENT-TYPE( ) methodINSERT-BEFORE( ) methodLOAD( ) method (Handle)REMOVE-CHILD( ) methodREPLACE-CHILD( ) methodSAVE( ) method–See also
+CREATE X-DOCUMENT statement, X-noderef object handle on page 98
+
+
+X-noderef object handle
+A handle to a reference to an XML node. The X-noderef object is an ABL object that is a reference to any arbitrary node in an XML tree except a document node. You create the handle and assign it to a handle variable with the CREATE X-NODEREF statement.
+An X-noderef object is not in a fully usable state until it has been associated with an X-document. Before this, you can only access its HANDLE, TYPE, PRIVATE-DATE, and UNIQUE-ID attributes without error. To avoid run-time errors, the following code shows one way to test the status of an X-noderef object:
+
+Syntax
+
+
+x-noderef-handle
+A handle variable that references an X-noderef object. You can use this handle as a parameter or return-value for attributes and methods that provide access to the underlying XML node.
+
+attribute
+An attribute of the X-noderef object.
+
+method
+A method of the X-noderef object.
+
+Attributes
+
+ATTRIBUTE-NAMES attributeCHILD-NUM attributeHANDLE attributeINSTANTIATING-PROCEDURE
+attributeLOCAL-NAME attributeNAME attributeNAMESPACE-PREFIX attributeNAMESPACE-URI attributeNODE-VALUE attributeNUM-CHILDREN attributeOWNER-DOCUMENT attributeSUBTYPE attributeTYPE attributeUNIQUE-ID attribute–Methods
+
+APPEND-CHILD( ) methodCLONE-NODE( ) methodDELETE-NODE( ) methodGET-ATTRIBUTE( ) methodGET-ATTRIBUTE-NODE( ) methodGET-CHILD( ) methodGET-PARENT( ) methodINSERT-BEFORE( ) methodLONGCHAR-TO-NODE-VALUE( ) methodMEMPTR-TO-NODE-VALUE( ) methodNODE-VALUE-TO-LONGCHAR( ) methodNODE-VALUE-TO-MEMPTR( ) methodNORMALIZE( ) methodREMOVE-ATTRIBUTE( ) methodREMOVE-CHILD( ) methodREPLACE-CHILD( ) methodSET-ATTRIBUTE( ) methodSET-ATTRIBUTE-NODE( ) methodNotes
+The value of the UNIQUE-ID attribute on this handle is guaranteed to be unique only for the life cycle of the single XML document instance to which it belongs (the currently-associated X-document object handle on page 97). Once the currently-associated x-document handle is deleted, any new XML document (referenced with a new X-document handle value) can re-use the UNIQUE-ID attribute values for the x-noderef objects of the deleted document. Thus, you can track the uniqueness of x-noderef object instances within an ABL session by remembering each pair of UNIQUE-ID attribute values from a given x-noderef object handle and its associated x-document object handle.
+
+See also
+CREATE X-NODEREF statement, X-document object handle on page 97
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

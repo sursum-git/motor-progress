@@ -1,0 +1,329 @@
+Accessing handle attributes and methods
+    A handle attribute is a value that defines a visible, functional, and other characteristic of an ABL handle-based object.
+    System handles also have attributes that describe and control certain handle-based object or system states. Attributes
+    can be readable, writeable, or both. Readable means that your code can assign the value of the attribute to a variable or
+    reference its value in an expression. Writeable means that your code can change the value of an attribute and thereby
+    change the associated characteristic of the object or system state. Whether or not an attribute is readable or writeable
+    depends on a number of factors (for example, the widget type, system handle type, widget realization, etc.).
+    A handle method is a specialized function associated with an ABL handle-based object that performs an action on the
+    object, or alters the behavior of the object. Some system handles also have methods that affect certain widget and system
+    behaviors. All methods return a value and some methods require parameters. The return value usually is a logical value
+    specifying whether or not the execution of the method was successful. However, some methods return other types of
+    information.
+
+Handle-based references
+    You must access all handle attributes and methods with reference to a handle-based object or its handle using this general
+    syntax:
+
+    Syntax
+
+        handle-based-reference : attribute-or-method-access
+          [ IN container-widget-name ]
+
+
+    The handle-based-reference must conform to the following syntax:
+
+        { object-name-reference | handle-reference }
+
+
+    An object-name-reference is a name reference to a static handle-based object, such as the defined name of a frame or
+    window, or of another static handle-based object, such as a temp-table or buffer. For more information, see Object name
+    references on page 30. A handle-reference can be a handle value that references any handle-based object (static or
+    dynamic), or it can be a system handle. For more information, see Handle references on page 31.
+    The attribute-or-method-access identifies a given attribute or method associated with the specified handle-based-reference.
+    The container-widget-name is a name reference to a static container widget for the static widget referenced by
+    object-name-reference. You need it only if the static widget reference is ambiguous.
+    For more information on attribute-or-method-access and how to access:
+    •   Attributes, see Handle attribute access on page 32
+    •   Methods, see Handle method calls on page 32
+    The following sections provide more information on the object-name-reference and handle-reference options.
+
+    Object name references
+    An object-name-reference can have the following syntax, depending on the static handle-based object:
+
+    Syntax
+
+        [ object-type ] object-name
+                                                                                    
+The object-type is the type of the static handle-based object specified in the DEFINE statement for the handle-based
+object, such as FRAME in the DEFINE FRAME statement or TEMP-TABLE in the DEFINE TEMP-TABLE statement.
+For a data representation widget associated with a field or variable, object-type is the widget specified using the VIEW-AS
+phrase, such as COMBO-BOX for VIEW-AS COMBO-BOX.
+The object-name is the name that you specify for the static handle-based object using the DEFINE statement for the
+handle-based object. For a data representation widget, it is the name of the field or variable associated with the widget.
+For static frame fields, you only need to provide the object-name (field or variable name) to reference the associated
+widget, and ABL looks for its data representation widget in a frame. However, for most other static handle-based objects,
+you must qualify the object-name with the object-type, for example, BUFFER Customer, QUERY qCust, or TEMP-TABLE
+ttCust.
+For example, in this code fragment, the handle to a frame field (dDate) and the handle to a buffer object (bCust) are
+both returned and assigned to handle variables using the HANDLE attribute of each handle-based object:
+
+  DEFINE VARIABLE hField AS HANDLE NO-UNDO.
+  DEFINE VARIABLE hObject AS HANDLE NO-UNDO.
+  DEFINE VARIABLE dDate   AS DATE   NO-UNDO VIEW-AS FILL-IN.
+
+  DEFINE BUFFER bCust FOR Customer.
+
+  DEFINE FRAME AFrame
+    dDate bCust.Name.
+
+  hField = dDate:HANDLE /* Widget name found in frame AFrame */.
+  hObject = BUFFER bCust:HANDLE.
+
+
+
+Handle references
+A handle-reference allows you to directly reference a handle-based object using a handle value. You can set this handle
+value by assigning the HANDLE attribute of a static handle-based object (see Object name references on page 30), by
+creating a dynamic handle-based object, by assigning the handle value provided by a system handle, or from any other
+source of handle values, such as method or function return values. Examples of handle references include
+CURRENT-WINDOW and BUFFER bCust:HANDLE (from the previous example).
+You can access the handle to a static handle-based object using a HANDLE data type (field or variable) that you set to
+the value of the HANDLE attribute on the static object name reference.
+You can access the handle for a dynamic handle-based object through a HANDLE data type (field or variable) whose
+value is initially set using the CREATE statement for the specified handle-based object. You can also access the handle
+value to some dynamic handle-based objects, as in the case of a procedure object, that you initially obtain using an
+appropriate RUN statement or system handle.
+The HANDLE attribute of a given object handle can also provide a valid handle value that references the same
+handle-based object as the given object handle, itself. For example, the following assignment statements set both hProc1
+and hProc2 to the same running procedure object using the THIS-PROCEDURE system handle and its HANDLE
+attribute, and the MESSAGE statement displays the FILE-NAME attribute for the same procedure object:
+
+  DEFINE VARIABLE hProc1 AS HANDLE NO-UNDO.
+  DEFINE VARIABLE hProc2 AS HANDLE NO-UNDO.
+
+  /* hProc1 equals hProc2 */
+  hProc1 = THIS-PROCEDURE.
+  hProc2 = THIS-PROCEDURE:HANDLE.
+
+  MESSAGE hProc1:FILE-NAME SKIP hProc2:FILE-NAME VIEW-AS ALERT-BOX.
+                                                                                         
+Handle attribute access
+    To access a handle attribute, use the following syntax:
+
+    Syntax
+
+      widget-reference : attribute-name [ IN container-widget-name ]
+
+
+    The widget-reference is a reference to a handle-based object (see Handle-based references on page 30). The attribute-name
+    specifies the ABL-defined name of a handle-based object attribute. The container-widget-name is a name reference to
+    a static container for a static widget. You need it only if the static widget reference is ambiguous without it, as shown
+    in the following example. For more information on accessing attributes, see Accessing handle attributes and methods
+    on page 30.
+    To read an attribute value, assign the attribute value to a field or variable of a compatible data type, pass the attribute
+    as an input parameter to some procedure, function, or method, or include the attribute in an expression. To write an
+    attribute value, assign the value to the attribute or pass the attribute as an output parameter to some procedure, function,
+    or method.
+    The following example repositions a selection list (Select-1) to another row in the specified frame (SelectFrameA):
+
+      DEFINE VARIABLE Select-1 AS CHARACTER NO-UNDO
+        VIEW-AS SELECTION-LIST SIZE 50.0 BY 10.0.
+
+      DEFINE FRAME SelectFrameA Select-1.
+      DEFINE FRAME SelectFrameB Select-1.
+
+      Select-1:ROW IN FRAME SelectFrameA = Select-1:ROW + 2.
+
+
+    Note that ABL assumes that the second reference to Select-1 within the same assignment statement is in the same
+    frame that is specified for the first reference.
+
+Handle method calls
+    To invoke (execute) a handle method, use the following syntax:
+
+    Syntax
+
+      widget-reference : method-name ( [ parameter-list ] )
+        [ IN container-widget-name ]
+
+
+    The widget-reference is a reference to a handle-based object (see Handle-based references on page 30). The method-name
+    specifies the ABL-defined name of a handle method, and parameter-list specifies any parameter list for the method.
+    The container-widget-name is a name reference to a static container for a static widget. You need it only if the static
+    widget reference is ambiguous, as shown in the following example. To execute a handle method, you can assign the
+    return value directly to a variable, include the method in an expression, or directly invoke the method as a statement
+    (terminated with a period), ignoring its return value. 
+
+   The following example executes the ADD-FIRST( ) method for a selection list (Select-1) in two different
+   ways—assigning the return value to a logical variable (methRtn) and invoking it directly, without assigning a value:
+
+     DEFINE VARIABLE Select-1 AS CHARACTER NO-UNDO
+       VIEW-AS SELECTION-LIST SIZE 50.0 BY 10.0.
+     DEFINE VARIABLE methRtn AS LOGICAL    NO-UNDO.
+
+     DEFINE FRAME SelectFrameA Select-1.
+     DEFINE FRAME SelectFrameB Select-1.
+
+     methRtn = Select-1:ADD-FIRST("BLUE") IN FRAME SelectFrameA.
+     Select-1:ADD-FIRST("GREEN") IN FRAME SelectFrameB.
+
+
+
+
+Chained handle references
+   A chained handle reference has the following syntax:
+
+   Syntax
+
+     widget-reference : attribute-or-method-reference
+       [ : attribute-or-method-reference ] ...
+
+
+   A chained handle reference allows you to reference multiple object handles in a series that terminates with a final handle
+   attribute or method. The widget-reference specifies a handle-based object (see Handle-based references on page 30).
+   The attribute-or-method-reference can be any appropriate attribute or method of the referenced handle-based object
+   immediately preceding it. When you use this syntax, the middle handle attributes and methods must return a data type
+   of HANDLE in order to allow an additional handle reference in the chain, until the final handle attribute or method is
+   accessed, which can return any ABL data type.
+   The following example shows a chained handle reference (see also Widget phrase, HANDLE function):
+
+     DEFINE VARIABLE hBuff AS HANDLE NO-UNDO.
+
+     CREATE BUFFER hBuff FOR TABLE "Customer".
+     MESSAGE hBuff:BUFFER-FIELD(3):NAME.
+
+
+
+
+Widget color, font, and measurement values
+   Some entries in this section refer to color and font values (for example, BGCOLOR and FONT). These values are color
+   and font numbers established for your system. Some entries in this section also refer to character units, an ABL unit of
+   measure for specifying portable widget sizes and positions in graphical environments. For more information on color
+   and font values, or character units and their relationship to pixels, see OpenEdge Programming Interfaces.
+   Note: When you assign a decimal value to an attribute representing a measurement in character units, ABL automatically
+   rounds the assigned value to the nearest decimal value that corresponds to whole pixel units.
+
+
+Accessing COM object properties and methods
+   A COM object property is a value that defines the visible, functional, and other characteristics of a COM object (ActiveX
+   Automation object or ActiveX control). An ActiveX control property is classified as a design-time or run-time property
+    depending on when you can change it. A design-time property can be changed using the Properties Window of the
+    AppBuilder. A run-time property can be changed from ABL at run time. Generally, you can read both design-time and
+    run-time properties at run time. In all other respects, COM object properties are functionally analogous to handle
+    attributes.
+    A COM object method is a specialized function associated with a COM object that performs an action on the COM
+    object or alters the behavior of the COM object. COM object methods may or may not return a value and may or may
+    not require parameters. A return value may be a component handle to another COM object; however, many methods
+    return other types of information or no information at all. Like handle methods, you execute COM object methods by
+    calling them directly as statements rather than as part of an expression. In all other respects, COM object methods are
+    functionally analogous to handle methods.
+    The basic syntax for accessing COM object properties and methods from ABL is similar to accessing handle attributes
+    and methods. These are the main differences:
+    •   You must access a COM object property or method with reference to an instantiated COM object. ABL supports the
+        COM-HANDLE data type to provide COM object references for accessing properties and methods.
+    •   You might have to specify the parameters of COM object methods with more type information, depending on the
+        method and how the COM object is implemented.
+    •   All COM objects are dynamic objects, so you never qualify a COM object reference by a static container reference
+        (such as a static frame or menu widget).
+
+Syntax for accessing COM object properties and methods
+    This section describes the three basic types of ABL statements for accessing properties and methods.
+    •   Property write on page 34
+    •   Property read on page 34
+    •   Method call on page 35
+    Note: You can access COM object properties and methods from many other types of ABL statements that use these
+    properties and methods in a similar fashion. The following statements, however, illustrate all the basic mechanisms for
+    accessing COM objects from ABL.
+
+    Property write
+    The following syntax describes a basic assignment (=) statement for writing a COM object property:
+
+    Syntax
+
+        Com-Handle-Var :COMProperty [ AS Data-type ] = expression
+          [ NO-ERROR ]
+
+
+    Com-Handle-Var is any COM-HANDLE variable set to the handle of an instantiated COM object. COMProperty is a
+    COM object property access (see COMProperty on page 35). Data-type is any supported COM data type (see Data-type
+    on page 36) that is compatible with expression. The expression is any combination of ABL elements that results in a
+    single value. NO-ERROR allows the application to handle any ABL ERROR conditions raised by the statement.
+
+    Property read
+    The following syntax describes a basic assignment (=) statement for writing a COM object property:
+
+    Syntax
+
+        [ { field | COMProperty } = ]
+          Com-Handle-Var :COMProperty [ NO-ERROR ]
+
+
+A field is any ABL variable, database field, class-based data member or property, or handle attribute of a compatible
+data type. COMProperty is a COM object property access (see COMProperty on page 35). Com-Handle-Var is any
+COM-HANDLE variable set to the handle of an instantiated COM object. NO-ERROR allows the application to handle
+any ABL ERROR conditions raised by the statement.
+
+Method call
+The following syntax describes either a basic assignment (=) statement for invoking a COM object method that returns
+a value or the basic statement for invoking a COM object method directly that ignores any returned value:
+
+Syntax
+
+  { field } =
+    Com-Handle-Var:Method-Name( [ param [ , param ] ... ] )
+    [ NO-ERROR ]
+
+
+
+  Com-Handle-Var:Method-Name( [ param [ , param ] ... ] )
+    [ NO-ERROR ]
+
+
+field
+           Any ABL variable, database field, class-based data member or property, or handle attribute of a
+           compatible data type. This can also be a COM object property (see COMProperty on page 35).
+Com-Handle-Var
+           Any COM-HANDLE variable set to the handle of an instantiated COM object.
+Method-Name
+         The name of the method to invoke.
+param
+           The following syntax describes how to specify a parameter for a COM object method:
+
+               { [ OUTPUT | INPUT-OUTPUT ] expression [ AS Data-type ]
+                [ BY-POINTER | BY-VARIANT-POINTER ] }
+
+
+           expression
+           Can be any valid ABL expression or data element.
+           Data-type
+           A supported COM data type that is compatible with the expression. For information on COM data
+           types and on OUTPUT, INPUT-OUTPUT, BY-POINTER, and BY-VARIANT-POINTER, see Data-type
+           on page 36.
+           There is currently no support for named parameters, for example: Method-Name(Color="GREEN",
+           Shape="SQUARE").
+           If a parameter is optional you may omit it from the parameter list, but you still need to retain the comma
+           to indicate its position. For example, ComObject:ComMethod(param1,param2,,,param5).
+NO-ERROR
+       Allows the application to handle any error condition raised by the statement.
+Note: You can optionally chain COM object references.
+
+COMProperty
+The following syntax describes a COM object property access with optional chaining of COM object references:
+
+
+   Syntax
+
+     [ { COMProperty | COMMethod } : ] ...
+       Property-Name [ ( index [ , index ] ... ) ]
+
+
+   Property-Name is the name of the accessed property. The optional multi-level index is an integer expression as required
+   by the property. You must not follow the colon separator by a space.
+   Any COMProperty or COMMethod that precedes the final Property-Name must return a COM object reference that
+   provides access to the immediately following Property-Name. The final property access can return any supported COM
+   data type.
+
+   Data-type
+   The following syntax lists the supported COM data types for specifying any Data-type required for accessing a COM
+   object property or method:
+
+   Syntax
+
+     SHORT | FLOAT | CURRENCY | UNSIGNED-BYTE | ERROR-CODE | IUNKNOWN
+
+
+   The requirements for using the OUTPUT, INPUT-OUTPUT, BY-VARIANT-POINTER, BY-POINTER, and AS
+   Data-type options depend on the COM object method or property, the implementation of the COM object, and how you
+   plan to use the parameter or property in your application. In many cases, expression is all that you require for a property
+   write or method parameter. 

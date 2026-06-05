@@ -1,0 +1,126 @@
+allwaysapply=true
+
+EXTENT function
+   This function returns the size (extent) of an array field or variable as an INTEGER value. More specifically, it returns:
+   •   The number of elements for a field or variable defined as a determinate array
+   •   The Unknown value (?) for a variable defined as an indeterminate array with no size
+   •   The size that has been set for a variable defined as an indeterminate array
+   •   Zero for a field or variable that is not an array
+   Note: The EXTENT function corresponds to the EXTENT attribute.
+
+   Syntax
+
+       EXTENT ( array )
+
+
+   array
+                Any array field or variable.
+
+   Example
+   In the following example, the EXTENT function is used to set the limit of a DO loop that cycles through all elements
+   of an array:
+   r-arrext.p
+
+       DEFINE VARIABLE int_value AS INTEGER NO-UNDO EXTENT 3 INITIAL [1, 2, 3].
+       DEFINE VARIABLE ix        AS INTEGER NO-UNDO .
+       DEFINE VARIABLE tot       AS INTEGER NO-UNDO LABEL "The total is".
+
+       DO ix = 1 TO EXTENT(int_value):
+         tot = tot + int_value[ix].
+       END.
+
+       DISPLAY tot.
+
+
+
+EXTENT statement
+   Sets the number of elements for an indeterminate array. An indeterminate array must have the extent size set before
+   elements can be assigned into it. An indeterminate array can also be resized using the EXTENT statement. The EXTENT
+   statement cannot be used to set or modify the size of a determinate array.
+
+Syntax
+
+  EXTENT ( array ) = expression [ NO-ERROR ]
+
+
+array
+             An expression that results in an ABL array.
+expression
+             An INTEGER expression that evaluates to the extent value assigned to the array variable or parameter.
+             The extent value can be any number between 1 and 28000, inclusive.
+NO-ERROR
+             The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying
+             error messages.
+Note: Compound assignment operators (+=, -=, *=, /=) can be used with the EXTENT statement. For more information,
+see += Addition assignment operator on page 46, -= Subtraction assignment operator on page 52, *= Multiplication
+assignment operator on page 54, and /= Division assignment operator on page 57.
+
+Example
+The following example defines an indeterminate array variable. The size of the array variable is set multiple times using
+the EXTENT statement:
+
+  VAR CHAR[] x. // indeterminate array
+
+  MESSAGE "x has" EXTENT(x) "elements"
+    VIEW-AS ALERT-BOX. // x has ? elements
+
+  EXTENT(x) = 3. // set size to 3 elements
+  x[1] = "one".
+  x[2] = "two".
+  x[3] = "three".
+
+  MESSAGE "x has" EXTENT(x) "elements" SKIP
+    "x contains:" x[1] x[2] x[3]
+    VIEW-AS ALERT-BOX. // x has 3 elements
+                        // x contains: one two three
+
+  EXTENT(x) = 5.           //set size to 5 elements
+  x[4] = "four".
+  x[5] = "five".
+
+  MESSAGE "x has" EXTENT(x) "elements" SKIP
+    "x contains:" x[1] x[2] x[3] x[4] x[5]
+    VIEW-AS ALERT-BOX. // x has 5 elements
+                        // x contains: one two three four five
+
+  EXTENT(x) = 2.           // set size to 2 elements
+
+  MESSAGE "x has" EXTENT(x) "elements" SKIP
+    "x contains:" x[1] x[2]
+    VIEW-AS ALERT-BOX. // x has 2 elements
+                        // x contains: one two
+
+  EXTENT(x) = 0.           // compiler error
+
+  EXTENT(x) = ?.           // deallocate the array
+       MESSAGE "x has" EXTENT(x) "elements"
+         VIEW-AS ALERT-BOX. // x has ? elements
+
+
+   The following example uses the += assignment operator to add 10 elements to an indeterminate array:
+
+       VAR CHAR[] x. // indeterminate array
+
+       MESSAGE "x has" EXTENT(x) "elements"
+         VIEW-AS ALERT-BOX. // x has ? elements
+
+       EXTENT(x) = 3.          // set size of x to 3 elements
+
+       MESSAGE "x has" EXTENT(x) "elements"
+         VIEW-AS ALERT-BOX. // x has 3 elements
+
+       EXTENT(x) += 10.           // extend size of x by 10 elements
+
+       MESSAGE "x has" EXTENT(x) "elements"
+         VIEW-AS ALERT-BOX. // x has 13 elements
+
+
+   Notes
+   •   You can call the EXTENT statement to resize an indeterminate array. If expression is set to a value that is larger than
+       the original array, the existing elements are preserved, and the additional elements are initialized to the default value
+       for the datatype. If expression is set to a smaller value, the data is truncated (elements in the array beyond the new
+       size are lost).
+   •   You can also use the EXTENT statement to set the size of an indeterminate array back to its initial state (with no
+       size) by specifying the Unknown value (?) in expression.
+   •   If you call the EXTENT statement attempting to set the extent size of a determinate array variable or parameter, the
+       AVM generates a compiler error.

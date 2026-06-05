@@ -1,0 +1,11 @@
+INTERFACE IPipelineStep:
+
+    METHOD PUBLIC INTEGER getOrder().
+
+    METHOD PUBLIC CHARACTER getStepType().
+
+    METHOD PUBLIC CHARACTER getPayload().
+
+    METHOD PUBLIC CHARACTER getRawJson().
+
+END INTERFACE.

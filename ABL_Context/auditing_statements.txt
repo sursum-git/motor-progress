@@ -1,0 +1,26 @@
+AUDIT-ENABLED function
+   Determines whether a connected database is audit-enabled.
+   For information about audit-enabling a database, or creating and activating an audit policy for a database, see Introduction
+   to Security and Auditing.
+
+   Syntax
+
+       AUDIT-ENABLED( [ integer-expression | logical-name | alias ] )
+
+
+   integer-expression
+              The sequence number of a connected database to query. For example, AUDIT-ENABLED(1) queries
+              the first database, AUDIT-ENABLED(2) queries the second database, and so on. If you specify a
+              sequence number that does not correspond to a connected database, the AVM returns the Unknown
+              value (?).
+   logical-name or alias
+              The logical name or alias of a connected database to query. These forms require a quoted character
+              string or a character expression. If you specify a logical name or alias that does not correspond to a
+              connected database, the AVM returns the Unknown value (?).
+
+   Notes
+   •   If you specify a connected database, the AVM queries that database and returns TRUE if it is audit-enabled. If you
+       do not specify a database, the AVM queries all connected databases and returns TRUE if any one of the connected
+       databases is audit-enabled.
+   •   You can reference the AUDIT-ENABLED function within a preprocessor &IF expression (such as, &IF
+       AUDIT-ENABLED … &ENDIF). 

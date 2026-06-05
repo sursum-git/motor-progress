@@ -1,0 +1,42 @@
+{esbo/boMsg.i}
+
+DEFINE TEMP-TABLE ttRetorno
+    FIELD codigo    AS INT
+    FIELD descricao AS CHAR .
+
+DEFINE TEMP-TABLE ttChave
+    FIELD chave AS CHAR
+    FIELD valor  AS CHAR.
+
+PROCEDURE criarTTRetorno:
+    DEFINE INPUT  PARAMETER pDescricao   AS CHARACTER   NO-UNDO.
+    DEFINE INPUT  PARAMETER pCodigo      AS INTEGER     NO-UNDO.
+    CREATE ttRetorno.
+    ASSIGN ttRetorno.codigo     = pCodigo
+           ttRetorno.descricao  = pDescricao.
+
+
+END PROCEDURE.
+
+PROCEDURE criarTTChave:
+    DEFINE INPUT  PARAMETER pChave   AS CHARACTER   NO-UNDO.
+    DEFINE INPUT  PARAMETER pValor   AS CHARACTER   NO-UNDO.
+    CREATE ttChave.
+    ASSIGN ttchave.chave        = pChave
+           ttChave.valor        = pvalor.
+
+
+END PROCEDURE.
+
+
+PROCEDURE inserirMsgTTRet:
+    DEFINE INPUT  PARAMETER pHandle AS HANDLE      NO-UNDO.
+    DEFINE INPUT  PARAMETER cTipo   AS CHARACTER   NO-UNDO.
+    RUN getTTMsg IN pHandle(cTipo,OUTPUT TABLE ttMsg).
+    FOR EACH ttMsg:
+         RUN criarTTRetorno(ttMsg.tipo  + '-' +  ttMsg.descricao ,ttMsg.cod ).  
+    END.
+
+
+
+END PROCEDURE.

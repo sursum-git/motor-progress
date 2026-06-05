@@ -1,0 +1,1220 @@
+&ANALYZE-SUSPEND _VERSION-NUMBER UIB_v8r12 GUI ADM1
+&ANALYZE-RESUME
+&Scoped-define WINDOW-NAME w-livre
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _DEFINITIONS w-livre 
+/*:T *******************************************************************************
+** Copyright DATASUL S.A. (1997)
+** Todos os Direitos Reservados.
+**
+** Este fonte e de propriedade exclusiva da DATASUL, sua reproducao
+** parcial ou total por qualquer meio, so podera ser feita mediante
+** autorizacao expressa.
+*******************************************************************************/
+{include/i-prgvrs.i RELPP003 1.00.00.001}
+
+/* Create an unnamed pool to store all the widgets created 
+     by this procedure. This is a good default which assures
+     that this procedure's triggers and internal procedures 
+     will execute in this procedure's storage, and that proper
+     cleanup will occur on deletion of the procedure. */
+
+CREATE WIDGET-POOL.
+
+/* ***************************  Definitions  ************************** */
+
+/* Parameters Definitions ---                                           */
+
+/* Local Variable Definitions ---                                       */
+
+DEFINE TEMP-TABLE tt
+    FIELD nrContainer       LIKE pp-container.nr-container
+    FIELD NomeFornec        LIKE pp-container.nome-ab-Forn
+    FIELD dtCompra          LIKE pp-container.dt-compra
+    FIELD dtPrevChegada     LIKE pp-container.dt-prev-chegada
+    FIELD dtRecebimento     LIKE pp-container.dt-recebimento
+    FIELD dtReg             AS DATE
+    FIELD situacao          AS CHAR FORMAT 'x(20)'
+    FIELD itCodigo          LIKE pp-it-container.it-codigo
+    FIELD descItem          AS  CHAR FORMAT 'x(100)'
+    FIELD codRefer          LIKE pp-it-container.cod-refer
+    FIELD tipoReg           AS CHAR
+    FIELD quantidade        AS DECIMAL FORMAT '>>>,>>>,>>>,>>9.99'
+    FIELD sitPed            AS CHAR FORMAT 'x(20)'
+    FIELD dtCancelamento    LIKE ped-item.dt-canseq
+    FIELD dtHrGeracao       AS CHAR FORMAT 'x(20)'
+    FIELD codEmitente       AS INT
+    FIELD nomeEmitente      AS CHAR FORMAT 'x(20)'
+    FIELD nomeRepres        LIKE ped-venda.nome-abrev 
+    FIELD sitContainer      AS CHAR FORMAT 'x(50)'
+    FIELD tipoMostruario    AS CHAR FORMAT 'x(50)'
+    FIELD precoUnitario     AS DECIMAL
+    FIELD valorTotal        AS DECIMAL
+    FIELD desconto          AS DECIMAL
+    FIELD nrPedido          AS INT
+    FIELD moeda             AS CHAR
+    FIELD precoReal         AS DECIMAL
+    FIELD precoDolar        AS DECIMAL
+    FIELD versao            LIKE plan_vendas.cod_versao.
+        
+DEFINE TEMP-TABLE ttContainer
+    FIELD nrContainer       AS INT
+    FIELD situacao          AS CHAR FORMAT 'x(50)'
+    FIELD tipoMostruario    AS CHAR FORMAT 'x(50)'
+    FIELD itCodigo          AS CHAR
+    FIELD precoDolar        AS DECIMAL
+    FIELD precoReal         AS DECIMAL.
+
+DEFINE TEMP-TABLE ttPontos
+    FIELD idPonto        AS INT
+    FIELD descPonto      AS CHAR FORMAT 'x(100)'.
+
+DEFINE VARIABLE dtGeracao           AS DATETIME    NO-UNDO INIT NOW.
+DEFINE VARIABLE cListaSituacao      AS CHARACTER   NO-UNDO INIT '1'.
+DEFINE VARIABLE cListaPedidos       AS CHARACTER   NO-UNDO FORMAT 'x(4000)'.
+DEFINE VARIABLE cListaSitContainer  AS CHARACTER   NO-UNDO INIT 'Aberto,Suspenso,Fechado'.
+DEFINE VARIABLE cListaVersao        AS CHARACTER   NO-UNDO FORMAT 'x(40000)'.
+DEFINE VARIABLE novaVersao          AS INTEGER     NO-UNDO.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-PREPROCESSOR-BLOCK 
+
+/* ********************  Preprocessor Definitions  ******************** */
+
+&Scoped-define PROCEDURE-TYPE w-livre
+&Scoped-define DB-AWARE no
+
+&Scoped-define ADM-CONTAINER WINDOW
+
+/* Name of designated FRAME-NAME and/or first browse and/or first query */
+&Scoped-define FRAME-NAME f-cad
+
+/* Standard List Definitions                                            */
+&Scoped-Define ENABLED-OBJECTS rt-button RECT-1 fiNrContainerIni ~
+fiNrContainerFim tgAberto RADIO-SET-1 sl_versao tgAberto-2 btExcel 
+&Scoped-Define DISPLAYED-OBJECTS fiNrContainerIni fiNrContainerFim tgAberto ~
+RADIO-SET-1 sl_versao tgAberto-2 
+
+/* Custom List Definitions                                              */
+/* List-1,List-2,List-3,List-4,List-5,List-6                            */
+
+/* _UIB-PREPROCESSOR-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+/* ***********************  Control Definitions  ********************** */
+
+/* Define the widget handle for the window                              */
+DEFINE VAR w-livre AS WIDGET-HANDLE NO-UNDO.
+
+/* Menu Definitions                                                     */
+DEFINE SUB-MENU mi-programa 
+       MENU-ITEM mi-consultas   LABEL "Co&nsultas"     ACCELERATOR "CTRL-L"
+       MENU-ITEM mi-imprimir    LABEL "&Relat¢rios"    ACCELERATOR "CTRL-P"
+       RULE
+       MENU-ITEM mi-sair        LABEL "&Sair"          ACCELERATOR "CTRL-X".
+
+DEFINE SUB-MENU m_Ajuda 
+       MENU-ITEM mi-conteudo    LABEL "&Conteudo"     
+       MENU-ITEM mi-sobre       LABEL "&Sobre..."     .
+
+DEFINE MENU m-livre MENUBAR
+       SUB-MENU  mi-programa    LABEL "&Nome-do-Programa"
+       SUB-MENU  m_Ajuda        LABEL "&Ajuda"        .
+
+
+/* Definitions of handles for SmartObjects                              */
+DEFINE VARIABLE h_p-exihel AS HANDLE NO-UNDO.
+
+/* Definitions of the field level widgets                               */
+DEFINE BUTTON btExcel 
+     LABEL "Excel" 
+     SIZE 12 BY 1.25.
+
+DEFINE VARIABLE fiNrContainerFim AS INTEGER FORMAT ">>>>>9":U INITIAL 999999 
+     LABEL "AtÇ" 
+     VIEW-AS FILL-IN 
+     SIZE 14 BY 1 NO-UNDO.
+
+DEFINE VARIABLE fiNrContainerIni AS INTEGER FORMAT ">>>>>9":U INITIAL 0 
+     LABEL "Container de" 
+     VIEW-AS FILL-IN 
+     SIZE 14 BY 1 NO-UNDO.
+
+DEFINE VARIABLE RADIO-SET-1 AS INTEGER 
+     VIEW-AS RADIO-SET HORIZONTAL
+     RADIO-BUTTONS 
+          "Geraá∆o On-line", 1,
+"Utilizar vers∆o existente", 2
+     SIZE 50 BY 1.25 NO-UNDO.
+
+DEFINE RECTANGLE RECT-1
+     EDGE-PIXELS 2 GRAPHIC-EDGE  NO-FILL   
+     SIZE 52.72 BY 8.17.
+
+DEFINE RECTANGLE rt-button
+     EDGE-PIXELS 2 GRAPHIC-EDGE    
+     SIZE 63 BY 1.46
+     BGCOLOR 7 .
+
+DEFINE VARIABLE sl_versao AS CHARACTER 
+     VIEW-AS SELECTION-LIST MULTIPLE SORT SCROLLBAR-VERTICAL 
+     SIZE 47.57 BY 4.25 NO-UNDO.
+
+DEFINE VARIABLE tgAberto AS LOGICAL INITIAL yes 
+     LABEL "Apenas Container's em Aberto" 
+     VIEW-AS TOGGLE-BOX
+     SIZE 37.14 BY .83 NO-UNDO.
+
+DEFINE VARIABLE tgAberto-2 AS LOGICAL INITIAL no 
+     LABEL "Gerar Nova Vers∆o" 
+     VIEW-AS TOGGLE-BOX
+     SIZE 37.14 BY .83 NO-UNDO.
+
+
+/* ************************  Frame Definitions  *********************** */
+
+DEFINE FRAME f-cad
+     fiNrContainerIni AT ROW 3.5 COL 15.57 COLON-ALIGNED WIDGET-ID 4
+     fiNrContainerFim AT ROW 3.5 COL 37.57 COLON-ALIGNED WIDGET-ID 6
+     tgAberto AT ROW 4.75 COL 5.57 WIDGET-ID 8
+     RADIO-SET-1 AT ROW 6.92 COL 6.57 NO-LABEL WIDGET-ID 10
+     sl_versao AT ROW 8.29 COL 7 NO-LABEL WIDGET-ID 38
+     tgAberto-2 AT ROW 12.67 COL 7.57 WIDGET-ID 40
+     btExcel AT ROW 14 COL 4.57 WIDGET-ID 2
+     "Vers∆o" VIEW-AS TEXT
+          SIZE 8.43 BY .96 AT ROW 5.83 COL 6 WIDGET-ID 18
+     rt-button AT ROW 1 COL 1
+     RECT-1 AT ROW 5.63 COL 4.86 WIDGET-ID 16
+    WITH 1 DOWN NO-BOX KEEP-TAB-ORDER OVERLAY 
+         SIDE-LABELS NO-UNDERLINE THREE-D 
+         AT COL 1 ROW 1
+         SIZE 63.29 BY 14.75 WIDGET-ID 100.
+
+
+/* *********************** Procedure Settings ************************ */
+
+&ANALYZE-SUSPEND _PROCEDURE-SETTINGS
+/* Settings for THIS-PROCEDURE
+   Type: w-livre
+   Allow: Basic,Browse,DB-Fields,Smart,Window,Query
+   Container Links: 
+   Add Fields to: Neither
+   Other Settings: COMPILE
+ */
+&ANALYZE-RESUME _END-PROCEDURE-SETTINGS
+
+/* *************************  Create Window  ************************** */
+
+&ANALYZE-SUSPEND _CREATE-WINDOW
+IF SESSION:DISPLAY-TYPE = "GUI":U THEN
+  CREATE WINDOW w-livre ASSIGN
+         HIDDEN             = YES
+         TITLE              = "Template Livre <Insira complemento>"
+         HEIGHT             = 14.71
+         WIDTH              = 63.72
+         MAX-HEIGHT         = 27.5
+         MAX-WIDTH          = 195.14
+         VIRTUAL-HEIGHT     = 27.5
+         VIRTUAL-WIDTH      = 195.14
+         RESIZE             = yes
+         SCROLL-BARS        = no
+         STATUS-AREA        = yes
+         BGCOLOR            = ?
+         FGCOLOR            = ?
+         THREE-D            = yes
+         MESSAGE-AREA       = no
+         SENSITIVE          = yes.
+ELSE {&WINDOW-NAME} = CURRENT-WINDOW.
+
+ASSIGN {&WINDOW-NAME}:MENUBAR    = MENU m-livre:HANDLE.
+/* END WINDOW DEFINITION                                                */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _INCLUDED-LIB w-livre 
+/* ************************* Included-Libraries *********************** */
+
+{src/adm/method/containr.i}
+{include/w-livre.i}
+{utp/ut-glob.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+
+
+/* ***********  Runtime Attributes and AppBuilder Settings  *********** */
+
+&ANALYZE-SUSPEND _RUN-TIME-ATTRIBUTES
+/* SETTINGS FOR WINDOW w-livre
+  VISIBLE,,RUN-PERSISTENT                                               */
+/* SETTINGS FOR FRAME f-cad
+   FRAME-NAME L-To-R                                                    */
+IF SESSION:DISPLAY-TYPE = "GUI":U AND VALID-HANDLE(w-livre)
+THEN w-livre:HIDDEN = yes.
+
+/* _RUN-TIME-ATTRIBUTES-END */
+&ANALYZE-RESUME
+
+ 
+
+
+
+/* ************************  Control Triggers  ************************ */
+
+&Scoped-define SELF-NAME w-livre
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL w-livre w-livre
+ON END-ERROR OF w-livre /* Template Livre <Insira complemento> */
+OR ENDKEY OF {&WINDOW-NAME} ANYWHERE DO:
+  /* This case occurs when the user presses the "Esc" key.
+     In a persistently run window, just ignore this.  If we did not, the
+     application would exit. */
+  RETURN NO-APPLY.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL w-livre w-livre
+ON WINDOW-CLOSE OF w-livre /* Template Livre <Insira complemento> */
+DO:
+  /* This ADM code must be left here in order for the SmartWindow
+     and its descendents to terminate properly on exit. */
+  APPLY "CLOSE":U TO THIS-PROCEDURE.
+  RETURN NO-APPLY.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME btExcel
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL btExcel w-livre
+ON CHOOSE OF btExcel IN FRAME f-cad /* Excel */
+DO:
+  EMPTY TEMP-TABLE tt.
+  RUN buscarBDContainer.
+  ASSIGN btExcel:LABEL IN FRAME {&FRAME-NAME} = 'Processando...'
+         btExcel:SENSITIVE IN FRAME {&FRAME-NAME} = NO. 
+
+   IF tgAberto-2:SCREEN-VALUE = 'yes' THEN DO:
+
+      ASSIGN novaVersao = NEXT-VALUE(sq_plan_vendas).
+
+      CREATE plan_vendas_versao.
+
+      ASSIGN plan_vendas_versao.cod_versao = novaVersao
+        plan_vendas_versao.data_hora_geracao = NOW
+        plan_vendas_versao.usuario_geracao = c-seg-usuario.
+
+  END.
+
+  ELSE DO:
+
+      IF radio-set-1:SCREEN-VALUE = '1' THEN
+          ASSIGN novaVersao = 0.
+
+  END.
+
+  RUN buscarRegSaldoPI(INPUT FRAME {&FRAME-NAME} fiNrContainerIni,INPUT FRAME {&FRAME-NAME} fiNrContainerFim).
+  RUN buscarPedidosPI(INPUT FRAME {&FRAME-NAME} fiNrContainerIni,INPUT FRAME {&FRAME-NAME} fiNrContainerFim, OUTPUT cListaPedidos).
+  RUN buscarRegPedidosPI(cListaPedidos).
+  
+  IF tgAberto-2:SCREEN-VALUE = 'yes' THEN DO:
+
+      RUN pi-criar-versao.
+
+  END.
+
+  RUN gerarTxt.
+
+  ASSIGN btExcel:LABEL IN FRAME {&FRAME-NAME} = 'Excel'
+         btExcel:SENSITIVE IN FRAME {&FRAME-NAME} = YES.
+
+
+  IF NUM-ENTRIES (sl_versao:SCREEN-VALUE IN FRAME {&FRAME-NAME}) > 1 THEN 
+      OS-COMMAND SILENT 'START EXCEL /N M:\EMS206\ESP\EXCEL\RELPP001EXCEL_VERSAO.XLS'.
+  ELSE
+      OS-COMMAND SILENT 'START EXCEL /N M:\EMS206\ESP\EXCEL\RELPP001EXCEL.XLS'.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME mi-consultas
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL mi-consultas w-livre
+ON CHOOSE OF MENU-ITEM mi-consultas /* Consultas */
+DO:
+  RUN pi-consulta IN h_p-exihel.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME mi-conteudo
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL mi-conteudo w-livre
+ON CHOOSE OF MENU-ITEM mi-conteudo /* Conteudo */
+OR HELP OF FRAME {&FRAME-NAME}
+DO:
+  RUN pi-ajuda IN h_p-exihel.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME mi-imprimir
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL mi-imprimir w-livre
+ON CHOOSE OF MENU-ITEM mi-imprimir /* Relat¢rios */
+DO:
+  RUN pi-imprimir IN h_p-exihel.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME mi-programa
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL mi-programa w-livre
+ON MENU-DROP OF MENU mi-programa /* Nome-do-Programa */
+DO:
+  run pi-disable-menu.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME mi-sair
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL mi-sair w-livre
+ON CHOOSE OF MENU-ITEM mi-sair /* Sair */
+DO:
+  RUN pi-sair IN h_p-exihel.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME mi-sobre
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL mi-sobre w-livre
+ON CHOOSE OF MENU-ITEM mi-sobre /* Sobre... */
+DO:
+  {include/sobre.i}
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME RADIO-SET-1
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL RADIO-SET-1 w-livre
+ON VALUE-CHANGED OF RADIO-SET-1 IN FRAME f-cad
+DO:
+  IF RADIO-SET-1:SCREEN-VALUE = '2' THEN DO:
+      FIND FIRST pp-container 
+      WHERE pp-container.situacao = 1 NO-LOCK NO-ERROR.
+      IF AVAIL pp-container THEN
+      ASSIGN fiNrContainerIni:SCREEN-VALUE = STRING(pp-container.nr-container).
+   /* Code placed here will execute AFTER standard behavior.    */
+
+     ASSIGN cListaVersao = ''.
+     FOR EACH plan_vendas_versao NO-LOCK:
+       IF cListaVersao = '' THEN
+           ASSIGN cListaVersao = STRING (plan_vendas_versao.data_hora_geracao, '99/99/99 hh:mm:ss') + "," + string(plan_vendas_versao.cod_versao).
+       ELSE
+           ASSIGN cListaVersao = cListaVersao + "," + STRING (plan_vendas_versao.data_hora_geracao, '99/99/99 hh:mm:ss') + "," + string(plan_vendas_versao.cod_versao).
+     END.
+
+   /*ASSIGN  cListaVersao = '12/01/2014 08:00,1, 18/01/2014 09:00,2'.*/
+   IF clistaVersao = '' THEN DO:
+      ASSIGN cListaVersao = 'N∆o Existem Vers‰es,0'.
+      sl_versao:SENSITIVE  = NO.
+      ASSIGN tgAberto-2:SCREEN-VALUE = 'no'.
+      ASSIGN tgAberto-2:SENSITIVE = no.
+   END.
+   ELSE DO: 
+      sl_versao:SENSITIVE  = YES.
+      ASSIGN tgAberto-2:SCREEN-VALUE = 'no'.
+      ASSIGN tgAberto-2:SENSITIVE = no.
+   END.
+      
+   
+   /* Code placed here will execute AFTER standard behavior.    */
+
+
+  END.
+  ELSE DO:
+     ASSIGN cListaVersao = ',0'.
+     sl_versao:SENSITIVE  = NO.
+     ASSIGN tgAberto-2:SENSITIVE = YES.
+  END.
+  ASSIGN  sl_versao:list-item-pairs  = cListaVersao.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME sl_versao
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL sl_versao w-livre
+ON F8 OF sl_versao IN FRAME f-cad
+DO:
+  MESSAGE sl_versao:SCREEN-VALUE
+      VIEW-AS ALERT-BOX INFO BUTTONS OK.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME tgAberto
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL tgAberto w-livre
+ON VALUE-CHANGED OF tgAberto IN FRAME f-cad /* Apenas Container's em Aberto */
+DO:
+  IF INPUT FRAME  {&frame-name} tgAberto  = YES THEN
+     ASSIGN cListaSituacao = '1'.
+  ELSE
+     ASSIGN cListaSituacao = '1,2,3'.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&Scoped-define SELF-NAME tgAberto-2
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CONTROL tgAberto-2 w-livre
+ON VALUE-CHANGED OF tgAberto-2 IN FRAME f-cad /* Gerar Nova Vers∆o */
+DO:
+  IF INPUT FRAME  {&frame-name} tgAberto  = YES THEN
+     ASSIGN cListaSituacao = '1'.
+  ELSE
+     ASSIGN cListaSituacao = '1,2,3'.
+END.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+&UNDEFINE SELF-NAME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _CUSTOM _MAIN-BLOCK w-livre 
+
+
+/* ***************************  Main Block  *************************** */
+
+/* Include custom  Main Block code for SmartWindows. */
+{src/adm/template/windowmn.i}
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+
+/* **********************  Internal Procedures  *********************** */
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE adm-create-objects w-livre  _ADM-CREATE-OBJECTS
+PROCEDURE adm-create-objects :
+/*------------------------------------------------------------------------------
+  Purpose:     Create handles for all SmartObjects used in this procedure.
+               After SmartObjects are initialized, then SmartLinks are added.
+  Parameters:  <none>
+------------------------------------------------------------------------------*/
+  DEFINE VARIABLE adm-current-page  AS INTEGER NO-UNDO.
+
+  RUN get-attribute IN THIS-PROCEDURE ('Current-Page':U).
+  ASSIGN adm-current-page = INTEGER(RETURN-VALUE).
+
+  CASE adm-current-page: 
+
+    WHEN 0 THEN DO:
+       RUN init-object IN THIS-PROCEDURE (
+             INPUT  'panel/p-exihel.w':U ,
+             INPUT  FRAME f-cad:HANDLE ,
+             INPUT  'Edge-Pixels = 2,
+                     SmartPanelType = NAV-ICON,
+                     Right-to-Left = First-On-Left':U ,
+             OUTPUT h_p-exihel ).
+       RUN set-position IN h_p-exihel ( 1.13 , 47.72 ) NO-ERROR.
+       /* Size in UIB:  ( 1.25 , 16.00 ) */
+
+       /* Links to SmartPanel h_p-exihel. */
+       RUN add-link IN adm-broker-hdl ( h_p-exihel , 'State':U , THIS-PROCEDURE ).
+
+       /* Adjust the tab order of the smart objects. */
+       RUN adjust-tab-order IN adm-broker-hdl ( h_p-exihel ,
+             fiNrContainerIni:HANDLE IN FRAME f-cad , 'BEFORE':U ).
+    END. /* Page 0 */
+
+  END CASE.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE adm-row-available w-livre  _ADM-ROW-AVAILABLE
+PROCEDURE adm-row-available :
+/*------------------------------------------------------------------------------
+  Purpose:     Dispatched to this procedure when the Record-
+               Source has a new row available.  This procedure
+               tries to get the new row (or foriegn keys) from
+               the Record-Source and process it.
+  Parameters:  <none>
+------------------------------------------------------------------------------*/
+
+  /* Define variables needed by this internal procedure.             */
+  {src/adm/template/row-head.i}
+
+  /* Process the newly available records (i.e. display fields,
+     open queries, and/or pass records on to any RECORD-TARGETS).    */
+  {src/adm/template/row-end.i}
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE buscarBDContainer w-livre 
+PROCEDURE buscarBDContainer :
+EMPTY TEMP-TABLE ttContainer.
+/*INPUT FROM m:\ems206\esp\excel\BDContainer.csv. */
+INPUT FROM 'I:\3-Planilhas\excel\BDContainer.csv'.
+    DEFINE VARIABLE i AS INTEGER     NO-UNDO.
+    DEFINE VARIABLE cLinha AS CHARACTER   NO-UNDO FORMAT 'x(100)'.
+    REPEAT:
+        ASSIGN i = i + 1.
+        IMPORT UNFORMAT cLinha.
+        /*MESSAGE clinha
+            VIEW-AS ALERT-BOX INFO BUTTONS OK.*/
+        IF SUBSTR(cLinha,1,1) <> 'C' AND NUM-ENTRIES(cLinha,";") >= 6  THEN DO:
+           CREATE ttContainer.
+           ASSIGN  ttContainer.nrContainer    = INT(ENTRY(1,cLinha,";"))
+                   ttContainer.situacao       = ENTRY(2,cLinha,";") 
+                   ttContainer.tipoMostruario = ENTRY(3,cLinha,";")
+                   ttContainer.itCodigo       = ENTRY(4,cLinha,";")
+                   ttContainer.precoDolar     = dec(ENTRY(5,cLinha,";"))
+                   ttContainer.precoReal      = dec(ENTRY(6,cLinha,";")).
+        END.
+    END.    
+
+    /*FOR EACH ttContainer:
+        MESSAGE ttContainer.nrContainer SKIP
+                ttContainer.itCodigo  
+            VIEW-AS ALERT-BOX INFO BUTTONS OK.
+    END.*/
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE buscarPedidosPI w-livre 
+PROCEDURE buscarPedidosPI :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DEFINE INPUT  PARAMETER iNrContainerIni AS INTEGER     NO-UNDO.
+DEFINE INPUT  PARAMETER iNrContainerFim AS INTEGER     NO-UNDO.
+DEFINE OUTPUT PARAMETER cListaPedidos   AS CHARACTER   NO-UNDO FORMAT 'x(4000)'.
+FOR EACH ped-venda-ext NO-LOCK
+    WHERE ped-venda-ext.nr-container >= iNrContainerIni
+    AND   ped-venda-ext.nr-container <= iNrContainerFim:
+    IF INPUT FRAME {&FRAME-NAME} tgAberto  = YES THEN DO:
+       FIND FIRST pp-container
+           WHERE pp-container.nr-container = ped-venda-ext.nr-container
+           AND   LOOKUP(STRING(pp-container.situacao),cListaSituacao,',') > 0
+           NO-LOCK NO-ERROR.
+       IF NOT AVAIL pp-container THEN NEXT.
+    END.
+    ASSIGN cListaPedidos = IF cListaPedidos = '' 
+                           THEN STRING(ped-venda-ext.nr-pedido) ELSE cListaPedidos
+                            + ',' 
+                            + STRING(ped-venda-ext.nr-pedido).  
+
+END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE buscarRegPedidosPI w-livre 
+PROCEDURE buscarRegPedidosPI :
+{utp/ut-glob.i}
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DEFINE INPUT  PARAMETER cListaPedidos AS CHARACTER   NO-UNDO FORMAT 'x(4000)'.
+OUTPUT TO c:\temp\ttcontainer.txt.
+FOR EACH ttContainer:
+    DISP ttContainer WITH WIDTH 550.
+END.
+OUTPUT CLOSE.
+
+OUTPUT TO value("c:\temp\PERFORMANCE.txt").
+
+IF radio-set-1:SCREEN-VALUE IN FRAME {&FRAME-NAME} = '2' THEN DO:
+
+    FOR EACH plan_vendas NO-LOCK WHERE 
+        LOOKUP(string(plan_vendas.cod_versao),sl_versao:SCREEN-VALUE IN FRAME {&FRAME-NAME}) > 0 :
+             
+        
+        IF plan_vendas.tipo_registro = 1 THEN DO:
+
+            CREATE tt.
+    
+            ASSIGN tt.nrContainer      = plan_vendas.nr_container
+                tt.NomeFornec          = ''                                                     
+                tt.dtCompra            = plan_vendas.dt_compra                                              
+                tt.dtPrevChegada       = plan_vendas.dt_prev_chegada                                        
+                tt.dtRecebimento       = plan_vendas.dt_recebimento                             
+                tt.dtReg               = 12/31/9999                                             
+                tt.situacao            = plan_vendas.status_container                           
+                tt.itCodigo            = plan_vendas.it_codigo                                              
+                tt.codRefer            = plan_vendas.cod_refer                                             
+                tt.tipoReg             = 'venda' 
+                tt.quantidade          = plan_vendas.quantidade                                         
+                tt.codEmitente         = plan_vendas.cod_emitente                                       
+                tt.nomeRepres          = plan_vendas.nome_repres                                            
+                tt.tipoMostruario      = plan_vendas.tipo_mostruario                                        
+                tt.precoDolar          = plan_vendas.preco_dolar                                            
+                tt.precoReal           = plan_vendas.preco_real                                             
+                tt.precoUnitario       = plan_vendas.preco_unitario                                         
+                tt.desconto            = plan_vendas.desconto                                               
+                tt.valorTotal          = plan_vendas.preco_total                                            
+                tt.nrPedido            = plan_vendas.nr_pedido                                                                       
+                tt.dtHrGeracao         = ''
+                tt.versao              = plan_vendas.cod_versao
+                tt.dtCancelamento      = plan_vendas.dt-cancela.                                                
+                                                                                                                   
+            FIND FIRST ITEM WHERE ITEM.it-codigo = tt.itCodigo NO-ERROR.                                           
+            IF AVAIL ITEM THEN                                                                                              
+                ASSIGN tt.descItem = ITEM.desc-item.                                                                        
+            ELSE                                                                                                            
+                ASSIGN tt.descItem = ''.                                                                                    
+                                                                                                                            
+            FIND FIRST emitente WHERE emitente.cod-emitente = tt.codEmitente NO-ERROR.                                      
+            IF AVAIL emitente THEN                                                                                          
+                ASSIGN tt.nomeEmitente = emitente.nome-abrev.                                                               
+            ELSE                                                                                                            
+                ASSIGN tt.nomeEmitente = ''.                                                                                
+    
+            FIND FIRST ttContainer WHERE ttContainer.nrContainer = tt.nrContainer NO-ERROR.
+            IF AVAIL ttContainer THEN
+                ASSIGN tt.sitContainer = ttContainer.situacao.
+            ELSE 
+                ASSIGN tt.sitContainer = ''.
+
+            IF plan_vendas.situacao_item = 1 THEN
+                ASSIGN tt.sitPed = 'aberto'.
+            ELSE IF plan_vendas.situacao_item = 2 THEN
+                ASSIGN tt.sitPed = 'atendido parcial'.
+            ELSE IF plan_vendas.situacao_item = 3 THEN
+                ASSIGN tt.sitPed = 'atendido total'.
+            ELSE IF plan_vendas.situacao_item = 4 THEN
+                ASSIGN tt.sitPed = 'pendente'.
+            ELSE IF plan_vendas.situacao_item = 5 THEN
+                ASSIGN tt.sitPed = 'suspenso'.
+            ELSE IF plan_vendas.situacao_item = 6 THEN
+                ASSIGN tt.sitPed = 'cancelado'.
+            ELSE IF plan_vendas.situacao_item = 7 THEN
+                ASSIGN tt.sitPed = 'fatur balc∆o'.
+        
+            IF plan_vendas.moeda_pedido = 0 THEN
+                ASSIGN tt.moeda = "real".
+            ELSE IF plan_vendas.moeda_pedido = 1 THEN
+                ASSIGN tt.moeda = "dolar compra". 
+            ELSE IF plan_vendas.moeda_pedido = 2 THEN
+                ASSIGN tt.moeda = "ufir patrim".
+            ELSE IF plan_vendas.moeda_pedido = 3 THEN
+                ASSIGN tt.moeda = "dolar venda".
+        END.
+    END.
+END.
+
+ELSE DO:
+    FOR EACH ped-venda NO-LOCK
+        WHERE ped-venda.tp-pedido = 'pi'
+        AND   lookup(string(ped-venda.nr-pedido),cListaPedidos,',')> 0:
+        PUT 'inicio ped-venda:' ped-venda.nr-pedido " " NOW  SKIP.
+        FIND FIRST ped-venda-ext
+            WHERE ped-venda-ext.nr-pedido = ped-venda.nr-pedido
+            NO-LOCK NO-ERROR.
+        PUT 'apos ped-venda-ext:' NOW SKIP.
+        FIND FIRST pp-container 
+            WHERE pp-container.nr-container  = ped-venda-ext.nr-container
+            AND   lookup(string(pp-container.situacao),cListaSituacao,',') > 0
+            NO-LOCK NO-ERROR.
+        PUT 'apos pp-container:' NOW SKIP.
+        IF NOT AVAIL pp-container THEN NEXT.
+        FIND FIRST emitente WHERE emitente.cod-emitente = ped-venda.cod-emitente NO-LOCK NO-ERROR.
+        PUT 'apos emitente:' NOW SKIP.
+        FIND FIRST ems2med.moeda OF ped-venda NO-LOCK NO-ERROR.
+        PUT 'apos moeda:' NOW SKIP.
+        FOR EACH ped-item OF ped-venda NO-LOCK:
+            PUT 'inicio ped-item:' ped-item.it-codigo " "  NOW SKIP.
+            FIND FIRST ttContainer
+            WHERE ttContainer.nrContainer = ped-venda-ext.nr-container
+            AND   ttContainer.itCodigo    = ped-item.it-codigo NO-ERROR.
+            PUT 'inicio ped-item:' NOW  SKIP.
+            FIND FIRST ITEM OF ped-item NO-LOCK NO-ERROR.
+            CREATE  tt.
+            ASSIGN  tt.nrContainer   =  IF AVAIL pp-container THEN pp-Container.nr-container     ELSE 0
+                    tt.NomeFornec    =  IF AVAIL pp-container THEN pp-container.nome-ab-forn     ELSE ''
+                    tt.dtCompra      =  IF AVAIL pp-container THEN pp-container.dt-compra        ELSE ?
+                    tt.dtPrevChegada =  IF AVAIL pp-container THEN pp-container.dt-prev-chegada  ELSE ?
+                    tt.dtRecebimento =  IF AVAIL pp-container THEN pp-container.dt-recebimento   ELSE ?
+                    tt.dtReg         =  ped-venda.dt-implant.
+                    IF AVAIL pp-container THEN 
+                       ASSIGN tt.situacao      =  ENTRY(pp-container.situacao,cListaSitContainer,",").
+            ASSIGN 
+                    tt.itCodigo      =  ped-item.it-codigo 
+                    tt.descItem      =  IF AVAIL ITEM THEN ITEM.desc-item ELSE ''                                                     
+                    tt.codRefer      =  ped-item.cod-refer 
+                    tt.tipoReg       =  'venda'
+                    tt.quantidade    =  ped-item.qt-pedida * -1 .
+
+            RUN retornarSitItem(ped-item.cod-sit-item,OUTPUT tt.sitPed).
+
+            ASSIGN 
+                    tt.dtHrGeracao      =  string(dtGeracao,'99/99/9999 hh:mm:ss')
+                    tt.codEmitente      = ped-venda.cod-emitente
+                    tt.nomeRepres       = ped-venda.no-ab-reppri
+                    tt.nomeEmitente     = IF AVAIL emitente    THEN emitente.nome-abrev ELSE ''
+                    tt.sitContainer     = IF AVAIL ttContainer THEN ttContainer.situacao ELSE ''
+                    tt.tipoMostruario   = IF AVAIL ttContainer THEN ttContainer.tipoMostruario ELSE '' 
+                    tt.precoDolar       = IF AVAIL ttContainer THEN ttContainer.precoDolar ELSE 0
+                    tt.precoReal        = IF AVAIL ttContainer THEN ttContainer.precoReal  ELSE 0
+                    tt.precoUnitario    = ped-item.vl-preuni
+                    tt.desconto         = ped-item.val-desconto-total
+                    tt.valorTotal       = ped-item.vl-tot-it
+                    tt.nrPedido         = ped-venda.nr-pedido
+                    tt.moeda            = IF AVAIL moeda THEN moeda.descricao ELSE ''
+                    tt.versao           = novaVersao
+                    tt.dtCancelamento   = ped-item.dt-canseq.
+        END.
+    END.
+
+    /*EMPTY TEMP-TABLE ttPontos.
+    
+    FOR EACH pto-itiner NO-LOCK.
+        FIND FIRST pto-contr OF pto-itiner NO-LOCK NO-ERROR.
+        CREATE ttPontos.
+        ASSIGN ttPontos.idPonto     = pto-itiner.cod-pto-contr
+               ttPontos.descPonto   = pto-contr.descricao.
+    END.*/
+    
+END.    
+OUTPUT CLOSE.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE buscarRegSaldoPI w-livre 
+PROCEDURE buscarRegSaldoPI :
+{utp/ut-glob.i}
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DEFINE INPUT  PARAMETER iNrContainerIni AS INTEGER     NO-UNDO.
+DEFINE INPUT  PARAMETER iNrContainerFim AS INTEGER     NO-UNDO.
+
+IF radio-set-1:SCREEN-VALUE IN FRAME {&FRAME-NAME} = '2' THEN DO:
+
+    FOR EACH plan_vendas NO-LOCK WHERE
+        LOOKUP(string(plan_vendas.cod_versao),sl_versao:SCREEN-VALUE IN FRAME {&FRAME-NAME}) > 0 :
+
+        IF plan_vendas.tipo_registro = 2 THEN DO:
+
+            CREATE tt.
+
+            /*FIND FIRST ttContainer
+                WHERE ttContainer.nrContainer = tt.nrContainer
+                AND   ttContainer.itCodigo    = tt.itCodigo
+                NO-LOCK NO-ERROR.*/
+
+            ASSIGN tt.nrContainer  = plan_vendas.nr_container
+               tt.dtCompra         = plan_vendas.dt_compra
+               tt.dtPrevChegada    = plan_vendas.dt_prev_chegada
+               tt.dtRecebimento    = plan_vendas.dt_recebimento
+               tt.dtReg            = 12/31/9999
+               tt.situacao         = plan_vendas.status_container
+               tt.itCodigo         = plan_vendas.it_codigo
+               tt.codRefer         = plan_vendas.cod_refer
+               tt.tipoReg          = 'estoque'
+               tt.quantidade       = plan_vendas.quantidade
+               tt.sitPed           = ''
+               tt.dtHrGeracao      = ''
+               tt.sitContainer     = ''
+               tt.precoReal        = plan_vendas.preco_real
+               tt.precoDolar       = plan_vendas.preco_dolar
+               tt.versao           = plan_vendas.cod_versao
+               tt.dtCancelamento   = ?.
+
+
+            FIND FIRST ttContainer WHERE ttContainer.nrContainer = tt.nrContainer NO-ERROR.
+            IF AVAIL ttContainer THEN
+                ASSIGN tt.sitContainer = ttContainer.situacao.
+            ELSE
+                ASSIGN tt.sitContainer = ''.
+
+            FIND FIRST ttContainer WHERE ttContainer.nrContainer = tt.nrContainer NO-ERROR.
+            IF AVAIL ttContainer THEN
+                ASSIGN tt.tipoMostruario = ttContainer.tipoMostruario.
+            ELSE
+                ASSIGN tt.tipoMostruario = ''.
+
+            FIND FIRST ITEM WHERE ITEM.it-codigo = tt.itCodigo NO-ERROR.
+            IF AVAIL ITEM THEN
+               ASSIGN tt.descItem = ITEM.desc-item.
+            ELSE
+               ASSIGN tt.descItem = ''.
+
+            FIND FIRST emitente WHERE emitente.cod-emitente = plan_vendas.cod_emitente NO-ERROR.
+            IF AVAIL emitente THEN
+                ASSIGN tt.NomeFornec = emitente.nome-abrev.
+            ELSE
+                ASSIGN tt.NomeFornec = ''.
+
+        END.
+    END.
+
+END.
+
+ELSE DO:
+    FOR EACH pp-container 
+        WHERE pp-container.nr-container >= INPUT FRAME  {&frame-name} fiNrContainerIni 
+        AND   pp-container.nr-container <= INPUT FRAME  {&frame-name} fiNrContainerFim 
+        AND   lookup(string(pp-container.situacao),cListaSituacao,',') > 0
+        NO-LOCK:
+
+        FOR EACH pp-it-container OF pp-container NO-LOCK:
+            FIND FIRST ttContainer
+            WHERE ttContainer.nrContainer = pp-container.nr-container
+            AND   ttContainer.itCodigo    = pp-it-container.it-codigo
+            NO-LOCK NO-ERROR.
+            FIND FIRST ITEM NO-LOCK
+                WHERE ITEM.it-codigo = pp-it-container.it-codigo NO-ERROR.
+            CREATE tt.
+            ASSIGN  tt.nrContainer      =  pp-container.nr-container
+                    tt.NomeFornec       =  pp-container.nome-ab-forn
+                    tt.dtCompra         =  pp-container.dt-compra
+                    tt.dtPrevChegada    =  pp-container.dt-prev-chegada
+                    tt.dtRecebimento    =  pp-container.dt-recebimento
+                    tt.dtReg            =  pp-container.dt-compra
+                    tt.situacao         =  entry(pp-container.situacao,cListaSitContainer,',')
+                    tt.itCodigo         =  pp-it-container.it-codigo
+                    tt.codRefer         =  pp-it-container.cod-refer
+                    tt.tipoReg          =  'estoque'
+                    tt.quantidade       =  pp-it-container.qt-pedida
+                    tt.sitPed           =  ''
+                    tt.dtHrGeracao      = string(dtGeracao,'99/99/9999 hh:mm:ss')
+                    tt.descItem         = IF AVAIL ITEM THEN item.desc-item ELSE ''
+                    tt.sitContainer     = IF AVAIL ttContainer THEN ttContainer.situacao ELSE ''
+                    tt.tipoMostruario   = IF AVAIL ttContainer THEN ttContainer.tipoMostruario ELSE ''
+                    tt.precoReal        = IF AVAIL ttContainer THEN ttContainer.precoReal ELSE 0
+                    tt.precoDolar       = IF AVAIL ttContainer THEN ttContainer.precoDolar ELSE 0
+                    tt.versao           = novaVersao
+                    tt.dtCancelamento   = ?.     
+        END.
+    END.
+        
+    /*EMPTY TEMP-TABLE ttPontos.
+    
+    FOR EACH pto-itiner NO-LOCK.
+        FIND FIRST pto-contr OF pto-itiner NO-LOCK NO-ERROR.
+        CREATE ttPontos.
+        ASSIGN ttPontos.idPonto     = pto-itiner.cod-pto-contr
+               ttPontos.descPonto   = pto-contr.descricao.
+    END.*/
+
+END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE disable_UI w-livre  _DEFAULT-DISABLE
+PROCEDURE disable_UI :
+/*------------------------------------------------------------------------------
+  Purpose:     DISABLE the User Interface
+  Parameters:  <none>
+  Notes:       Here we clean-up the user-interface by deleting
+               dynamic widgets we have created and/or hide 
+               frames.  This procedure is usually called when
+               we are ready to "clean-up" after running.
+------------------------------------------------------------------------------*/
+  /* Delete the WINDOW we created */
+  IF SESSION:DISPLAY-TYPE = "GUI":U AND VALID-HANDLE(w-livre)
+  THEN DELETE WIDGET w-livre.
+  IF THIS-PROCEDURE:PERSISTENT THEN DELETE PROCEDURE THIS-PROCEDURE.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE enable_UI w-livre  _DEFAULT-ENABLE
+PROCEDURE enable_UI :
+/*------------------------------------------------------------------------------
+  Purpose:     ENABLE the User Interface
+  Parameters:  <none>
+  Notes:       Here we display/view/enable the widgets in the
+               user-interface.  In addition, OPEN all queries
+               associated with each FRAME and BROWSE.
+               These statements here are based on the "Other 
+               Settings" section of the widget Property Sheets.
+------------------------------------------------------------------------------*/
+  DISPLAY fiNrContainerIni fiNrContainerFim tgAberto RADIO-SET-1 sl_versao 
+          tgAberto-2 
+      WITH FRAME f-cad IN WINDOW w-livre.
+  ENABLE rt-button RECT-1 fiNrContainerIni fiNrContainerFim tgAberto 
+         RADIO-SET-1 sl_versao tgAberto-2 btExcel 
+      WITH FRAME f-cad IN WINDOW w-livre.
+  {&OPEN-BROWSERS-IN-QUERY-f-cad}
+  VIEW w-livre.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE gerarTXT w-livre 
+PROCEDURE gerarTXT :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+OUTPUT TO VALUE (SESSION:TEMP-DIRECT + 'relpp001.txt').
+
+    FOR EACH tt:
+        EXPORT DELIMITER "|" tt.
+    END.
+    
+    FIND FIRST tt NO-ERROR.
+    IF NOT AVAIL tt THEN DO:
+        PUT "Dados n∆o encontrados..." SKIP.
+    END.
+OUTPUT CLOSE.
+
+
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE local-destroy w-livre 
+PROCEDURE local-destroy :
+/*------------------------------------------------------------------------------
+  Purpose:     Override standard ADM method
+  Notes:       
+------------------------------------------------------------------------------*/
+
+  /* Code placed here will execute PRIOR to standard behavior. */
+
+  /* Dispatch standard ADM method.                             */
+  RUN dispatch IN THIS-PROCEDURE ( INPUT 'destroy':U ) .
+  {include/i-logfin.i}
+
+  /* Code placed here will execute AFTER standard behavior.    */
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE local-exit w-livre 
+PROCEDURE local-exit :
+/* -----------------------------------------------------------
+  Purpose:  Starts an "exit" by APPLYing CLOSE event, which starts "destroy".
+  Parameters:  <none>
+  Notes:    If activated, should APPLY CLOSE, *not* dispatch adm-exit.   
+-------------------------------------------------------------*/
+  APPLY "CLOSE":U TO THIS-PROCEDURE.
+  
+  RETURN.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE local-initialize w-livre 
+PROCEDURE local-initialize :
+/*------------------------------------------------------------------------------
+  Purpose:     Override standard ADM method
+  Notes:       
+------------------------------------------------------------------------------*/
+
+  /* Code placed here will execute PRIOR to standard behavior. */
+  run pi-before-initialize.
+
+  {include/win-size.i}
+
+  {utp/ut9000.i "RELPP003" "1.00.00.001"}
+
+  /* Dispatch standard ADM method.                             */
+  RUN dispatch IN THIS-PROCEDURE ( INPUT 'initialize':U ) .
+ 
+    run pi-after-initialize.
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE pi-criar-versao w-livre 
+PROCEDURE pi-criar-versao :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+EMPTY TEMP-TABLE ttPontos.
+    
+FOR EACH pto-itiner NO-LOCK.
+    FIND FIRST pto-contr OF pto-itiner NO-LOCK NO-ERROR.
+    CREATE ttPontos.
+    ASSIGN ttPontos.idPonto     = pto-itiner.cod-pto-contr
+           ttPontos.descPonto   = pto-contr.descricao.
+END.
+    
+FOR EACH tt.
+
+    CREATE plan_vendas.
+                                                                                                                     
+    ASSIGN plan_vendas.nr_container       = tt.nrContainer                                                           
+        plan_vendas.dt_compra             = tt.dtCompra                                                             
+        plan_vendas.dt_prev_chegada       = tt.dtPrevChegada                                                                   
+        plan_vendas.dt_recebimento        = tt.dtRecebimento                                                                               
+        plan_vendas.it_codigo             = tt.itCodigo                                                                           
+        plan_vendas.cod_refer             = tt.codRefer                                                            
+        /*plan_vendas.tipo_registro         = IF  tt.tipoReg = 'estoque' THEN 2 ELSE 1*/                                                                                                         
+        plan_vendas.quantidade            = tt.quantidade                                                                                                                
+        plan_vendas.cod_emitente          = tt.codEmitente                                                                                            
+        plan_vendas.nome_repres           = tt.nomeRepres                                                                                                        
+        plan_vendas.tipo_mostruario       = tt.tipoMostruario                                                                                                      
+        plan_vendas.preco_dolar           = tt.precoDolar                                                                                              
+        plan_vendas.preco_real            = tt.precoReal                                                                                               
+        plan_vendas.preco_unitario        = tt.precoUnitario                                                                                     
+        plan_vendas.desconto              = tt.desconto                                                                                                                      
+        plan_vendas.preco_total           = tt.valorTotal                                                                                                     
+        plan_vendas.nr_pedido             = tt.nrPedido                                                                                                        
+        plan_vendas.cod_versao            = tt.versao                                                                                           
+        plan_vendas.status_container      = tt.situacao.                                                        
+        
+    IF tt.sitPed = 'aberto' THEN
+        ASSIGN plan_vendas.situacao_item = 1.
+    ELSE IF tt.sitPed = 'atendido parcial' THEN
+        ASSIGN plan_vendas.situacao_item = 2.
+    ELSE IF tt.sitPed = 'atendido total' THEN
+        ASSIGN plan_vendas.situacao_item = 3.
+    ELSE IF tt.sitPed = 'pendente' THEN
+        ASSIGN plan_vendas.situacao_item = 4.
+    ELSE IF tt.sitPed = 'suspenso' THEN
+        ASSIGN plan_vendas.situacao_item = 5.
+    ELSE IF tt.sitPed = 'cancelado' THEN
+        ASSIGN plan_vendas.situacao_item = 6.
+    ELSE IF tt.sitPed = 'fatur balc∆o' THEN
+        ASSIGN plan_vendas.situacao_item = 7.
+    
+    IF tt.tipoReg = 'estoque' THEN
+        ASSIGN plan_vendas.tipo_registro = 2
+            plan_vendas.dt-cancela = ?.
+    ELSE IF tt.tipoReg = 'venda' THEN
+        ASSIGN plan_vendas.tipo_registro = 1
+            plan_vendas.dt-cancela = tt.dtCancelamento.
+
+    IF tt.moeda = "real" THEN                                                                                                      
+        ASSIGN plan_vendas.moeda_pedido = 0.                                                                        
+    ELSE IF tt.moeda = "dolar compra" THEN                                                                     
+        ASSIGN plan_vendas.moeda_pedido = 1.                                                                                       
+    ELSE IF tt.moeda = "ufir patrim" THEN                                                                                          
+        ASSIGN plan_vendas.moeda_pedido = 2.                                                                                           
+    ELSE IF tt.moeda = "dolar venda" THEN                                                                                                     
+        ASSIGN plan_vendas.moeda_pedido = 3.                                                                                                  
+
+    FIND FIRST ttPontos WHERE ttPontos.descPonto = tt.sitContainer NO-ERROR.
+    IF AVAIL ttPontos THEN
+        plan_vendas.situacao_container = ttPontos.idPonto.
+
+   
+END.
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE retornarSitItem w-livre 
+PROCEDURE retornarSitItem :
+/*------------------------------------------------------------------------------
+  Purpose:     
+  Parameters:  <none>
+  Notes:       
+------------------------------------------------------------------------------*/
+DEFINE INPUT  PARAMETER codSitItem AS INTEGER     NO-UNDO.
+DEFINE OUTPUT PARAMETER cSituacao AS CHARACTER   NO-UNDO.
+DEFINE VARIABLE cListaSituacao AS CHARACTER   NO-UNDO FORMAT 'x(100)'.
+
+
+ASSIGN cListaSituacao = {diinc/i03di149.i 3}.
+/*MESSAGE codSitItem SKIP
+    VIEW-AS ALERT-BOX INFO BUTTONS OK.*/
+
+
+ASSIGN cSituacao = ENTRY(codSitItem,cListaSituacao,",").
+
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE send-records w-livre  _ADM-SEND-RECORDS
+PROCEDURE send-records :
+/*------------------------------------------------------------------------------
+  Purpose:     Send record ROWID's for all tables used by
+               this file.
+  Parameters:  see template/snd-head.i
+------------------------------------------------------------------------------*/
+
+  /* SEND-RECORDS does nothing because there are no External
+     Tables specified for this w-livre, and there are no
+     tables specified in any contained Browse, Query, or Frame. */
+
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+
+&ANALYZE-SUSPEND _UIB-CODE-BLOCK _PROCEDURE state-changed w-livre 
+PROCEDURE state-changed :
+/*:T -----------------------------------------------------------
+  Purpose:     Manuseia trocas de estado dos SmartObjects
+  Parameters:  <none>
+  Notes:       
+-------------------------------------------------------------*/
+  DEFINE INPUT PARAMETER p-issuer-hdl AS HANDLE NO-UNDO.
+  DEFINE INPUT PARAMETER p-state AS CHARACTER NO-UNDO.
+
+  run pi-trata-state (p-issuer-hdl, p-state).
+END PROCEDURE.
+
+/* _UIB-CODE-BLOCK-END */
+&ANALYZE-RESUME
+

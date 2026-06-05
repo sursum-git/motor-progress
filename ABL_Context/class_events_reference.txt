@@ -1,0 +1,489 @@
+﻿
+
+
+
+
+
+
+
+
+
+
+
+
+
+Class Events Reference
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1
+Class Events Reference
+
+
+Events are application notifications that occur as the result of run-time conditions. The ABL Virtual Machine (AVM) notifies your application of an event by executing ABL code that you define in a trigger or event handler, depending on the kind of event. ABL supports a number of built-in events that automatically result from various ABL, user, or other actions that affect an application.
+You can also define your own events to notify your application of any useful condition. When you detect the occurrence of a given condition, you can notify your application of the event through an object associated with the event, which in turn executes a routine (event handler) that you have defined to respond to the event.
+There are a number of factors that determine how ABL notifies your application of an event, the most important being the kind of object associated with the event. In ABL, events can be associated with the following types of objects:
+• Handle-based objects
+• Class-based objects
+This section describes events that are associated with class-based objects (class events), including both ABL and .NET objects, and how your application can respond to them. The section also contains reference entries for built-in methods (event methods) that ABL provides to manage class events and reference entries for class events that ABL supports on built-in classes defined by OpenEdge. For more information on events associated with handle-based objects, see the Handle-based Object Events Reference.
+The following descriptions refer to both compile-time and run-time behavior, which include features that the language supports and verifies at compile time and actions that result from using these features at run time. This section refers to ABL or the ABL compiler when describing compile-time features and refers to the AVM when describing run-time actions.
+
+For details, see the following topics:
+• Class events
+
+• AfterFetchNextBatch event
+• BeforeFetchNextBatch event
+• CancelCreateRow event
+• CreateRow event
+• OffEnd event (.NET)
+• PositionChanged event
+• Publish( ) event method
+• SortRequest event
+• Subscribe( ) event method
+• Unsubscribe( ) event method
+
+
+
+Class events
+In ABL, class events are always defined as part of a class-based object definition, which can include one of the following object types:
+• An ABL class or interface type
+• A .NET class or interface type
+ABL class events and .NET class events (also called .NET events) are very similar in concept, and OpenEdge allows you to manage both of them using the same ABL mechanism. Each class or interface can define any number of class events. Thus, class events are members of the class or interface for which they are defined, like methods, properties, and data members. Like any class member, a class event can be defined as either an instance or a static event, and an instance event can also be defined as abstract. A class event also has an access mode (private, package-private, protected, package-protected, or public), which determines the application scope that can respond to the event.
+A class event has a signature, similar to a method, that can define parameters for passing data in response to event notification. An ABL application receives notice of a class event when the object that defines the event publishes it. In an ABL application, you can subscribe one or more ABL class methods or internal procedures as event handlers, which execute when a given event is published. These event handlers must all be defined with a signature that is compatible with the event that they are subscribed to handle.
+Class events provide similar features for class-based objects that named events provide for procedure-based objects, but using different mechanisms. You publish a named event using the PUBLISH statement and manage named event handler subscriptions using the SUBSCRIBE statement and UNSUBSCRIBE statement. However, you publish a class event using the Publish( ) event method on page 13 and manage class event handler subscriptions using the Subscribe( ) event method on page 15 and Unsubscribe( ) event method on page 17. Among the differences between the two types of events, a named event is defined when it is published and without a strongly-typed signature, while a class event must be defined before it is published and with a strongly-typed signature.
+
+
+Define class events
+In ABL, you can define class events in a user-defined class or interface definition using the DEFINE EVENT statement. This statement defines all of the event options described in this section, including the signature for its event handlers.
+
+In .NET, Common Language Specification (CLS)-compliant languages, such as C# or Visual Basic, have their own syntax to define events in a .NET class or interface. Similar to any other .NET class member, when you look up information about a .NET event in the .NET class library documentation, it typically describes the event member using syntax from one or more of these .NET languages. For example, C# provides the event keyword to declare an event in a class definition. In this way, the language-specific syntax for .NET events defines event options that are similar to the ABL DEFINE EVENT statement.
+For ABL class events, you define the strongly-typed handler signature in the DEFINE EVENT statement. For
+.NET events, the handler signature is specified using a .NET class type known as a delegate that is referenced in the event definition. Thus, using the same delegate type, .NET objects can conveniently define multiple events whose handlers use the same signature. For an ABL class event, you can define either an ABL method signature or you can reference a .NET delegate type to define a .NET signature for the event. Referencing a
+.NET delegate also allows you to implement a .NET interface event or an inherited .NET abstract event in an ABL class.
+You can define any valid ABL method signature for an ABL class event. However, the mechanics of event
+handler execution might limit your choices in practice. Also, ABL requires any .NET delegate that you use to conform to .NET conventions for event handlers.
+
+
+Define event handlers
+To use class events in your application, you must create one or more event handlers. A class event handler can be any class method or internal procedure whose signature is compatible with the signature defined for a given ABL or .NET class event. However, verification of the event handler signature occurs at a different point for method event handlers (at handler subscription compile time) than for internal procedure event handlers (at event publish run time). Note that all class event signatures include a VOID return type; therefore, any event handler method must also have a VOID return type.
+For ABL class events, including ABL class events that implement inherited .NET abstract events, if you raise ERROR or throw an error object, the error is raised on the statement that executes the Publish( ) event method on page 13 on the event as if you had called the event handler directly. For information on errors raised in handlers for .NET events, see Define handlers for .NET events on page 6.
+
+Define multiple handlers for an event
+If you need to subscribe more than one event handler for an ABL class event, when you publish the event, any OUTPUT or INPUT-OUTPUT parameter you define returns the value set by the final event handler to execute. In addition, any INPUT-OUTPUT parameter you define passes the value set by one event handler as input to the next event handler to execute. A similar effect occurs if you pass a handle or object reference as an INPUT parameter and your event handlers set the value of a public data member on the handle or class-based object. The returned value of the input object data element is the value set by the final handler to execute for the event. In addition, the order of execution for multiple handlers subscribed to a single event is not guaranteed, making it difficult or impossible to know exactly how parameter values returned from the Publish( ) method have been set. So, if you use more than one handler for a given event, you need to use caution in defining and using the parameters for that event.
+Also, if you raise ERROR or throw an error object from any one of the handlers for the ABL class event, any event handler that has not already run when the error is raised does not run. Therefore, if you want all handlers to run for an event, regardless of error conditions, you must resolve all conditions within each handler and allow the handler to return successfully.
+
+
+Define handlers for .NET events
+If you use a .NET delegate to define an ABL class event, or if you are defining an ABL method or internal procedure as a handler for a .NET event, you must define your event handler signature to match the delegate specified for the event. (In .NET, you implement event handlers by defining derivations of the specified delegate type.) For both ABL class events and .NET events, ABL only supports delegates whose signatures conform to the Microsoft .NET convention for event handler signatures. This signature convention provides for a VOID return type and two INPUT parameters, where the first parameter is a reference to a .NET System.Object that published the event, and the second parameter is a reference to a .NET System.EventArgs (or a derived class) that provides event arguments as public members of the class.
+
+Syntax
+The signature for any ABL event handler defined for a .NET delegate must conform to this general syntax:
+
+
+EventHandlerName
+The name of your class-based method or internal procedure.
+
+sender
+Object reference to the .NET class instance that published the event.
+
+args
+Object reference to an event arguments class that contains public properties that provide arguments for the event. Note that for a .NET event, args references an object that is created by .NET and added to the ABL session object chain when the event handler executes. Like any other locally scoped object reference, if you do not save the value before the event handler terminates, ABL automatically garbage collects this object at some point after the event handler returns.
+
+EventArgsClass
+The class type name of the event arguments class. This is always System.EventArgs or one of its derived classes. Thus, System.EventArgs is the base class for all event arguments classes that an event handler can receive through this INPUT parameter.
+To identify the exact handler signature for a given .NET delegate, you must look up the delegate in the appropriate class library documentation or use the Class Browser of Progress Developer Studio for OpenEdge to inspect the class. For .NET events supported on the built-in .NET classes provided by OpenEdge and described in the Class, Interface, and Enumeration Reference, each event reference entry described further on in this section indicates the delegate type associated with the event along with its matching event handler signature. Otherwise, to locate the delegate in .NET class library documentation, find the event you want to handle in the documentation for the class that publishes the event. The event definition includes a reference to its delegate type. The documentation for the specified delegate shows the .NET signature you must use for your event handler.
+If you do not trap and handle an error raised within a handler for a .NET event, whether it is raised as the ERROR condition or thrown as an error object, the AVM does not throw an Exception back to .NET, but displays an error message on the default output device and continues processing as if no error had occurred. So, unlike handlers for ABL class events, if you subscribe multiple handlers for a .NET event, all the handlers execute regardless if one or more of them raises an error.
+
+
+Use class events
+For any ABL class event, used by itself or to implement an interface or inherited abstract event, you must follow these general steps:
+1. Define the event using the DEFINE EVENT statement .
+2. Subscribe one or more handlers to the event using Subscribe( ) event method on page 15. You can subscribe handlers to an event anywhere the event is accessible in an application.
+3. Publish the event for a given condition using Publish( ) event method on page 13, which runs all subscribed event handlers for the event. You can publish the event only from within the class definition that implements a non-abstract definition for the event.
+4. Process any values returned from the Publish( ) method parameters.
+At any point after subscribing event handlers, you can optionally unsubscribe any event handlers you no longer need using the Unsubscribe( ) event method on page 17. Thus, like named events for procedures, class events allow you to dynamically define and undefine alternate routines that execute in response to the event.
+Note that similar to ABL class events, only the class that implements a non-abstract definition for a .NET event can publish it. This includes any ABL class that derives from and implements a .NET abstract class defining abstract events or that implements a .NET interface defining event prototypes.
+However by convention, a .NET class that defines an event also typically defines a corresponding protected OnEventName( ) method that allows a derived class to publish the event, where EventName specifies the name of the .NET event and the signature defines a System.EventArgs (or derivation) as input. If the OnEventName( ) method is overrideable (virtual in C#), you can also override this method in an ABL derived class. If you do override this method, you must also invoke the super class implementation of OnEventName( ) from within the overriding method (using the SUPER system reference) in order to ensure that all subscribed
+.NET delegates also respond to the event.
+For more information on overriding .NET methods, see the METHOD statement.
+To allow .NET events from .NET form and control objects to be published as part of the OpenEdge GUI for
+.NET, you must block to display the .NET forms and allow your subscribed event handlers to execute in response to any published events. To enable this .NET event handling, ABL provides WAIT-FOR statement syntax that blocks for both GUI for .NET events and ABL handle-based object events.
+For more information, see the WAIT-FOR statement (.NET and ABL).
+Otherwise, you can work with .NET events in exactly the same way as ABL class events.
+
+
+Events and event methods reference
+The following reference entries document both the events of built-in ABL classes and the built-in event methods for working with all class events. The ABL built-in classes also include a set of .NET objects defined by OpenEdge. For more information on all ABL built-in classes, see the Class, Interface, and Enumeration Reference. For information on class events defined for all other .NET objects, see the appropriate documentation..
+The reference entries for events that follow appear in alphabetical order by event name. Each reference entry includes the syntax required to define the signature for the event handler as a class-based method, with EventHandlerName used to indicate a name that you specify for the event handler. If you define the event handler as an internal procedure, define the same number of parameters in order by parameter mode and data type. If the event is a .NET event, the entry description also lists the name of the .NET delegate type defined for the event.
+
+
+
+AfterFetchNextBatch event
+(Windows only; GUI for .NET)
+This .NET event fires after the BindingSource object fetches the next batch of records when either the
+Batching property is set to true or the MaxDataGuess property is non-zero.
+Access: PUBLIC
+Applies to: Progress.Data.BindingSource class
+
+Syntax
+The delegate for this event defines the following event handler signature:
+
+
+EventHandlerName
+The name of the event handler.
+
+sender
+Object reference to the BindingSource object instance that published the event.
+
+args
+Object reference to a System.EventArgs object instance containing arguments for the event.
+When the event fires, there may be action that needs to be taken, such as calling control-specific methods or properties, to govern the control’s behavior during this record fetching operation.
+
+See also
+Batching property, MaxDataGuess property
+
+
+BeforeFetchNextBatch event
+(Windows only; GUI for .NET)
+This .NET event fires before the BindingSource object fetches the next batch of records when either the
+Batching property is set to true or the MaxDataGuess property is non-zero.
+Access: PUBLIC
+Applies to: Progress.Data.BindingSource class
+
+Syntax
+The delegate for this event defines the following event handler signature:
+
+EventHandlerName
+The name of the event handler.
+
+sender
+Object reference to the BindingSource object instance that published the event.
+
+args
+Object reference to a System.EventArgs object instance containing arguments for the event.
+When the event fires, there may be action that needs to be taken, such as calling control-specific methods or properties, to govern the control’s behavior during this record fetching operation.
+
+See also
+Batching property, MaxDataGuess property
+
+
+CancelCreateRow event
+(Windows only; GUI for .NET)
+The .NET event published when some user action cancels a create row operation in the bound .NET control (for example, pressing ESCAPE in a new empty row).
+Access: PUBLIC
+Applies to: Progress.Data.BindingSource class
+
+Syntax
+The delegate for this event defines the following event handler signature:
+
+
+EventHandlerName
+The name of the event handler.
+
+sender
+Object reference to the BindingSource object instance that published the event.
+
+args
+Object reference to a CancelCreateRowEventArgs object instance containing arguments for the event.
+
+When this event occurs, delete the previously created row and the corresponding record in the result set. Otherwise, the data in the control will not be synchronized with its data source.
+
+See also
+CreateRow event on page 10, Progress.Data.CancelCreateRowEventArgs class
+
+
+CreateRow event
+(Windows only; GUI for .NET)
+The .NET event published when some user action initiates a create row operation in the bound .NET control (for example, clicking in a new empty row at the bottom of a control).
+Access: PUBLIC
+Applies to: Progress.Data.BindingSource class
+
+Syntax
+The delegate for this event defines the following event handler signature:
+
+
+EventHandlerName
+The name of the event handler.
+
+sender
+Object reference to the BindingSource object instance that published the event.
+
+args
+Object reference to a CreateRowEventArgs object instance containing arguments for the event.
+When this event occurs, create a new record in the ABL data source object and the current result set. You can also set any initial values you want presented to the user.
+If the record was successfully created, set the Created property for the CreateRowEventArgs object to TRUE (the default value). If the record was not successfully created, set the Created property to FALSE.
+
+
+
+Caution: After creating a row, do not reopen the query or invoke the Refresh( ) method as this might produce unexpected results.
+
+
+See also
+CancelCreateRow event on page 9, Created property, Progress.Data.CreateRowEventArgs class
+
+
+OffEnd event (.NET)
+(Windows only; GUI for .NET)
+The .NET event published when record batching is enabled (that is, the BindingSource object's Batching property is TRUE) and some user action in the bound .NET control reaches the last row of the current result set. Use this event to retrieve the next batch of records.
+You can use this event when the BindingSource object is bound to a query. If bound to a ProDataSet object, this event applies only to the top-level table displayed in the .NET control.
+Access: PUBLIC
+Applies to: Progress.Data.BindingSource class
+
+Syntax
+The delegate for this event defines the following event handler signature:
+
+
+EventHandlerName
+The name of the event handler.
+
+sender
+Object reference to the BindingSource object instance that published the event.
+
+args
+Object reference to an OffEndEventArgs object instance containing arguments for the event.
+Each time you retrieve a batch of records, you must:
+• Add the records to the current result set.
+• Set the RowsAdded property for the OffEndEventArgs object to the number of records added to the result set (that is, the number of records retrieved in the most recent batch).
+Once you have retrieved all of the records, set the Batching property to FALSE.
+
+See also
+Batching property, Progress.Data.OffEndEventArgs class, RowsAdded property
+
+
+
+PositionChanged event
+(Windows only; GUI for .NET)
+The .NET event published when the value of the Position property (which specifies the position of the current row in the bound .NET control) changes, based either on some user action in the .NET control or a programmatic action. For example:
+• The user clicks on a different row in a control.
+• The user clicks on a Next button and the event handler for the button increments the Position property value.
+
+Note: When you click on a child row, the Position property is set to the position of the corresponding top-level parent row.
+
+Access: PUBLIC
+Applies to: Progress.Data.BindingSource class
+
+Syntax
+The delegate for this event defines the following event handler signature:
+
+
+EventHandlerName
+The name of the event handler.
+
+sender
+Object reference to the BindingSource object instance that published the event.
+
+args
+Object reference to a .NET System.EventArgs object instance containing arguments for the event. For information on the public class members inherited from the System.EventArgs class, refer to the .NET class library documentation.
+
+Whenever the value of the Position property changes, the BindingSource object automatically synchronizes the buffer in the bound ABL data source object to correspond to the selected row in the bound .NET control.
+
+Note: Generally, you should change the Position property, rather than navigating or repositioning the query associated with the bound ABL data source object. For more information about synchronizing data, see Use
+.NET Classes in ABL Applications.
+
+
+See also
+Position property (BindingSource)
+
+
+
+Publish( ) event method
+Publishes an ABL class event defined in the current class definition. Publishing an event causes any event handlers subscribed to the event to execute.
+Return type: VOID
+Access: PRIVATE
+Applies to: ABL class events
+
+Syntax
+
+[ THIS-OBJECT : | class-type-name : ]
+If event-name is a reserved keyword, you must prefix an instance event-name with THIS-OBJECT or a static event-name with the class type name of the current class definition. Otherwise use of these qualifiers is optional.
+
+event-name
+The name of a non-abstract event defined as part of the current class definition. At compile time, ABL verifies that event-name specifies an event whose DEFINE EVENT statement appears in the current class definition. This can also be the name of an inherited .NET abstract event that is implemented in the current ABL class.
+( [ parameter [ , parameter ] ... ] )
+Specifies zero or more parameters as defined for the event signature that you must pass to the Publish( ) method. The parameters you pass must match the parameters defined in the corresponding DEFINE EVENT statement with respect to number, data type, and mode, exactly as if you were calling a method defined with these parameters. Otherwise, ABL raises a compile-time error. Note that even if the method compiles, the AVM can raise a run-time error if an argument passed to a parameter has an ambiguous type during compilation that turns out to be incompatible at run time.
+The Publish( ) method passes the same parameters to each event handler subscribed to the event. Note that any parameter results represent values returned from the last event handler to execute. However, the order of execution for event handlers is not guaranteed. Therefore, if you subscribe to multiple event handlers, you cannot be certain what event handler has returned the parameter values from the Publish( ) method.
+
+Caution: Any values passed as INPUT-OUTPUT to a given event handler become input to the next event handler to execute for a given event. Because the order of handler execution for multiple event handlers is not guaranteed, you cannot be certain of the input values passed as INPUT-OUTPUT to any given event handler.
+
+
+For more information on the syntax and requirements for passing each parameter, and on the behavior of parameters passed to the Publish( ) method, see the Parameter passing syntax reference entry.
+
+NO-ERROR
+The NO-ERROR option is used to prevent the statement from raising ERROR and displaying error messages.
+For an ABL class event, if an event handler invoked by this method raises an error, the error is raised on this statement, and any event handlers that have not yet executed for the event do not execute. In this case, the error behavior and messages reflect the event handler that generated the error as if you called the handler directly. Note also that any STOP or QUIT condition is handled as if you called the handler directly.
+Note also, if event-name is an ABL event that implements a .NET abstract event, and you invoke a .NET method within your handler that throws an exception back to .NET, .NET generates a System.ApplicationException that it throws back to the .NET method, which determines the result that you can manage in your handler.
+You can only invoke the Publish( ) method on an event from within a class definition that defines and implements the event, regardless of the event's access mode. (You cannot invoke Publish( ) on an abstract event.) Thus, you can publish the event within any method, constructor, destructor, property accessor, or trigger that is defined within the class that also includes the DEFINE EVENT statement that implements the event.
+After the Publish( ) statement executes, the value of the RETURN-VALUE function reflects the last RETURN statement executed (if any) by all event handlers subscribed to event-name. However, because the order of handler execution is not guaranteed, if you subscribe more than one event handler that executes RETURN, you might not know which handler set the value for the RETURN-VALUE function.
+
+See also
+NO-ERROR option, PUBLISH statement, Subscribe( ) event method on page 15, Unsubscribe( ) event method on page 17
+
+
+SortRequest event
+(Windows only; GUI for .NET)
+The .NET event published when some user action initiates a sort operation in the bound .NET control (for example, clicking on a column header in a grid control).
+You can use this event when the BindingSource object is bound to a query or a buffer. If bound to a ProDataSet object, this event applies only to the top-level table displayed in the .NET control.
+Access: PUBLIC
+Applies to: Progress.Data.BindingSource class
+
+Syntax
+The delegate for this event defines the following event handler signature:
+
+
+EventHandlerName
+The name of the event handler.
+
+sender
+Object reference to the BindingSource object instance that published the event.
+
+args
+Object reference to a SortRequestEventArgs object instance containing arguments for the event.
+When this event occurs, the event handler must reopen the query associated with the ABL data source object with a modified sort criteria based on the values specified in the SortRequestEventArgs object.
+This event occurs only for .NET controls that rely on their data source for sorting.
+
+See also
+Progress.Data.SortRequestEventArgs class
+
+
+Subscribe( ) event method
+Subscribes an event handler method or procedure to an ABL or .NET class event.
+Return type: VOID
+Access: PUBLIC
+Applies to: ABL or .NET class events
+
+Syntax
+
+
+[publisher : ]
+The object reference to an ABL or .NET object or the type name of an ABL or .NET class that can publish the instance or static event, respectively. If you do not specify a publisher, it defaults to either THIS-OBJECT when event-name identifies an instance event defined in the current class instance, or to the class type name of the current class definition when event-name identifies a static event defined in the current class hierarchy.
+
+event-name
+The name of an ABL or .NET event that publisher can publish. At compile time, ABL verifies that event-name is an accessible member of the class referenced by publisher. The event can be an abstract event.
+[subscriber : ]handler-method
+An ABL class-based method that you want to subscribe as a handler for event-name, where handler-method is the unquoted name of a pure ABL instance or static method. If specified, subscriber can be either the object reference to an ABL class instance where handler-method is defined, or the type name of an ABL class where the static handler-method is defined. If you do not specify a subscriber, it defaults to either THIS-OBJECT when handler-method identifies an instance method defined in the current class hierarchy, or to the class type name of the current class definition when handler-method identifies a static method defined in the current class hierarchy.
+
+Note: The specified handler-method cannot be a .NET method.
+
+Note that the access mode (PUBLIC, PACKAGE-PROTECTED, PROTECTED, PACKAGE-PRIVATE,
+or PRIVATE) of the handler-method definition does not matter to the publisher. For example, you can subscribe a PRIVATE method of the subscribing class instance as a handler to an event defined and published by yet another class instance.
+The signature of handler-method does not have to be identical with the signature defined for event-name, but it must be run-time compatible. This includes an overloaded method as long as ABL can identify the signature for a unique overloading that is compatible with the event signature.
+Thus, ABL raises a compile-time error if handler-method:
+• Is not accessible to the context where this Subscribe( ) method executes
+• Does not have a run-time compatible signature
+• Does not have a unique overloading that is compatible with the event signature
+[subscriber-handle , ] handler-procedure
+A procedure that you want to subscribe as a handler for event-name, where handler-procedure is a character expression that evaluates to the name of an internal procedure. If specified, subscriber-handle is a handle to a persistent procedure, or any other external procedure on the call stack, where the internal procedure is defined. Otherwise, subscriber-handle defaults to THIS-PROCEDURE.
+At compile-time, ABL checks this Subscribe( ) method call only to verify that any specified
+subscriber-handle is a HANDLE data type and that handler-procedure is specified by a
+character expression. Otherwise, the AVM raises a run-time error if the procedure context specified by subscriber-handle is not accessible or it does not define handler-procedure as an internal procedure.
+
+NO-ERROR
+The NO-ERROR option is used to prevent the statement from raising ERROR and displaying error messages.
+
+See also
+NO-ERROR option, Publish( ) event method on page 13, SUBSCRIBE statement, Unsubscribe( ) event method on page 17
+
+
+Unsubscribe( ) event method
+Removes a method or procedure as a handler for an ABL or .NET class event.
+Return type: VOID
+Access: PUBLIC
+Applies to: ABL or .NET class events
+
+Syntax
+
+
+[ publisher : ]
+The object reference to an ABL or .NET object or the type name of an ABL or .NET class that can publish the instance or static event, respectively. If you do not specify a publisher, it defaults to either THIS-OBJECT when event-name identifies an instance event defined in the current class instance, or to the class type name of the current class definition when event-name identifies a static event defined in the current class hierarchy.
+
+event-name
+The name of an ABL or .NET event that publisher can publish. At compile time, ABL verifies that event-name is an accessible member of the class referenced by publisher. The event can be an abstract event.
+[ subscriber : ] handler-method
+An ABL class-based method that you want to remove as a handler for event-name, where handler-method is the unquoted name of the instance or static method. If specified, subscriber can be either the object reference to an ABL class instance where handler-method is defined, or the type name of an ABL class where the static handler-method is defined. If you do not specify a subscriber, it defaults to THIS-OBJECT when handler-method identifies an instance method defined in the current class hierarchy, or to the class type name of the current class definition when handler-method identifies a static method defined in the current class hierarchy.
+
+Note that the access mode (PUBLIC, PACKAGE-PROTECTED, PROTECTED, PACKAGE-PRIVATE,
+or PRIVATE) of the handler-method definition does not matter to the publisher. For example, you can remove a PRIVATE method of the unsubscribing class instance as a handler for an event defined and published by yet another class instance.
+The signature of handler-method must be run-time compatible with the signature defined for event-name. This includes an overloaded method as long as ABL can identify the signature for a unique overloading that is compatible with the event signature.
+Thus, ABL raises a compile-time error if handler-method:
+• Is not accessible to the context where this Unsubscribe( ) method executes
+• Does not have a run-time compatible signature
+• Does not have a unique overloading that is compatible with the event signature
+[ subscriber-handle , ] handler-procedure
+A procedure that you want to remove as a handler for event-name, where handler-procedure is a character expression that evaluates to the name of an internal procedure. If specified, subscriber-handle is a handle to a persistent procedure, or other external procedure on the call stack, where the internal procedure is defined. Otherwise, subscriber-handle defaults to
+THIS-PROCEDURE.
+At compile-time, ABL checks this Unsubscribe( ) method call only to verify that any specified subscriber-handle is a HANDLE data type and that handler-procedure is specified by a character expression. Otherwise, ABL raises a run-time error if the procedure context specified by
+subscriber-handle is not accessible or it does not define handler-procedure as an internal procedure.
+
+NO-ERROR
+The NO-ERROR option is used to prevent the statement from raising ERROR and displaying error messages.
+
+The Unsubscribe( ) method cancels an event subscription by removing the specified method or internal procedure from the list of handlers for the specified event-name. If you do not specify a publisher, you can only invoke Unsubscribe( ) in an ABL class definition and on an ABL or .NET event that the ABL class defines or inherits. When you cancel an event handler subscription, ABL does not raise either a run-time error if the specified event handler is not currently on the subscription list for the specified event.
+
+See also
+NO-ERROR option, Publish( ) event method on page 13, Subscribe( ) event method on page 15, UNSUBSCRIBE statement
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

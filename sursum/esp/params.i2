@@ -1,0 +1,7 @@
+DEFINE VARIABLE hBo AS HANDLE      NO-UNDO.
+DEFINE VARIABLE cVlParam AS CHARACTER   NO-UNDO.
+RUN esbo/boConsParam.p PERSIST SET hBo.
+RUN setCodParam IN hbo({1}).
+RUN getVlParam2 IN hBo({2},OUTPUT cVlParam).
+delete procedure hBo no-error.
+RETURN cVlParam.

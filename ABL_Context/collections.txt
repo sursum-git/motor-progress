@@ -1,0 +1,543 @@
+Develop Object-oriented ABL
+Applications
+
+
+
+
+Generated on: 20 June 2025
+
+    Collections in object-oriented ABL
+     In some applications, you may want to create and manage groups of related objects. Collections provide a
+     way to do this. A collection represents a group of objects that have some shared significance. In many
+     object-oriented programming languages, different collection structures are available for holding such objects,
+     each with their own set of capabilities. Structures include lists, maps, sets, stacks, queues, and other types.
+     Each structure varies in how they store, sort, and compare elements. A list, sorted set, and hash map are
+     among the most commonly used collection types and are available as built-in objects in object-oriented ABL.
+     Other types are not supported as built-in objects at this time.
+
+     This diagram shows the main interfaces in the Progress.Collections framework.
+
+
+
+
+     This table describes these interfaces:
+
+                            Interface                                             Description
+
+      Progress.Collections.IIterator<T> interface            This interface enables you to traverse through a
+                                                             collection. Properties and methods include Current,
+                                                             MoveNext(), and Reset().
+
+       Progress.Collections.IIterable<T> interface              This interface is the root interface for all the collection
+                                                                classes and defines the most primitive set of operations
+                                                                that can be applied to a collection. The GetIterator()
+                                                                method allows you to get an iterator, for traversing a
+                                                                collection.
+
+       Progress.Collections.ICollection<T> interface            This interface is common to all collections and defines
+                                                                properties and methods to manipulate generic collections.
+                                                                Properties and methods include Add(), AddAll(),
+                                                                Clear(), Contains(), Count, IsEmpty(), and
+                                                                Remove().
+
+
+      Note: When an object-oriented ABL object is added to a collection, the reference count of the object is
+      incremented so that it is not garbage collected while it remains in the collection.
+
+      The next topics describe the collections available as built-in objects in ABL.
+
+      Related Links
+
+    For details, see the following topics:
+     • List collections in object-oriented ABL
+
+     • Sorted set collections in object-oriented ABL
+
+     • Hash map collections in object-oriented ABL
+
+
+
+    List collections in object-oriented ABL
+      A list is an ordered collection. A list may contain duplicate elements.
+
+      This diagram shows the classes and interfaces relevant to list collections in the Progress.Collections
+      framework.
+
+
+    This table describes the classes and interfaces specific to lists (for collection-specific descriptions, see
+    Collections in object-oriented ABL):
+
+                       Class or interface                                             Description
+
+     Progress.Collections.ListIterator<T> class               This class represents the type of object returned by the
+                                                              GetIterator() method on a List<T> class and allows
+                                                              the traversal of elements in the list. Properties and
+                                                              methods include Current, MoveNext(), and Reset().
+
+     Progress.Collections.IList<T> interface                  This interface defines the model for a list-based
+                                                              collection. List collections implement a one-based
+                                                              indexing of elements where the elements in the collection
+                                                              can be retrieved by using the index of the element within
+                                                              the collection. Iteration of the collection is performed in
+                                                              the indexed order of the elements (1..2..3..). Elements in
+                                                              the list may be duplicated. Methods include Get(),
+                                                              IndexOf(), Insert(), RemoveAt() and Set().
+
+     Progress.Collections.List<T> class                       This class represents a strongly-typed list of objects that
+                                                              can be accessed by index and provides methods to
+                                                              search and manipulate lists. Properties and methods
+                                                              include Add(), AddAll(), Clear(), Contains(),
+                                                              Count, Get(), GetIterator(), IndexOf(),
+                                                              Insert(), IsEmpty, Remove(), RemoveAt(), and
+                                                              Set().
+
+
+
+    Serialization and remote parameter passing
+    A list collection object can be serialized using the present forms of serialization, which include binary and
+
+    JSON serialization, via the built-in Progress.IO.BinarySerializer and
+    Progress.IO.JsonSerializer, respectively.
+
+    You can also pass such list collection objects to, or from, a Progress Application Server (PAS) for OpenEdge
+    remote call.
+
+    Serialization and remote parameter passing for object-oriented ABL objects require that all objects are
+    marked as SERIALIZABLE, therefore, the objects inside the list collection also need to be SERIALIZABLE,
+    otherwise an error is raised during object serialization.
+
+    Example: List collection with a concrete type
+    This example code demonstrates how to create a list collection using a concrete class (the
+    OpenEdge.Core.String class). The example also shows how to add, insert, retrieve, replace, and remove
+    elements, and iterate over the list.
+
+
+     USING Progress.Collections.List.
+     USING Progress.Collections.IIterator.
+     USING OpenEdge.Core.String.
+
+     VAR String myString.
+     VAR List<String> myList.
+     VAR IIterator<String> myIterator.
+
+     myList = NEW List<String>().
+
+     myString = NEW String("four").
+
+     // Add items
+     myList:Add(myString).
+
+     myList:Add(NEW String("three")).
+
+     // Insert item at the first position
+     myList:Insert(1, NEW String("one")).
+
+     // Get the first item
+     myString = myList:Get(1).
+     MESSAGE "First Item:" myString:ToString().
+
+     // Replace the second item on the list
+     myList:SET(2, NEW String("two")).
+     myString = myList:Get(2).
+     MESSAGE "Second item:" myString:ToString().
+
+     // Remove first item
+     myList:RemoveAt(1).
+
+     // Print out the number of items
+     MESSAGE "Count:" myList:Count.
+
+     // List all items on the list via an iterator
+      myIterator = myList:GetIterator().
+      MESSAGE "List Items using iterator".
+
+      REPEAT WHILE myIterator:MoveNext():
+           MESSAGE myIterator:Current:ToString().
+      END.
+
+
+     Example: List collection with an interface type
+     This example code demonstrates how to create and add elements to a list collection using an interface type.
+     This example assumes an interface called IAnimal and two classes, Dog and Cat.
+
+
+      USING Progress.Collections.List.
+
+      VAR List<IAnimal> myList.
+      VAR Dog myDog.
+      VAR Cat myCat.
+
+      myList = NEW List<IAnimal>().
+
+      myDog = NEW Dog().
+      myCat = NEW Cat().
+
+      myList:Add(myDog).
+      myList:Add(myCat).
+
+
+    Sorted set collections in object-oriented ABL
+     A sorted set is a collection of unique elements (no duplicates) of a predefined order.
+
+     This diagram shows the classes and interfaces relevant to a sorted set collection in the
+     Progress.Collections framework.
+
+
+    This table describes the classes and interfaces specific to sorted sets (for collection-specific interfaces, see
+    Collections in object-oriented ABL).
+
+                       Class or interface                                              Description
+
+     Progress.Collections.IComparable <T> interface           This interface defines a method for specifying the default
+                                                              sort order for a SortedSet<T>.
+
+     Progress.Collections.IComparer <T> interface             This interface defines a method for specifying a custom
+                                                              sort order for a SortedSet<T>.
+
+     Progress.Collections.ISet<T> interface                   This interface is the root interface for all set collection
+                                                              classes and indicates that the collection conforms to
+                                                              specific rules about how duplicates are handled.
+
+     Progress.Collections.SortedSet<T> class                  This class represents a strongly-typed collection of unique
+                                                              objects that is maintained in sorted order.
+
+     Progress.Collections.SortedSetIterator<T> class          This class represents the type of object returned by the
+                                                              GetIterator() method on a SortedSet<T> class and
+                                                              allows the traversal of elements in the set.
+
+
+    The order of elements in a SortedSet is determined by the comparer implementation for the set. You
+    determine the order of elements, either by providing the class's natural ordering (that is, the class type for the
+    elements needs to implement the IComparable<T> interface), or by providing a comparer object that
+    implements the IComparer<T> interface.
+
+    The SortedSet<T> class implements the properties and methods defined in the ICollection<T>
+    interface and two additional properties (First and Last).
+
+    The SortedSet’s default comparer implementation calls the CompareTo() method on the class
+    implementing the IComparable<T> interface, to determine the location of the newly inserted element, if a
+    comparer was not specified in the constructor. If a comparer was specified, the comparer’s Compare()
+    method is always called instead and is the only one called and it does not matter if the element itself
+    implements IComparable or not.
+
+    The SortedSet’s default comparer implementation does not allow the unknown value (?) or invalid object
+    references to be added into the collection. If using a custom comparer, then it is up to the comparer
+    implementation to define the behavior for the unknown value (?).
+
+    The following rules also apply to the SortedSet implementation:
+
+    • The SortedSet implementation supports any object-oriented ABL object, including .NET objects.
+      However, you must specify your own comparer when adding .NET objects to a SortedSet (that is,
+      natural ordering is not supported in this case).
+    • Duplicate elements are not allowed. This is dependent on the value returned from the comparer
+      implementation (whether using the default comparer or a custom one). If the Compare()/CompareTo()
+      method returns 0, an object is considered to be in the set already, and is not added again (that is, the
+      existing one remains in the set).
+    • The order of the elements is maintained when elements are added or removed, based on the comparer
+      implementation.
+    • The Contains(), Get(), and Remove() methods determine equality of the element based on the value
+      returned by the comparer implementation (whether using the default comparer or a custom one).
+    • The SortedSet has a reference to any object added to it, which prevents garbage collection of such
+      added object until that reference no longer exists.
+    • Changing the sort values of existing elements is not supported and may lead to unexpected behavior (that
+      is, the sorting order or uniqueness of the set is not guaranteed).
+    • It is not safe to delete objects that are elements of the set. Doing so potentially invalidates the complete
+      collection as the sorting algorithm may no longer be able to guarantee consistency or uniqueness of the
+      set.
+
+       If a deleted object reference is encountered during any operation that needs to access properties of the
+       element or invoke a method on that element, the operation fails, and an error is raised indicating that a
+       deleted object reference was encountered. That includes the comparer object, if one was specified for the
+       SortedSet collection.
+
+
+    Serialization and remote parameter passing
+    A sorted set collection object can be serialized using the present forms of serialization, which include binary
+    and JSON serialization, via the built-in Progress.IO.BinarySerializer and
+    Progress.IO.JsonSerializer classes, respectively.
+
+    You can also pass such objects to, or from, a Progress Application Server (PAS) for OpenEdge remote call.
+
+    Serialization and remote parameter passing for object-oriented ABL objects require that all objects are
+    marked as SERIALIZABLE, therefore, the objects inside the collection also need to be SERIALIZABLE,
+    otherwise an error is raised during object serialization.
+
+    Example: SortedSet collection
+    The following is an example of a class called MyString that implements
+    Progress.Collections.IComparable. The class provides a default comparer (via the CompareTo()
+    method), that sorts the elements in alphabetical order of the strings passed in.
+
+     class MyString implements Progress.Collections.IComparable<Mystring>:
+
+       define property Value as char get. private set.
+
+       constructor MyString(INPUT pValue as CHAR).
+         if pValue = ? then
+            return error "Unknown value not supported”.
+         THIS-OBJECT:Value = pValue.
+       end.
+
+       method public integer CompareTo(otherObject as MyString).
+
+            if this-object = otherObject OR
+              this-object:Value = otherObject:Value then
+                return 0.
+            else if this-object:Value < otherObject:Value then
+                return -1. // current object sorts lower
+
+         // current object sorts higher
+         return 1.
+       end.
+
+     end.
+
+    The following example shows the usage of a SortedSet collection in ABL, using the MyString class
+    above.
+
+     var Progress.Collections.ISet<MyString> stringSet.
+     var Progress.Collections.IIterator<MyString> iterator.
+     var MyString name1.
+
+     stringSet = new Progress.Collections.SortedSet<MyString>().
+
+     // Add 4 elements    to the set
+     stringSet:Add(new    MyString("Thomas")).
+     stringSet:Add(new    MyString("George")).
+     stringSet:Add(new    MyString("Paul")).
+     stringSet:Add(new    MyString("John")).
+
+     // Same value will not be added to the set
+     if stringSet:Add(new MyString("George")) eq false then
+       message "George is already in the list".
+
+     // Print out the number of elements in the set
+     message "Count:" stringSet:Count.
+
+     name1 = new MyString("Paul").
+
+     // Remove one element from the set if it exists
+     if stringSet:Contains(name1) then
+
+          stringSet:Remove(name1).
+
+       // Iterate over the entries in the set
+       // which should show George, John and Thomas
+       iterator = stringSet:GetIterator().
+       repeat while iterator:MoveNext():
+         message iterator:Current:ToString().
+       end.
+
+     Hash map collections in object-oriented ABL
+      A hash map is a data structure that uses a hash function to map keys to their associated values. A hash map
+      consists of key-value pairs. The keys in a hash map must be unique, but the values do not have to be. A
+      simple example of a hash map is a collection of employees (keys) and their managers (values). Each
+      employee is unique, but employees can have the same manager. The ordering of elements in a hash map is
+      not important. Hash maps are efficient, and allow faster access to elements than other types of collections.
+
+      OpenEdge provides a built-in HashMap collection data structure in the Progress.Collections
+      framework. This diagram shows the classes and interfaces relevant to a HashMap.
+
+
+      This table describes the classes and interfaces for HashMap. (For collection-specific interfaces, see
+      Collections in object-oriented ABL.)
+
+                         Class or interface                                          Description
+
+       Progress.Collections.HashMap<K,V> class                Represents a strongly-typed collection of key-value pairs
+                                                              (map) backed by a hash table.
+
+       Progress.Collections.HashMapIterator<K,V> class        Represents the type of the object returned by the
+                                                              GetIterator() method in a HashMap<K,V> object,
+                                                              allowing traversal of the elements in the HashMap.
+
+      Progress.Collections.IEqualityComparer<T>               Provides an alternate implementation of HashCode()
+      interface                                               and Equals() to the map collection object.
+
+      Progress.Collections.IHashable interface                Provides the implementation for generating the hash code
+                                                              and is also capable of identifying when a key is
+                                                              considered the same.
+
+      Progress.Collections.IMap<K,V> interface                The root interface for map collection classes.
+
+      Progress.Collections.KeySet<K> class                    Class used by the Keys property of the HashMap to
+                                                              return a set containing all the keys in the HashMap
+                                                              instance.
+
+      Progress.Collections.KeySetIterator<K> class            Represents the type of the object returned by the
+                                                              GetIterator() method in a KeySet<K> class, allowing
+                                                              traversal of the elements in the KeySet<K>.
+
+      Progress.Collections.KeyValuePair<K,V> class            A class that holds a key-value pair for a Map collection.
+
+
+
+     How HashMap works
+
+     A HashMap relies on a hash function to compute an index (hash code) into an array of buckets, from which
+     the desired value can be found. During lookup, the key is hashed, and the resulting hash indicates in which
+     bucket the corresponding value is stored. The HashMap is able to hold keys and values as object-oriented
+     types (that is, compatible with Progress.Lang.Object). Scalar types are not supported. To ensure keys
+     are unique, you must define how to determine when the objects used as keys are considered to be equal.
+
+     To summarize, the requirements for using a HashMap are:
+
+     • Identify when a key is already in the collection, that is, compare the keys for equality.
+     • Generate a hash code for the key.
+
+     The HashMap enforces these requirements via an equality comparer. It provides a default equality comparer,
+     which requires that the key object implement the IHashable interface. IHashable defines methods for
+     getting the hash code for the key (HashCode() method), and for determining if two keys are the same
+     (Equals() method). For cases where the class used for the key cannot be changed or may not provide the
+     desired behavior, you can define a custom equality comparer. To define a custom equality comparer, you use
+     a class that implements the IEqualityComparer<T> interface. This interface also provides methods for
+     getting the hash code and for determining if two keys are the same. You can specify an instance of a custom
+     equality comparer when a new instance of the HashMap is created.
+
+     Note: The default equality comparer does not allow unknown, or invalid reference values as a key.
+     However, the custom equality comparer does. It can define the behavior for unknown values and decide if
+     unknowns are allowed or not.
+
+     The HashMap is responsible for maintaining the uniqueness of the keys in the collection, but it does not
+     define the uniqueness of the key. That job is the responsibility of the hashable object (that is, the key object
+     that implements IHashable), or the custom equality comparer, and any issues in those components impact
+     the ability of the HashMap to enforce uniqueness.
+
+     OpenEdge provides a built-in HASH-CODE function, which you can use in your HashCode()
+     implementation, to return a hash code. This function is intended to be used with HashMaps.
+
+     The KeyValuePair<K,V> class is used to represent the collection of key-value pairs. When you iterate
+     through the HashMap, you get instances of KeyValuePair<K,V>, which are the elements of the collection.
+
+     The following behavior also apply to the HashMap implementation:
+
+     • Supports any object-oriented ABL object, including .NET objects. However, you must specify a custom
+       equality comparer (by implementing the IEqualityComparer<T> interface) when adding .NET objects
+       to a HashMap.
+     • Duplicate keys are not allowed. This is dependent on the equality comparer implementation (whether
+       using the default or a custom one). If the Equals() method returns TRUE, a key object is considered to
+       be in the map already, and is not added again, that is, the existing key-value pair remains in the map.
+     • The map does not guarantee any ordering for the key-value pairs, and there is no guarantee the order will
+       remain constant over time (due to rehashing).
+     • All the methods that take a key as a parameter determine the hash code and equality of the key based on
+       the equality comparer implementation (whether using the default or a custom one).
+     • The HashMap has a reference to any key and value objects added to it, and that prevents garbage
+       collection of such added objects until the reference no longer exists.
+     • Changing the key object's value of an existing element is not supported and may lead to undefined
+       behavior (that is, the uniqueness of the map is not guaranteed).
+     • It is not safe to delete key objects that are in the HashMap. Doing so potentially invalidates the complete
+       collection as it may no longer be able to guarantee consistency or uniqueness of the HashMap.
+     • If a deleted object reference is encountered during any operation that needs to access properties of the
+       element or invoke a method on that element, the operation fails, and an error is raised indicating that a
+       deleted object reference was encountered. That includes the equality comparer object, if one was
+       specified for the HashMap.
+
+     Serialization and remote parameter passing
+     A HashMap object can be serialized using the present forms of serialization, which include binary and JSON
+     serialization, via the built-in Progress.IO.BinarySerializer and Progress.IO.JsonSerializer
+     classes, respectively.
+
+     You can also pass such objects to, or from, a Progress Application Server (PAS) for OpenEdge remote call, if
+     both sides are running version 12.7.
+
+     Serialization and remote parameter passing for object-oriented ABL objects require that all objects are
+     marked as SERIALIZABLE. Therefore, the objects inside the collection also need to be SERIALIZABLE,
+     which includes the key and value objects in the collection, otherwise an error is raised during object
+     serialization. This includes the equality comparer object, if one is specified when the HashMap object was
+     created. That means that if the equality comparer object is not serializable, you cannot serialize the HashMap
+     object either.
+
+     Example: HashMap collection
+
+     The following example shows how to create, manage, and iterate over a HashMap. The example uses an
+     Employee class (shown) and assumes a class called Manager (not shown).
+
+                                                  Employee.cls
+
+
+      CLASS Employee IMPLEMENTS Progress.Collections.IHashable:
+
+        CONSTRUCTOR Employee(pcID AS CHARACTER):
+          EmployeeID = pcID.
+        END.
+
+        DEFINE PROPERTY EmployeeID AS CHARACTER GET. PRIVATE SET.
+
+        METHOD PUBLIC INTEGER HashCode().
+          // Hash on the value of property EmployeeID
+          RETURN HASH-CODE(THIS-OBJECT:EmployeeID).
+        END.
+
+        METHOD PUBLIC OVERRIDE LOGICAL Equals(otherObj AS Progress.Lang.Object):
+          IF NOT VALID-OBJECT(otherObj) OR
+            otherObj:GetClass() NE THIS-OBJECT:GetClass() THEN
+            RETURN FALSE.
+
+           // It’s up to the implementation to decide if case-sensitiveness
+           // is required or not. This is case-insensitive.
+           IF THIS-OBJECT:EmployeeID = CAST(otherObj, Employee):EmployeeID
+           THEN
+             RETURN TRUE.
+           RETURN FALSE.
+        END.
+
+      END.
+
+      VAR   Progress.Collections.IMap<Employee,Manager> employeeMap.
+      VAR   Progress.Collections.HashMapIterator<Employee,Manager> iterator.
+      VAR   Employee employee1.
+      VAR   Manager manager1.
+      VAR   Progres.Collections.KeyValuePair<Employee,Manager> pair.
+
+      employeeMap = NEW Progress.Collections.HashMasp<Employee,Manager>().
+
+      // Add 4 key-value pairs to the collection
+      employeeMap:Add(NEW Employee("thomas1","Thomas"), NEW Manager("George")).
+      employeeMap:Add(NEW Employee("paul1", "Paul "), NEW Manager("George")).
+      employeeMap:Add(NEW Employee("george1", "George"), NEW Manager("John")).
+      employeeMap:Add(NEW Employee("john1", "John"), NEW Manager("Tim")).
+
+     // Same key will not be added to the collection
+     IF employeeMap:Add(NEW Employee("george1", "George"), NEW Manager("bruce1","Bruce"))
+     EQ FALSE THEN
+        MESSAGE "George is already in the map".
+
+     // Print out the number of pairs in the set (4)
+     MESSAGE "Count:" employeeMap:Count.
+
+     employee1 = NEW Employee("paul1", "Paul").
+     // Remove the pair using a given key if it exists
+     IF employeeMap:ContainsKey(employee1) THEN
+        employeeMap:Remove(employee1).
+
+     // John now reports to David
+     manager1 = NEW Manager("john1", "John").
+     employeeMap:Set(manager1, NEW Manager("david1", "David")).
+
+     // Using a KeyValuePair is also allowed
+     // Paul was removed above. Add Paul reporting to John
+     pair = NEW Progress.Collections.KeyValuePair<Employee,Manager>(employee1,
+                manager1).
+
+     IF employeeMap:Add(pair1) EQ FALSE THEN
+        MESSAGE "Paul is already in the map".
+
+     // If hashmap contains key and value in pair, then remove it
+     pair = NEW Progress.Collections.KeyValuePair<Employee,Manager>(employee1,
+                NEW Manager("david1", "David")).
+     // This won’t find it or remove it because there is no pair
+     // with Paul and David.
+     IF employeeMap:Contains(pair) THEN
+        employeeMap:Remove(pair).
+
+     // Iterate over the entries in the map
+     // which should show the following in no particular order
+     // Thomas -> George
+     // Paul -> John
+     // George -> John
+     // John -> David
+     iterator = CAST(employeeMap:GetIterator()
+                Progress.Collections.HashMapIterator<Employee,Manager>).
+     REPEAT WHILE iterator:MoveNext():
+     MESSAGE iterator:Current:Key:FullName “->”
+             iterator:Current:Value:FullName.
+     END.

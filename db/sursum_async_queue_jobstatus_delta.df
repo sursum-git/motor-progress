@@ -1,0 +1,14 @@
+ADD FIELD "jobStatus" OF "SursumQueryJob" AS character
+  FORMAT "x(20)"
+  INITIAL "queued"
+  POSITION 3
+
+ADD INDEX "jobStatusNextRun" ON "SursumQueryJob"
+  INDEX-FIELD "jobStatus" ASCENDING
+  INDEX-FIELD "nextRunAt" ASCENDING
+
+.
+PSC
+cpstream=ISO8859-1
+.
+00000000000000000000000000000000

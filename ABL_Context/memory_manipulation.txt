@@ -1,0 +1,1051 @@
+GET-LONG function
+
+Returns the signed 32-bit value at the specified memory location as an INTEGER value.
+
+   Syntax
+
+       GET-LONG ( source , position )
+
+
+   source
+              A function or variable that returns a RAW or MEMPTR value. If source is the Unknown value (?), GET-LONG returns the Unknown value (?).
+   position
+              An integer value greater than 0 that indicates the byte position where you want to find the information.
+              If position is greater than the length of source, the AVM returns the Unknown value (?). If position is less than 1, the AVM generates a run-time error.
+
+   Examples
+   For examples of how to use the GET-LONG function, see the GET-BYTE function on page 587 reference entry.
+
+   Notes
+   •   This function supports byte-swapping only if source is a MEMPTR data type. The function will first examine the
+       byte-order setting of the MEMPTR and then swap the bytes appropriately before interpreting them. The AVM does
+       not swap the bytes in the MEMPTR's memory, but does the byte-swap as it creates the return value.
+   •   For more information on using the MEMPTR and RAW data types, see OpenEdge Programming Interfaces.
+
+
+
+
+
+GET-POINTER-VALUE function
+
+Returns, as an INT64 value, the address of (or pointer to) the memory region associated with the specified MEMPTR variable. The returned value is based on whether the platform supports 64-bit pointers or 32-bit pointers. On a 32-bit platform, the value never gets bigger than 2GB.
+
+Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       GET-POINTER-VALUE ( memptr-var )
+
+
+   memptr-var
+             A reference to a variable defined as MEMPTR. If the variable is uninitialized (has no associated memory region), the function returns 0.
+
+Example
+This function is particularly useful when building a structure in an MEMPTR region that references other MEMPTR
+regions. It allows you to obtain the pointer to one MEMPTR region and store it in the structure you create in another
+MEMPTR region. The following example allocates three memory regions-for a BITMAPINFO structure, a
+BITMAPINFOHEADER structure, and an RGB color array. It then uses the GET-POINTER-VALUE function together
+with the PUT-LONG statement to store pointers to the BITMAPINFOHEADER structure and an RGB color array in
+the BITMAPINFO structure. These structures describe a device-independent bitmap for Windows dynamic link library
+(DLL) routines. For more information on these bitmap structures, see your Windows Software Development Kit documentation.
+Note: The following example only works on a 32-bit machine because it leaves space for 4 bytes for the pointer values.
+On a 64-bit machine, you would have to allocate 8 bytes of space.
+r-ptrval.p
+
+    DEFINE VARIABLE bitmapinfo       AS MEMPTR NO-UNDO.
+    DEFINE VARIABLE bitmapinfoheader AS MEMPTR NO-UNDO.
+    DEFINE VARIABLE RGBcolors        AS MEMPTR NO-UNDO.
+
+    SET-SIZE(bitmapinfo)                    = 4 /* Pointer to bitmapinfoheader */
+                                            + 4. /* Pointer to RGBcolors       */
+
+    SET-SIZE(bitmapinfoheader) =               4    /*   biSize                 */
+                               +               4    /*   biWidth                */
+                               +               4    /*   biHeight               */
+                               +               2    /*   biPlanes               */
+                               +               2    /*   biBitCount             */
+                               +               4    /*   biCompression          */
+                               +               4    /*   biSizeImage            */
+                               +               4    /*   biXpelsPerMeter        */
+                               +               4    /*   biYPelsPerMeter        */
+                               +               4    /*   biClrUsed              */
+                               +               4.   /*   biClrImportant         */
+
+    SET-SIZE(RGBcolors)                     = 16 * 4. /* Array for 16 RGB color values */
+
+    /* Initialize pointers to bit map info header and RGB color array */
+    PUT-LONG(bitmapinfo,1) = GET-POINTER-VALUE(bitmapinfoheader).
+    PUT-LONG(bitmapinfo,5) = GET-POINTER-VALUE(RGBcolors).
+
+
+Note: Before using structures such as these, you must initialize them according to your DLL requirements. For example,
+the biBitCount segment of the bitmapinfoheader must be set to 4 to specify the number of possible colors available in the RGB color array (16).
+
+Notes
+•   MEMPTR structures are initialized using the SET-SIZE statement.
+•   For more information on using the MEMPTR data type, see OpenEdge Programming Interfaces.
+
+
+
+
+GET-SHORT function
+
+Returns the signed 16-bit value at the specified memory location as an INTEGER value.
+
+   Syntax
+
+       GET-SHORT ( source , position )
+
+
+   source
+              A function or variable that returns a RAW or MEMPTR value. If source is the Unknown value (?), GET-SHORT returns the Unknown value (?).
+   position
+              An integer value greater than 0 that indicates the byte position where you want to find the information.
+              If position is greater than the length of source, the AVM returns the Unknown value (?). If position is less than 1, the AVM generates a run-time error.
+
+   Notes
+   •   This function supports byte-swapping only if source is a MEMPTR data type. The function will first examine the
+       byte-order setting of the MEMPTR and then swap the bytes appropriately before interpreting them. The AVM does
+       not swap the bytes in the MEMPTR's memory, but does the byte-swap as it creates the return value.
+   •   For more information on using the MEMPTR and RAW data types, see OpenEdge Programming Interfaces.
+
+
+
+
+
+GET-SIZE function
+
+Returns, as an INT64 value, the allocated byte size of the memory region associated with the specified MEMPTR variable.
+
+Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       GET-SIZE ( memptr-var )
+
+
+   memptr-var
+             A MEMPTR variable. If the variable is uninitialized (has no associated memory region), the function returns 0.
+
+   Example
+   The following example allocates three memory regions-for a BITMAPINFO structure, a BITMAPINFOHEADER
+   structure, and an RGB color array. It then displays the allocation size for each region. These structures describe a
+   device-independent bitmap for Windows dynamic link library (DLL) routines. For more information on these bitmap structures, see your Windows Software Development Kit documentation.
+
+   r-getsiz.p
+
+       DEFINE VARIABLE bitmapinfo       AS MEMPTR NO-UNDO.
+       DEFINE VARIABLE bitmapinfoheader AS MEMPTR NO-UNDO.
+       DEFINE VARIABLE RGBcolors        AS MEMPTR NO-UNDO.
+
+       SET-SIZE(bitmapinfo)                   = 4 /* Pointer to bitmapinfoheader */
+                                              + 4. /* Pointer to RGBcolors       */
+
+       SET-SIZE(bitmapinfoheader) =              4   /*   biSize                  */
+                                  +              4   /*   biWidth                 */
+                                  +              4   /*   biHeight                */
+                                  +              2   /*   biPlanes                */
+                                  +              2   /*   biBitCount              */
+                                  +              4   /*   biCompression           */
+                                  +              4   /*   biSizeImage             */
+                                  +              4   /*   biXpelsPerMeter         */
+                                  +              4   /*   biYPelsPerMeter         */
+                                  +              4   /*   biClrUsed               */
+                                  +              4   /*   biClrImportant          */
+                                               .
+
+       SET-SIZE(RGBcolors)                    = 16 * 4. /* Array for 16 RGB color values */
+
+       DISPLAY
+         GET-SIZE(bitmapinfo)
+           LABEL "Bitmap info structure size" COLON 30 SKIP
+         GET-SIZE(bitmapinfoheader)
+           LABEL "Bitmap header structure size" COLON 30 SKIP
+         GET-SIZE(RGBcolors)
+           LABEL "Bitmap colors array size" COLON 30
+         WITH SIDE-LABELS.
+
+
+
+   Notes
+   •   To return a memory size greater than 0, the MEMPTR variable must be fully initialized, not just pre-initialized by
+       a DLL or UNIX shared library routine.
+   •   MEMPTR structures are initialized using the SET-SIZE statement.
+   •   For more information on using the MEMPTR data type, see OpenEdge Programming Interfaces.
+
+
+
+
+GET-STRING function
+
+Returns the null-terminated character string at the specified memory location as a CHARACTER value (not including the null terminator) or the number of bytes specified starting from the specified memory location as a CHARACTER value.
+
+   Syntax
+
+       GET-STRING ( source , position [ , numbytes ] )
+
+
+   source
+              A function or variable that returns a RAW or MEMPTR value. If source is the Unknown value (?),
+              GET-STRING returns the Unknown value (?).
+   position
+              An integer value greater than 0 that indicates the byte position where you want to find the information.
+              If position is greater than the length of source, the AVM returns the Unknown value (?). If position is less than 1, the AVM generates a run-time error.
+   numbytes
+              An integer value greater than 0 that indicates how many bytes to convert into the CHARACTER value
+              that is returned. If numbytes is not specified, or is -1, GET-STRING( ) returns all bytes until it encounters a NULL value.
+
+   Examples
+   For examples of how to use the GET-STRING function, see the GET-BYTE function on page 587 reference entry.
+
+   Note
+   For more information on using the MEMPTR and RAW data types, see OpenEdge Programming Interfaces.
+
+
+
+
+GET-UNSIGNED-LONG function
+
+Returns the unsigned 32-bit value at the specified memory location as an INT64. This is analogous to the GET-UNSIGNED-SHORT function, except with a 32-bit value.
+
+   Syntax
+
+       GET-UNSIGNED-LONG ( source , position )
+
+
+   source
+              A function or variable that returns a RAW or MEMPTR value. If source is the Unknown value (?), GET-UNSIGNED-LONG returns the Unknown value (?).
+   position
+              An INTEGER or INT64 value greater than 0 that indicates the byte position where you want to find
+              the information. If position is greater than the length of source, the AVM returns the Unknown value
+              (?). If position is less than 1, the AVM generates a run-time error.
+
+   Notes
+   •   When returning the value from GET-UNSIGNED-LONG() to an INTEGER, if the value exceeds the maximum
+       value of an INTEGER, the AVM generates a run-time error.
+   •   This function supports byte-swapping only if source is a MEMPTR data type. The function will first examine the
+       byte-order setting of the MEMPTR and then swap the bytes appropriately before interpreting them. The AVM does
+       not swap the bytes in the MEMPTR's memory, but does the byte-swap as it creates the return value.
+   •   For more information on using the MEMPTR and RAW data types, see OpenEdge Programming Interfaces.
+
+
+
+
+
+GET-UNSIGNED-SHORT function
+
+Returns the unsigned 16-bit value at the specified memory location as an INTEGER value.
+
+   Syntax
+
+       GET-UNSIGNED-SHORT ( source , position )
+
+
+   source
+              A function or variable that returns a RAW or MEMPTR value. If source is the Unknown value (?),
+              GET-UNSIGNED-SHORT returns the Unknown value (?).
+   position
+              An integer value greater than 0 that indicates the byte position where you want to find the information.
+              If position is greater than the length of source, the AVM returns the Unknown value (?). If position is less than 1, the AVM generates a run-time error.
+
+   Examples
+   For examples of how to use the GET-UNSIGNED-SHORT function, see the GET-BYTE function on page 587 reference entry.
+
+   Notes
+   •   This function supports byte-swapping only if source is a MEMPTR data type. The function will first examine the
+       byte-order setting of the MEMPTR and then swap the bytes appropriately before interpreting them. The AVM does
+       not swap the bytes in the MEMPTR's memory, but does the byte-swap as it creates the return value.
+   •   For more information on using the MEMPTR and RAW data types, see OpenEdge Programming Interfaces.
+
+
+
+
+PUT-BITS statement
+
+Uses the bit representation of an integer to set a given number of bits at a given location within another integer.
+
+   Syntax
+
+     PUT-BITS ( destination , position , numbits ) = expression
+
+
+   destination
+                 An ABL integer variable. The statement sets bits in destination that correspond to the bits that are on
+                 in the source variable, expression. It clears bits in the destination variable that are 0 in the source
+                 variable. Note that the number of bits set or cleared is limited by the numbits parameter, and the location
+                 within the destination is determined by the position variable.
+   position
+                 A variable or expression that returns an integer. This parameter designates the position of the
+                 lowest-order bit of the bits that are to be interpreted as an integer. Bits are numbered from 1 through
+                 the length of an integer; with 1 being the low-order bit. If position is greater than the length of an
+                 integer or less than 1, the AVM generates a run-time error.
+   numbits
+                 The number of bits to examine when generating the return value. If position plus numbits is greater
+                 than the length of an integer plus 1, the AVM generates a run-time error.
+   expression
+                 A source variable that returns an integer. If the integer cannot be represented in the number of bits
+                 specified by numbits, the AVM stores the low-order numbits bits of the integer.
+
+
+
+
+
+
+PUT-BYTE statement
+
+Stores the unsigned 1-byte value of an integer expression at the specified memory location.
+
+   Syntax
+
+     PUT-BYTE ( destination , position ) = expression
+
+
+   destination
+                 A variable of type RAW or MEMPTR. If destination is the Unknown value (?), it remains the Unknown
+                 value (?). If destination is a MEMPTR and has not had its region allocated (by a SET-SIZE statement
+                 or by a Windows dynamic link library (DLL) or UNIX shared library routine), the AVM generates a
+                 run-time error.
+   position
+                 An integer value greater than 0 that indicates the byte position where the AVM stores expression. If
+                 position is less than 1, the AVM generates a run-time error. For a RAW destination, if position is
+             greater than the length of destination, the AVM changes the length of destination to position and pads
+             the gap with null bytes. For a MEMPTR destination, if position is greater than the length of destination,
+             the AVM generates a run-time error.
+expression
+             The integer value of a constant, field, variable, function, or expression. If expression is less than 0 or
+             greater than 255, the AVM stores the right-most byte value of expression in destination.
+
+Examples
+This procedure finds the name of Customer 26, Jack's Jacks, and stores it in the RAW variable r1. The PUT-BYTE
+statement replaces the first four bytes in the Name with the specified character code values. The procedure then writes
+the values in r1 back into the Name field and displays that field. Jack's Jacks becomes Bill's Jacks.
+r-rawput.p
+
+  /* You must connect to a non-OpenEdge demo database to run this procedure */
+  DEFINE VARIABLE r1 AS RAW NO-UNDO.
+
+  FIND Customer WHERE Customer.CustNum = 26.
+  DISPLAY Customer.Name.
+
+  ASSIGN
+    r1                               =   RAW(Customer.Name)
+    PUT-BYTE(r1,1)                   =   ASC('B')
+    PUT-BYTE(r1,2)                   =   ASC('i')
+    PUT-BYTE(r1,3)                   =   ASC('l')
+    PUT-BYTE(r1,4)                   =   ASC('l')
+    RAW(Customer.Name)               =   r1.
+
+  DISPLAY Customer.Name.
+
+
+The following example allocates a MEMPTR region large enough to hold the character string "Bill", terminated by a
+null byte. It stores the string one byte at a time using the PUT-BYTE statement, and then displays the string directly
+from the region.
+r-mptput.p
+
+  DEFINE VARIABLE mptr AS MEMPTR NO-UNDO.
+
+  ASSIGN
+    SET-SIZE(mptr)               =   LENGTH("Bill") + 1
+    PUT-BYTE(mptr,1)             =   ASC('B')
+    PUT-BYTE(mptr,2)             =   ASC('i')
+    PUT-BYTE(mptr,3)             =   ASC('l')
+    PUT-BYTE(mptr,4)             =   ASC('l')
+    PUT-BYTE(mptr,5)             =   0.
+
+  DISPLAY GET-STRING(mptr,1).
+
+
+
+
+PUT-BYTES statement
+
+Copies a RAW or MEMPTR variable to the specified location in another RAW or MEMPTR variable.
+
+   Syntax
+
+     PUT-BYTES ( destination , position ) = expression
+
+
+   destination
+                 An expression that returns a target RAW or MEMPTR variable. If destination is the Unknown value
+                 (?), PUT-BYTES does nothing.
+   position
+                 An integer value greater than 0 that indicates the byte position where you want to put the data. If
+                 position is less than 1, the AVM generates a run-time error.
+                 For a RAW variable, if position is greater than the length of destination, the AVM increases the length
+                 of destination to position plus the remaining bytes needed to store expression. The gap between the
+                 original destination length and position is padded with null bytes.
+                 For a MEMPTR variable, if position is greater than the length of destination or does not leave sufficient
+                 room to store expression, the AVM generates a run-time error. If destination is a RAW and position
+                 plus the length of expression is greater than 32K, the AVM generates a run-time error.
+   expression
+                 An expression that returns a RAW or MEMPTR variable.
+
+
+
+
+
+PUT-DOUBLE statement
+
+Stores the 8-byte floating-point value of a DECIMAL expression at the specified memory location.
+
+   Syntax
+
+     PUT-DOUBLE ( destination , position ) = expression
+
+
+   destination
+                 A variable of type RAW or MEMPTR. If destination is the Unknown value (?), it remains the Unknown
+                 value (?). If destination is a MEMPTR and has not had its region allocated (by a SET-SIZE statement
+                 or by a Windows dynamic link library (DLL) or UNIX shared library routine), the AVM generates a
+                 run-time error.
+   position
+                 An integer value greater than 0 that indicates the byte position where the AVM stores expression. If
+                 position is less than 1, the AVM generates a run-time error.
+   For a RAW destination, if position is greater than the length of destination, the AVM increases the length of destination
+   to position plus the remaining bytes needed to store expression. The gap between the original destination length and
+   position is padded with null bytes.
+   For a MEMPTR destination, if position is greater than the length of destination or does not leave sufficient room to
+   store expression, the AVM generates a run-time error.
+   expression
+                 The DECIMAL value of a constant, field, variable, function, or expression.
+
+   
+   Notes
+   •   This statement supports byte-swapping only if destination is a MEMPTR data type. The statement will first examine
+       the byte-order setting of the MEMPTR and then swap the bytes appropriately while putting the data into the MEMPTR
+       memory.
+   •   For more information on accessing DLL routines from ABL, see OpenEdge Programming Interfaces.
+
+
+
+
+
+PUT-FLOAT statement
+
+Stores the 4-byte floating-point value of a DECIMAL expression at the specified memory location.
+
+   Syntax
+
+       PUT-FLOAT ( destination , position ) = expression
+
+
+   destination
+                 A variable of type RAW or MEMPTR. If destination is the Unknown value (?), it remains the Unknown
+                 value (?). If destination is a MEMPTR and has not had its region allocated (by a SET-SIZE statement
+                 or by a Windows dynamic link library (DLL) or UNIX shared library routine), the AVM generates a
+                 run-time error.
+   position
+                 An integer value greater than 0 that indicates the byte position where the AVM stores expression. If
+                 position is less than 1, the AVM generates a run-time error.
+                 For a RAW destination, if position is greater than the length of destination, the AVM increases the
+                 length of destination to position plus the remaining bytes needed to store expression. The gap between
+                 the original destination length and position is padded with null bytes.
+                 For a MEMPTR destination, if position is greater than the length of destination or does not leave
+                 sufficient room to store expression, the AVM generates a run-time error.
+   expression
+                 The DECIMAL value of a constant, field, variable, function, or expression.
+
+   
+   Notes
+   •   This statement supports byte-swapping only if destination is a MEMPTR data type. The statement will first examine
+       the byte-order setting of the MEMPTR and then swap the bytes appropriately while putting the data into the MEMPTR
+       memory.
+   •   For more information on accessing DLL routines from ABL, see OpenEdge Programming Interfaces.
+
+
+
+
+PUT-INT64 statement
+
+Stores the signed 64-bit value of an INT64 or INTEGER expression at the specified memory location as an INT64 data type.
+
+   Syntax
+
+       PUT-INT64 ( destination , position ) = expression
+
+
+   destination
+                 A variable of type RAW or MEMPTR. If destination is the Unknown value (?), it remains the Unknown
+                 value (?). If destination is a MEMPTR and its region in not allocated (by a SET-SIZE statement or
+                 by a Windows dynamic link library (DLL) or UNIX shared library routine), the AVM generates a
+                 run-time error.
+   position
+                 An integer value greater than 0 that indicates the byte position where the AVM stores expression. If
+                 position is less than 1, the AVM generates a run-time error.
+                 For a RAW destination, if position is greater than the length of destination, the AVM increases the
+                 length of destination to position plus the remaining bytes needed to store expression. The gap between
+                 the original destination length and position is padded with null bytes.
+                 For a MEMPTR destination, if position is greater than the length of destination or does not leave
+                 sufficient room to store expression, the AVM generates a run-time error.
+   expression
+                 The integer value of a constant, field, variable, function, or expression.
+
+
+
+
+
+PUT-KEY-VALUE statement
+   (Windows only)
+   Adds, modifies, and deletes keys in the current environment.
+   Note: Does not apply to SpeedScript programming.
+
+Syntax
+
+     PUT-KEY-VALUE
+       {{ SECTION section-name
+              KEY {key-name | DEFAULT }
+              VALUE value
+          }
+          |{ COLOR | FONT }{ number | ALL }
+       }
+       [ NO-ERROR ]
+
+
+SECTION section-name
+        A CHARACTER expression that specifies the name of the section that contains the key of interest.
+            In initialization files, section names appear in square brackets([]). When you specify a section name
+            in a PUT-KEY-VALUE statement, omit the square brackets.
+KEY key-name
+         A CHARACTER expression that specifies the name of the key of interest.
+DEFAULT
+            Tells PUT-KEY-VALUE to use the default key of section section-name.
+            Some applications store data in the registry under the default key of a section. This option lets you
+            modify this data. For an example, see the EXAMPLES section of this entry.
+            This option applies only to the registry and not to initialization files.
+VALUE value
+         The value of the key to write to the environment. value must evaluate to a CHARACTER expression
+         of no more than 128 bytes.
+COLOR { number | ALL }
+        Updates color definitions in the current environment from the definitions in the internal color table.
+        The number parameter is a literal integer that specifies the number of a single color in the current
+        environment whose definition you want to update. The ALL option updates all color definitions in the
+        current environment.
+FONT { number | ALL }
+         Updates font definitions in the current environment from the definitions in the internal font table. The
+         number parameter is a literal integer that specifies the number of a single font in the current environment
+         whose definition you want to update. The ALL option updates all font definitions in the current
+         environment.
+NO-ERROR
+            The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying
+            error messages.
+
+Examples
+If the current environment resides in the registry, the PUT-KEY-VALUE statement:
+1.   Searches in the registry under the current environment for the subkey MYSECTION
+2.   Creates MYSECTION if it does not exist
+3.   Searches MYSECTION for the subkey MYKEY
+4.   Sets MYKEY to the value MYVARIABLE (if MYKEY exists), or adds MYKEY and the value MYVARIBLE (if
+     MYKEY does not exist)
+
+If the current environment resides in an initialization file, the PUT-KEY-VALUE statement:
+1. Searches the initialization file for the section MYSECTION
+2. Creates MYSECTION if it does not exist
+3. Searches MYSECTION for the key MYKEY
+4. Sets MYKEY to the value MYVARIABLE (if MYKEY exists), or adds MYKEY and the value MYVARIBLE (if
+   MYKEY does not exist):
+
+      PUT-KEY-VALUE SECTION "MYSECTION" KEY "MYKEY" VALUE MYVARIABLE
+
+
+If the current environment resides in the registry, the following examples add, directly under the current environment,
+the value name MYKEY and the value MYVARIABLE:
+
+  PUT-KEY-VALUE SECTION "" KEY "MYKEY" VALUE MYVARIABLE
+
+
+
+  PUT-KEY-VALUE SECTION "?" KEY "MYKEY" VALUE MYVARIABLE
+
+
+If the current environment resides in an initialization file, the previous examples return an error.
+If the current environment resides in the registry, the following examples:
+1. Search in the registry under the current environment for the key MYSECTION.
+2. Search MYSECTION for the value name MYKEY.
+3. Delete MYKEY and its value.
+
+  PUT-KEY-VALUE SECTION "MYSECTION" KEY "MYKEY" VALUE ""
+
+
+
+  PUT-KEY-VALUE SECTION "MYSECTION" KEY "MYKEY" VALUE ?
+
+
+If the current environment resides in an initialization file, the previous examples delete the key MYKEY, including its
+value, from the section MYSECTION.
+If the current environment resides in the registry, the following examples delete the subkey MYSECTION, all values
+under MYSECTION, all subkeys under MYSECTION, and all values under those subkeys:
+
+  PUT-KEY-VALUE SECTION "MYSECTION " KEY "?" VALUE ?
+
+
+
+  PUT-KEY-VALUE SECTION "MYSECTION " KEY "" VALUE ""
+
+
+If the current environment resides in an initialization file, the previous examples remove the section MYSECTION, and
+all key-value pairs within MYSECTION, from the initialization file.
+If the current environment resides in the registry, the following example:
+1. Searches the current environment for the subkey MYAPP
+2. Sets the default key under MYAPP to NEWVALUE
+
+  PUT-KEY-VALUE SECTION "MYAPP" KEY DEFAULT VALUE "NEWVALUE"
+If the current environment resides in an initialization file, the previous example returns an error.
+
+   Notes
+   •   Environments typically consist of sections, each of which contains keys, each of which consists of a name and a
+       value. A typical section name is COLORS. A typical key within this section consists of the name COLOR7 and the
+       value 255,255,0. This key attaches the name COLOR7 to color value 255,255,0 (a color specification that uses the
+       red-green-blue color-naming scheme).
+       The current environment might be the registry or an initialization file. The registry consists of sections called keys
+       and subkeys arranged in a hierarchy. Keys and subkeys contain value entries, each of which consists of a value name
+       and value data. Initialization files, by contrast, consist of a single level of sections. Sections contain entries, each of
+       which consists of a name, an equal sign (=), and a value.
+       For more information on environments, see the topics on colors and fonts in OpenEdge Programming Interfaces.
+   •   The current environment is one of the following:
+       •   The default environment
+       •   An environment that a startup parameter specified (the startup environment)
+       •   An environment that a LOAD statement loaded and that the most recent USE statement made current
+   •   If you UNLOAD the current environment, a subsequent PUT-KEY-VALUE writes to the startup environment.
+   •   To remove a key-value pair from an environment, set key-name to the name of the key and value to the Unknown
+       value (?).
+   •   To remove a section, including all its key-value pairs, from an environment, set section-name to the name of the
+       section and key-name to the Unknown value (?).
+   •   To change the definitions in the internal color table, use one of the following techniques:
+       •   To display a dialog box that lets the user change the color definitions, use the SYSTEM-DIALOG-COLOR
+           statement.
+       •   To change the color definitions directly from ABL, use the attributes and methods of the COLOR-TABLE handle.
+       Note: The COLOR option of the PUT-KEY-VALUE statement does not change the definitions in the internal color
+       table. This option merely moves some or all of those definitions to the current environment.
+   •   To change the definitions in the internal font table, use one of the following techniques:
+       •   To display a dialog box that lets the user change the font definitions, use the SYSTEM-DIALOG-FONT statement.
+       •   To change the font definitions directly from ABL, use the attributes and methods of the FONT-TABLE handle.
+       Note: The FONT option of the PUT-KEY-VALUE statement does not change the definitions in the internal font
+       table. This option merely moves some or all of those definitions to the current environment.
+   •   For more information on colors and fonts, see the topics on colors and fonts in OpenEdge Programming Interfaces.
+
+
+
+
+
+PUT-LONG statement
+
+Stores the signed 32-bit value of an integer expression at the specified memory location.
+
+   Syntax
+
+       PUT-LONG ( destination , position ) = expression
+   destination
+                 A variable of type RAW or MEMPTR. If destination is the Unknown value (?), it remains the Unknown
+                 value (?). If destination is a MEMPTR and its region in not allocated (by a SET-SIZE statement or
+                 by a Windows dynamic link library (DLL) or UNIX shared library routine), the AVM generates a
+                 run-time error.
+   position
+                 An integer value greater than 0 that indicates the byte position where the AVM stores expression. If
+                 position is less than 1, the AVM generates a run-time error.
+                 For a RAW destination, if position is greater than the length of destination, the AVM increases the
+                 length of destination to position plus the remaining bytes needed to store expression. The gap between
+                 the original destination length and position is padded with null bytes.
+                 For a MEMPTR destination, if position is greater than the length of destination or does not leave
+                 sufficient room to store expression, the AVM generates a run-time error.
+   expression
+                 The integer value of a constant, field, variable, function, or expression.
+
+   Notes
+   •   For examples of how to use the PUT-LONG statement, see the PUT-BYTE statement on page 834 reference entry.
+   •   This statement supports byte-swapping only if destination is a MEMPTR data type. The statement will first examine
+       the byte-order setting of the MEMPTR and then swap the bytes appropriately while putting the data into the MEMPTR
+       memory.
+   •   For more information on accessing DLL routines from ABL, see OpenEdge Programming Interfaces.
+
+
+
+
+PUT-SHORT statement
+
+Stores the signed 16-bit value of an integer expression at the specified memory location.
+
+   Syntax
+
+       PUT-SHORT ( destination , position ) = expression
+
+
+   destination
+                 A variable of type RAW or MEMPTR. If destination is the Unknown value (?), it remains the Unknown
+                 value (?). If destination is a MEMPTR and its region is not allocated (by a SET-SIZE statement or
+                 by a Windows dynamic link library (DLL) or UNIX shared library routine), the AVM generates a
+                 run-time error.
+   position
+                 An integer value greater than 0 that indicates the byte position where the AVM stores expression. If
+                 position is less than 1, the AVM generates a run-time error.
+                 For a RAW destination, if position is greater than the length of destination, the AVM increases the
+                 length of destination to position plus the remaining bytes needed to store expression. The gap between
+                 the original destination length and position is padded with null bytes.
+                 For a MEMPTR destination, if position is greater than the length of destination or does not leave
+                 sufficient room to store expression, the AVM generates a run-time error.
+   expression
+                 The integer value of a constant, field, variable, function, or expression.
+
+   Notes
+   •   For examples of how to use the PUT-SHORT statement, see the PUT-BYTE statement on page 834 reference entry.
+   •   This statement supports byte-swapping only if destination is a MEMPTR data type. The statement will first examine
+       the byte-order setting of the MEMPTR and then swap the bytes appropriately while putting the data into the MEMPTR
+       memory.
+   •   For more information on accessing DLL routines from ABL, see OpenEdge Programming Interfaces.
+
+
+
+
+
+PUT-STRING statement
+
+Stores the null-terminated value of a CHARACTER or LONGCHAR expression at the specified memory location. If numbytes is specified, PUT-STRING will copy the requested number of bytes from the variable, regardless of whether there are embedded nulls. In this case PUT-STRING will not put a terminating null into the MEMPTR unless the last byte copied happens to be a null.
+
+   Syntax
+
+       PUT-STRING ( destination , position , [numbytes] ) = expression
+
+
+   destination
+                 A variable of type RAW or MEMPTR. If destination is the Unknown value (?), it remains the Unknown
+                 value (?). If destination is a MEMPTR and its region is not allocated (by a SET-SIZE statement or
+                 by a Windows dynamic link library (DLL) or UNIX shared library routine), the AVM generates a
+                 run-time error.
+   position
+                 An integer value greater than 0 that indicates the byte position where the AVM stores expression. If
+                 position is less than 1, the AVM generates a run-time error.
+                 For a RAW destination, if position is greater than the length of destination, the AVM increases the
+                 length of destination to position plus the remaining bytes needed to store expression. The gap between
+                 the original destination length and position is padded with null bytes.
+                 For a MEMPTR destination, if position is greater than the length of destination or does not leave
+                 sufficient room to store expression, the AVM generates a run-time error.
+   numbytes
+                 An integer value greater than 0 that indicates how many bytes to copy from expression. If position
+                 plus numbytes is greater than the length of destination, the AVM generates a run-time error.
+   expression
+                 An expression (a constant, field name, variable name, or expression) whose value is a CHARACTER
+                 or LONGCHAR. The AVM converts a LONGCHAR value to -cpinternal before it stores the
+                 value.
+
+
+
+
+PUT-UNSIGNED-LONG statement
+
+Writes an INTEGER or INT64 value as a 32-bit unsigned value to a MEMPTR or RAW value. This statement is analogous to the PUT-UNSIGNED-SHORT statement, except with a 32-bit value.
+
+   Syntax
+
+       PUT-UNSIGNED-LONG ( destination , position ) = expression
+
+
+   destination
+                 A MEMPTR or RAW variable. If destination is the Unknown value (?), it remains the Unknown value
+                 (?). If destination is a MEMPTR and its region is not allocated (by a SET-SIZE statement, or by a
+                 Windows DLL or Unix shared object entry point), the AVM generates a run-time error.
+   position
+                 An INTEGER or INT64 value greater than 0 that indicates the byte position to write expression. If
+                 position is less than 1, the AVM generates a run-time error. For a RAW destination, if position is
+                 greater than the length of destination, the AVM increases the length of destination to position plus the
+                 remaining bytes needed to store expression. The gap between the original destination length and
+                 position is padded with null bytes. For a MEMPTR destination, if position is greater than the length
+                 of destination or does not leave sufficient room to store expression, the AVM generates a run-time
+                 error.
+                 For a RAW destination, if position is greater than the length of destination, the AVM increases the
+                 length of destination to position plus the remaining bytes needed to store expression. The gap between
+                 the original destination length and position is padded with null bytes.
+                 For a MEMPTR destination, if position is greater than the length of destination or does not leave
+                 sufficient room to store expression, the AVM generates a run-time error.
+   expression
+                 An INTEGER or INT64 value of a constant, field, variable or expression. If expression is an INT64
+                 value exceeding the maximum value of an UNSIGNED-LONG, the AVM generate an overflow error
+                 at run time.
+
+   Notes
+   •   This statement supports byte-swapping only if destination is a MEMPTR data type. The statement will first examine
+       the byte-order setting of the MEMPTR and then swap the bytes appropriately while putting the data into the MEMPTR
+       memory.
+
+
+
+
+
+PUT-UNSIGNED-SHORT statement
+
+Stores the unsigned 16-bit value of an integer expression at the specified memory location.
+
+   Syntax
+
+       PUT-UNSIGNED-SHORT ( destination , position ) = expression
+
+
+   destination
+                 A variable of type RAW or MEMPTR. If destination is the Unknown value (?), it remains the Unknown
+                 value (?). If destination is a MEMPTR and its region is not allocated (by a SET-SIZE statement or
+                 by a Windows dynamic link library (DLL) or UNIX shared library routine), the AVM generates a
+                 run-time error.
+   position
+                 An integer value greater than 0 that indicates the byte position where the AVM stores expression. If
+                 position is less than 1, the AVM generates a run-time error.
+                 For a RAW destination, if position is greater than the length of destination, the AVM increases the
+                 length of destination to position plus the remaining bytes needed to store expression. The gap between
+                 the original destination length and position is padded with null bytes.
+                 For a MEMPTR destination, if position is greater than the length of destination or does not leave
+                 sufficient room to store expression, the AVM generates a run-time error.
+   expression
+                 The integer value of a constant, field, variable, function, or expression.
+
+   Notes
+   •   This statement supports byte-swapping only if destination is a MEMPTR data type. The statement will first examine
+       the byte-order setting of the MEMPTR and then swap the bytes appropriately while putting the data into the MEMPTR
+       memory.
+   •   For more information on accessing DLL routines from ABL, see OpenEdge Programming Interfaces.
+
+
+
+
+RAW function
+
+(ORACLE only)
+Extracts bytes from a field.
+
+   Syntax
+
+     RAW ( field[ , position[ , length]] )
+
+
+   field
+                Any field from which you want to extract bytes.
+   position
+                An integer expression that indicates the position of the first byte you want to extract from field. The
+                default value of position is 1.
+   length
+                An integer expression that indicates the number of bytes you want to extract from field. If you do not
+                use the length argument, RAW uses field from position to end.
+
+   Example
+   This procedure extracts bytes from the Name field of the first Customer, starting at byte 8, and writes 4 bytes to the
+   variable r1:
+   r-rawfct.p
+
+     /*You must connect to a non-OpenEdge demo database to run this procedure*/
+     DEFINE VARIABLE r1 AS RAW NO-UNDO.
+
+     FIND FIRST Customer NO-LOCK.
+     r1 = RAW(Customer.Name,8,4).
+
+   Notes
+   •   If position is less than 1, or length is less than 0, the AVM returns a run-time error.
+   •   If (position +length -1) is greater than the length of the field from which you are extracting the bytes, the AVM
+       returns a run-time error.
+
+
+
+
+
+RAW statement
+(ORACLE only)
+Writes bytes to a field.
+
+   Syntax
+
+       RAW ( field[ , position[ , length]] ) = expression
+
+
+   field
+                The field in which you want to store expression.
+   position
+                An integer expression that indicates the position in field where you want to store expression. The
+                default for position is 1.
+   length
+                An integer expression that indicates the number of positions you want to replace in field. If you do
+                not use the length argument, RAW puts expression into field from position to end. ABL treats
+                variable-length fields and fixed-length fields differently. See the Notes section for more information.
+   expression
+                A function or variable name that returns data and results in the bytes that you want to store in field.
+
+   Notes
+   •   In a variable length field, if (position +length -1) is greater than the length of field, the AVM pads the field with nulls
+       before it performs the replacement.
+   •   In a fixed length field, if (position +length -1) is greater than the length of field, the AVM returns a run-time error.
+       If (position + length -1) is less then the length of field, the AVM pads the field with nulls so that it remains the same
+       size.
+   •   If position, length, or expression is equal to the Unknown value (?), then field becomes the Unknown value (?).
+   •   If position is less than 1, or length is less than 0, the AVM generates a run-time error.
+
+
+
+
+
+RELEASE EXTERNAL statement
+
+Frees (that is, unloads from memory) a dynamic link library (DLL) or UNIX shared library.
+
+   Syntax
+
+     RELEASE EXTERNAL [ PROCEDURE ] "dll-name"
+
+
+   [ PROCEDURE ]
+           An optional "noise" keyword that does not affect the statement's behavior in any way.
+   dll-name
+              A character string representing the name of the DLL or UNIX shared library.
+
+   Example
+   To free the DLL, mystuff.dll, code the following statement:
+
+     RELEASE EXTERNAL PROCEDURE "mystuff.dll".
+
+
+
+
+SET-POINTER-VALUE statement
+
+Sets a variable of type MEMPTR to the value of a particular memory location.
+
+Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       SET-POINTER-VALUE ( memptr-var ) = memptr-value
+
+
+   memptr-var
+             A reference to a variable defined as MEMPTR.
+   memptr-value
+             An integer that represents a memory location.
+
+   Example
+   The following example calls a DLL routine that returns a pointer to a structure, extracts an address at byte 5 of the
+   structure, uses SET-POINTER-VALUE to assign the address to an ABL MEMPTR, and displays the character string
+   at the address:
+
+       DEFINE VARIABLE person_struct AS MEMPTR NO-UNDO. /* pointer to structure */
+       DEFINE VARIABLE name          AS MEMPTR NO-UNDO. /* pointer to name */
+
+       SET-SIZE(person_struct) = 8.
+
+       RUN person_info (OUTPUT person_struct).
+       SET-POINTER-VALUE(name) = GET-LONG(person_struct,5).
+       DISPLAY GET-STRING(name,1) FORMAT "x(50)".
+       SET-SIZE(person_struct) = 0.
+
+       PROCEDURE person_info EXTERNAL "person.dll" PERSISTENT:
+         DEFINE OUTPUT PARAMETER person_struct AS MEMPTR.
+       END PROCEDURE.
+
+   Notes
+   •   SET-POINTER-VALUE is particularly useful when accessing Windows Dynamic Link Library (DLLs) or UNIX
+       shared library routines from ABL. For more information on DLLs, see the topics on DLLs in OpenEdge Programming
+       Interfaces.
+
+
+   
+
+
+SET-SIZE statement
+
+Manages memory associated with a MEMPTR variable. This includes allocating and associating a region of memory with an uninitialized MEMPTR variable, setting the size of a region allocated with a Windows dynamic link library (DLL) or UNIX shared library routine for a MEMPTR, and deallocating memory associated with a MEMPTR variable.
+
+Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       SET-SIZE ( memptr-var ) = size
+
+
+   memptr-var
+             A reference to a variable defined as MEMPTR.
+   size
+                An integer expression that specifies the allocated byte size of the region pointed to by memptr-var.
+
+   Example
+   In the following example, the SET-SIZE statement allocates 8 bytes of memory, associates the memory with the
+   ElipRegion variable, and then initializes the region with four SHORT (2-byte) values:
+   r-setsiz.p
+
+       DEFINE VARIABLE ElipRegion AS MEMPTR NO-UNDO.
+
+       ASSIGN
+        SET-SIZE(ElipRegion)                  = 8
+         PUT-SHORT(ElipRegion,            1)   = 10
+         PUT-SHORT(ElipRegion,            3)   = 10
+         PUT-SHORT(ElipRegion,            5)   = 200
+         PUT-SHORT(ElipRegion,            7)   = 50.
+
+
+
+   Notes
+   •   If memptr-var has no memory allocated to it (is uninitialized), then the SET-SIZE statement allocates a memory
+       region of the specified size.
+   •   If a MEMPTR variable is returned from a DLL or UNIX shared library routine that also allocates a memory region
+       to it, then the SET-SIZE statement initializes the size of the existing region. The AVM does not allocate a new region.
+       This allows the AVM to perform bounds checking on references to MEMPTR regions allocated outside ABL.
+                CAUTION: You must know and specify the exact size of the memory region returned by the DLL routine
+                from the type of structure it allocates. An incorrect size can result in data loss.
+   •   If the specified size is 0, the SET-SIZE statement deallocates (frees) any memory associated with memptr-var, making
+       it available to reference a new memory region.
+   •   If the specified size is greater than 0 and memptr-var is fully initialized (associated with a memory region of a
+       specified size), the SET-SIZE statement has no effect and leaves memptr-var unchanged.
+   •   After initializing a MEMPTR variable, you can obtain the address of (or pointer to) the region associated with the
+       variable using the GET-POINTER-VALUE function. Use this to build structures that contain pointers to other
+       structures, as required by some DLL or UNIX shared library routines.
+ 
+
+
+
+
+XOR operator (bitwise)
+
+Performs a bitwise exclusive OR operation on two expressions of the same flag enum type and returns a new instance of the same type.
+
+   Syntax
+
+       flag-enum-expression XOR flag-enum-expression
+
+
+   flag-enum-expression
+             An expression whose value is a flag enum instance. Both expressions must be the same flag enum
+             type, and neither expression can be the Unknown value (?).
+
+   Example
+   When you perform an XOR operation on two flag enum instances, the resulting instance has a flag set if the state of that
+   flag was different for the original two expressions. For example, using this enum type:
+
+       ENUM Alignment FLAGS:
+           DEFINE ENUM Left
+                       Right
+                       Top
+                       Bottom.
+       END ENUM.
+The following code fragment shows examples of two different XOR operations.
+
+       DEFINE myAlignment AS Alignment.
+
+       myAlignment = Alignment:Left.
+       /* The initial value for myAlignment has the Left set. */
+
+       myAlignment = myAlignment XOR Alignment:Top.
+       /* After the first XOR operation, myAlignment has both the Left and Top
+          flags set because initially, myAlignment has the Left flag set and
+          Alignment:Top does not, and vice versa for the Top flag. */
+
+       myAlignment = myAlignment XOR (Alignment:Top OR Alignmen:Bottom).
+       /* myAlignmnet now starts with the Left and Top flags set, and the enum
+          instance created by the OR operation has both the Top and Bottom
+          flags set. After the XOR operation, myAlignment has the Left and
+          Bottom flags set because the status of those flags are different in
+          the two enum instances operated on by the XOR. */
+
+
+   The first XOR operation in the previous example shows how you can use bitwise XOR to toggle a flag on and off.
+   Performing an XOR operation on myAlignment with an enum instance that has only one flag set will result in an
+   instance with that flag turned on if if it was off in myAlignment or off it was turned on in myAlignment.
+   The second XOR operation shows how you can use bitwise XOR to toggle the status of two flags that you want to be
+   mutually exclusive. When myAlignment starts with either Top or Bottom set, but not both, using the XOR operation
+   with the enum instance created by the OR operation switches the status of the two flags.
+
+   Notes
+   •   This operator can be used with both ABL and .NET flag enums.
+

@@ -1,0 +1,17 @@
+
+DEFINE TEMP-TABLE tt{3} LIKE {1} .
+DEFINE VARIABLE cCampos{3} AS CHARACTER   NO-UNDO.
+DEFINE VARIABLE carq{1}   AS CHARACTER   NO-UNDO.
+ASSIGN cArq{1} = 'c:\temp\{1}{3}.csv'. 
+IF SEARCH(cArq{1}) <> ?  THEN
+   OS-DELETE cArq{1} .
+
+OUTPUT TO value(cArq{1}) .
+
+RUN getCpsTT(TEMP-TABLE tt{3}:HANDLE,";", OUTPUT cCampos{3}).
+PUT UNFORM cCampos{3} SKIP.
+FOR EACH {1} {2} NO-LOCK:
+    EXPORT DELIMITER ";" {1}.
+END.
+
+OUTPUT CLOSE.

@@ -1,0 +1,183 @@
+CREATE SAX-ATTRIBUTES statement
+   Creates an instance of a SAX-attributes object and assigns its handle to the handle variable specified. Use this object to
+   access and manage the attribute list for an XML element either being read or written with the SAX-reader or SAX-writer
+   object.
+
+   Syntax
+
+       CREATE SAX-ATTRIBUTES handle [ IN WIDGET-POOL pool-name ] [ NO-ERROR ]
+
+
+   handle
+                Variable of type HANDLE which stores the handle of the new SAX-attributes object.
+   IN WIDGET-POOL pool-name
+           Specifies the widget pool where the AVM creates the new object. If you do not specify a widget pool,
+           the AVM creates the object in the current default widget pool.
+   NO-ERROR
+                                                                                                       
+            The NO-ERROR option is used to prevent the statement from raising ERROR and displaying
+            error messages.
+In ABL, a SAX-attributes object can be automatically created and managed by the SAX parser, or programatically
+created and managed by you. Automatic SAX-attributes objects are created, populated, and destroyed during the scope
+of the startElement callback procedure. The startElement callback is called by the SAX-reader object each time the SAX
+parser encounters new XML element during a read operation. The SAX parser populates the SAX-attributes object, but
+you may interact with the object during the scope of the startElement callback procedure. For example, you may add
+elements, update elements, and remove elements from the SAX-attributes object.
+At the conclusion of the callback, the SAX-attributes object is deleted and your access to the element list is lost. To save
+the XML attributes list, you would need to create another SAX-attributes object that is not tied to the scope of the
+startElement callback procedure. Then, from within the startElement callback, you would use the
+COPY-SAX-ATTRIBUTES( ) method on the new object and provide a handle to the automatically created SAX-attributes
+object.
+Finally, you would likely pass the XML element and its attributes to a SAX-writer object to concurrently build a new
+XML document while reading the source XML document.
+
+Example
+The following code snippets assembled form one complete example of a concurrent XML read and write operation. The
+first snippet shows the main block of code:
+
+  DEFINE VARIABLE cFileRead AS CHARACTER NO-UNDO INITIAL "custorders.xml".
+  DEFINE VARIABLE cFileWrite AS CHARACTER NO-UNDO INITIAL "custitems.xml".
+
+  DEFINE     VARIABLE      hReader      AS   HANDLE      NO-UNDO.
+  DEFINE     VARIABLE      hWriter      AS   HANDLE      NO-UNDO.
+  DEFINE     VARIABLE      hSaxAtt      AS   HANDLE      NO-UNDO.
+  DEFINE     VARIABLE      lok          AS   LOGICAL     NO-UNDO.
+
+  CREATE SAX-READER hReader.
+  CREATE SAX-WRITER hWriter.
+  CREATE SAX-ATTRIBUTES hSaxAtt.
+
+  /* Uses THIS-PROCEDURE as the SAX handler. All callbacks are below. */
+
+  lok = hReader:SET-INPUT-SOURCE("file", cFileRead).
+  lok = hWriter:SET-OUTPUT-DESTINATION("file", cFileWrite).
+
+  hReader:SAX-PARSE().
+  IF ERROR-STATUS:ERROR THEN DO:
+    MESSAGE "Problem reading the XML file:" cFileRead.
+    MESSAGE ERROR-STATUS:GET-MESSAGE(1).
+  END.
+  ELSE
+    MESSAGE "XML file converted. Written to" cFileWrite.
+
+  DELETE OBJECT hReader.
+  DELETE OBJECT hWriter.
+  DELETE OBJECT hSaxAtt.
+
+This snippet contains the callbacks for starting and ending a document read. Note that embedded in the steps of the read
+operation are the corresponding steps for a concurrent write operation:
+
+  /* SAX-reader callbacks below*/
+
+  /* Context controller */
+  DEFINE VARIABLE lWriteChar AS LOGICAL NO-UNDO.
+
+  PROCEDURE startdocument:
+    ASSIGN
+      hWriter:ENCODING = "utf-8"
+      lok              = hWriter:START_DOCUMENT().
+  END PROCEDURE.
+
+  PROCEDURE enddocument:
+    lok = hWriter:END-DOCUMENT().
+  END PROCEDURE.
+
+
+The startElement callback does most of the processing. Depending on the values being read by SAX-reader, the callback
+decides what to write to the new XML document:
+
+  PROCEDURE startelement:
+    DEFINE INPUT PARAMETER              namespaceuri        AS   CHARACTER     NO-UNDO.
+    DEFINE INPUT PARAMETER              localname           AS   CHARACTER     NO-UNDO.
+    DEFINE INPUT PARAMETER              qname               AS   CHARACTER     NO-UNDO.
+    DEFINE INPUT PARAMETER              attributes          AS   HANDLE        NO-UNDO.
+
+    CASE qname:
+      WHEN "customer" THEN ASSIGN
+        lWriteChar = FALSE
+        lok        = hSaxAtt:COPY-SAX-ATTRIBUTES(attributes)
+        lok        = hWriter:START-ELEMENT(qname).
+      WHEN "name" THEN ASSIGN
+        lWriteChar = TRUE
+        lok        = hSaxAtt:REMOVE-ATTRIBUTE("id")
+        lok        = hWriter:START-ELEMENT(qname, hSaxAtt).
+      WHEN "order" THEN ASSIGN
+        lWriteChar = FALSE
+        lok        = hWriter:START-ELEMENT(qname).
+      WHEN "item" THEN ASSIGN
+        lWriteChar = FALSE
+        lok        = hWriter:START-ELEMENT(qname)
+        lok        = hWriter:WRITE-CHARACTERS
+          (attributes:GET-VALUE-BY-QNAME("description"))
+        lok        = hWriter:END-ELEMENT(qname).
+      WHEN "custorders" THEN ASSIGN
+        lWriteChar = FALSE
+        lok        = hWriter:START-ELEMENT("custitems").
+    END CASE.
+  END PROCEDURE.
+
+
+   The last snippet completes the set of callback procedures needed for this example:
+
+     PROCEDURE endelement:
+       DEFINE INPUT PARAMETER namespaceuri AS CHARACTER NO-UNDO.
+       DEFINE INPUT PARAMETER localname    AS CHARACTER NO-UNDO.
+       DEFINE INPUT PARAMETER qname        AS CHARACTER NO-UNDO.
+
+        IF qname = "customer" OR qname = "name" OR qname = "order" THEN
+          lok = hWriter:END-ELEMENT(qname).
+
+       IF qname = "custorders" THEN
+         lok = hWriter:END-ELEMENT("custitems").
+     END PROCEDURE.
+
+     PROCEDURE characters:
+       DEFINE INPUT PARAMETER chararray   AS LONGCHAR NO-UNDO.
+       DEFINE INPUT PARAMETER arraylength AS INTEGER NO-UNDO.
+
+       IF lWriteChar THEN
+         lok = hWriter:WRITE-CHARACTERS(chararray).
+     END PROCEDURE.
+
+
+
+   CREATE SAX-READER statement
+   Creates an instance of a SAX-reader object and assigns its handle to the handle variable you specify. The SAX-reader
+   object can be used to control the parsing of XML source.
+
+   Syntax
+
+     CREATE SAX-READER handle
+       [ IN WIDGET-POOL pool-name] [ NO-ERROR ]
+
+
+   handle
+              A variable of type HANDLE into which CREATE SAX-READER stores the new handle.
+   IN WIDGET-POOL pool-name
+           A CHARACTER expression indicating the widget pool in which the object is created. If you do not
+           specify a widget pool, the object is created in the current default widget pool.
+   NO-ERROR
+              The NO-ERROR option is used to prevent the statement from raising ERROR and displaying
+              error messages.
+
+   
+
+
+
+CREATE SAX-WRITER statement
+   Creates an instance of a SAX-writer object and assigns its handle to the handle variable specified. Use this object to
+   write an XML document using the SAX interface.
+
+   Syntax
+
+     CREATE SAX-WRITER handle [ IN WIDGET-POOL pool-name ] [ NO-ERROR ]
+
+
+   handle
+               Variable of type HANDLE which stores the handle of the new SAX-writer object.
+   IN WIDGET-POOL pool-name
+           Specifies the widget pool where the AVM creates the new object. If you do not specify a widget pool,
+           the AVM creates the object in the current default widget pool.
+   NO-ERROR
+               The NO-ERROR option is used to prevent the statement from raising ERROR and displaying
+               error messages.

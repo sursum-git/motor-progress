@@ -1,0 +1,4011 @@
+EDGE-CHARS attribute
+   The width, in character units, of the edge of a rectangle.
+   Data type: DECIMAL
+   Access: Readable/Writeable
+   Applies to: RECTANGLE widget
+
+
+EDGE-PIXELS attribute
+   The width, in pixels, of the edge of a rectangle.
+   Data type: INTEGER
+   Access: Readable/Writeable
+   Applies to: RECTANGLE widget
+
+
+EDIT-CAN-PASTE attribute
+   (Windows only; Graphical interfaces only)
+   Indicates whether the Clipboard contains data that can be pasted into the widget.
+   Data type: LOGICAL
+   Access: Read-only
+   Applies to: BROWSE widget (cell), COMBO-BOX widget, EDITOR widget, FILL-IN widget
+   If the Clipboard contains data that can be pasted into the widget, EDIT-CAN-PASTE is TRUE. Otherwise, it is FALSE.
+   For browses, this attribute applies only to fill-in and combo-box browse columns.
+
+
+EDIT-CAN-UNDO attribute
+   (Windows only; Graphical interfaces only)
+   Indicates whether the widget can undo the last modification.
+   Data type: LOGICAL
+   Access: Read-only
+   Applies to: BROWSE widget (cell), COMBO-BOX widget, EDITOR widget
+   If the widget can undo the last modification, EDIT-CAN-UNDO has the value TRUE, otherwise it has the value FALSE.
+   If you set EDIT-CAN-UNDO to any value, the AVM empties the undo buffer.
+   For browses, this attribute applies only to fill-in and combo-box browse columns.
+
+
+EDIT-CLEAR( ) method
+   (Windows only; Graphical interfaces only)
+   Deletes the selected text.
+   Return type: LOGICAL
+   Applies to: BROWSE widget (cell), COMBO-BOX widget, EDITOR widget, FILL-IN widget
+
+   Syntax
+
+     EDIT-CLEAR ( )
+
+
+   If the widget performs the operation successfully, the method returns TRUE. Otherwise, it returns FALSE.
+   For browses, this method applies only to fill-in and combo-box browse columns.
+                                                                                      
+EDIT-COPY( ) method
+   (Windows only; Graphical interfaces only)
+   Copies the currently selected text in the widget to the Clipboard.
+   Return type: LOGICAL
+   Applies to: BROWSE widget (cell), COMBO-BOX widget, EDITOR widget, FILL-IN widget
+
+   Syntax
+
+     EDIT-COPY ( )
+
+
+   If the widget performs the operation successfully, the method returns TRUE. Otherwise, it returns FALSE.
+   For browses, this method applies only to fill-in and combo-box browse columns.
+
+
+EDIT-CUT( ) method
+   (Windows only; Graphical interfaces only)
+   Copies the currently selected text in the widget to the Clipboard and then deletes the selected text.
+   Return type: LOGICAL
+   Applies to: BROWSE widget (cell), COMBO-BOX widget, EDITOR widget, FILL-IN widget
+
+   Syntax
+
+     EDIT-CUT ( )
+
+
+   If the widget performs the operation successfully, the method returns TRUE. Otherwise, it returns FALSE.
+   For browses, this method applies only to fill-in and combo-box browse columns.
+
+
+EDIT-PASTE( ) method
+   (Windows only; Graphical interfaces only)
+   Copies the currently selected text of the Clipboard into the widget at the current cursor position, if the Clipboard contains
+   text data.
+   Return type: LOGICAL
+   Applies to: BROWSE widget (cell), COMBO-BOX widget, EDITOR widget, FILL-IN widget
+
+   Syntax
+
+     EDIT-PASTE ( )
+
+
+   If the widget performs the operation successfully, the method returns TRUE. Otherwise, it returns FALSE.
+   For browses, this method applies only to fill-in and combo-box browse columns.
+                                                                                     
+
+
+EDIT-UNDO( ) method
+   (Windows only; Graphical interfaces only)
+   Makes the editor undo its most recent edit if possible.
+   Return type: LOGICAL
+   Applies to: BROWSE widget (cell), COMBO-BOX widget, EDITOR widget
+
+   Syntax
+
+     EDIT-UNDO ( )
+
+
+   If the widget performs the operation successfully, the method returns TRUE. Otherwise, it returns FALSE.
+   For browses, this method applies only to fill-in and combo-box browse columns.
+
+
+EMPTY attribute
+   Indicates whether the SCREEN-VALUE attribute for the editor contains text.
+   Data type: LOGICAL
+   Access: Read-only
+   Applies to: EDITOR widget
+   The EMPTY attribute is TRUE if the editor contains no text (that is, the editor's SCREEN-VALUE is null).
+
+
+EMPTY-DATASET( ) method
+   Empties a ProDataSet object of all records in its associated temp-tables.
+   Return type: LOGICAL
+   Applies to: ProDataSet object handle
+
+   Syntax
+
+     EMPTY-DATASET ( )
+
+
+   When you invoke this method, the ABL Virtual Machine (AVM) sets the ORIGIN-HANDLE attribute on any changes
+   temp-tables corresponding to the source temp-tables of this ProDataSet to the Unknown value (?).
+
+
+EMPTY-TEMP-TABLE( ) method
+   Deletes all records from a temp-table associated with a buffer object or from a temp-table directly identified by a
+   temp-table object handle.
+   When you empty a temp-table that is defined as UNDO within a transaction, the AVM deletes the records individually.
+   This is less efficient than emptying the temp-table outside the transaction, where the AVM deletes all records in the
+   temp-table as a unit.
+   Return type: LOGICAL
+                                                                                       
+
+
+   Applies to: Buffer object handle, Temp-table object handle
+
+   Syntax
+
+     EMPTY-TEMP-TABLE ( )
+
+
+   If the temp-table you invoke this method on was used to populate one or more temp-tables via the GET-CHANGES()
+   method, the AVM sets the ORIGIN-HANDLE attribute for those populated temp-tables to the Unknown value (?).
+   This method corresponds to the EMPTY TEMP-TABLE statement.
+   Note: The EMPTY-TEMP-TABLE() method cannot be used together with other assignments in a single ASSIGN
+   statement.
+
+
+ENABLE( ) method
+   Enables the specified radio button within the radio set.
+   Return type: LOGICAL
+   Applies to: RADIO-SET widget
+
+   Syntax
+
+     ENABLE ( label )
+
+
+   label
+               A character-string expression that specifies the label of a radio button.
+   If the operation is successful, the method returns TRUE.
+
+
+ENABLE-CONNECTIONS( ) method
+   Specifies the TCP/IP port that the AVM uses to listen for new connections. Once called, the AVM automatically listens
+   for and accepts new connections for the specified port.
+   Return type: LOGICAL
+   Applies to: Server socket object handle
+
+   Syntax
+
+     ENABLE-CONNECTIONS ( connection-parms )
+
+
+   connection-parms
+             A character string expression that contains a space-separated list of one or more socket connection
+             parameters.
+   The following table describes the socket connection parameters you can include in this string.
+                                                                                       
+
+   Table 11: Socket connection parameters
+
+   Parameter                                 Description
+   -S socket-port                            The TCP/IP port number that the AVM should listen to and accept connections
+                                             on. You can specify either an explicit port number or a TCP service name. If
+                                             you use a TCP service name, the method uses the port number associated with
+                                             that name in the TCP/IP services file.
+   -pf filename                              Optional. A text file containing any of the socket connection parameters
+                                             described in this table. If this file contains any other OpenEdge startup
+                                             parameters, this method ignores them.
+   -qsize backlog                            Optional. The length of the pending-connection queue—that is, the maximum
+                                             number of connection requests you want the server to queue while it processes
+                                             the connections already accepted. If the queue is full when a connection request
+                                             is received, it is refused.The default length of the queue depends on the
+                                             platform.
+                                             Note: On some platforms, the value you supply for backlog is modified by
+                                             addition, subtraction, multiplication, division, or some combination of these,
+                                             and it is this modified value that becomes the maximum length of the queue.
+                                             For more information, see the documentation for your platform.
+
+   -ssl                                      If specified, the connection is TLS-based.
+                                             Note: Be sure you need TLS before using this option. TLS incurs more or
+                                             less heavy performance penalties, depending on resources and load.
+
+   -keyalias aliasname                       Sets the alias name of the Public[/Private] key and digital certificate to use
+                                             within the keystore. If not specified, the default default_server key alias
+                                             is used.
+   -keyaliaspasswd encpwd                    Sets the password to use in accessing the Public[/Private] key and digital
+                                             certificate. Always specify a -keyaliaspassword when the -keyalias
+                                             option is used. The default password only exists when using the
+                                             default_server server certificate.
+   -nosessioncache                           If specified, caching for the TLS client session is disabled.
+                                             The maximum amount of time, in seconds, that the server waits before it rejects
+     -sessiontimeout
+     [seconds]                               a TLS client's request to resume a session. The default value is 180 seconds.
+
+
+
+   An application server cannot act as a socket server, since they are already listening on a port. ENABLE-CONNECTIONS
+   is only valid from batch clients, GUI clients and character clients. This method will generate an error if it is called from
+   an invalid application. This method will also generate an error if it is called multiple times without the
+   DISABLE-CONNECTION( ) method being called in between.
+   Note: Connections to a TLS-enabled server socket require the management of public keys on the client (TLS client)
+   and private keys on the server (TLS server). For ABL sockets, the TLS client is the ABL session initiating the TLS
+   connection on a socket object and the TLS server is the ABL session enabling TLS connections on a server socket object.
+   For information on using TLS to secure an ABL socket connection, see the sections on sockets in OpenEdge Programming
+   Interfaces. For more information on TLS and managing private key and digital certificate stores for OpenEdge TLS
+   clients and servers, see Learn about Security and Auditing.
+
+
+ENABLE-EVENTS( ) method
+   (Windows only)  
+
+
+   Enables event notification for automation objects.
+   Return type: CHARACTER
+   Applies to: Automation Object
+
+   Syntax
+
+     ENABLE-EVENTS ( event-proc-prefix )
+
+
+   event-proc-prefix
+              A character-string expression that the AVM prepends to event names. The resulting string is the name
+              of the internal procedure the AVM runs when an event is fired. During an event notification, all running
+              procedures and all persistent procedures are searched to find a procedure with the name matching
+              event-proc-prefix.eventname (for example, ExcelWB.SelectionChanged).
+
+
+ENABLED attribute
+   Determines whether or not the profiler is enabled. When set to TRUE, the profiler is activated and initialized. The default
+   value is FALSE.
+   Data type: LOGICAL
+   Access: Readable/Writable
+   Applies to: PROFILER system handle
+   When the profiler is first enabled, all the active procedures are registered and assigned module identifiers. An active
+   procedure is any persistent procedure or any procedure on the procedure call stack. For each active procedure, except
+   those that are part of Developer Studio, a PROFILER:LISTINGS setting of TRUE also generates listing files. In
+   addition, a TRUE setting records coverage analysis information. To generate listing files or coverage analysis information,
+   set PROFILER:LISTINGS and PROFILER:COVERAGE attributes to TRUE before setting PROFILER:ENABLED
+   to TRUE. As long as profiling is enabled, Progress maintains a registry of the procedures that executed, regardless of
+   whether profiling is turned on or off (controlled by the setting of the PROFILER:PROFILING attribute). When
+   profiling is disabled (by setting PROFILER:ENABLED to FALSE), Progress writes accumulated profiling data to the
+   output file, and then discards the registry of procedures that executed.
+
+
+ENCODE-DOMAIN-ACCESS-CODE( ) method
+   Encrypts the specified character expression and returns a character value that you can store for later use as a domain
+   access code in your database's domain configuration.
+   Return-type: CHARACTER
+   Applies to: SECURITY-POLICY system handle
+
+   Syntax
+
+     ENCODE-DOMAIN-ACCESS-CODE ( data-to-encrypt )
+
+
+   data-to-encrypt
+              A CHARACTER expression containing the domain access code.
+
+   
+
+ENCODING attribute
+   Returns the name of the character encoding used to encode the contents of an XML document. The default encoding is
+   UTF-8.
+   Data type: CHARACTER
+   Access: Readable/Writable
+   Applies to: X-document object handle, SAX-writer object handle
+   For an X-document object, the AVM sets the ENCODING attribute to the encoding name specified in the XML document's
+   encoding declaration when you load an XML document using the LOAD( ) method (Handle) on page 300.
+   You can also set the ENCODING attribute to the name of the character encoding to use when saving an XML document
+   using the SAVE( ) method on page 420. The AVM records this character encoding in the encoding declaration in the
+   XML document's prologue. If you do not set the ENCODING attribute, when you save the document, the document
+   will not have an encoding declaration in its prologue, but the document will be saved with the default encoding of UTF-8.
+   For a SAX-writer object, you can set the ENCODING attribute to the name of the character encoding to use when writing
+   the XML document. You can set this attribute only when the WRITE-STATUS is either SAX-WRITE-IDLE or
+   SAX-WRITE-COMPLETE. That is, you can only change this attribute when the writer is not writing, otherwise it fails
+   and generates an error message. The AVM records this character encoding in the encoding declaration in the XML
+   document's prologue. If you do not set the ENCODING attribute, when you write the document, the document will not
+   have an encoding declaration in its prologue, but the document will be written with the default encoding of UTF-8.
+   The encoding name must be an Internet Assigned Numbers Authority (IANA) name supported by the ABL XML Parser.
+   The following table lists the names of the supported IANA encodings and their corresponding ABL code pages.
+   Table 12: IANA encodings and corresponding ABL code pages
+
+   IANA encoding name                                           ABL code page name
+   Big5                                                         BIG-5
+   EUC-JP                                                       EUCJIS
+   GB2312                                                       GB2312
+   GB18030                                                      GB18030
+   GBK                                                          CP936
+   hp-roman8                                                    ROMAN-8
+   IBM00858                                                     IBM858
+   IBM037                                                       IBM037
+   IBM273                                                       IBM273
+   IBM277                                                       IBM277
+   IBM278                                                       IBM278
+   IBM284                                                       IBM284
+   IBM297                                                       IBM297
+   IBM437                                                       IBM437
+   IBM500                                                       IBM500
+   IBM850                                                       IBM850
+   IBM851                                                       IBM851                                 
+IBM852               IBM852
+IBM857               IBM857
+IBM861               IBM861
+IBM862               IBM862
+IBM866               IBM866
+ISO-8859-1           ISO8859-1
+ISO-8859-2           ISO8859-2
+ISO-8859-3           ISO8859-3
+ISO-8859-4           ISO8859-4
+ISO-8859-5           ISO8859-5
+ISO-8859-6           ISO8859-6
+ISO-8859-7           ISO8859-7
+ISO-8859-8           ISO8859-8
+ISO-8859-9           ISO8859-9
+ISO-8859-10          ISO8859-10
+ISO-8859-15          ISO8859-15
+KOI8-R               KOI8-R
+KS_C_5601-1987       KSC5601
+Shift_JIS            SHIFT-JIS
+TIS-620              620-2533
+US-ASCII             ASCII
+UTF-16               UTF-16
+UTF-32               UTF-32
+UTF-8                UTF-8
+windows-1250         1250
+windows-1251         1251
+windows-1252         1252
+windows-1253         1253
+windows-1254         1254
+windows-1255         1255
+windows-1256         1256
+windows-1257         1257
+windows-1258         1258
+                                                                                    
+
+ENCRYPT-AUDIT-MAC-KEY( ) method
+   Encrypts and encodes the specified character expression and returns an encrypted character value that you can store for
+   later use in message authentication code (MAC) operations.
+   Return type: CHARACTER
+   Applies to: AUDIT-POLICY system handle
+
+   Syntax
+
+     ENCRYPT-AUDIT-MAC-KEY ( encrypt-key )
+
+
+   encrypt-key
+              A character expression containing the key to encrypt. The AVM converts this key to UTF-8 before
+              encrypting it and storing it, which ensures a consistent value regardless of code page settings.
+   The following code fragment illustrates how to use the ENCRYPT-AUDIT-MAC-KEY( ) method to set a database
+   MAC key value:
+
+     DEFINE VARIABLE cVal AS CHARACTER NO-UNDO.
+     DEFINE VARIABLE cKey AS CHARACTER NO-UNDO INITIAL "Open Sesame".
+     . . .
+     cVal = AUDIT-POLICY:ENCRYPT-AUDIT-MAC-KEY(cKey).
+     FIND _db-detail.
+     PUT-STRING(_db-detail._db-mac-key, 1, LENGTH(cVal)) = cVal.
+
+
+   You can also use the ENCRYPT-AUDIT-MAC-KEY( ) method to generate an encrypted value for an OpenEdge
+   password in order to obscure its cleartext value from hacking. For example:
+
+     DEFINE INPUT PARAMETER cUserID AS CHARACTER NO-UNDO.
+     DEFINE INPUT PARAMETER cPasswd AS CHARACTER NO-UNDO.
+
+     CONNECT C:\OpenEdge\WRK\db\Sports2020
+       VALUE( "-U " + cUserID +
+             " -P " + "oech1::" + AUDIT-POLICY:ENCRYPT-AUDIT-MAC-KEY(cPasswd))
+       -H dbserver -S 1900 NO-ERROR.
+
+
+   The cUserID and cPasswd parameters pass in a user ID and password that a user might enter in response to a prompt,
+   in this case to authenticate and set the user identity for a connection created for the sports2020 database.
+   Therefore, cPasswd contains the cleartext value of the password the user has typed. The "oech1::" prefix is an
+   identifier that tells OpenEdge that the value following the "::" is encrypted in a manner that allows it to recover the
+   cleartext value for internal operations, such as validating a user account password. Without the prefix, OpenEdge
+   interprets the string as the cleartext value a user might type directly, and therefore does not attempt to decrypt.
+   In this example, the encrypted password is passed as the value of the Password (-P) connection parameter. However,
+   OpenEdge understands this encryption format anywhere that it accepts a password—for example, to set the
+   PRIMARY-PASSPHRASE attribute on page 369 on the client-principal object handle for OpenEdge-performed user
+   authentication.
+   For more information on using password encryption in ABL, see the documentation on encrypted passwords in OpenEdge
+   Programming Interfaces.
+
+
+ENCRYPTION-SALT attribute
+   The default salt value (a random series of bytes) to use with the GENERATE-PBE-KEY function. The default value is
+   the Unknown value (?), which indicates that no salt value is used to generate the password-based encryption key.
+   Data type: RAW
+   Access: Readable/Writeable
+   Applies to: SECURITY-POLICY system handle
+   If specified, this salt value is combined with a password value and hashed some number of times to generate a
+   password-based encryption key (using the algorithm specified by the PBE-HASH-ALGORITHM attribute and the
+   number of iterations specified by the PBE-KEY-ROUNDS attribute).
+   When set, only the first 8 bytes are used. If the value has fewer than 8 bytes, it is padded at the end with zero-value
+   bytes.
+   You can use the GENERATE-PBE-SALT function to generate a salt value, which can help to ensure that the password
+   key value is unique.
+   You are responsible for generating, storing, and transporting this value.
+
+   See also
+   GENERATE-PBE-KEY function, GENERATE-PBE-SALT function
+
+
+END-DOCUMENT( ) method
+   Closes the XML document represented by a SAX-writer object.
+   Return type: LOGICAL
+   Applies to: SAX-writer object handle
+
+   Syntax
+
+     END-DOCUMENT( )
+
+
+   Closes the XML stream. This is the logical conclusion of creating the XML document.
+   If you call this method before the START-DOCUMENT method, the method fails. WRITE-STATUS must not be
+   SAX-WRITE-IDLE or SAX-WRITE-COMPLETE when you call this method. END-DOCUMENT changes
+   WRITE-STATUS to SAX-WRITE-COMPLETE.
+   If the STRICT attribute is TRUE and the final tag has not been closed (that is, the root node), then this method fails.
+
+  
+
+END-ELEMENT( ) method
+   Ends an XML node based upon the name of the node with in a SAX-writer object.
+   Return type: LOGICAL
+   Applies to: SAX-writer object handle
+
+
+   Syntax
+
+       END-ELEMENT ( name[, namespace-URI] )
+
+
+   name
+               A CHARACTER or LONGCHAR expression evaluating to the fully qualified or unqualified name
+               of the element.
+   namespace-URI
+            A CHARACTER or LONGCHAR expression evaluating to the URI of the element. If the element
+            doesn't contain a namespace, it can evaluate to an empty string ("") or the Unknown value (?).
+   Ends an XML node and sets the WRITE-STATUS to SAX-WRITE-ELEMENT.
+   For every invocation of END-ELEMENT, there must be a preceding corresponding call of the START-ELEMENT
+   method. All the parameter values must match for the methods to correspond. The method does not resolve namespaces.
+   Instead, it matches the namespace against the corresponding START-ELEMENT value.
+   If the STRICT attribute is TRUE and the method does not match a preceding START-ELEMENT call, then the method
+   fails.
+
+   See also
+   START-ELEMENT( ) method on page 478
+
+
+END-EVENT-GROUP( ) method
+   Indicates the end of a group of related events in the current session.
+   Return type: LOGICAL
+   Applies to: AUDIT-CONTROL system handle
+
+   Syntax
+
+       END-EVENT-GROUP( )
+
+
+   After calling this method, the EVENT-GROUP-ID attribute is cleared for all connected audit-enabled databases and is
+   no longer recorded in audit event records for this event group.
+   There can be only one active event group per session at any one point in time. To set a different event group for the
+   session, you can:
+   •   Call the END-EVENT-GROUP( ) method, to end the current event group, and then call the BEGIN-EVENT-GROUP( )
+       method to begin the new event group.
+   •   Call the BEGIN-EVENT-GROUP( ) method to begin the new event group. If there is an existing event group in
+       effect, the AVM ends the existing event group before beginning the new event group.
+   Calling this method does not generate an audit event or an audit record.
+   If successful, this method returns TRUE. Otherwise, it returns FALSE.
+
+                                                                                         
+
+
+END-FILE-DROP( ) method
+   (Windows only; Graphical interfaces only)
+   Terminates a drag-and-drop operation and frees the memory allocated by Windows to hold the names of the dropped
+   files.
+   Return type: BOOLEAN
+   Applies to: BROWSE widget, BUTTON widget, COMBO-BOX widget, DIALOG-BOX widget, EDITOR widget,
+   FILL-IN widget, FRAME widget, RADIO-SET widget, SELECTION-LIST widget, SLIDER widget, TOGGLE-BOX
+   widget, WINDOW widget
+
+   Syntax
+
+     END-FILE-DROP ( )
+
+
+   This method returns TRUE if it is successful. If there is no current drag-and-drop operation, GET-DROPPED-FILE( )
+   returns FALSE.
+
+
+END-USER-PROMPT attribute
+   A freeform string that WebClient uses when prompting for a userid and password, if it does not find those values in the
+   security cache.
+   Data type: CHARACTER
+   Access: Read-only
+   Applies to: CODEBASE-LOCATOR system handle
+
+
+ENTITY-EXPANSION-LIMIT attribute
+   Indicates the maximum number of entity substitutions the XML parser (either DOM or SAX) will permit in a document.
+   Data type: INTEGER
+   Access: Readable/Writable
+   Applies to: SAX-reader object handle, X-document object handle
+   By limiting the number of entity substitutions, use of this attribute prevents recursive entities from consuming system
+   resources. The default value is 50,000. The attribute's value must be equal to or greater than 0; setting the attribute to a
+   negative value will result in a runtime error. If the attribute is set to the Unknown value (?), the feature is off.
+   You can set this behavior globally by using the -entityExpansionLimit startup parameter. The default value of
+   the attribute is set by the startup parameter, but you can change the attribute as needed to override the behavior set by
+   the startup parameter. See the Startup Command and Parameter Reference for more information.
+
+
+ENTRY( ) method
+   Returns the character-string value of the specified list entry.
+   Return type: CHARACTER
+   Applies to: BROWSE widget (column), COMBO-BOX widget, SELECTION-LIST widget
+                                                                                     
+   Syntax
+
+       ENTRY ( list-index )
+
+
+   list-index
+                An integer expression that specifies an entry within the combo-box list or selection list.
+   For browses, this method applies only to combo-box browse columns.
+
+
+ENTRY-TYPES-LIST attribute
+   Returns a character string containing a comma-separated list of all valid entry types for the current OpenEdge environment.
+   For DataServer server logging, the string contains the valid entry types against the logical database specified by the
+   DB-CONTEXT attribute on page 155.
+   Data type: CHARACTER
+   Access: Read-only
+   Applies to: DSLOG-MANAGER system handle, LOG-MANAGER system handle
+
+
+ERROR attribute
+   A compile-time or run-time error condition.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: Asynchronous request object handle, Buffer object handle, COMPILER system handle, ERROR-STATUS
+   system handle, ProDataSet object handle, Temp-table object handle
+   The ERROR attribute corresponds to the ERROR function.
+   For the asynchronous request object handle, the ERROR attribute indicates that the ERROR condition was encountered
+   during the processing of an application server or Web Server request. If the COMPLETE attribute is FALSE, the value
+   of this attribute is the Unknown value (?). This attribute is set immediately before the associated event procedure or
+   method is executed.
+   For the COMPILER system handle, the ERROR attribute indicates whether an error occurred in the preceding compilation.
+   If no error occurred in the preceding compilation, the value of ERROR is the Unknown value (?).
+   For the ProDataSet object handle, Temp-table object handle, and Buffer object handle, the ERROR attribute indicates
+   whether an error occurred during a FILL or SAVE-ROW-CHANGES operation.
+   For a ProDataSet object handle or a temp-table object handle, the ERROR attribute is reset to FALSE when one of the
+   following methods removes the object's before-image records:
+   •   FILL( ) method on page 201
+   •   EMPTY-DATASET( ) method on page 179
+   •   MERGE-CHANGES( ) method on page 330
+   •   ACCEPT-CHANGES( ) method on page 36
+   •   REJECT-CHANGES( ) method on page 398
+   Note:
+   The ERROR attribute is effective only if a before-table is NO-UNDO during a data source update. If the before-table
+   is UNDO, the ERROR attribute is lost.
+ 
+
+   This attribute is marshalled between the client and the application server.
+   For the ERROR-STATUS system handle, the ERROR attribute indicates whether the ABL ERROR condition was raised
+   in the most recent statement that used the NO-ERROR option. If no ERROR condition was raised in that statement, the
+   value of the ERROR attribute is FALSE.
+   The ERROR attribute is writeable for a ProDataSet object, a Temp-table object, and a Buffer object. You can set the
+   ERROR attribute programmatically in order to manage the application response to errors. For example, you might set
+   the ERROR attribute to FALSE in order to ignore all errors that might be returned for a statement using the NO-ERROR
+   option. However, note that manually setting this attribute has no affect on ABL error management. Thus, if you set the
+   ERROR attribute to TRUE, the AVM does not also raise the ERROR condition.
+   Note: Statements such as COMPILE that handle errors as part of their normal function do not raise the ABL ERROR
+   condition. For example, the COMPILE statement does not raise the ERROR condition when it encounters compilation
+   errors in a procedure.
+
+
+ERROR-COLUMN attribute
+   The character position at which a compiler error occurred.
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: COMPILER system handle
+   If no error occurred in the preceding compilation, the value of ERROR-COLUMN is the Unknown value (?).
+
+
+ERROR-OBJECT attribute
+   An object reference to an instance of a class that implements the Progress.Lang.Error interface. The instance
+   describes an ERROR condition raised by an asynchronous call to a procedure or Web service operation. This attribute
+   holds the Unknown value (?) if there is no ERROR or relevant STOP condition.
+   Note: If the object reference is to an instance of Progress.Lang.StopError, it describes a STOP condition raised
+   from an unexpected error in the asynchronous call, not an ERROR condition itself.
+   Data type: Class that implements the Progress.Lang.Error interface
+   Access: Read-only
+   Applies to: Asynchronous request object handle
+   The error or stop object the attribute references can be thrown by the server or raised in the client before anything is run
+   on the server, for example, if there is an error in processing one of the parameters.
+   Compared to the ERROR-STATUS system handle , ERROR-OBJECT can accommodate user-defined error objects,
+   thereby providing more information to the client.
+
+   Notes
+   •   Error objects can be thrown by the server:
+       •   From an error CATCH block
+       •   Using the ROUTINE-LEVEL ON ERROR UNDO, THROW directive
+       •   Using a Progress.Lang.AppError object that is created as a result of a RETURN ERROR in the called
+           procedure
+   •   StopError objects can be thrown by the server:
+       •   From a stop CATCH block
+
+
+       •   Whenever the server does not handle the corresponding STOP condition and the client has a relevant CATCH
+           block on its portion of the call stack
+   •   If a StopError object is thrown from the server, its error messages continue to be available on the client from the
+       serialized object even though they are written to the log file on the OpenEdge application server.
+
+   
+ERROR-OBJECT-DETAIL attribute
+   Identifies the SOAP-fault object that contains SOAP fault message detail.
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: ERROR-STATUS system handle
+   If a Web service operation generates a SOAP fault message, the AVM generates the following error:
+
+   Syntax
+
+       Web service %s<operation> failed.                  SOAP faultstring is %s (nnnn)
+
+
+   The complete SOAP fault error message is returned to the AVM as part of the ERROR-STATUS system handle.
+   If the ABL application invokes the Web service operation with the NO-ERROR option on the RUN statement, any errors
+   that occur as a result of the operation are suppressed. In this case, the application can access the SOAP fault message
+   detail using the SOAP-fault and SOAP-FAULT-DETAIL object handles. Otherwise, the AVM displays the error message
+   to the end user.
+
+
+ERROR-ROW attribute
+   The line number at which a compiler error occurred.
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: COMPILER system handle
+   If no error occurred in the preceding compilation, the value of ERROR-ROW is the Unknown value (?).
+
+
+ERROR-STACK-TRACE attribute
+   This attribute controls whether or not the CallStack property on error objects can be used. The default value is FALSE
+   (disabled). However, if getting the call stack is important for troubleshooting your application, you should not hesitate
+   to use it. When this attribute is FALSE, the default value, the CallStack property on an error object will be the
+   Unknown value (?).
+   You can also set this session attribute using the -errorstack startup parameter.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: SESSION system handle
+                                                                                        
+
+   An error object thrown from an application server to a client will contain the stack trace from the application server in
+   its CallStack property. If ERROR-STACK-TRACE is TRUE on the client, the AVM will prepend the CallStack
+   property with the stack trace from the client. The text "Server StackTrace" will appear at the start of the application
+   server stack trace to differentiate it from the client side stack. In the example below, the lines in boldface represent the
+   application server stack trace:
+
+       doIt asclient.p at line 46 (asclient.p)
+       asclient.p at line 26 (asclient.p)
+       main.p at line 10 (main.p)
+
+       Server StackTrace:
+       myproc svr.p at line 30 (svr.p)
+       svr.p at line 5 (svr.p)
+
+
+
+
+ERROR-STRING attribute
+   An arbitrary string value associated with a buffer or temp-table object that provides descriptive information about an
+   error on that object.
+   Data type: CHARACTER
+   Access: Readable/Writable
+   Applies to: Buffer object handle, Temp-table object handle
+   Setting the attribute does not in any way signal an error condition to ABL. The AVM does not inspect this string, or
+   take action based on its value.
+   The AVM automatically clears this attribute by setting its value to the empty string ("") when one of the following
+   occurs:
+   •   The FILL( ) method is used on any ProDataSet object containing a temp-table, on one of its member temp-table
+       objects, or on a parent buffer that cascades down through that temp-table object.
+   •   The EMPTY-TEMP-TABLE( ) method on page 179 is used on a temp-table object buffer.
+   •   You set the ERROR-STRING attribute, for the temp-table object, to the empty string ("").
+   The number of characters in this string is limited to 3K.
+   Note: The ERROR-STRING attribute is effective only if a before-table is NO-UNDO during a data source update. If
+   the before-table is UNDO, the ERROR-STRING attribute is lost.
+
+
+EVENT-GROUP-ID attribute
+   Returns the universally unique identifier (UUID) for the audit event group in effect for the current session, as a Base64
+   character string. The UUID is 22 characters in length (the two trailing Base64 pad characters are removed).
+   Data type: CHARACTER
+   Access: Read-only
+   Applies to: AUDIT-CONTROL system handle
+   The value of this attribute is set by the BEGIN-EVENT-GROUP( ) method, and cleared by the END-EVENT-GROUP( )
+   method. This value is recorded in all audit event records generated for this audit event group until you either end the
+   current audit event group or begin a different audit event group.
+   If no audit event group is in effect, this method returns the Unknown value (?).
+                                                                                      
+EVENT-HANDLER attribute
+   The name of the internal procedure or method to run on completion of an ABL event for an asynchronous request.
+   Data type: CHARACTER
+   Access: Read-only
+   Applies to: Asynchronous request object handle
+
+
+EVENT-HANDLER-OBJECT attribute
+   For an asynchronous object, returns the object specified by EVENT-HANDLER-CONTEXT in the RUN statement.
+   Otherwise, returns the Unknown value (?).
+   For the SAX-reader object, it is set to an object-oriented ABL object reference that is the callback handler for the
+   SAX-reader callback events.
+   Data type: Progress.Lang.Object
+   Access: Read-only for the Asynchronous request object handle, Readable/Writable for the SAX-reader object handle
+   Applies to: Asynchronous request object handle, SAX-reader object handle
+   Notes: The EVENT-HANDLER-OBJECT attribute shows the following behavior when used with the SAX-reader
+   object:
+   •   Assigning a value other than (?) to the EVENT-HANDLER-OBJECT attribute will cause an update to the HANDLER
+       attribute changing it to the unknown value.
+   •   Assigning a value other than (?) to the HANDLER attribute will cause an update to the EVENT-HANDLER-OBJECT
+       attribute changing it to the unknown value.
+   •   Assigning a value of unknown to the EVENT-HANDLER-OBJECT attribute will unregister any existing object-oriented
+       ABL object callback context.
+   •   The assigned value must be a handle and may be any of the following:
+       •   THIS-OBJECT, when called from within a method.
+       •   An expression that results in an object handle variable that refers to a valid object-oriented ABL object instance.
+
+
+
+EVENT-PROCEDURE attribute
+   The name of the internal procedure to run as the event procedure for an asynchronous request.
+   Note: Applies only if the ASYNCHRONOUS attribute is TRUE.
+   Data type: CHARACTER
+   Access: Read-only
+   Applies to: Asynchronous request object handle, Call object handle
+   The name of this internal procedure is the same as the name of the event procedure as specified by the
+   EVENT-PROCEDURE option on the RUN statement. If the EVENT-PROCEDURE option is not specified, this attribute
+   is set to the empty string (""). The attribute returns the unknown (?) value if the EVENT-HANDLER-OBJECT attribute
+   on page 193 is specified as an object.
+                                                                                   
+
+EVENT-PROCEDURE-CONTEXT attribute
+   The procedure handle of the active procedure context where the event procedure is defined for an asynchronous request.
+   Note: Applies only if the ASYNCHRONOUS attribute is TRUE.
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: Asynchronous request object handle, Call object handle
+   This procedure handle is the same as the handle specified by the EVENT-PROCEDURE...IN procedure-context option
+   of the RUN statement that executes this request. If the EVENT-PROCEDURE...IN option is not specified (the default),
+   this attribute is set to the value of the THIS-PROCEDURE system handle at the time the RUN statement was executed.
+   The attribute returns the unknown (?) value if the EVENT-HANDLER-OBJECT attribute on page 193 is specified as
+   an object.
+
+
+EVENT-TYPE attribute
+   The type of the last event.
+   Data type: CHARACTER
+   Access: Read-only
+   Applies to: LAST-EVENT system handle
+   Valid event types are:
+   •   "KEYPRESS" — When the detected event is a keyboard event identified by key label, such as ESC, CTRL+A, or
+       A.
+   •   "MOUSE" — When the detected event is a portable or three-button mouse event, such as MOUSE-SELECT-UP or
+       LEFT-MOUSE-UP.
+   •   "PROGRESS" — When the detected event is a high-level ABL event. These include all events identified as direct
+       manipulation, key function, developer, and other miscellaneous events, such as SELECTION, DELETE-LINE, U1,
+       or CHOOSE.
+
+
+EXCLUSIVE-ID attribute
+   The ID assigned to a state-aware cookie. Intended for internal use only.
+   Data type: CHARACTER
+   Access: Read-only
+   Applies to: WEB-CONTEXT system handle
+
+
+EXECUTION-LOG attribute
+   Determines whether the AVM traces the execution of procedures, user-define functions, and the publish and subscribe
+   statements in the execution log. Intended for internal use only.
+   Data type: LOGICAL
+   Access: Readable/Writable
+   Applies to: SESSION system handle
+
+
+EXIT-CODE attribute
+   Returns an optional exit code set by the application, when the AVM process ends.
+   Data type: INTEGER
+   Access: Readable/Writeable
+   Applies to: SESSION system handle
+   The attribute allows the application to optionally set a program exit code. This provides meaningful feedback to the
+   shell script and allows the creation of automation scripting around the termination of the ABL application.
+   This attribute is set to the Unknown value (?) if not set by the application.
+   For example:
+
+     SESSION:EXIT-CODE=123.
+
+
+     SESSION:EXIT-CODE=myIntVar.
+
+
+   Windows allows positive integer values (0-32,767). UNIX restricts this to the range of 0 through 255 (inclusive). If you
+   attempt to set an improper value for your platform, a runtime error is raised.
+   If an AVM process running as an application server session sets an EXIT-CODE value, a runtime error is raised.
+   The exit code specified by SESSION:EXIT-CODE can be printed from a bash shell as shown in the following example:
+
+     $PROEXE -p MyTest.p -b
+
+
+     echo $?
+
+
+   In Windows, the exit code can be printed from the command line as shown below:
+
+     start /wait $PROEXE -p MyTest.p -b
+
+
+     echo %errorlevel%
+
+
+   In Windows PowerShell the pseudo-environment variable is called by $LastExitCode instead of %errorlevel%.
+   Other shells in Windows may restrict the exit code to a range smaller than 0-32,767. For example, Cygwin limits the
+   value to the same range as Unix (0-255) and returns only the lower 8 bits of the value. For example, if the application
+   sets the exit code to 300, the exit code displayed from a Windows command prompt (cmd.exe) is 300, while in Cygwin
+   it is 44 (the lower 8 bits):
+   Integer value                                                 Binary value
+   300                                                           00000000 00000000 00000001 00101100
+   44                                                            00000000 00000000 00000000 00101100
+
+   It is important to keep this in mind when choosing exit code values.
+                                                                                     
+
+EXPAND attribute
+   How to set the size of a horizontal radio set.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: RADIO-SET widget
+   This attribute applies to radio sets whose HORIZONTAL attribute are set to TRUE (for horizontal alignment).
+   If TRUE, the size for each button is equal to the width of the button with the longest label. If FALSE, the size for each
+   button is set according to its label.
+   You can set this attribute only before the widget is realized.
+
+
+EXPANDABLE attribute
+   (Graphical interfaces only)
+   Indicates whether the AVM extends the right-most browse column to the right edge of the browse. This covers white
+   space that appears when the browse is wider than the sum of the widths of the browse columns.
+   Data type: LOGICAL
+   Access: Readable/Writable
+   Applies to: BROWSE widget
+   If you set a browse's EXPANDABLE attribute to TRUE, the AVM extends the right-most browse column to the right
+   edge of the browse, if necessary, to cover any white space that might appear-unless you explicitly set the width of the
+   right-most browse column using the WIDTH-CHARS or WIDTH-PIXELS attribute. The right-most browse column
+   expands to the right anytime the browse or another browse column is resized.
+   If the browse has a horizontal scroll bar, no white space appears between the right-most browse column and the right
+   edge of the browse, and the right-most browse column does not expand to the right.
+   If EXPANDABLE is TRUE and a browse column's VISIBLE attribute is changed, the last column's width may be
+   changed.
+   When adding dynamic browse columns to a browse, it is best to keep EXPANDABLE turned off until all columns are
+   added.
+
+
+EXPORT( ) method
+   (PAS for OE only)
+   Creates and modifies an application server's export list, which specifies the remote procedures that a client application
+   can execute in the current application server session.
+   Return type: LOGICAL
+   Applies to: SESSION system handle
+
+   Syntax
+
+     EXPORT ( [list] )
+
+
+   list
+               A comma-separated list of procedure names and name-patterns. EXPORT( ) ignores white space
+               (blank, tab, and newline) at the beginning and end of an entry. The only wildcard EXPORT( ) supports
+               is the asterisk (*). For more information on wildcards, see the reference entry for the MATCHES
+               function.
+   The EXPORT( ) method applies only to application servers. That is, if the REMOTE attribute of the SESSION handle
+   is FALSE, EXPORT( ) does nothing and returns FALSE.
+   The EXPORT( ) method can be called repeatedly within the context of the application server instance. Each time
+   EXPORT( ) is called, the application server instance adds the procedures in list to its export list. If you do not specify
+   list, the EXPORT( ) method resets the export list to empty.
+   The EXPORT( ) method performs pattern matching by comparing two procedure names character-by-character, taking
+   wildcards into account. Procedure names must match exactly. Case (uppercase and lowercase) is significant.
+   If the EXPORT( ) method is never called, a client application can call any procedure in the application server's PROPATH.
+   Once EXPORT( ) is called in the context of an application server, a client application can call only the procedures in
+   the export list.
+   Typically, the Connect procedure or Startup procedure of an application server calls the EXPORT( ) method, depending
+   on the operating mode. For example, where you might call it from the Connect procedure on a session-managed application
+   server, you would probably call it from the Startup procedure on a session-free application server. For more information
+   on Connect procedures, see the reference entry for the CONNECT( ) method (Progress Application Server for OpenEdge)
+   on page 119.
+
+
+EXPORT-PRINCIPAL( ) method
+   Exports the unsealed or sealed client-principal object as a portable security token with the currently defined property
+   and attribute settings by converting it to a RAW value. You can assign this value to a RAW variable and send it to
+   another ABL session (such as an application server session) or assign it to a field in a secure database. The receiving
+   ABL session can then import the RAW value into another client-principal object using the IMPORT-PRINCIPAL( )
+   method on page 266. Depending on its sealed or unsealed state, you can use the imported object to assert or set the user
+   identity it represents using the SEAL( ) method on page 431, SECURITY-POLICY:SET-CLIENT( ) method on page
+   453, or SET-DB-CLIENT function, as appropriate.
+   Return type: RAW
+   Applies to: Client-principal object handle
+
+   Syntax
+
+       EXPORT-PRINCIPAL( )
+
+
+   The client-principal object can be either sealed or unsealed.
+   Calling this method does not generate an audit event or an audit record.
+
+   Notes
+   •   A typical use case for exporting an unsealed security token is having a client log in by exporting an unsealed
+       client-principal initialized with its asserted user identity to a remote authentication service over a secure connection.
+       The authentication service then imports the client-principal and, after a successful user authentication, seals the
+       client-principal, beginning a user login session. The service might then export and return the sealed client-principal
+       to the requesting client, which imports the object to set its authenticated identity. The service might also cache the
+       exported client-principal in secure storage for a future identity management request.
+   •   A typical use case for exporting a sealed security token is in a remote authentication service that responds to identity
+       management requests from ABL sessions of an n-tier application. For each request, the authentication service retrieves
+       and imports the sealed client-principal from secure storage that is associated with a given login session key and
+  performs the requested action (such as invoking the LOGOUT( ) method to terminate the user login session). The
+       service then exports the sealed (and changed) client-principal, replacing the previous copy in secure storage and
+       possibly returning it to the requesting ABL session.
+
+   
+EXTENT attribute
+   The number of elements in an array field.
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: Buffer-field object handle
+   Note: The EXTENT attribute corresponds to the EXTENT function.
+
+
+FETCH-SELECTED-ROW( ) method
+   Fetches the nth selected row in a browse and puts the row into the database buffer. In other words, this method specifies
+   one row from the one-based index into all currently selected rows and puts that row into the record buffer.
+   Return type: LOGICAL
+   Applies to: BROWSE widget
+
+   Syntax
+
+       FETCH-SELECTED-ROW ( n )
+
+
+   n
+               An integer expression that specifies a selected row within the browse.
+   The AVM maintains a numbered list of selected rows, starting at 1. The AVM builds this numbered list as the user
+   selects rows in the browse. When you call the FETCH-SELECTED-ROW method, the AVM searches this list to find
+   the nth row selected by the user.
+
+
+FGCOLOR attribute
+   (Graphical interfaces only)
+   The color number for the foreground color of the widget.
+   Data type: INTEGER
+   Access: Readable/Writeable
+   Applies to: BROWSE widget (browse, column, and cell), COMBO-BOX widget, DIALOG-BOX widget, EDITOR
+   widget, FILL-IN widget, FRAME widget, IMAGE widget, LITERAL widget, RADIO-SET widget, RECTANGLE
+   widget, SELECTION-LIST widget, SLIDER widget, TEXT widget, TOGGLE-BOX widget, WINDOW widget
+   The color number represents an entry in the color table maintained by the COLOR-TABLE handle.
+   For a browse cell, it specifies the color of a specific cell in the view port. You can set this color only as the cell appears
+   in the view port during a ROW-DISPLAY event.
+   You cannot set this attribute for a BUTTON widget.
+   You cannot set this attribute for combo-boxes, selection-lists, editors, or native fill-in fields (VIEW-AS FILL-IN
+   NATIVE) when they are disabled (not SENSITIVE).
+   Setting the FGCOLOR attribute for any of the following field-level widgets within a dialog-box or frame overrides any
+   INHERIT-FGCOLOR attribute or option settings: BROWSE, COMBO-BOX (all types), EDITOR, FILL-IN (NATIVE
+   and Enabled), and SELECTION-LIST.
+   Note: This attribute has no meaning for control-frames because the ActiveX control visualization constitutes the
+   foreground.
+
+   See also
+   BGCOLOR attribute on page 74, Frame phrase, INHERIT-FGCOLOR attribute on page 271
+
+
+FILE-CREATE-DATE attribute
+   (Windows only)
+   Indicates the date on which the specified file was created.
+   Data type: DATE
+   Access: Read-only
+   Applies to: FILE-INFO system handle
+
+
+FILE-CREATE-TIME attribute
+   (Windows only)
+   Indicates the time when the specified file was created.
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: FILE-INFO system handle
+
+
+FILE-MOD-DATE attribute
+   Indicates the last date the specified file was modified.
+   Data type: DATE
+   Access: Read-only
+   Applies to: FILE-INFO system handle
+   This attribute is supported on all platforms.
+
+
+FILE-MOD-TIME attribute
+   Indicates the last time the specified file was modified.
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: FILE-INFO system handle
+   This attribute is supported on all platforms.
+
+
+FILE-NAME attribute
+   The name of the file associated with a handle. Returns the empty string for a Web service procedure.
+   The FILE-NAME attribute of the COMPILER handle is maintained only for backward compatibility. Use the
+   GET-FILE-NAME( ) method on page 232, instead.
+   Data type: CHARACTER
+   Access: Readable/Writable
+   Applies to: COMPILER system handle, FILE-INFO system handle, Procedure object handle, PROFILER system handle,
+   RCODE-INFO handle, SOURCE-PROCEDURE system handle, TARGET-PROCEDURE system handle,
+   THIS-PROCEDURE system handle
+   The FILE-NAME attribute of the COMPILER handle is the name of the source file from the preceding compilation. If
+   no error occurred during the preceding compilation, FILE-NAME assumes the unknown value (?).
+   For the PROFILER handle, FILE-NAME is the file into which the profiling data is written after the raw recorded data
+   is analyzed. The file name must be set before data can be stored. The default value is the unknown value (?).
+   The FILE-NAME attribute of the FILE-INFO or RCODE-INFO handle is the name of the file used by subsequent
+   references to the handle. You can specify the filename with a .p, .r, or no extension. If you set FILE-NAME to a
+   relative pathname, then the AVM searches the PROPATH to find the file. Otherwise, the AVM looks for the file specified
+   by the absolute pathname. When used with FILE-INFO, the filename can contain Unicode characters. When used with
+   RCODE-INFO, the filename cannot contain characters outside of the non-Unicode code page. For more information
+   about Unicode and code pages, see Internationalize ABL Applications.
+   The FILE-NAME attribute of a procedure handle is the pathname of the procedure file that contains the procedure
+   associated with the handle. If the procedure file is specified by the Startup Procedure (-p) parameter, then the attribute
+   contains the full pathname of the file. Otherwise, it contains the pathname exactly as specified in the RUN statement
+   that invoked it. The procedure can be local or remote.
+   The FILE-NAME attribute of the COMPILER handle and procedure handle is read only.
+
+
+FILE-OFFSET attribute
+   The character offset in the source file in which a Compiler error occurred.
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: COMPILER system handle
+   If no error occurred in the preceding compilation, the value of FILE-OFFSET is the Unknown value (?).
+
+
+FILE-SIZE attribute
+   Indicates the size of the specified file.
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: FILE-INFO system handle
+   This attribute is supported on all platforms.
+                                                                                        
+FILE-TYPE attribute
+   A string of characters that indicate the type of file that is currently specified for the FILE-INFO handle.
+   Data type: CHARACTER
+   Access: Read-only
+   Applies to: FILE-INFO system handle
+   The character string specifies two classes of file types—one type per file from the first class and one or more types per
+   file from the second class. The following table lists the file type characters from the first class of file types.
+   Table 13: File type characters—one per file
+
+    File type              Description
+    D                      The file is a directory.
+    F                      The file is a standard file or FIFO pipe (UNIX systems).
+    M                      The file is a member of an ABL library (procedure library (.pl) or archive file (.apl)).
+
+    S                      The file is a special device (UNIX systems).
+    X                      The file type is unknown. (Contact your Progress Software Corporation Technical Support
+                           representative if you receive this value.)
+
+
+   The following table lists the file type characters from the second class of file types.
+   Table 14: File type characters—one or more per file
+
+    File type              Description
+    H                      The file is hidden.
+    L                      The file is a symbolic link (UNIX systems).
+    P                      The file is a pipe file (UNIX systems).
+    R                      The file is readable.
+    W                      The file is writeable.
+
+
+
+
+FILL( ) method
+   Fills a ProDataSet object, recursively, based on its defined data sources, data relations, and queries. You can fill a
+   ProDataSet object completely by running FILL on the ProDataSet handle itself, or partially by starting at the level of
+   one of its member Buffer objects.
+   Return type: LOGICAL
+   Applies to: ProDataSet object handle, Buffer object handle
+
+   Syntax
+
+     FILL( )
+
+   You can define a query for the data source of a ProDataSet member buffer at any level of the ProDataSet object to select
+   the records to fill in one FILL operation. You can also use the FILL-WHERE-STRING attribute to override the WHERE
+   clause in the query for the data source during a FILL operation.
+   Note: The FILL-WHERE-STRING attribute of the data source object only applies to the default data source query. It
+   does not apply when a named query is specified for the data source using the FOR QUERY syntax of the DEFINE
+   DATA-SOURCE statement or the QUERY attribute on the DATA-SOURCE object.
+   You can perform a FILL operation on a ProDataSet object or one of its member buffer objects any number of times.
+   You might do this, for example, to load data in a ProDataSet object or buffer after you have modified a data-source
+   object query or attached to a different data-source object.
+   You can specify the FILL mode to direct the FILL operation for a ProDataSet member buffer using the FILL-MODE
+   attribute on page 202. The default FILL-MODE is MERGE. When FILL-MODE is REPLACE, the BEFORE-ROW-FILL
+   event handler is run after the original ProDataSet row is copied into the ProDataSet buffer.
+   A number of built-in events fire automatically at different points during the FILL process, for example before the FILL,
+   after a record is created in the temp-table, and so on. For more information about ProDataSet events, see the ProDataSet
+   events.
+   You can recursively fill a ProDataSet with self-referencing elements, for example, bill-of-materials parent/child tables
+   or organization chart manager/employee tables. For a static ProDataSet, use the RECURSIVE option of the data-relation
+   object. For a dynamic ProDataSet, use the ADD-RELATION( ) method on page 49 of the ProDataSet object handle,
+   where there is a recursive argument.
+   If successful, this method returns TRUE. Otherwise, it returns FALSE.
+   If the AVM encounters an error, it sets the value of the ERROR attribute on page 189 to TRUE for the associated
+   ProDataSet object handle and Temp-table object handle.
+   Note: When executing the method, there is no guarantee as to the contents of the buffers involved after the method
+   finishes executing.
+   
+   
+
+
+FILLED attribute
+   Indicates if the background color of a rectangle is set to a certain value.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: RECTANGLE widget
+   If the value of the FILLED attribute is TRUE, the background color of the rectangle depends on the value of the
+   BGCOLOR attribute (for graphical interfaces) or the value of the DCOLOR attribute (for character interfaces). The
+   default value of FILLED is TRUE.
+
+
+FILL-MODE attribute
+   Specifies the mode in which the FILL( ) method on page 201 fills a ProDataSet member buffer. The default mode is
+   MERGE.
+                                                                                     
+   Data type: CHARACTER
+   Access: Readable/Writeable
+   Applies to: Buffer object handle
+   The following table lists the FILL( ) method modes.
+   Table 15: FILL( ) method modes
+
+   When the mode is . . .             The FILL( ) method . . .
+   APPEND                             Fills the table by adding new records on top of existing records in the table, without
+                                      performing any record comparisons. If this creates duplicate records, the AVM
+                                      generates a run-time error and you must manage the duplicate records.
+                                      If you are certain there are no duplicate records, an APPEND is more efficient than
+                                      a MERGE.
+
+   EMPTY                              Empties the table before the FILL operation begins.
+   MERGE                              Fills the table by merging new records with existing records in the table. The FILL( )
+                                      method checks each record to ensure there are no duplicate records (based on the
+                                      table's unique primary index). If the FILL( ) method finds a record with a duplicate
+                                      key, it does not replace the record because the record might have dependent records
+                                      elsewhere in the ProDataSet. In this case, the AVM does not generate a run-time
+                                      error. Thus, you cannot use this mode to refresh existing records.
+   NO-FILL                            Does not perform the FILL operation on the table.
+   REPLACE                            Fills the table by replacing existing records in the table. The FILL( ) method checks
+                                      each record to determine whether or not it exists in the table (based on the table's
+                                      unique primary index). If the record exists in the table, the FILL( ) method replaces
+                                      it. If the record does not exist, the FILL( ) method creates a new record. The
+                                      BEFORE-ROW-FILL event handler is run after the original ProDataSet row is
+                                      copied into the ProDataSet buffer. A REPLACE is less efficient than an APPEND
+                                      or a MERGE.
+
+
+
+
+FILL-WHERE-STRING attribute
+   The current WHERE expression for a data-source query, beginning with the keyword WHERE, and not including the prior
+   FOR EACH phrase of an OPEN QUERY statement.
+   Data type: CHARACTER
+   Access: Readable/Writeable
+   Applies to: Data-source object handle
+   You can use this attribute to override the existing WHERE expression in the query for the data-source object during a
+   FILL( ) operation. The default is the null value.
+   Note:
+   You can also modify the query on an associated data-relation using the WHERE-STRING attribute.
+   The NAME attribute of the Temp-table object handle is writeable for dynamic and AVM-generated temp-tables. You
+   might need to update a FILL-WHERE-STRING that references a renamed temp-table with new strings using the new
+   table name.
+   Note: The FILL-WHERE-STRING attribute of the data source object only applies to the default data source query. It
+   does not apply when a named query is specified using the QUERY attribute.
+                                                                                   
+FIND-BY-ROWID( ) method
+   Locates the record with the rowid you specify, then moves the record into the buffer.
+   Return type: LOGICAL
+   Applies to: Buffer object handle
+
+   Syntax
+
+     FIND-BY-ROWID ( rowid
+       [ ,
+         { SHARE-LOCK | EXCLUSIVE-LOCK | NO-LOCK }
+         [ , NO-WAIT ]
+       ] )
+
+
+   rowid
+              An expression of type ROWID that represents the rowid of the desired record.
+   SHARE-LOCK | EXCLUSIVE-LOCK | NO-LOCK
+              The type of lock that the AVM places on the record, if found. The default is SHARE-LOCK.
+              Note: For more information on record locks, see Develop ABL Applications.
+   NO-WAIT
+              Causes FIND-BY-ROWID to return FALSE immediately if another user has a lock on the desired
+              record and FIND-BY-ROWID specifies a locking option other than NO-LOCK.
+              Note: To determine whether another user has a lock on the desired record, use the LOCKED attribute
+              of the buffer object.
+   The FIND-BY-ROWID method returns TRUE if it finds the record, and FALSE if it does not.
+   The following is an example:
+
+     DEFINE VARIABLE bh AS HANDLE NO-UNDO.
+     DEFINE VARIABLE r AS ROWID NO-UNDO.
+
+     r = ... /* ROWID from some parameter */
+     bh = BUFFER CUSTOMER:HANDLE.
+     bh:FIND-BY-ROWID(r).
+
+
+   Note: The FIND-BY-ROWID method corresponds to a FIND statement of the form FIND buffer WHERE ROWID (
+   buffer ) = rowid ..., etc. That is, triggers are honored, and the default lock mode is SHARE-LOCK. One difference,
+   however, is that the FIND-BY-ROWID method does not raise an error if it cannot find the record.
+
+
+FIND-CURRENT( ) method
+   Changes the lock mode of a record in a buffer.
+   Return type: LOGICAL
+   Applies to: Buffer object handle
+
+   Syntax
+
+     FIND-CURRENT ( [lockmode[ , waitmode]] )
+
+
+   lockmode
+               An integer expression evaluating to one of the following constants: SHARE-LOCK,
+               EXCLUSIVE-LOCK, or NO-LOCK. You can assign any of these constants to an integer variable.
+               For example, mylock = NO-LOCK. The default is SHARE-LOCK.
+   waitmode
+               An integer expression evaluating to one of the following: NO-WAIT, 0, or the Unknown value (?).
+               You can assign NO-WAIT to an integer variable. For example, mywait = NO-WAIT.
+               The default is to wait.
+   The following shows an example of the FIND-CURRENT method:
+
+     DEFINE VARIABLE bh AS HANDLE NO-UNDO.
+
+     bh = BUFFER Customer:HANDLE.
+
+     DO TRANSACTION:
+        bh:FIND-CURRENT(EXCLUSIVE-LOCK).
+     END.
+      MESSAGE bh:CURRENT-CHANGED Customer.CustNum.
+
+
+   If the change in lock status succeeds, the method returns TRUE, otherwise it returns FALSE.
+   If the lock change fails, a message displays. You can suppress the message using NO-ERROR on the statement containing
+   the method.
+   Executing the FIND-CURRENT method resets the CURRENT-CHANGED attribute. If the record in the database
+   changes between the time the original record was found and the FIND-CURRENT executes, the CURRENT-CHANGED
+   attribute returns TRUE. If the record does not change, then the CURRENT-CHANGED attribute returns FALSE.
+
+   See also
+   FIND-BY-ROWID( ) method on page 204, CURRENT-CHANGED attribute on page 146, CURRENT-CHANGED
+   function, FIND-FIRST( ) method on page 205, FIND-LAST( ) method on page 206, FIND-UNIQUE( ) method on page
+   207, FIND statement
+
+
+FIND-FIRST( ) method
+   Gets a single record. This method lets a user get the first record that satisfies the predicate expression.
+   Return type: LOGICAL
+   Applies to: Buffer object handle
+
+   Syntax
+
+     FIND-FIRST ( predicate-expression [ , lockmode[ , waitmode]] )
+
+
+   predicate-expression
+
+
+               A character expression that evaluates to the following syntax:
+
+                 [ WHERE [ logical-expression ]][ USE-INDEX index-name]
+
+
+               Once evaluated, predicate-expression can contain only constants and unabbreviated references to
+               fields from the buffer.
+               The predicate-expression itself can be built using a concatenation of character expressions.
+   lockmode
+               An integer expression evaluating to one of the following constants: SHARE-LOCK,
+               EXCLUSIVE-LOCK, or NO-LOCK. You can assign any of these constants to an integer variable.
+               For example, mylock = NO-LOCK.
+               The default is SHARE-LOCK.
+   waitmode
+               An integer expression evaluating to one of the following: NO-WAIT, 0, or the Unknown value (?).
+               You can assign NO-WAIT to an integer variable. For example, mywait = NO-WAIT. The default is
+               to wait.
+   The following shows some examples of FIND-FIRST method:
+
+     DEFINE VARIABLE bh     AS HANDLE    NO-UNDO.
+     DEFINE VARIABLE myname AS CHARACTER NO-UNDO.
+
+     bh = BUFFER Customer:HANDLE.
+
+     bh:FIND-FIRST("WHERE Customer.CustNum > 2", NO-LOCK).
+
+     DO TRANSACTION:
+       bh:FIND-FIRST("", EXCLUSIVE-LOCK).
+     END.
+
+     bh:FIND-FIRST("WHERE Customer.Name = " + QUOTER(myname) , NO-LOCK).
+
+
+   If FIND-FIRST succeeds, it returns TRUE, otherwise it returns FALSE.
+   If FIND-FIRST fails, it does not raise an error but displays a message. You can suppress this message by using
+   NO-ERROR on the statement containing the method.
+
+   
+
+FIND-LAST( ) method
+   Gets a single record. This method lets a user get the last record that satisfies the predicate expression.
+   Return type: LOGICAL
+   Applies to: Buffer object handle
+
+
+
+   Syntax
+
+     FIND-LAST ( predicate-expression[ , lockmode[ , waitmode]] )
+
+
+   predicate-expression
+               A character expression that evaluates to the following syntax:
+
+                 [ WHERE [ logical-expression ]][ USE-INDEX index-name]
+
+
+               Once evaluated, predicate-expression can contain only constants and unabbreviated references to
+               fields from the buffer.
+               The predicate-expression itself can be built using a concatenation of character expressions.
+   lockmode
+               An integer expression evaluating to one of the following constants: SHARE-LOCK,
+               EXCLUSIVE-LOCK, or NO-LOCK. You can assign any of these constants to an integer variable.
+               For example, mylock = NO-LOCK.
+               The default is SHARE-LOCK.
+   waitmode
+               An integer expression evaluating to one of the following: NO-WAIT, 0, or the Unknown value (?).
+               You can assign NO-WAIT to an integer variable. For example, mywait = NO-WAIT. The default is
+               to wait.
+   The following shows some examples of the FIND-LAST method:
+
+     DEFINE VARIABLE bh AS HANDLE NO-UNDO.
+
+     bh = BUFFER Customer:HANDLE.
+
+     bh:FIND-LAST("WHERE Customer.Balance > 0 use-index name").
+
+     bh:FIND-LAST("WHERE Customer.CustNum > 5 AND Customer.Address < 'z'").
+
+
+   If FIND-LAST succeeds, it returns TRUE, otherwise it returns FALSE.
+   If FIND-LAST fails, it does not raise an error but displays an error message. You can suppress the message using
+   NO-ERROR on the statement containing the method.
+
+   See also
+   FIND-CURRENT( ) method on page 204, FIND-FIRST( ) method on page 205, FIND-UNIQUE( ) method on page 207,
+   FIND statement
+
+
+FIND-UNIQUE( ) method
+   Gets a single record. This method lets a user get a unique record that satisfies the predicate expression.
+   Return type: LOGICAL
+   Applies to: Buffer object handle
+
+Syntax
+
+  FIND-UNIQUE ( predicate-expression[ , lockmode[ , waitmode]] )
+
+
+predicate-expression
+           A character expression that evaluates to the following syntax:
+
+             [ WHERE [ logical-expression ]][ USE-INDEX index-name]
+
+
+           Once evaluated, predicate-expression can contain only constants and unabbreviated references to
+           fields from the buffer. The predicate-expression itself can be built using a concatenation of character
+           expressions.
+lockmode
+           An integer expression evaluating to one of the following constants: SHARE-LOCK,
+           EXCLUSIVE-LOCK, or NO-LOCK. You can assign NO-LOCK to an integer variable. For example,
+           mylock = NO-LOCK.
+           The default is SHARE-LOCK.
+waitmode
+           An integer expression evaluating to one of the following: NO-WAIT, 0, or the Unknown value (?).
+           The default is to wait.
+           You can assign NO-WAIT to an integer variable. For example, mywait = NO-WAIT.
+The following shows some examples of the FIND-UNIQUE method:
+
+  DEFINE VARIABLE bh     AS HANDLE    NO-UNDO.
+  DEFINE VARIABLE myname AS CHARACTER NO-UNDO.
+
+  bh = BUFFER Customer:HANDLE.
+
+  bh:FIND-UNIQUE("WHERE Customer.Custnum < 3 AND
+  Customer.Name = 'lift line skiing'").
+
+  bh:FIND-UNIQUE("WHERE Customer.CustNum = 30").
+
+  bh:FIND-UNIQUE("WHERE Customer.Name = " + QUOTER(myname).
+  MESSAGE bh:AMBIGUOUS.
+
+
+If FIND-UNIQUE succeeds, it returns TRUE, otherwise it returns FALSE.
+If FIND-UNIQUE fails, a message displays. You can suppress this message using NO-ERROR on the statement containing
+the method.
+If more than one record satisfies the predicate expression, then the AMBIGUOUS attribute is set to TRUE.
+
+
+FIRST-ASYNC-REQUEST attribute
+   Returns the first entry in the list of all current asynchronous request handles for the specified application server or Web
+   service that have been created in the current session.
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: Server object handle
+   If there are no asynchronous request handles for the specified server, FIRST-ASYNC-REQUEST returns the Unknown
+   value (?).
+
+
+FIRST-BUFFER attribute
+   Returns the handle for the first dynamic buffer in the first table containing a dynamic buffer. The table may be either a
+   temp-table or a connected database, in that order. If no dynamic temp-table or database buffers exist in the session, it
+   returns the Unknown value (?).
+   Note: Only dynamic buffers created with the CREATE BUFFER statement are chained on the SESSION system handle.
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: SESSION system handle
+   There is no LAST-BUFFER attribute associated with the SESSION handle since the chain is one-directional.
+
+
+FIRST-CHILD attribute
+   The handle of the first widget created in the container widget or the current session.
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: DIALOG-BOX widget, FIELD-GROUP widget, FRAME widget, MENU widget, SUB-MENU widget,
+   WINDOW widget, SESSION system handle
+   You can use the FIRST-CHILD attribute to find the first entry in a list of all frames and dialog boxes in a window, all
+   field groups in a frame or dialog box, all widgets in a field group, all menu items in a menu or submenu, or all windows
+   in an ABL session (SESSION system handle). After finding the first entry, you can find the remaining entries in the list
+   by using each widget's NEXT-SIBLING attribute on page 344.
+
+
+FIRST-COLUMN attribute
+   A handle to the first column in a browse widget, regardless of the value of its READ-ONLY attribute or its VISIBLE
+   attribute.
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: BROWSE widget
+   After finding the first column, accessing the NEXT-COLUMN attribute of the current column allows you to walk through
+   the browse columns.
+                                                                                        
+FIRST-DATASET attribute
+   A handle to the first dynamic ProDataSet object created in the current ABL session.
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: SESSION system handle
+   After finding the first entry, you can find the remaining entries in the list by using the NEXT-SIBLING attribute on
+   page 344 for each dynamic ProDataSet object. Use the NEXT-SIBLING attribute to get the next entry in the list of
+   ProDataSet object handles created in the current ABL session.
+
+
+FIRST-DATA-SOURCE attribute
+   A handle to the first dynamic data-source object created in the current ABL session.
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: SESSION system handle
+   Use the NEXT-SIBLING attribute on page 344 to get the next entry in the chain of dynamic data-source object handles
+   created in the current ABL session.
+
+
+FIRST-FORM attribute
+   (Windows only; GUI for .NET)
+   The object reference for the first .NET Progress.Windows.IForm or ABL window FormProxy
+   (Progress.Windows.FormProxy) object in the list of all valid OpenEdge form objects created in the current ABL
+   session.
+   Data type: Progress.Windows.IForm interface
+   Access: Read-only
+   Applies to: SESSION system handle
+   Once you get the first object reference in the list, you can use the NextForm property in the
+   Progress.Windows.IForm interface to get the next entry in the list of OpenEdge form object references.
+   Note: To obtain the first class-based object in the list of all valid ABL and .NET objects created in the current ABL
+   session, use the FIRST-OBJECT attribute on page 210.
+   If you instantiate a Progress.Windows.IForm in a non-GUI ABL session, the object does not appear in the list
+   of OpenEdge form objects, but only in the list of valid class-based objects.
+
+   See also
+   LAST-FORM attribute on page 293, LAST-OBJECT attribute on page 293, FIRST-OBJECT attribute on page 210,
+   NextForm property, Progress.Windows.FormProxy class, Progress.Windows.IForm interface
+
+
+FIRST-OBJECT attribute
+   The object reference for the first class instance in the list of all valid ABL and .NET class instances created in the current
+   ABL session. If there are no class instances in the current session, this attribute returns the Unknown value (?).
+
+   Data type: Progress.Lang.Object
+   Access: Read-only
+   Applies to: SESSION system handle
+   Once you get the first object reference in the list, you can use the NEXT-SIBLING property in the Progress.Lang.Object
+   class to get the next entry in the list of ABL and .NET object references.
+   There are two points worth noting about this attribute with garbage collection enabled:
+   •   The object references maintained by the FIRST-OBJECT attribute and the NEXT-SIBLING property do not count
+       as references for garbage collection. That is, if a class instance is referenced only on the session object chain, it is
+       available for automatic garbage collection.
+   •   When an ABL object that inherits from a .NET object is on the session object chain, it can have circular references
+       that prevent it from being deleted (as with pure ABL objects). When there are no more ABL references to such an
+       ABL-derived .NET object, the object is removed from the object chain, but may still be instantiated because of
+       references to it from .NET. If the application re-obtains a reference to the object in ABL by getting it from .NET,
+       the reference is again placed on the object chain.
+   Note: To obtain the first .NET form or ABL FormProxy object in the list of all valid form objects created in the current
+   ABL session, use the FIRST-FORM attribute.
+
+  
+FIRST-OF( ) method
+   Returns TRUE if the current iteration of the query predicate FOR EACH . . . BREAK BY. . . is the first iteration for a
+   new break group.
+   Return type: LOGICAL
+   Applies to: Query object handle
+
+   Syntax
+
+       FIRST-OF ( level )
+
+
+   level
+               An integer expression that indicates a BREAK BY group, where 0 is the entire query, 1 is the first
+               BREAK BY, 2 is the second BREAK BY, and so on.
+       The following example shows how the FIRST-OF( ) method is used to identify the first record of a break group:
+
+     DEFINE QUERY qCustomer FOR Customer SCROLLING.
+
+     QUERY qCustomer:QUERY-PREPARE("FOR EACH Customer WHERE Customer.CustNum > 50
+       BREAK BY Customer.Country BY Customer.Comments").
+     QUERY qCustomer:QUERY-OPEN.
+
+     REPEAT WITH TITLE "Customers Break By Country and Comments":
+       GET NEXT qCustomer.
+       IF NOT AVAILABLE Customer THEN LEAVE.
+       DISPLAY
+          Customer.Country FORMAT "x(10)"
+          Customer.Comments FORMAT "x(20)"
+          QUERY qCustomer:FIRST-OF(0) LABEL "First"
+          QUERY qCustomer:LAST-OF(0) LABEL "Last"
+          QUERY qCustomer:FIRST-OF(1) LABEL "First Country"
+          QUERY qCustomer:LAST-OF(1) LABEL "Last Country"
+          QUERY qCustomer:FIRST-OF(2) LABEL "First Company"
+          QUERY qCustomer:LAST-OF(2) LABEL "Last Company".
+     END.
+
+
+
+ 
+
+FIRST-PROCEDURE attribute
+   For an application server, returns the first entry in the list of remote persistent, single-run, and singleton procedures that
+   are active on the connected application server. For Web services, returns the first entry in the list of procedure objects
+   associated with the Web service.
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: Server object handle, SESSION system handle
+   If the current session has no active persistent procedures or the application server has no active remote persistent,
+   single-run, or singleton procedures, FIRST-PROCEDURE returns the Unknown value (?). To find the next procedure
+   given the first, use the NEXT-SIBLING attribute of the procedure handle.
+   Note: The PERSISTENT attribute on page 365 of a remote persistent procedure returned by FIRST-PROCEDURE is
+   TRUE only if the RUN statement that executes the procedure was invoked with the PERSISTENT option. The
+   PERSISTENT attribute is FALSE if the persistent procedure was invoked with the SINGLE-RUN or SINGLETON
+   option of the RUN statement.
+   For information on creating persistent, single-run, or singleton procedures, see the RUN statement reference entry. To
+   check a handle for validity, use the VALID-HANDLE function.
+
+
+FIRST-QUERY attribute
+   A handle to the first dynamic query created in the current ABL session.
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: SESSION system handle
+
+   Use the NEXT-SIBLING attribute on page 344 to get the next entry in the chain of dynamic query handles created in
+   the current ABL session. The chain of dynamic query handles includes all automatically generated queries, such as those
+   created for data-relation objects.
+
+
+FIRST-SERVER attribute
+   A handle to the first entry in the list of server handles of the current ABL session. This includes both application server
+   objects and Web service server objects.
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: SESSION system handle
+   The handle associated with the first entry in the list of all server handles created in the current session. If the current
+   session has no server handles, FIRST-SERVER has the Unknown value (?). For more information on server handles,
+   see the Server object handle reference entry.
+
+
+FIRST-SERVER-SOCKET attribute
+   A handle to the first entry in the list of all valid server socket handles created in the current session. If there are no server
+   socket handles in this session, FIRST-SERVER-SOCKET returns the Unknown value (?).
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: SESSION system handle
+
+
+FIRST-SOCKET attribute
+   A handle to the first entry in the list of all valid socket handles created in the current session. If there are no socket
+   handles in this session, FIRST-SOCKET returns the Unknown value (?).
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: SESSION system handle
+
+
+FIRST-TAB-ITEM attribute
+   The first widget in the tab order of a field group.
+   Data type: HANDLE
+   Access: Readable/Writeable
+   Applies to: FIELD-GROUP widget
+   When you set this attribute, the assigned widget is moved to the first tab position, preceding the widget that was previously
+   at this position. Other widgets in the field group maintain their same relative tab positions.
+   To set the attribute, you must assign it the handle of a field-level widget or frame that can receive focus from a TAB
+   event and that is also a child of the field group to which the attribute applies. If the FIRST-TAB-ITEM attribute is not
+   set (that is, is the Unknown value (?)), the default first tab position goes to the widget identified by the FIRST-CHILD
+   attribute of the field group.
+                                                                                      
+
+    Note: Any tab reordering that you do with this attribute can be reset by a subsequent ENABLE statement unless you
+   define the frame that owns the field group with the KEEP-TAB-ORDER option. For more information, see the ENABLE
+   statement and Frame phrase reference entries.
+
+
+FIT-LAST-COLUMN attribute
+   (Graphical interfaces only)
+   Allows the browse to be displayed so that there is no empty space to the right and no horizontal scroll bar by potentially
+   widening or shrinking the last browse column's width.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: BROWSE widget
+   When this attribute is specified, and the last browse column can be fully or partially displayed in the browse's viewport,
+   then the last browse column's width is adjusted so that it fits within the viewport with no empty space to its right and
+   no horizontal scroll bar.
+   If the last browse column is fully contained in the viewport with empty space to its right, it grows so that its right edge
+   is adjacent to the vertical scroll bar.
+   If the last browse column extends outside the viewport, it shrinks so its right edge is adjacent to the vertical scroll bar
+   and the horizontal scroll bar is not needed.
+   The default value is FALSE.
+   Note: The FIT-LAST-COLUMN attribute performs the same function as the EXPANDABLE attribute. Progress
+   Software Corporation recommends that you use the FIT-LAST-COLUMN attribute instead of the EXPANDABLE
+   attribute. This recommendation includes replacing EXPANDABLE with FIT-LAST-COLUMN in your current code.
+   The following shows the DEFINE BROWSE statement syntax with FIT-LAST-COLUMN specified:
+
+     DEFINE BROWSE b1 QUERY q1
+       DISPLAY Customer.CustNum Customer.Name
+       ENABLE Customer.CustNum WITH 3 DOWN WIDTH 40 FIT-LAST-COLUMN.
+
+
+   The MIN-COLUMN-WIDTH attribute affects the FIT-LAST-COLUMN attribute. As a result, if FIT-LAST-COLUMN
+   is set to TRUE, the last browse column is resized to fit within the viewport only if its width is no smaller than the
+   minimum width. To specify the minimum size that the last browse column's width can be reduced to, use the
+   MIN-COLUMN-WIDTH-PIXELS or MIN-COLUMN-WIDTH-CHARS attribute. See MIN-COLUMN-WIDTH-PIXELS
+   attribute on page 333 and MIN-COLUMN-WIDTH-CHARS attribute on page 333 for more information.
+   FIT-LAST-COLUMN and NO-EMPTY-SPACE are mutually exclusive. If both are specified in the DEFINE BROWSE
+   statement, the compiler displays an error message. If one attribute is set to TRUE while the other attribute is already
+   TRUE, a warning message displays at run time.
+   FIT-LAST-COLUMN is primarily intended for use in the initial layout of a static browse. It is most useful when laying
+   out a browse with a specified width when you have only a few browse columns and you want to fully use the available
+   space in your viewport.
+   If the FIT-LAST-COLUMN attribute is set to TRUE, and, subsequently, any browse column's width is changed or the
+   browse's width is changed, then the last browse column's width might be adjusted so that it fits within the viewport with
+   no empty space and no horizontal scroll bar.
+   When the last browse column's width is set at run time after the browse is realized, then FIT-LAST-COLUMN is ignored.
+                                                                                  
+   If the FIT-LAST-COLUMN attribute is set to FALSE, the last browse column's width remains the same and is never
+   changed by ABL.
+   The FIT-LAST-COLUMN attribute and the EXPANDABLE attribute have the same behavior. Therefore, if you specify
+   the Expand Browse (-expandbrow) startup parameter at startup, the FIT-LAST-COLUMN attribute is set to TRUE
+   for each browse in that session.
+
+ 
+FLAT-BUTTON attribute
+   (Windows only; Graphical interfaces only)
+   Indicates whether a button is two-dimensional until the mouse passes over it, at which time, a 3D border appears.
+   Data type: LOGICAL
+   Access: Readable/Writable
+   Applies to: BUTTON widget
+   The FLAT-BUTTON attribute must be set before the button is realized. The default value is FALSE.
+   Setting the FLAT-BUTTON attribute to TRUE forces the NO-FOCUS attribute to TRUE because the FLAT-BUTTON
+   attribute only works with the NO-FOCUS attribute. Similarly, setting the NO-FOCUS attribute to FALSE forces the
+   FLAT-BUTTON attribute to FALSE.
+   The mnemonic key (ALT accelerator) for a widget will not work if the NO-FOCUS attribute is TRUE because this
+   removes the widget from the tab order. Also, because the widget is not in the tab order, pressing TAB will not change
+   focus from the widget.
+
+
+FOCUSED-ROW attribute
+   The 1-based index or position of the focused row in the viewport.
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: BROWSE widget
+
+
+FOCUSED-ROW-SELECTED attribute
+   Indicates whether the row that has focus is selected.
+   Data type: LOGICAL
+   Access: Read-only
+   Applies to: BROWSE widget
+   If the row that has focus is selected, FOCUSED-ROW-SELECTED is TRUE . Otherwise, it is FALSE.
+
+
+FONT attribute
+   (Graphical interfaces only)
+   The number of the font of a widget.
+   Data type: INTEGER
+   Access: Readable/Writeable
+   Applies to: BROWSE widget (browse, column, and cell), BUTTON widget, COMBO-BOX widget, DIALOG-BOX
+   widget, EDITOR widget, FILL-IN widget, FRAME widget, LITERAL widget, RADIO-SET widget, SELECTION-LIST
+   widget, SLIDER widget, TEXT widget, TOGGLE-BOX widget, WINDOW widget
+   The font number represents an entry in the font table maintained by the FONT-TABLE handle.
+   For a browse cell, it specifies the font of a specific cell in the view port. You can set this font only as the cell appears
+   in the view port during a ROW-DISPLAY event.
+   For browses, this attribute applies only to fill-in and combo-box browse columns.
+   Note: When the AUTO-RESIZE attribute is set to TRUE, the AVM resizes the following widgets with run-time changes
+   to the FONT attribute: Buttons, Combo boxes, Editors, Fill-ins, Radio sets, Selection lists, Sliders, Texts, and Toggle
+   boxes.
+
+
+FOREGROUND attribute
+   Indicates whether the field group is a foreground or a background field group.
+   Data type: LOGICAL
+   Access: Read-only
+   Applies to: FIELD-GROUP widget
+   If the FOREGROUND attribute is TRUE, the field group is a foreground (data iteration) group. If FOREGROUND is
+   FALSE, the field group is the background group for the frame.
+
+
+FOREIGN-KEY-HIDDEN attribute
+   Specifies whether to hide foreign key fields in the child records of a nested data-relation in a ProDataset.
+   Data type: LOGICAL
+   Access: Readable/Writable
+   Applies to: Data-relation object handle
+   This setting is only valid if the NESTED attribute is also TRUE.
+   When working with large ProDataSets, omitting foreign keys in nested child records can yield smaller XML documents,
+   more efficient network transfers, and performance gains with the READ-XML( ) and WRITE-XML( ) methods.
+   Care must be taken when deciding to use this feature. The READ-XML( ) method automatically populates foreign keys
+   in nested child records with the value in the outer parent record when the foreign key is omitted from the XML document.
+   Unless you are sure that the receiver of the XML document will do the same, you should not use this option in your
+   nested data-relations.
+   For example, while .NET can read this XML document and populate an ADO .NET DataSet, it will create rows in the
+   child DataTable with a null value for the foreign key field.
+
+  
+FORM-INPUT attribute
+   Returns raw HTTP form input that is less than 32K in size.
+
+
+   Data type: CHARACTER
+   Access: Read-only
+   Applies to: WEB-CONTEXT system handle
+
+
+FORM-LONG-INPUT attribute
+   Returns raw HTTP form input that is greater than 32K in size. The AVM performs no conversion on the data.
+   Data type: MEMPTR
+   Access: Read-only
+   Applies to: WEB-CONTEXT system handle
+
+
+FORMAT attribute
+   The text format of a widget or browse-cell.
+   Data type: CHARACTER
+   Access: Readable/Writeable
+   Applies to: BROWSE widget (cell), Buffer-field object handle, COMBO-BOX widget, FILL-IN widget, TEXT widget,
+   TOGGLE-BOX widget
+   For DROP-DOWN-LIST combo-boxes, if you set this attribute with items in the drop-down list, all items are converted
+   to the new format. This attribute is ignored for SIMPLE and DROP-DOWN combo-boxes.
+   For combo boxes whose entries consist of label-value pairs, the AVM converts all values to the new format.
+   For browses, this attribute applies only to fill-in and combo-box browse columns.
+   For browses in Windows, if you modify the FORMAT attribute of a browse-cell, its format changes, but its size does
+   not.
+   For buffer-fields, the value of the FORMAT attribute does not affect the ABL user interface anywhere. Rather, it controls
+   the output of the STRING-VALUE attribute, and lets users explicitly format non-ABL user interfaces.
+   Note: When the AUTO-RESIZE attribute is TRUE, the AVM resizes combo box and fill-in field widgets with run-time
+   changes to the FORMAT attribute.
+
+
+FORMATTED attribute
+   Determines the format of XML output from a SAX-writer object.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: SAX-writer object handle
+   The default value is FALSE.
+   TRUE indicates that the SAX-writer should format the document with additional white space, carriage returns, and line
+   feeds, so that the elements display in a hierarchical manner.
+   FALSE indicates the SAX-writer should create an optimized document that includes no extra white space.
+   You can read this attribute at all times, but you can only write to it when the WRITE-STATUS is either
+   SAX-WRITE-IDLE or SAX-WRITE-COMPLETE. That is, you can only change the attribute when the SAX-writer is
+   not writing, otherwise the call fails and generate an error message.
+
+
+
+FORWARD-ONLY attribute
+   Lets you avoid building result-lists for static and dynamic queries.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: Query object handle
+   Set to TRUE to avoid building result-lists for queries. Set to FALSE to build result-lists for queries. The default is
+   FALSE.
+   When TRUE, you cannot use the GET PREV, GET LAST, REPOSITION, or BROWSE methods or statements with
+   these queries. If you do, the AVM generates an error. You can use the GET-FIRST( ) method and GET FIRST statement
+   only on newly opened queries, and you can use the GET NEXT statement and GET-NEXT( ) method freely.
+   If you set FORWARD-ONLY to TRUE, and you open a query with preselect or sort, the AVM still builds a result-list
+   in order to resolve the query. You cannot set FORWARD-ONLY while a query is open or being browsed.
+   Setting FORWARD-ONLY to TRUE can improve the performance of operations on queries.
+
+
+FRAGMENT attribute
+   Specifies if the output of a SAX-writer object is a complete document or a fragment.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: SAX-writer object handle
+   The default value is FALSE.
+   TRUE indicates that the writer should not include the XML declaration or require a root node. This behavior allows the
+   developer to create XML fragments which can be used to create larger documents. For example, one SAX-writer object's
+   document fragment LONGCHAR could be used as the parameter of WRITE-FRAGMENT for another SAX-writer.
+   FALSE indicates the SAX-writer should create a complete XML document with the XML declaration and root node.
+   You can read this attribute at all times, but you can only write to it when the WRITE-STATUS is either
+   SAX-WRITE-IDLE or SAX-WRITE-COMPLETE. That is, the attribute can only be changed when the SAX-writer is
+   not writing, otherwise it fails and generates an error message.
+
+
+FRAME attribute
+   The handle of the frame that contains the widget.
+   Data type: HANDLE
+   Access: Readable/Writeable
+   Applies to: BROWSE widget, BUTTON widget, COMBO-BOX widget, CONTROL-FRAME widget, EDITOR widget,
+   FILL-IN widget, FRAME widget, IMAGE widget, LITERAL widget, RADIO-SET widget, RECTANGLE widget,
+   SELECTION-LIST widget, SLIDER widget, TEXT widget, TOGGLE-BOX widget
+   This attribute is writeable only for static frames and all dynamic widgets. You can set this attribute for a static frame
+   only before the widget is realized.
+
+
+FRAME-COL attribute
+   The decimal column position, in character units, of the left edge of the widget relative to the upper left corner of the
+   frame that contains the widget.
+   Data type: DECIMAL
+   Access: Read-only
+   Applies to: BROWSE widget, BUTTON widget, COMBO-BOX widget, CONTROL-FRAME widget, EDITOR widget,
+   FILL-IN widget, IMAGE widget, LITERAL widget, RADIO-SET widget, RECTANGLE widget, SELECTION-LIST
+   widget, SLIDER widget, TEXT widget, TOGGLE-BOX widget
+
+
+FRAME-NAME attribute
+   The name of the frame that contains the widget.
+   Data type: CHARACTER
+   Access: Read-only
+   Applies to: BROWSE widget, BUTTON widget, COMBO-BOX widget, CONTROL-FRAME widget, EDITOR widget,
+   FILL-IN widget, IMAGE widget, LITERAL widget, RADIO-SET widget, RECTANGLE widget, SELECTION-LIST
+   widget, SLIDER widget, TEXT widget, TOGGLE-BOX widget
+
+
+FRAME-ROW attribute
+   The decimal row position, in character units, of the top edge of the widget relative to the upper left corner of the frame
+   that contains the widget.
+   Data type: DECIMAL
+   Access: Read-only
+   Applies to: BROWSE widget, BUTTON widget, COMBO-BOX widget, CONTROL-FRAME widget, EDITOR widget,
+   FILL-IN widget, IMAGE widget, LITERAL widget, RADIO-SET widget, RECTANGLE widget, SELECTION-LIST
+   widget, SLIDER widget, TEXT widget, TOGGLE-BOX widget
+   If the parent frame is a down frame with multiple occurrences, the FRAME-ROW attribute regards the original occurrence
+   as the parent, not the current occurrence.
+
+
+FRAME-SPACING attribute
+   The number of display units between frames in a window. In graphical interfaces the display units are pixels. In character
+   interfaces the display units are character cells.
+   Data type: INTEGER
+   Access: Readable/Writeable
+   Applies to: SESSION system handle
+   By default, the value for FRAME-SPACING is the height of one row in the default system font. In character interfaces,
+   this is the character cell height. In graphical interfaces, this is the number of pixels returned by the PIXELS-PER-ROW
+   attribute.
+
+
+FRAME-X attribute
+   The location of the left edge of the widget relative to the upper left corner of the frame that contains the widget.
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: BROWSE widget, BUTTON widget, COMBO-BOX widget, CONTROL-FRAME widget, EDITOR widget,
+   FILL-IN widget, IMAGE widget, LITERAL widget, RADIO-SET widget, RECTANGLE widget, SELECTION-LIST
+   widget, SLIDER widget, TEXT widget, TOGGLE-BOX widget
+   In character mode, this attribute returns the widget location in row column units. In graphical interfaces, this attribute
+   returns pixels.
+
+
+FRAME-Y attribute
+   The location of the top edge of the widget relative to the upper left corner of the frame that contains the widget.
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: BROWSE widget, BUTTON widget, COMBO-BOX widget, CONTROL-FRAME widget, EDITOR widget,
+   FILL-IN widget, IMAGE widget, LITERAL widget, RADIO-SET widget, RECTANGLE widget, SELECTION-LIST
+   widget, SLIDER widget, TEXT widget, TOGGLE-BOX widget
+   In character mode, this attribute returns the widget location in row column units. In graphical interfaces, this attribute
+   returns pixels.
+
+
+FREQUENCY attribute
+   Indicates the incremental display of the TIC-MARKS attribute. It is used exclusively with the TIC-MARKS attribute.
+   Data type: INTEGER
+   Access: Readable/Writeable
+   Applies to: SLIDER widget
+   For example, if you set FREQUENCY to 5, a tic mark appears in every fifth position along the length of the slider.
+
+
+FULL-HEIGHT-CHARS attribute
+   The maximum internal height of the window, in character units.
+   Data type: DECIMAL
+   Access: Read-only
+   Applies to: WINDOW widget
+   The maximum internal height of a window is the height of the screen display minus the vertical spacing required to
+   display the border, title bar, menu bar, message area, and status area of the window.
+   The value of this attribute is the Unknown value (?) until the window is realized.
+
+
+FULL-HEIGHT-PIXELS attribute
+   The maximum internal height of the window, in pixel units.
+
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: WINDOW widget
+   The maximum internal height of a window is the height of the screen display minus the vertical spacing required to
+   display the border, title bar, menu bar, message area, and status area of the window.
+   The value of this attribute is the Unknown value (?) until the window is realized.
+
+
+FULL-PATHNAME attribute
+   The absolute pathname of the file specified in the FILE-NAME attribute.
+   Data type: CHARACTER
+   Access: Read-only
+   Applies to: FILE-INFO system handle
+   The pathname can contain Unicode characters. See Internationalize ABL Applications for more information about
+   Unicode.
+
+
+FULL-WIDTH-CHARS attribute
+   The maximum internal width of the window, in character units.
+   Data type: DECIMAL
+   Access: Read-only
+   Applies to: WINDOW widget
+   The maximum internal width of a window is the width of the screen display minus the horizontal spacing required to
+   display the border of the window.
+   The value of this attribute is the Unknown value (?) until the window is realized.
+
+
+FULL-WIDTH-PIXELS attribute
+   The maximum internal width of the window, in pixel units.
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: WINDOW widget
+   The maximum internal width of a window is the width of the screen display minus the horizontal spacing required to
+   display the border of the window.
+   The value of this attribute is the Unknown value (?) until the window is realized.
+
+
+FUNCTION attribute
+   The names of high-level events based on the EVENT-TYPE attribute value.
+   Data type: CHARACTER
+   Access: Read-only
+   Applies to: LAST-EVENT system handle
+                                                                                     
+   For EVENT-TYPE = "KEYPRESS", this attribute returns key functions, such as "RETURN". For EVENT-TYPE =
+   "MOUSE", this attribute returns high-level events for both portable and three-button event types, such as
+   "MOUSE-SELECT-CLICK" (portable) or "LEFT-MOUSE-CLICK" (three-button). For EVENT-TYPE = "PROGRESS",
+   this attribute returns high-level widget and direct manipulation events, such as "CHOOSE" or "SELECTION".
+
+
+GET-ATTRIBUTE( ) method
+   Returns the value of the specified attribute of an element referred to by an XML node reference.
+   Return type: CHARACTER
+   Applies to: X-noderef object handle
+
+   Syntax
+
+     GET-ATTRIBUTE ( name )
+
+
+   name
+               The attribute name whose value is desired. Attribute names are defined within the element tag. If using
+               a DTD, you can define attributes with the "IMPLIED" property and those attributes will appear in the
+               DOM structure.
+   If the requested attribute does not exist, an empty string is returned.
+   The following example demonstrates listing all the attributes of the node:
+
+     ...
+     anames = hNoderef:ATTRIBUTE-NAMES.
+     REPEAT jx = 1 TO NUM-ENTRIES(anames):
+       bname = ENTRY(jx, anames).
+       MESSAGE "attribute-name is" bname "value is"
+          hNoderef:GET-ATTRIBUTE(bname).
+     END.
+
+
+
+
+GET-ATTRIBUTE-NODE( ) method
+   Returns the XML ATTRIBUTE node with the specified name.
+   Return type: LOGICAL
+   Applies to: X-noderef object handle
+
+   Syntax
+
+     GET-ATTRIBUTE-NODE ( attr-node-handle , name )
+
+
+   attr-node-handle
+              A valid X-noderef handle to use for the XML ATTRIBUTE node.
+   name
+               A character expression representing the name of the XML ATTRIBUTE node. For a namespace-aware
+               ATTRIBUTE node, you must qualify the node name with a prefix including a colon (for example,
+               prefix:node-name).
+
+GET-BINARY-DATA( ) method
+   Returns a MEMPTR containing the binary data in the file specified in the form field. The AVM sets the size of the
+   MEMPTR to match the size of the file. This method is called by the get-binary-data WebSpeed API function.
+   Intended for internal use only.
+   Return type: MEMPTR
+   Applies to: WEB-CONTEXT system handle
+
+   Syntax
+
+     GET-BINARY-DATA ( INPUT field-name )
+
+
+   field-name
+                The name of the form field containing the name of the file posted in the web request received by the
+                WebSpeed Agent.
+   If the specified field is not part of the form, or the field is not of type ‘file', the AVM returns the Unknown value (?)
+   and displays an error message. You can suppress this message by using NO-ERROR on the statement containing the
+   method.
+
+
+GET-BLUE-VALUE( ) method
+   (Graphical interfaces only)
+   Returns the blue component of an entry in the color table.
+   Return type: INTEGER
+   Applies to: COLOR-TABLE system handle
+
+   Syntax
+
+     GET-BLUE-VALUE ( index )
+
+
+   index
+                An integer expression that specifies an entry in the color table.
+
+
+GET-BROWSE-COLUMN( ) method
+   Returns the handle for the requested browse column.
+   Return type: HANDLE
+   Applies to: BROWSE widget
+
+   Syntax
+
+     GET-BROWSE-COLUMN ( col-index )
+
+
+   col-index
+                An integer value specifying the 1-based index into the browse column list.
+                                                                                     
+
+GET-BUFFER-HANDLE( ) method
+   Gets the handle to a particular buffer of a query or ProDataSet object.
+   Return type: HANDLE
+   Applies to: ProDataSet object handle, Query object handle
+
+   Syntax
+
+     GET-BUFFER-HANDLE ( buffer-sequence-number|buffer-name )
+
+
+   buffer-sequence-number
+              An integer that represents the sequence number of the desired buffer.
+               Note: Sequence numbers for buffers of a query start at one, where one represents the top level and
+               subsequent numbers represent lower levels of join, if any.
+   buffer-name
+             A CHARACTER expression that evaluates to the name of a buffer in the query or ProDataSet object.
+   If the buffer cannot be found, this attribute returns the Unknown value (?).
+
+
+GET-BYTES-AVAILABLE( ) method
+   Indicates the number of bytes available for reading from the socket.
+   Return type: INTEGER
+   Applies to: Socket object handle
+
+   Syntax
+
+     GET-BYTES-AVAILABLE( )
+
+
+
+
+GET-CALLBACK-PROC-CONTEXT( ) method
+   Returns the handle of the procedure that contains the internal procedure associated with the ABL callback for the specified
+   event.
+   Return type: HANDLE
+   Applies to: Buffer object handle, ProDataSet object handle, Query object handle
+
+   Syntax
+
+     GET-CALLBACK-PROC-CONTEXT ( event-name )
+
+
+   event-name
+             The name of a defined event.
+   If the object does not have a callback procedure for the specified event, this method returns the Unknown value (?).
+
+   Use the SET-CALLBACK-PROCEDURE( ) method to associate an internal procedure with a callback for
+   an object.
+   For more information on events, see the Handle-based Object Events Reference.
+
+   See also
+   APPLY-CALLBACK( ) method on page 60, GET-CALLBACK-PROC-NAME( ) method on page 225,
+   SET-CALLBACK-PROCEDURE( ) method on page 452
+
+
+GET-CALLBACK-PROC-NAME( ) method
+   Returns the name of the internal procedure associated with the ABL callback for the specified event.
+   Return type: CHARACTER
+   Applies to: Buffer object handle, ProDataSet object handle, Query object handle
+
+   Syntax
+
+     GET-CALLBACK-PROC-NAME ( event-name )
+
+
+   event-name
+             The name of a defined event.
+   If the object does not have a callback procedure for the specified event, this method returns the Unknown value (?).
+   Use the SET-CALLBACK-PROCEDURE( ) method on page 452 to associate an internal procedure with a callback for
+   an object.
+   For more information on events, see the Handle-based Object Events Reference.
+
+   
+GET-CGI-LIST( ) method
+   Gets the list of CGI environment variables. This method is called by the get-cgi WebSpeed API function. Intended
+   for internal use only.
+   Return type: CHARACTER
+   Applies to: WEB-CONTEXT system handle
+
+
+GET-CGI-VALUE( ) method
+   Gets the value of a specified CGI environment variable. This method is called by the get-cgi WebSpeed API function.
+   Intended for internal use only.
+   Return type: CHARACTER
+   Applies to: WEB-CONTEXT system handle
+
+
+GET-CGI-LONG-VALUE( ) method
+   Returns a LONGCHAR value in either the code page specified in the HTML-CHARSET attribute, if that code page is
+   valid for a LONGCHAR, or -cpinternal. Otherwise, it returns the Unknown value (?) and displays an error message.
+   You can suppress this message by using NO-ERROR on the statement containing the method. This method is called by
+   the get-cgi-long and get-long-value WebSpeed API functions. Intended for internal use only.
+   Return type: LONGCHAR
+   Applies to: WEB-CONTEXT system handle
+
+
+GET-CHANGES( ) method
+   Loads all the temp-tables or a single temp-table of an empty target ProDataSet object with changed rows from all
+   temp-tables or a single temp-table (respectively) of the original (source) ProDataSet object.
+   Return type: LOGICAL
+   Applies to: Buffer object handle, ProDataSet object handle (of the target object)
+
+   Syntax
+   The syntax to invoke this method follows:
+
+     change-handle:GET-CHANGES ( original-handle[ , get-parent-mode] )
+
+
+   change-handle
+             A handle to the target ProDataSet object or to the buffer object of the target ProDataSet temp-table to
+             receive the changed rows.
+   original-handle
+              A handle to the original (source) ProDataSet object or a handle to the buffer object of a single source
+              ProDataSet temp-table that contains the changed rows to load into the target object.
+   get-parent-mode
+              An optional logical expression, where TRUE indicates that the AVM gets the changed parent rows
+              of each changed child row.
+               When TRUE, the AVM includes the parent row of each changed child row in the ProDataSet object
+               or ProDataSet temp-table (if any). If there is more than one parent level above the changed row, the
+               AVM includes the parent row at each level. In this case, the parent temp-tables must have a unique
+               primary index that the AVM can use to find the corresponding rows. If a parent row has changed, the
+               AVM copies both the before-image and after-image of the parent row. If a parent row has not changed,
+               there will be no before-image of the parent row, and its change state (ROW-STATE) will be
+               ROW-UNMODIFIED (0) or the Unknown value (?).
+               Note: When the relation mode of a parent is REPOSITION, no attempt is made to find that parent.
+               When FALSE, the AVM does not include parent rows. The default value is FALSE.
+   The ProDataSet objects associated with a target ProDataSet handle and the original-handle must have the same number
+   of temp-table buffers, and the definition of the corresponding temp-tables must match (that is, in the number of columns,
+   data types, and so on). Likewise, the temp-table objects associated with a target temp-table and the original-handle must
+   match.
+   Once the changed rows are loaded, the AVM sets the ORIGIN-HANDLE attribute on the temp-tables in the receiving
+   ProDataSet object to the corresponding temp-tables in the original source ProDataSet object. The AVM also sets the
+   ORIGIN-ROWID attribute on each of the before-image table rows created in the receiving ProDataSet object to the
+                                                                                     
+   ROWID of the corresponding before-image table row in the original source temp-table. The MERGE-CHANGES( )
+   method on page 330 and MERGE-ROW-CHANGES( ) method on page 331 uses these values to match up temp-tables
+   and temp-table rows during a merge operation.
+   Note: When executing the method, there is no guarantee as to the contents of the buffers involved after the method
+   finishes executing.
+
+
+GET-CHILD( ) method
+   Retrieves a specific child node of the current node. The first parameter must be a valid X-noderef handle and will refer
+   to the specified child XML node if the method succeeds.
+   Return type: LOGICAL
+   Applies to: X-document object handle, X-noderef object handle
+
+   Syntax
+
+     GET-CHILD ( x-node-handle , index )
+
+
+   x-node-handle
+             A valid X-noderef handle to use as the child XML node.
+   index
+               An integer representing the relative number in the node-tree (1 based).
+   The following code fragment demonstrates getting all the child nodes from the XML node referenced by hNoderef using
+   the GET-CHILD( ) method:
+
+     . . .
+     REPEAT jx = 1 TO hNoderef:NUM-CHILDREN:
+       ok = hNoderef:GET-CHILD(hNoderefChild, jx).
+       IF NOT ok THEN LEAVE.
+        . . .
+     END.
+
+
+
+
+GET-CHILD-RELATION( ) method
+   Gets the handle to a data-relation object for which the buffer is the parent.
+   Return type: HANDLE
+   Applies to: Buffer object handle
+
+   Syntax
+
+     GET-CHILD-RELATION ( index )
+
+
+   index
+               An integer expression indicating the 1-based index of the data-relation object.
+                                                                                    
+GET-CLIENT( ) method
+   Returns the handle to a copy of the sealed client-principal object that represents the user identity for the ABL session.
+   If no identity has been established for the session using the SECURITY-POLICY:SET-CLIENT( ) method on page 453,
+   this method returns the Unknown value (?).
+   Return type: HANDLE
+   Applies to: SECURITY-POLICY system handle
+
+   Syntax
+
+       GET-CLIENT ( )
+
+
+   You can use the client-principal object returned by this function to set the user's identity for other ABL sessions or
+   database connections.
+   To avoid a memory leak, you must explicitly delete the client-principal object whose handle is returned by this method
+   when you no longer need it.
+   This method does not raise an ERROR condition unless it encounters an unexpected internal error.
+
+  
+GET-COLUMN( ) method
+   Returns the column number at which the nth message occurred during the preceding compilation.
+   Return type: INTEGER
+   Applies to: COMPILER system handle
+
+   Syntax
+
+       GET-COLUMN ( n )
+
+
+   n
+               An integer expression, from 1 to the value of the NUM-MESSAGES attribute on page 354, that specifies
+               the numeric occurrence of a compilation message. If the nth occurrence of a compilation message did
+               not occur, the compiler issues a warning message at runtime.
+
+
+GET-CONFIG-VALUE( ) method
+   Gets the value of parameters set in the WebSpeed configuration file. This method is called by the get-config
+   WebSpeed API function. Intended for internal use only.
+   Return type: CHARACTER
+   Applies to: WEB-CONTEXT system handle
+
+
+GET-CURRENT( ) method
+   Refetches the current record or records associated with the query.
+   Return type: LOGICAL
+   Applies to: Query object handle
+
+   Syntax
+
+     GET-CURRENT ( NO-LOCK | SHARE-LOCK [ , NO-WAIT ]
+     | EXCLUSIVE-LOCK [ , NO-WAIT ] )
+
+
+   NO-LOCK
+          Specifies that no lock is applied to the record. This applies to all buffers in a join.
+   SHARE-LOCK
+          Specifies that the record is share locked. This applies to all buffers in a join.
+   EXCLUSIVE-LOCK
+          Specifies that the record is exclusively locked. This applies to all buffers in a join.
+   NO-WAIT
+              Specifies that the method returns immediately if the record cannot be accessed because it is locked by
+              another user. If you do not use the NO-WAIT option, the method waits until the record can be accessed.
+              This applies to all buffers in a join. If you specify NO-WAIT and the record is locked by another user,
+              the record is returned to you with NO-LOCK and the LOCKED function returns TRUE for the record.
+   Note: When you execute an OPEN QUERY or REPOSITION statement for a query associated with a browse widget,
+   the browse is automatically adjusted to remain in sync with the query. However, when you execute a GET statement or
+   method, the browse is not adjusted. You can use the GET statement, or one of the GET methods
+   (GET-CURRENT/FIRST/LAST/NEXT/PREV) to perform background processing without affecting the browse, but
+   you must execute a REPOSITION statement or one of the REPOSITION methods
+   (REPOSITION-BACKWARD/FORWARD/TO-ROW/TO-ROWID) to put the query and browse back in sync.
+
+
+GET-DATASET-BUFFER( ) method
+   Gets the handle to the ProDataSet object buffer associated with the data-source object.
+   Return type: HANDLE
+   Applies to: Data-source object handle
+
+   Syntax
+
+     GET-DATASET-BUFFER ( )
+
+
+
+
+GET-DOCUMENT-ELEMENT( ) method
+   Retrieves the root element of the document. The parameter must be a valid X-noderef handle and will refer to the
+   document's root element if the method succeeds.
+   Return type: LOGICAL
+
+
+   Applies to: X-document object handle
+
+   Syntax
+
+     GET-DOCUMENT-ELEMENT ( x-node-handle )
+
+
+   x-node-handle
+             A valid X-noderef handle to use for the root element.
+   The following example demonstrates the use of GET-DOCUMENT-ELEMENT if hDoc is an X-document and hRoot
+   is an X-noderef:
+
+     /* Creates an ABL document object & initializes the associated XML
+        object. */
+     CREATE X-document hDoc.
+
+     /* Creates an ABL reference for an XML node in a parse tree. */
+     CREATE X-NODEREF hRoot.
+
+     /* Reads the myxml.xml document into an XML parse tree. */
+     hDoc:LOAD("file","myxml.xml",false).
+
+     /* Associates hRoot with the root node of the hDoc document. */
+     hDoc:GET-DOCUMENT-ELEMENT(hRoot).
+
+
+
+
+GET-DROPPED-FILE( ) method
+   (Windows only; Graphical interfaces only)
+   Returns the name of the dropped file indicated by the index parameter.
+   Return type: CHARACTER
+   Applies to: BROWSE widget, BUTTON widget, COMBO-BOX widget, DIALOG-BOX widget, EDITOR widget,
+   FILL-IN widget, FRAME widget, RADIO-SET widget, SELECTION-LIST widget, SLIDER widget, TOGGLE-BOX
+   widget, WINDOW widget
+
+   Syntax
+
+     GET-DROPPED-FILE ( index )
+
+
+   index
+              An integer expression that specifies the ordinal number of a dropped file. If index is less than 1 or
+              greater than the number of dropped files (as indicated by NUM-DROPPED-FILES),
+              GET-DROPPED-FILE( ) returns the Unknown value (?). If there is no current drag-and-drop operation,
+              GET-DROPPED-FILE( ) returns the Unknown value (?).
+   The returned filename can contain Unicode characters. See Internationalize ABL Applications for more information
+   about Unicode.
+
+
+GET-DYNAMIC( ) method
+   (Graphical interfaces only)
+
+   Returns TRUE if the entry in the color table is a dynamic color.
+   Return type: LOGICAL
+   Applies to: COLOR-TABLE system handle
+
+   Syntax
+
+       GET-DYNAMIC ( index )
+
+
+   index
+              An integer expression that specifies an entry in the color table.
+
+
+GET-ERROR-COLUMN( ) method
+   Returns the listing column number at which the nth error occurred in the preceding ABL source code compilation.
+   This method is supported only for backward compatibility. Use the GET-COLUMN( ) method on page 228 instead.
+   Return type: INTEGER
+   Applies to: COMPILER system handle
+
+   Syntax
+
+       GET-ERROR-COLUMN ( n )
+
+
+   n
+              An integer expression, from 1 to the value of the NUM-MESSAGES attribute on page 354, that specifies
+              the numeric occurrence of a compilation error. If the nth occurrence of a compilation error did not
+              occur, this method returns the Unknown value (?).
+
+
+GET-ERROR-ROW( ) method
+   Returns the listing line number at which the nth error occurred in the preceding ABL source code compilation.
+   This method is supported only for backward compatibility. Use the GET-ROW( ) method on page 244 instead.
+   Return type: INTEGER
+   Applies to: COMPILER system handle
+
+   Syntax
+
+       GET-ERROR-ROW ( n )
+
+
+   n
+              An integer expression, from 1 to the value of the NUM-MESSAGES attribute on page 354, that specifies
+              the numeric occurrence of a compilation error.
+   If the nth occurrence of a compilation error did not occur, this method returns the Unknown value (?).
+                                                                                     
+GET-FILE-NAME( ) method
+   Returns the name of the source file associated with the nth error that occurred in the preceding ABL source code
+   compilation.
+   Return type: CHARACTER
+   Applies to: COMPILER system handle
+
+   Syntax
+
+       GET-FILE-NAME ( n )
+
+
+   n
+               An integer expression, from 1 to the value of the NUM-MESSAGES attribute on page 354, that specifies
+               the numeric occurrence of a compilation error.
+   If the nth occurrence of a compilation error did not occur, this method returns the Unknown value (?).
+
+
+GET-FILE-OFFSET( ) method
+   Returns the character offset at which the nth error occurred in the associated source file during the preceding ABL source
+   code compilation.
+   Return type: INTEGER
+   Applies to: COMPILER system handle
+
+   Syntax
+
+       GET-FILE-OFFSET ( n )
+
+
+   n
+               An integer expression, from 1 to the value of the NUM-MESSAGES attribute on page 354, that specifies
+               the numeric occurrence of a compilation error.
+   If the nth occurrence of a compilation error did not occur, this method returns the Unknown value (?).
+
+
+GET-FIRST( ) method
+   Moves a query object's result list pointer to the first row.
+   Return type: LOGICAL
+   Applies to: Query object handle
+
+   Syntax
+
+       GET-FIRST ( NO-LOCK | SHARE-LOCK [ , NO-WAIT ]
+       | EXCLUSIVE-LOCK [ , NO-WAIT ] )
+
+
+   NO-LOCK
+          Specifies that no lock is applied to the record. This applies to all buffers in a join. Unless explicitly
+          specified otherwise, this is the default lock type for this method.
+                                                                                    
+   SHARE-LOCK
+          Specifies that the record is share locked. This applies to all buffers in a join.
+   EXCLUSIVE-LOCK
+          Specifies that the record is exclusively locked. This applies to all buffers in a join.
+   NO-WAIT
+               Specifies that the method returns immediately if the record cannot be accessed because it is locked by
+               another user. If you do not use the NO-WAIT option, the method waits until the record can be accessed.
+               This applies to all buffers in a join. If you specify NO-WAIT and the record is locked by another user,
+               the record is returned to you with NO-LOCK and the LOCKED function returns TRUE for the record.
+
+   Example
+
+       DEFINE VARIABLE hQuery AS HANDLE NO-UNDO.
+       DEFINE VARIABLE iCount AS INTEGER INITIAL 0 NO-UNDO.
+
+       CREATE QUERY hQuery.
+
+       hQuery:SET-BUFFERS(BUFFER Customer:HANDLE).
+       hQuery:QUERY-PREPARE("FOR EACH Customer").
+       hQuery:QUERY-OPEN.
+
+       hQuery:GET-FIRST().
+       MESSAGE "First Customer is" NAME.
+
+       DO WHILE NOT hQuery:QUERY-OFF-END:
+         iCount = iCount + 1.
+         hQuery:GET-NEXT().
+       END.
+       MESSAGE "Total number of Customer is" iCount.
+
+       hQuery:QUERY-CLOSE().
+       DELETE OBJECT hQuery.
+
+
+   Notes
+   •   GET-FIRST() returns TRUE if the first record in the query is found. If the query is not open or the first record
+       cannot be found (query is empty), the method returns FALSE. If the query object handle is invalid, an error is raised.
+   •   A query that includes a BREAK BY phrase becomes a FORWARD-ONLY query. In this case you cannot use the
+       GET-FIRST() method. If you do, the AVM raises ERROR.
+   •   When you execute an OPEN QUERY or REPOSITION statement for a query associated with a browse widget, the
+       browse is automatically adjusted to remain in sync with the query. However, when you execute a GET statement or
+       method, the browse is not adjusted. You can use the GET statement, or one of the GET methods
+       (GET-CURRENT/FIRST/LAST/NEXT/PREV) to perform background processing without affecting the browse, but
+       you must execute a REPOSITION statement or one of the REPOSITION methods
+       (REPOSITION-BACKWARD/FORWARD/TO-ROW/TO-ROWID) to put the query and browse back in sync.
+   •   GET-NEXT() does the same action as GET-FIRST() if it is the first GET call after a query is opened.
+
+
+GET-GREEN-VALUE( ) method
+   (Graphical interfaces only)
+   Returns the green component of an entry in the color table.
+   Return type: INTEGER
+
+   Applies to: COLOR-TABLE system handle
+
+   Syntax
+
+     GET-GREEN-VALUE ( index )
+
+
+   index
+               An integer expression that specifies an entry in the color table.
+
+
+GET-HEADER-ENTRY( ) method
+   Retrieves the SOAP-header-entryref object at the given header entry index (base 1). In other words, a SOAP-header
+   object contains a list of entries. Each entry points to an existing SOAP-header-entryref object. This method finds the
+   SOAP-header-entryref object associated with indexed header entry and copies its handle to the header-entryref handle
+   you provided.
+   Return type: LOGICAL
+   Applies to: SOAP-header object handle
+
+   Syntax
+
+     GET-HEADER-ENTRY ( header-entryref , index )
+
+
+   header-entryref
+              A valid SOAP-header-entryref object handle.
+   index
+               An integer expression indicating the 1-based index of the header entry.
+
+
+GET-INDEX-BY-NAMESPACE-NAME( ) method
+   Gets the 1-based index of the attribute with the given namespace name.
+   Return type: INTEGER
+   Applies to: SAX-attributes object handle
+
+   Syntax
+
+     GET-INDEX-BY-NAMESPACE-NAME ( uri , localname )
+
+
+   uri
+               The namespace URI (that is, the URI to which the attribute's prefix refers), or if the name has no
+               namespace URI, an empty string.
+   localname
+               The local (unqualified) name of the attribute.
+   Returns the Unknown value (?) if no attribute's uri-localname combination matches the combination of uri and localname.
+                                                                                       
+GET-INDEX-BY-QNAME( ) method
+   Gets the 1-based index of the attribute with the given XML qualified name.
+   Return type: INTEGER
+   Applies to: SAX-attributes object handle
+
+   Syntax
+
+     GET-INDEX-BY-QNAME ( qname )
+
+
+   qname
+               A CHARACTER expression indicating the XML qualified name of the attribute of interest.
+   Returns the Unknown value (?) if no attribute's XML qualified name matches qname.
+
+
+GET-ITERATION( ) method (Data Objects)
+   Returns the buffer handle at a given level of iteration during a recursive FILL of a ProDataSet.
+   Return type: HANDLE
+   Applies to: Buffer object handle
+
+   Syntax
+
+     GET-ITERATION ( level )
+
+
+   level
+               An integer expression indicating the level of iteration.
+   As a recursive ProDataSet FILL is proceeding, it creates clones of the relevant buffers, relations, queries and data-sources
+   for each level of recursion. As a new record is added to the ProDataSet, it fires FILL events on the recursed, cloned
+   buffer. From inside the event handler, you may want to see previous iterations of the buffer; its parent, grandparent,
+   great-grandparent, and so on. GET-ITERATION( ) returns the buffer handle at a specified recursion level.
+   If the buffer object handle does not point to a ProDataSet temp-table or is not part of a recursive data-relation,
+   GET-ITERATION returns the Unknown value (?).
+
+   See also
+   CURRENT-ITERATION attribute (Data Objects) on page 147, FILL( ) method on page 201, NUM-ITERATIONS
+   attribute (data objects) on page 353, RECURSIVE attribute on page 395
+
+
+GET-ITERATION( ) method (Widget Objects)
+   Returns the handle for the field group that represents the nth visible iteration of the frame.
+   Return type: HANDLE
+   Applies to: FRAME widget
+
+   Syntax
+
+       GET-ITERATION ( n )
+
+
+   n
+               An integer expression that specifies the number of a visible frame iteration.
+   You can read the NUM-ITERATIONS attribute of the frame to determine how many visible foreground (data) iterations
+   the frame contains. You can then use the FIRST-CHILD or LAST-CHILD attributes of the field group to access the
+   first or last field-level widget (respectively) in the iteration.
+
+
+GET-LAST( ) method
+   Moves a query object's result list pointer to the last row.
+   Return type: LOGICAL
+   Applies to: Query object handle
+
+   Syntax
+
+       GET-LAST ( NO-LOCK | SHARE-LOCK [ , NO-WAIT ]
+       | EXCLUSIVE-LOCK [ , NO-WAIT ] )
+
+
+   NO-LOCK
+          Specifies that no lock is applied to the record. This applies to all buffers in a join. Unless explicitly
+          specified otherwise, this is the default lock type for this method.
+   SHARE-LOCK
+          Specifies that the record is share locked. This applies to all buffers in a join.
+   EXCLUSIVE-LOCK
+          Specifies that the record is exclusively locked. This applies to all buffers in a join.
+   NO-WAIT
+               Specifies that the method returns immediately if the record cannot be accessed because it is locked by
+               another user. If you do not use the NO-WAIT option, the method waits until the record can be accessed.
+               This applies to all buffers in a join. If you specify NO-WAIT and the record is locked by another user,
+               the record is returned to you with NO-LOCK and the LOCKED function returns TRUE for the record.
+
+   Notes
+   •   GET-LAST() returns TRUE if the last record in the query is found. If the query is not open or the last record cannot
+       be found (query is empty), the method returns FALSE. If the query object handle is invalid, an error is raised.
+   •   A query that includes a BREAK BY phrase becomes a FORWARD-ONLY query. In this case you cannot use the
+       GET-LAST() method. If you do, the AVM raises ERROR.
+   •   When you execute an OPEN QUERY or REPOSITION statement for a query associated with a browse widget, the
+       browse is automatically adjusted to remain in sync with the query. However, when you execute a GET statement or
+       method, the browse is not adjusted. You can use the GET statement, or one of the GET methods
+       (GET-CURRENT/FIRST/LAST/NEXT/PREV) to perform background processing without affecting the browse,
+       but you must execute a REPOSITION statement or one of the REPOSITION methods
+       (REPOSITION-BACKWARD/FORWARD/TO-ROW/TO-ROWID) to put the query and browse back in sync.
+
+GET-LOCALNAME-BY-INDEX( ) method
+   Gets the local (unqualified) name of the attribute at the given 1-based index.
+   Return type: CHARACTER
+   Applies to: SAX-attributes object handle
+
+   Syntax
+
+       GET-LOCALNAME-BY-INDEX ( index )
+
+
+   index
+               An integer expression indicating the 1-based index of the attribute.
+   Looks up an attribute's local (unqualified) name by index. Returns the Unknown value (?) if namespace processing is
+   disabled, if the index is less than 1, or if the index is greater than the value of the SAX-attributes object's NUM-ITEMS
+   attribute.
+
+
+GET-MESSAGE( ) method (Handle)
+   Returns the message associated with a specified error currently recorded by the specified system handle.
+   Return type: CHARACTER
+   Applies to: COMPILER system handle, ERROR-STATUS system handle
+
+   Syntax
+
+       GET-MESSAGE ( n )
+
+
+   n
+               An integer expression, from 1 to the value of the NUM-MESSAGES attribute on page 354, that specifies
+               the numeric occurrence of the error whose information you want to retrieve.
+   For the COMPILER system handle, this is the message returned for the nth error that occurred during the preceding
+   ABL source code compilation.
+   For the ERROR-STATUS system handle, this is the message returned for the nth error that occurred during the execution
+   of a statement run with the NO-ERROR option.
+
+
+GET-MESSAGE-TYPE( ) method
+   Returns the message type associated with the nth message that occurred during the preceding compilation.
+   Return type: INTEGER
+   Applies to: COMPILER system handle
+
+   Syntax
+
+       GET-MESSAGE-TYPE ( n )
+
+
+   n
+
+
+              An integer expression, from 1 to the value of the NUM-MESSAGES attribute on page 354, that specifies
+              the numeric occurrence of a compilation message. If the nth occurrence of a compilation message did
+              not occur, the compiler issues a warning message at runtime.
+   The GET-MESSAGE-TYPE method returns one of the following values:
+   •   1 — Error message
+   •   2 — Warning message
+   •   3 — Preprocessor directive
+
+
+GET-NEXT( ) method
+   Moves a query object's result list pointer ahead one row.
+   Return type: LOGICAL
+   Applies to: Query object handle
+
+   Syntax
+
+       GET-NEXT ( NO-LOCK | SHARE-LOCK [ , NO-WAIT ]
+       | EXCLUSIVE-LOCK [ , NO-WAIT ] )
+
+
+   NO-LOCK
+          Specifies that no lock is applied to the record. This applies to all buffers in a join. Unless explicitly
+          specified otherwise, this is the default lock type for this method.
+   SHARE-LOCK
+          Specifies that the record is share locked. This applies to all buffers in a join.
+   EXCLUSIVE-LOCK
+          Specifies that the record is exclusively locked. This applies to all buffers in a join.
+   NO-WAIT
+              Specifies that the method returns immediately if the record cannot be accessed because it is locked by
+              another user. If you do not use the NO-WAIT option, the method waits until the record can be accessed.
+              This applies to all buffers in a join. If you specify NO-WAIT and the record is locked by another user,
+              the record is returned to you with NO-LOCK and the LOCKED function returns TRUE for the record.
+
+   Example
+
+       DEFINE VARIABLE hQuery AS HANDLE NO-UNDO.
+       DEFINE VARIABLE iCount AS INTEGER INITIAL 0 NO-UNDO.
+
+       CREATE QUERY hQuery.
+
+       hQuery:SET-BUFFERS(BUFFER Customer:HANDLE).
+       hQuery:QUERY-PREPARE("FOR EACH Customer").
+       hQuery:QUERY-OPEN.
+
+       hQuery:GET-FIRST().
+       MESSAGE "First Customer is" NAME.
+
+       DO WHILE NOT hQuery:QUERY-OFF-END:
+         iCount = iCount + 1.
+         hQuery:GET-NEXT().
+       END.
+       MESSAGE "Total number of Customer is" iCount.
+
+       hQuery:QUERY-CLOSE().
+       DELETE OBJECT hQuery.
+
+
+   Notes
+   •   GET-NEXT() returns TRUE if the next record in the query is found. If the query is not open or the next record
+       cannot be found (query is empty or the query result list pointer is on the last row), the method returns FALSE. If the
+       query object handle is invalid, an error is raised.
+   •   When you execute an OPEN QUERY or REPOSITION statement for a query associated with a browse widget, the
+       browse is automatically adjusted to remain in sync with the query. However, when you execute a GET statement or
+       method, the browse is not adjusted. You can use the GET statement, or one of the GET methods
+       (GET-CURRENT/FIRST/LAST/NEXT/PREV) to perform background processing without affecting the browse, but
+       you must execute a REPOSITION statement or one of the REPOSITION methods
+       (REPOSITION-BACKWARD/FORWARD/TO-ROW/TO-ROWID) to put the query and browse back in sync.
+   •   GET-NEXT() does the same action as GET-FIRST() if it is the first GET call after a query is opened.
+
+
+GET-NODE( ) method
+   Returns a handle to an X-noderef object that refers to the XML underlying a SOAP-header-entryref object or SOAP
+   fault entry.
+   Note: A SOAP-header object contains a list of entries that each point to an exiting SOAP-header-entryref object. It is
+   a SOAP-header-entryref object that the method is operating on.
+   Return type: LOGICAL
+   Applies to: SOAP-fault-detail object handle, SOAP-header-entryref object handle
+
+   Syntax
+
+       GET-NODE ( x-noderef )
+
+
+   x-noderef
+               A variable of type X-noderef that refers to the root node of a DOM tree that has a SOAP header entry
+               or SOAP fault entry as its root.
+   The X-noderef will have namespace declarations for all namespaces that are in effect for the SOAP header entry element.
+   The X-noderef will include attributes for all attributes that the SOAP header entry has, including SOAP
+   ENV:mustUnderstand and SOAP-ENV:Actor. Operations performed on the X NODEREF, its child X-noderefs, will
+   directly affect the underlying header entry (note that this contrasts with the LONGCHAR returned from
+   GET-SERIALIZED( ) method).
+   Returns the Unknown value (?) if the SOAP-header-entryref object handle has been initialized but does not refer to a
+   header entry (for example, immediately after the CREATE SOAP-HEADER-ENTRYREF statement).
+
+
+GET-NUMBER( ) method
+   Returns the error number associated with a specified error currently recorded by the specified system handle.
+   Return type: INTEGER
+   Applies to: COMPILER system handle, ERROR-STATUS system handle
+                                                                                    
+   Syntax
+
+       GET-NUMBER ( n )
+
+
+   n
+              An integer expression, from 1 to the value of the NUM-MESSAGES attribute on page 354, that specifies
+              the numeric occurrence of the error whose information you want to retrieve.
+   For the COMPILER system handle, this is the error number returned for the nth error that occurred during the preceding
+   ABL source code compilation.
+   For the ERROR-STATUS system handle, this is the error number returned for the nth error that occurred during the
+   execution of a statement run with the NO-ERROR option.
+
+
+GET-PARENT( ) method
+   Retrieve the parent node of the node. The first parameter must be a valid X-noderef handle and will refer to the parent
+   XML node if the node has a parent. If the node is the top "root" element in the document, the method will fail, and the
+   X-noderef handle will not refer to a node.
+   Return type: LOGICAL
+   Applies to: X-noderef object handle
+
+   Syntax
+
+       GET-PARENT ( x-node-handle )
+
+
+   x-node-handle
+             A valid X-noderef handle to use for the parent XML node.
+   The following example returns a handle to the parent XML node in hNoderefParent unless the hNoderef is the top "root"
+   element in the hDoc.
+
+       hNoderef:GET-PARENT(hNoderefParent)
+
+
+
+
+GET-PREV( ) method
+   Moves a query object's result list pointer back one row.
+   Return type: LOGICAL
+   Applies to: Query object handle
+
+   Syntax
+
+       GET-NEXT ( NO-LOCK | SHARE-LOCK [ , NO-WAIT ]
+       | EXCLUSIVE-LOCK [ , NO-WAIT ] )
+
+
+   NO-LOCK
+          Specifies that no lock is applied to the record. This applies to all buffers in a join. Unless explicitly
+          specified otherwise, this is the default lock type for this method.
+
+   SHARE-LOCK
+          Specifies that the record is share locked. This applies to all buffers in a join.
+   EXCLUSIVE-LOCK
+          Specifies that the record is exclusively locked. This applies to all buffers in a join.
+   NO-WAIT
+               Specifies that the method returns immediately if the record cannot be accessed because it is locked by
+               another user. If you do not use the NO-WAIT option, the method waits until the record can be accessed.
+               This applies to all buffers in a join. If you specify NO-WAIT and the record is locked by another user,
+               the record is returned to you with NO-LOCK and the LOCKED function returns TRUE for the record.
+
+   Notes
+   •   GET-PREV() returns TRUE if the previous record in the query is found. If the query is not open or the previous
+       record cannot be found (query is empty or the query result list pointer is on the first row), the method returns FALSE.
+       If the query object handle is invalid, an error is raised.
+   •   A query that includes a BREAK BY phrase becomes a FORWARD-ONLY query. In this case you cannot use the
+       GET-PREV() method. If you do, the AVM raises ERROR.
+   •   When you execute an OPEN QUERY or REPOSITION statement for a query associated with a browse widget, the
+       browse is automatically adjusted to remain in sync with the query. However, when you execute a GET statement or
+       method, the browse is not adjusted. You can use the GET statement, or one of the GET methods
+       (GET-CURRENT/FIRST/LAST/NEXT/PREV) to perform background processing without affecting the browse,
+       but you must execute a REPOSITION statement or one of the REPOSITION methods
+       (REPOSITION-BACKWARD/FORWARD/TO-ROW/TO-ROWID) to put the query and browse back in sync.
+
+
+GET-PROPERTY( ) method
+   Gets the value of the specified application-defined property stored in the client-principal object. The client-principal
+   object may be sealed or unsealed. If the specified property is not stored in the object, or the property does not have a
+   value, this method returns the Unknown value (?).
+   Return type: CHARACTER
+   Applies to: Client-principal object handle
+
+   Syntax
+
+       GET-PROPERTY ( property-name )
+
+
+   property-name
+              A case-sensitive character string that specifies the name of an application-defined property stored in
+              the client-principal object. You must enclose this character string in quotes.
+   You can also use the LIST-PROPERTY-NAMES( ) method to retrieve a list of all application-defined properties stored
+   in the client-principal.
+   The following code fragment illustrates how to use the GET-PROPERTY( ) method:
+
+       DEFINE VARIABLE hCP AS HANDLE     NO-UNDO.
+       DEFINE VARIABLE vVal AS CHARACTER NO-UNDO.
+       . . .
+       CREATE CLIENT-PRINCIPAL hCp.
+       . . .
+       vVal = hCP:GET-PROPERTY("eye-color").
+       DISPLAY "Eye color: " vVal.
+
+
+   
+
+
+GET-PRINTERS( ) method
+   (Windows only)
+   Returns a comma-separated list of printers defined in the Windows Registry.
+   Return type: CHARACTER
+   Applies to: SESSION system handle
+
+   Syntax
+
+     SESSION:GET-PRINTERS( )
+
+
+   If there are no printers defined in the Windows Registry, this method returns the null string (""). Network printers appear
+   in Universal Naming Convention format.
+
+
+GET-QNAME-BY-INDEX( ) method
+   Gets the XML qualified name of the attribute at the given 1-based index.
+   Return type: CHARACTER
+   Applies to: SAX-attributes object handle
+
+   Syntax
+
+     GET-QNAME-BY-INDEX ( index )
+
+
+   index
+               An integer expression indicating the 1-based index of the attribute.
+   Looks up an attribute's XML qualified name by index. Returns Unknown value (?) if the index is less than 1 or greater
+   than the value of the SAX-attributes object's NUM-ITEMS attribute.
+
+
+GET-RED-VALUE( ) method
+   (Graphical interfaces only)
+   Returns the red component of an entry in the color table.
+   Return type: INTEGER
+   Applies to: COLOR-TABLE system handle
+
+   Syntax
+
+     GET-RED-VALUE ( index )
+
+
+   index
+               An integer expression that specifies an entry in the color table.
+                                                                                     
+
+GET-RELATION( ) method
+   Gets the handle of the specified data-relation object.
+   Return type: HANDLE
+   Applies to: ProDataSet object handle
+
+   Syntax
+
+     GET-RELATION ( index|relation-name )
+
+
+   index
+               An integer expression indicating the 1-based index of the data-relation object.
+   relation-name
+              A character expression that evaluates to the name of the data-relation object.
+
+
+GET-REPOSITIONED-ROW( ) method
+   Returns the row index of the browse viewport where the REPOSITION TO ROWID (or RECID) statement displays a
+   repositioned record.
+   Return type: INTEGER
+   Applies to: BROWSE widget
+
+   Syntax
+
+     GET-REPOSITIONED-ROW ( )
+
+
+   By default, this is the top row in the browse viewport (index 1). Note that this method is only useful in conjunction with
+   the REPOSITION statement.
+   See the SET-REPOSITIONED-ROW( ) method on page 464 reference entry for more information.
+
+
+GET-RGB-VALUE( ) method
+   (Graphical interfaces only)
+   Returns an INTEGER that represents a combination of the red, green, and blue value of an entry in the color table.
+   Return type: INTEGER
+   Applies to: COLOR-TABLE system handle
+
+   Syntax
+
+     GET-RGB-VALUE ( index )
+
+
+   index
+               An integer expression that specifies an entry in the color table.
+   Note: This method is useful primarily when using colors with ActiveX controls.
+                                                                                     
+
+GET-ROW( ) method
+   Returns the line number at which the nth message occurred during the preceding compilation.
+   Return type: INTEGER
+   Applies to: COMPILER system handle
+
+   Syntax
+
+       GET-ROW ( n )
+
+
+   n
+               An integer expression, from 1 to the value of the NUM-MESSAGES attribute on page 354, that specifies
+               the numeric occurrence of a compilation message. If the nth occurrence of a compilation message did
+               not occur, the compiler issues a warning message at runtime.
+
+
+GET-SAFE-USER( ) method
+   This method only applies to a Progress Application Server (PAS) for OpenEdge application server.
+   Returns the handle to a copy of the sealed client-principal object that represents the safe user identity for the specified
+   multi-tenant database connection. The application is responsible for deleting the handle object when done. If the Safe
+   User ID feature is disabled for the specified database, the method returns the Unknown (?) value.
+   Return-type: HANDLE
+   Applies to: SECURITY-POLICY system handle
+
+   Syntax
+
+       GET-SAFE-USER ( logical-db-name )
+
+
+   logical-db-name
+               The logical name of the database from which you want to retrieve the safe user identity. The logical
+               database name must be a character string enclosed in quotes, or a character expression.
+   The following example code shows how to call the GET-SAFE-USER() method.
+
+       DEFINE VARIABLE hCP AS HANDLE NO-UNDO.
+
+       hCP = SECURITY-POLICY:GET-SAFE-USER(LDBNAME(1)).
+       IF hCP = ?
+       THEN
+         MESSAGE "Database is not configured to use the Safe User ID feature".
+       ELSE DO:
+         MESSAGE "Database is configured to use the Safe User ID feature".
+         DELETE OBJECT hCP. // clean up the object
+       END.
+
+
+                                                                                       
+GET-SELECTED-WIDGET( ) method
+   Returns the handle of the selected widget in a dialog box, frame, or window.
+   Return type: HANDLE
+   Applies to: DIALOG-BOX widget, FRAME widget, WINDOW widget
+
+   Syntax
+
+       GET-SELECTED-WIDGET ( n )
+
+
+   n
+               An integer expression that specifies an index to a selected widget in a frame, dialog box, or window.
+   You can use the NUM-SELECTED-WIDGETS attribute to determine the total number of selected widgets within the
+   frame or window. The order of the selected widgets is unpredictable.
+
+
+GET-SERIALIZED( ) method
+   Returns a LONGCHAR that contains the serialized form of the XML underlying the SOAP-header-entryref or SOAP
+   fault entry. (The SOAP-header object contains a list of entries that each point to an exiting SOAP-header-entryref object.
+   It is the SOAP-header-entryref object that the method serializes.)
+   Return type: LONGCHAR
+   Applies to: SOAP-fault-detail object handle, SOAP-header-entryref object handle
+
+   Syntax
+
+       GET-SERIALIZED ( )
+
+
+   Contents of the returned LONGCHAR are equivalent to taking the X-noderef returned by the GET-NODE( ) method
+   and serializing the data. The caller of this method is responsible for managing the lifetime of the LONGCHAR. Changes
+   made to the contents of the LONGCHAR will NOT be reflected in the original header entry unless it is passed as the
+   parameter in the SET-SERIALIZED( ) method.
+   Returns the Unknown value (?) if the SOAP-header-entryref object handle has been initialized but does not refer to a
+   header entry (for example, immediately after the CREATE SOAP-HEADER-ENTRYREF statement).
+
+
+GET-SIGNATURE( ) method
+   Returns the signature of the internal procedure or user-defined function whose name you supply. Specifically:
+   •   If you provide the name of an internal procedure, GET-SIGNATURE returns the type and mode of each parameter.
+   •   If you provide the name of a user-defined function, GET-SIGNATURE returns the return type, and the type and
+       mode of each parameter.
+   •   If you provide the nil procedure name (""), GET-SIGNATURE returns the signature of the procedure whose handle
+       you supply.
+   •   If you provide a name that does not match any of the internal procedures or user-defined functions in the procedure,
+       GET-SIGNATURE returns the empty string ("").
+   •   If you provide a remote (proxy) procedure handle or the name of a Web service procedure, GET-SIGNATURE
+       returns the empty string ("").
+
+•   If you provide the name of a DLL entry point, GET-SIGNATURE returns the ABL equivalent of the C data type of
+    each parameter of the entry point. For more information, see OpenEdge Programming Interfaces.
+Note: GET-SIGNATURE does not return the signature of any internal procedure defined using the PROCEDURE
+statement's PRIVATE option. Similarly, GET-SIGNATURE does not return the signature of any user-defined function
+defined using the FUNCTION statement's PRIVATE option.
+Return type: CHARACTER
+Applies to: Procedure object handle
+
+Syntax
+
+    GET-SIGNATURE ( int-proc-name )
+
+
+int-proc-name
+           The name of an internal procedure or user-defined function.
+GET-SIGNATURE returns a string with the following format:
+
+    type , return-type , [modenamep-type[ , modenamep-type]...]
+
+
+type
+              The type of the internal procedure. Types include:
+              •   PROCEDURE — An ABL internal procedure
+              •   FUNCTION — An ABL user-defined function whose definition resides in the procedure
+              •   EXTERN — An ABL user-defined function whose definition resides in another procedure
+              •   DLL-ENTRY — A DLL entry point
+              •   MAIN — The main procedure
+return-type
+              (User-defined functions only) The ABL data type that a user-defined function returns.
+mode name p-type
+         A parameter description where mode is the mode of the parameter, name is the name of the parameter,
+         and p-type is the type of parameter. The parameter type is either a data type (scalar or array) or, for a
+         buffer parameter, the name of the table associated with the buffer.
+              The modes are:
+              •   INPUT
+              •   OUTPUT
+              •   INPUT-OUTPUT
+              •   BUFFER
+              •   INPUT TABLE
+              •   OUTPUT TABLE
+              •   INPUT-OUTPUT TABLE
+              The data types are:
+              •   CHARACTER
+              •   DATE
+              •   DATETIME
+              •   DATETIME-TZ
+              •   DECIMAL
+              •   HANDLE
+              •   INT64
+              •   INTEGER
+              •   LOGICAL
+              •   MEMPTR
+              •   RAW
+              •   RECID
+              •   ROWID
+              When you define the parameter type as a determinate array with a constant extent value, the
+              GET-SIGNATURE( ) method returns the constant extent value specified as part of the signature (for
+              example, EXTENT 100). When you define the parameter type as a determinate array with a variable
+              extent value, or as an indeterminate array, the GET-SIGNATURE( ) method returns only the extent
+              keyword (that is, EXTENT, with no extent value).
+
+
+GET-SOCKET-OPTION( ) method
+   Returns a comma separated string containing values appropriate for the specified socket option. Otherwise, it returns
+   the Unknown value (?).
+   Return type: CHARACTER
+   Applies to: Socket object handle
+
+   Syntax
+
+     GET-SOCKET-OPTION ( name )
+
+
+   name
+              A character expression indicating the name of the socket option to be retrieved. The following table
+              describes the options ABL supports.
+              Table 16: Options for GET-SOCKET-OPTION( )
+
+               Option                          Value returned
+               TCP-NODELAY                     An enable indicator, which is either TRUE or FALSE.
+               SO-LINGER                       Two comma separated values:
+                                               •   The onoff indicator, which is either TRUE or FALSE.
+                                               •   The linger time. If the onoff indicator is FALSE, the linger
+                                                   time does not need to be provided.
+
+               SO-KEEPALIVE                    TRUE if the option is on; FALSE otherwise.The default
+                                               depends on how the socket object was created:
+                                               •   For socket objects created using CREATE SOCKET, the
+                                                   default is off.
+                                               •   For socket objects created by ABL and passed as a
+                                                   parameter to the event-procedure context, the default is
+                                                   on.
+
+               SO-REUSEADDR                    TRUE if the option is on; FALSE otherwise.The default
+                                               depends on the platform.
+               SO-RCVBUF                       An integer that indicates the size of the receive buffer.The
+                                               default depends on the platform.
+                                                                                    
+                Option                           Value returned
+                SO-SNDBUF                        An integer that indicates the size of the send buffer.The default
+                                                 depends on the platform.
+                SO-RCVTIMEO                      The timeout length—that is, the number of seconds you want
+                                                 the socket to wait for expected data before timing out.The
+                                                 default is -1, which tells the socket to wait forever.
+                                                 Note: The timeout length is not guaranteed to be precise to
+                                                 the second.
+
+
+   This method returns option-specific data if the retrieval of the option succeeded and the Unknown value (?) otherwise.
+   An error can occur if:
+   •   The value of name is not an ABL-supported socket option
+   •   Getting the socket option fails
+
+
+GET-SOURCE-BUFFER( ) method
+   Gets the handle to the source buffer in the data-source object at the specified index position.
+   Return type: HANDLE
+   Applies to: Data-source object handle
+
+   Syntax
+
+       GET-SOURCE-BUFFER ( [buffer-index] )
+
+
+   buffer-index
+              An optional integer expression indicating the 1-based index of the source buffer. The default is 1.
+
+
+GET-TAB-ITEM( ) method
+   Returns the handle of a widget at a specified tab position in a field group.
+   Return type: HANDLE
+   Applies to: FIELD-GROUP widget
+
+   Syntax
+
+       GET-TAB-ITEM ( n )
+
+
+   n
+               An integer expression that specifies a tab position within a field group.
+   You can use the MOVE-AFTER-TAB-ITEM( ) and MOVE-BEFORE-TAB-ITEM( ) methods to change the tab position
+   of fields at the field level, and the FIRST-TAB-ITEM and LAST-TAB-ITEM attributes to change the tab positions at
+   the field group level.
+   If the widget returned is a frame, the specified tab position includes the tab positions of all tab-order widgets contained
+   by the frame. For more information on how frames owned by a field group participate in the tab order of that field group,
+   see the FRAME widget reference entry.
+
+
+GET-TEXT-HEIGHT-CHARS( ) method
+   (Graphical interfaces only)
+   Returns the height, in character units, of the specified font. If no font is specified, the method returns the height of the
+   default font.
+   Return type: DECIMAL
+   Applies to: FONT-TABLE system handle
+
+   Syntax
+
+     GET-TEXT-HEIGHT-CHARS ( [font] )
+
+
+   font
+               An integer expression that specifies an entry within the font.
+   If you pass the Unknown value (?) to this method, the AVM uses the system default font. When a field-level widget
+   inherits its font from the parent frame, the AVM returns the Unknown value (?) for the font and you must use the font
+   of the parent frame.
+
+
+GET-TEXT-HEIGHT-PIXELS( ) method
+   (Graphical interfaces only)
+   Returns the height, in pixels, of the specified font. If no font is specified, the method returns the height of the default
+   font.
+   Return type: INTEGER
+   Applies to: FONT-TABLE system handle
+
+   Syntax
+
+     GET-TEXT-HEIGHT-PIXELS ( [font] )
+
+
+   font
+               An integer expression that specifies an entry within the font table.
+   If you pass the Unknown value (?) to this method, the AVM uses the system default font. When a field-level widget
+   inherits its font from the parent frame, the AVM returns the Unknown value (?) for the font and you must use the font
+   of the parent frame.
+
+
+GET-TEXT-WIDTH-CHARS( ) method
+   (Graphical interfaces only)
+   Returns the width, in character units, of the string using the specified font. If no font is specified, the method calculates
+   the width of the string using the default font.
+   Return type: DECIMAL
+   Applies to: FONT-TABLE system handle
+   Syntax
+
+     GET-TEXT-WIDTH-CHARS ( string[ , font] )
+
+
+   string
+               A character-string expression whose width you want to determine.
+   font
+               An integer expression that specifies an entry within the font table.
+   If you pass the Unknown value (?) to this method, the AVM uses the system default font. When a field-level widget
+   inherits its font from the parent frame, the AVM returns the Unknown value (?) for the font and you must use the font
+   of the parent frame.
+
+
+GET-TEXT-WIDTH-PIXELS( ) method
+   (Graphical interfaces only)
+   Returns the width, in pixels, of the string using the specified font. If no font is specified, the method calculates the width
+   of the string using the default font.
+   Return type: INTEGER
+   Applies to: FONT-TABLE system handle
+
+   Syntax
+
+     GET-TEXT-WIDTH-PIXELS ( string[ , font] )
+
+
+   string
+               A character-string expression whose width you want to determine.
+   font
+               An integer expression that specifies an entry within the font table.
+   If you pass the Unknown value (?) to this method, the AVM uses the system default font. When a field-level widget
+   inherits its font from the parent frame, the AVM returns the Unknown value (?) for the font and you must use the font
+   of the parent frame.
+
+
+GET-TOP-BUFFER( ) method
+   Gets the top-level buffer in a ProDataSet object at the specified index position.
+   Note: A top-level buffer is a ProDataSet object buffer that is not a child in any active data relation. There may be one
+   or more top-level buffers in a ProDataSet object.
+   Return type: HANDLE
+   Applies to: ProDataSet object handle
+
+   Syntax
+
+     GET-TOP-BUFFER ( index )
+
+
+   index
+               An integer expression indicating the 1-based index of the top-level buffer.
+                                                                                  
+GET-TYPE-BY-INDEX( ) method
+   Gets the type of the attribute at the given 1-based index.
+   Return type: CHARACTER
+   Applies to: SAX-attributes object handle
+
+   Syntax
+
+     GET-TYPE-BY-INDEX ( index )
+
+
+   index
+               An integer expression indicating the 1-based index of the attribute.
+   The attribute type is one of the following strings: "CDATA," "ID," "IDREF," "IDREFS," "NMTOKEN," "NMTOKENS,"
+   "ENTITY," "ENTITIES," or "NOTATION." These are always uppercase.
+   Returns the Unknown value (?) if the index is less than 1 or greater than the value of SAX-attributes object's NUM-ITEMS
+   attribute.
+
+
+GET-TYPE-BY-NAMESPACE-NAME( ) method
+   Gets the type of the attribute with the given namespace name.
+   Return type: CHARACTER
+   Applies to: SAX-attributes object handle
+
+   Syntax
+
+     GET-TYPE-BY-NAMESPACE-NAME ( uri , localname )
+
+
+   uri
+               The namespace URI (that is, the URI to which the attribute's prefix refers), or, if the name has no
+               namespace URI, an empty string.
+   localname
+               The local (unqualified) name of the attribute.
+   The attribute type is one of the following strings: "CDATA," "ID," "IDREF," "IDREFS," "NMTOKEN," "NMTOKENS,"
+   "ENTITY," "ENTITIES," or "NOTATION." These are always uppercase.
+   Returns the Unknown value (?) if no attribute's XML qualified name matches the combination of uri and localname or
+   if namespace processing is disabled.
+
+
+GET-TYPE-BY-QNAME( ) method
+   Gets the type of the attribute with the given XML qualified name.
+   Return type: CHARACTER
+   Applies to: SAX-attributes object handle
+
+   Syntax
+
+     GET-TYPE-BY-QNAME ( qname )
+
+
+   qname
+               A CHARACTER expression indicating the XML qualified name of the attribute of interest.
+   The attribute type is one of the following strings: "CDATA," "ID," "IDREF," "IDREFS," "NMTOKEN," "NMTOKENS,"
+   "ENTITY," "ENTITIES," or "NOTATION." These are always uppercase.
+   Returns the Unknown value (?) if no attribute's XML qualified name matches qname.
+
+
+GET-URI-BY-INDEX( ) method
+   Gets the namespace URI of the attribute at the given 1-based index.
+   Return type: CHARACTER
+   Applies to: SAX-attributes object handle
+
+   Syntax
+
+     GET-URI-BY-INDEX ( index )
+
+
+   index
+               An integer expression indicating the 1-based index of the attribute.
+   Returns the Unknown value (?) if index is less than 1 or greater than the value of the SAX-attributes object's NUM-ITEMS
+   attribute.
+
+
+GET-VALUE-BY-INDEX( ) method
+   Gets the value of the attribute at the given 1-based index.
+   Return type: CHARACTER
+   Applies to: SAX-attributes object handle
+
+   Syntax
+
+     GET-VALUE-BY-INDEX ( index )
+
+
+   index
+               An integer expression indicating the 1-based index of the attribute.
+   Returns the Unknown value (?) if index is less than 1 or greater than the value of the SAX-attributes object's NUM-ITEMS
+   attribute.
+
+
+GET-VALUE-BY-NAMESPACE-NAME( ) method
+   Gets the value of the attribute with the given namespace name.
+   Return type: CHARACTER
+   Applies to: SAX-attributes object handle
+
+   Syntax
+
+     GET-VALUE-BY-NAMESPACE-NAME ( uri , localname )
+
+
+   uri
+               The namespace URI (that is, the URI to which the attribute's prefix refers), or, if the name has no
+               namespace URI, an empty string.
+   localname
+               The local (unqualified) name of the attribute.
+   Returns the Unknown value (?) if no attribute has a namespace name that matches the uri and localname, or if namespace
+   processing is disabled.
+
+
+GET-VALUE-BY-QNAME( ) method
+   Gets the value of the attribute with the given XML qualified name.
+   Return type: CHARACTER
+   Applies to: SAX-attributes object handle
+
+   Syntax
+
+     GET-VALUE-BY-QNAME ( qname )
+
+
+   qname
+               A CHARACTER expression indicating the XML qualified name of the attribute.
+   Returns the Unknown value (?) if no attribute has a XML qualified name that matches qname.
+
+
+GET-WAIT-STATE( ) method
+   Returns a string indicating the current wait-state.
+   Return type: CHARACTER
+   Applies to: SESSION system handle
+
+   Syntax
+
+     GET-WAIT-STATE ( )
+
+
+   If the SET-WAIT-STATE( ) method was called with "GENERAL" or "COMPILER", GET-WAIT-STATE( ) returns
+   that string. If the SET-WAIT-STATE( ) method was called with an arbitrary pointer name, GET-WAIT-STATE( )
+   returns "CUSTOM". If there is no current wait-state, GET-WAIT-STATE( ) returns an empty string ("").
+
+
+GRAPHIC-EDGE attribute
+   (Character interfaces only)
+   Indicates whether to draw a rectangle with graphic characters.
+   Data type: LOGICAL
+
+
+   Access: Readable/Writeable
+   Applies to: RECTANGLE widget
+   When the GRAPHIC-EDGE attribute is TRUE, the rectangle is drawn with graphic characters, and the EDGE-CHARS
+   and EDGE-PIXELS attributes are ignored.
+
+
+GRID-FACTOR-HORIZONTAL attribute
+   (Graphical interfaces only)
+   The spacing, in horizontal grid units, between the horizontal grid lines of the frame.
+   Data type: INTEGER
+   Access: Readable/Writeable
+   Applies to: FRAME widget
+   If the value is 1, each horizontal grid unit is intersected by a line of vertical grid points. If the value is greater than 1,
+   every nth horizontal grid unit is intersected by a line of vertical grid points, where n is the value of
+   GRID-FACTOR-HORIZONTAL. The default value is 6.
+   The width of a horizontal grid unit is defined by the GRID-UNIT-WIDTH-CHARS or GRID-UNIT-WIDTH-PIXELS
+   attribute.
+   Note: Setting this attribute to 1 has the same effect as setting the GRID-FACTOR-VERTICAL attribute to 1, because
+   either setting makes all grid points visible in the frame.
+
+
+GRID-FACTOR-VERTICAL attribute
+   (Graphical interfaces only)
+   The spacing, in vertical grid units, between the vertical grid lines of the frame.
+   Data type: INTEGER
+   Access: Readable/Writeable
+   Applies to: FRAME widget
+   If the value is 1, each vertical grid unit is intersected by a line of horizontal grid points. If the value is greater than 1,
+   every nth vertical grid unit is intersected by a horizontal line of grid points, where n is the value of
+   GRID-FACTOR-VERTICAL. The default value is 6.
+   The height of a vertical grid unit is defined by the GRID-UNIT-HEIGHT-CHARS or GRID-UNIT-HEIGHT-PIXELS
+   attribute.
+   Note: Setting this attribute to 1 has the same effect as setting the GRID-FACTOR-HORIZONTAL attribute to 1, because
+   either setting makes all grid points visible in the frame.
+
+
+GRID-SNAP attribute
+   (Graphical interfaces only)
+   Indicates whether widgets should snap to the grid when they are moved or resized.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: FRAME widget
+
+   If the GRID-SNAP attribute is TRUE, when widgets are moved or resized they align with (snap to) the closest grid
+   points in the frame. This alignment occurs whether or not the grid points are visible (determined by the GRID-VISIBLE
+   attribute).
+   The distance between grid points (vertical and horizontal grid units) is defined by the GRID-UNIT-HEIGHT-CHARS,
+   GRID-UNIT-HEIGHT-PIXELS, GRID-UNIT-WIDTH-CHARS, and GRID-UNIT-WIDTH-PIXELS attributes.
+
+
+GRID-UNIT-HEIGHT-CHARS attribute
+   (Graphical interfaces only)
+   The height, in character units, of a vertical grid unit on the frame.
+   Data type: DECIMAL
+   Access: Readable/Writeable
+   Applies to: FRAME widget
+   This attribute specifies the distance between vertical grid points in the frame. When a widget is moved or resized, it
+   snaps to these grid points within the frame when the GRID-SNAP attribute is set to TRUE. The default value depends
+   on the display resolution and the size of the default system font.
+
+
+GRID-UNIT-HEIGHT-PIXELS attribute
+   (Graphical interfaces only)
+   The height, in pixels, of a vertical grid unit on the frame.
+   Data type: INTEGER
+   Access: Readable/Writeable
+   Applies to: FRAME widget
+   This attribute specifies the distance between vertical grid points in the frame. When a widget is moved or resized, it
+   snaps to these grid points within the frame when the GRID-SNAP attribute is set to TRUE. The default value is 6.
+
+
+GRID-UNIT-WIDTH-CHARS attribute
+   (Graphical interfaces only)
+   The width, in character units, of a horizontal grid unit on the frame.
+   Data type: DECIMAL
+   Access: Readable/Writeable
+   Applies to: FRAME widget
+   This attribute specifies the distance between horizontal grid points in the frame. When a widget is moved or resized, it
+   snaps to these grid points within the frame when the GRID-SNAP attribute is set to TRUE. The default value depends
+   on the display resolution and the size of the default system font.
+
+
+GRID-UNIT-WIDTH-PIXELS attribute
+   (Graphical interfaces only)
+   The width, in pixels, of a horizontal grid unit on the frame.
+   Data type: INTEGER
+                                                                                          
+   Access: Readable/Writeable
+   Applies to: FRAME widget
+   This attribute specifies the distance between horizontal grid points in the frame. When a widget is moved or resized, it
+   snaps to these grid points within the frame when the GRID-SNAP attribute is set to TRUE. The default value is 6.
+
+
+GRID-VISIBLE attribute
+   (Graphical interfaces only)
+   Indicates whether the grid of a frame is visible.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: FRAME widget
+   When visible, the grid is a set of points laid out in vertical and horizontal lines. The distance between grid points (vertical
+   and horizontal grid units), whether visible or invisible, is defined by using the GRID-UNIT-HEIGHT-CHARS,
+   GRID-UNIT-HEIGHT-PIXELS, GRID-UNIT-WIDTH-CHARS, and GRID-UNIT-WIDTH-PIXELS attributes. What
+   grid points are visible is determined by the GRID-FACTOR-VERTICAL and GRID-FACTOR-HORIZONTAL attributes,
+   which define the spacing between the visible vertical and horizontal lines of grid points.
+   When used with scrollable frames, some grid points might not be visible.
+
+
+GROUP-BOX attribute
+   (Graphical interfaces only)
+   Indicates the rectangle is a group box, which surrounds one or more user interface widgets to visually indicate a relationship
+   among the widgets.
+   Data type: LOGICAL
+   Access: Readable/Writable
+   Applies to: RECTANGLE widget
+   The appearance of a group box changes automatically to conform to the current display setting. When the display is set
+   to the Windows XP Theme, the group box rectangle appears with rounded corners and a single-line border. When the
+   display is set to the Windows Classic Theme, the group box appears with square corners and a shaded double-line border.
+   If you set this attribute after the widget is realized, its affect is immediate (if the widget is visible).
+   When TRUE, the ROUNDED attribute setting is ignored.
+
+   See also
+   ROUNDED attribute on page 417
+
+
+HANDLE attribute
+   A handle to the object.
+   Data type: HANDLE
+   Access: Read-only
+   Applies to: Asynchronous request object handle, AUDIT-CONTROL system handle, AUDIT-POLICY system handle,
+   BROWSE widget (browse, column, and cell), Buffer object handle, Buffer-field object handle, BUTTON widget, Call
+   object handle, Client-principal object handle, CLIPBOARD system handle, CODEBASE-LOCATOR system handle,
+   COLOR-TABLE system handle, COMBO-BOX widget, COMPILER system handle, Data-relation object handle,
+   Data-source object handle, DEBUGGER system handle, DIALOG-BOX widget, DSLOG-MANAGER system handle,
+   EDITOR widget, ERROR-STATUS system handle, FIELD-GROUP widget, FILE-INFO system handle, FILL-IN
+   widget, FONT-TABLE system handle, FRAME widget, IMAGE widget, LAST-EVENT system handle, LITERAL
+   widget, LOG-MANAGER system handle, MENU widget, MENU-ITEM widget, Procedure object handle, ProDataSet
+   object handle, PROFILER system handle, Query object handle, RADIO-SET widget, RCODE-INFO handle,
+   RECTANGLE widget, SAX-attributes object handle, SAX-reader object handle, SAX-writer object handle,
+   SECURITY-POLICY system handle, SELECTION-LIST widget, Server object handle, Server socket object handle,
+   SESSION system handle, SLIDER widget, SOAP-fault object handle, SOAP-fault-detail object handle, SOAP-header
+   object handle, SOAP-header-entryref object handle, Socket object handle, Stream object handle, SUB-MENU widget,
+   Temp-table object handle, TEXT widget, TOGGLE-BOX widget, Transaction object handle, WEB-CONTEXT system
+   handle, WINDOW widget, X-document object handle, X-noderef object handle
+   You can store this value in a HANDLE variable. You can also use it to associate one widget with another widget or with
+   a system handle. For example, you can assign the HANDLE value of the menu bar to the MENU-BAR attribute of a
+   window, or you can make the window the current window by assigning its HANDLE value to the CURRENT-WINDOW
+   handle.
+   For query objects, the HANDLE attribute lets you acquire a query object for a static query, as shown in the following
+   code:
+
+     my-query-handle = QUERY q:HANDLE.
+
+
+   The following code uses the HANDLE attribute of a buffer field to retrieve the buffer field's handle:
+
+     my-buffer-field = city:HANDLE IN BUFFER Customer.
+
+
+   The preceding code requires that you know the name of the field (in this case, "City") at compile time. The following
+   code, which performs the same task, does not require the name of the field:
+
+     my-buffer = BUFFER Customer:HANDLE
+     my-buffer-field = my-buffer:BUFFER-FIELD("City").
+
+
+   The value of the HANDLE attribute is guaranteed to be unique among the HANDLE attributes for all object instances
+   in an ABL session.
+
+
+HANDLER attribute
+   A handle to the procedure containing the SAX callbacks.
+   Note: To get the handle to an object-oriented ABL object containing methods as callback for SAX events use the
+   EVENT-HANDLER-OBJECT attribute on page 193.
+   Data type: HANDLE
+   Access: Readable/Writable
+   Applies to: SAX-reader object handle
+   The default is a handle to the procedure that contains the SAX-PARSE( ) method, or the SAX-PARSE-FIRST( )
+   and SAX-PARSE-NEXT( ) methods.
+
+   When SAX-PARSE( ), SAX-PARSE-FIRST( ), or SAX-PARSE-NEXT( ) executes, the SAX-reader object
+   looks for callbacks only in the procedure or object whose handle is stored in the HANDLER. HANDLER must be a valid
+   procedure or object handle and cannot be a proxy.
+   Note: It is permissible for both the driver procedure (the procedure that contains the SAX-PARSE( ) method, or the
+   SAX-PARSE-FIRST( ) and SAX-PARSE-NEXT( ) methods) and callback handler procedure or object of a SAX
+   application to reside on a remote application server. If this occurs, callbacks are invoked local to the application server.
+   Callbacks can reside within a special handler procedure file that is run persistently or within the driver procedure.
+   Within a procedure file, to get a handle to the procedure file, use the THIS-PROCEDURE handle. The following
+   fragment assigns HANDLER a handle to the current procedure:
+
+       hSaxReader:HANDLER = THIS-PROCEDURE.
+
+
+
+   Notes
+   •   Assigning a value other than ? to the HANDLER attribute will cause an update to the EVENT-HANDLER-OBJECT
+       attribute changing it to the unknown value.
+   •   Assigning a value other than ? to the EVENT-HANDLER-OBJECT attribute will cause an update to the HANDLER
+       attribute changing it to the unknown value.
+
+
+HAS-LOBS attribute
+   Returns TRUE if the Buffer object has BLOB or CLOB fields defined in it. Otherwise, it returns FALSE.
+   Data type: LOGICAL
+   Access: Read-only
+   Applies to: Buffer object handle
+
+
+HAS-RECORDS attribute
+   This attribute returns TRUE when the corresponding temp-table has records. It returns FALSE when the temp-table
+   does not have any records, or the temp-table is in an UNPREPARED state.
+   Data type: LOGICAL
+   Access: Read-only
+   Applies to: Temp-table object handle
+
+
+Height property
+   (Windows only; Graphical interfaces only)
+   The height of the control-frame and control-frame COM object, in pixels.
+   Return type: INTEGER
+   Access: Readable/Writeable
+   Applies to: CONTROL-FRAME widget, COM object
+   Setting this value changes the HEIGHT-CHARS attribute and HEIGHT-PIXELS attribute of the corresponding
+   control-frame widget to an equivalent value.
+                                                                                   
+
+   Note: References to COM object properties and methods extend the syntax used for referencing widget attributes and
+   methods. 
+
+HEIGHT-CHARS attribute
+   The height, in character units, of the widget. The HEIGHT-CHARS attribute of the SESSION handle contains the height
+   of the display.
+   Data type: DECIMAL
+   Access: Readable/Writeable
+   Applies to: BROWSE widget (browse and cell), BUTTON widget, COMBO-BOX widget, CONTROL-FRAME widget,
+   DIALOG-BOX widget, EDITOR widget, FIELD-GROUP widget, FILL-IN widget, FRAME widget, IMAGE widget,
+   LITERAL widget, RADIO-SET widget, RECTANGLE widget, SELECTION-LIST widget, SESSION system handle,
+   SLIDER widget, TEXT widget, TOGGLE-BOX widget, WINDOW widget
+   For combo boxes, field groups, and the SESSION handle, this attribute is read-only.
+   In character mode, the HEIGHT-CHARS attribute must be set before the browse is realized. Attempting to set the
+   attribute after realization of the browse causes a run-time error.
+   For control-frames, the HEIGHT-CHARS attribute maps to the Height property of the control-frame COM object
+   (ActiveX control container).
+   For browses, the HEIGHT-CHARS attribute sets the decimal height, in characters, of the browse without changing the
+   height of the browse's rows. If you change the value of a browse's HEIGHT-CHARS or HEIGHT-PIXELS attribute,
+   the number of rows that appear in the viewport might change.
+
+
+HEIGHT-PIXELS attribute
+   The height, in pixels, of the widget. The HEIGHT-PIXEL attribute of the SESSION handle contains the height of the
+   display.
+   Data type: INTEGER
+   Access: Readable/Writeable
+   Applies to: BROWSE widget (browse and cell), BUTTON widget, COMBO-BOX widget, CONTROL-FRAME widget,
+   DIALOG-BOX widget, EDITOR widget, FIELD-GROUP widget, FILL-IN widget, FRAME widget, IMAGE widget,
+   LITERAL widget, RADIO-SET widget, RECTANGLE widget, SELECTION-LIST widget, SESSION system handle,
+   SLIDER widget, TEXT widget, TOGGLE-BOX widget, WINDOW widget
+   For combo boxes, field groups, and the SESSION handle, this attribute is read-only.
+   In character mode, the HEIGHT-PIXELS attribute must be set before the browse is realized. Attempting to set the
+   attribute after realization of the browse causes a run-time error.
+   For control-frames, the HEIGHT-PIXELS attribute maps to the Height property of the control-frame COM object
+   (ActiveX control container).
+   For browses, the HEIGHT-PIXELS attribute sets the decimal height, in pixels, of the browse without changing the height
+   of the browse's rows. If you change the value of a browse's HEIGHT-CHARS or HEIGHT-PIXELS attribute, the number
+   of rows that appear in the viewport might change.
+
+
+HELP attribute
+   The help text for a field.
+   Data type: CHARACTER
+
+   Access: Readable/Writeable
+   Applies to: BROWSE widget (browse and column), Buffer-field object handle, BUTTON widget, COMBO-BOX
+   widget, CONTROL-FRAME widget, EDITOR widget, FILL-IN widget, IMAGE widget, LITERAL widget, RADIO-SET
+   widget, RECTANGLE widget, SELECTION-LIST widget, SLIDER widget, TEXT widget, TOGGLE-BOX widget
+   For this attribute to have effect, the window that contains the specified widget must have its STATUS-AREA attribute
+   set to TRUE. The text stored in the HELP attribute displays in the status area of the containing window when the widget
+   has input focus. The HELP attribute text overrides any status-area text issued by the STATUS statement.
+
+
+HIDDEN attribute
+   Indicates whether to "hide" a widget.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: BROWSE widget, BUTTON widget, COMBO-BOX widget, CONTROL-FRAME widget, DIALOG-BOX
+   widget, EDITOR widget, FILL-IN widget, FRAME widget, IMAGE widget, LITERAL widget, RADIO-SET widget,
+   RECTANGLE widget, SELECTION-LIST widget, SLIDER widget, TEXT widget, TOGGLE-BOX widget, WINDOW
+   widget
+   Setting the HIDDEN attribute to TRUE prevents the widget from being displayed implicitly. For a field-level widget,
+   child frame, or child window, this means that the widget is not automatically made visible when the containing frame
+   or parent window becomes visible. The widget does not appear unless one of the following occurs:
+   •   It is forced to receive user input (for example, using a SET or PAUSE statement).
+   •   It is explicitly displayed using a VIEW statement or by setting its VISIBLE attribute to TRUE.
+   Any action that explicitly displays the widget also resets the HIDDEN attribute to FALSE. If the widget is already
+   visible, setting its HIDDEN attribute to TRUE makes that widget and any widgets it parents (and their descendants)
+   invisible (VISIBLE is set to FALSE). The default value of the HIDDEN attribute is FALSE for all widgets.
+   In windows, setting the HIDDEN attribute to TRUE prevents implicit display of the hidden window when you:
+   •   Invoke DISPLAY, ENABLE, and VIEW statements for frames of the window
+   •   View an ancestor or descendant window of the hidden window
+   This limits flashing side effects caused during set up of the application user interface. In windows, this attribute is not
+   supported in character mode.
+   For frames and dialog boxes, setting the HIDDEN attribute to TRUE prevents implicit display of the frame or dialog
+   box when you invoke DISPLAY or ENABLE statements for the widget or its descendant frames. This allows the frame
+   or dialog box to remain invisible during actions that set it up. The HIDDEN attribute has no effect on DISPLAY statements
+   directed to a file, pipe, or printer.
+   Note: Setting a frame or field-level widget's VISIBLE attribute to TRUE also displays any parent or ancestor frames,
+   even if their HIDDEN attributes are set to TRUE (resetting the HIDDEN attributes, if necessary). However, setting a
+   window's VISIBLE attribute to TRUE only displays the window if there are no ancestor windows with their HIDDEN
+   attribute set to TRUE. In any case, the window's own HIDDEN attribute is set to FALSE.
+   For field-level widgets and frames parented by other frames, setting the HIDDEN attribute to TRUE prevents implicit
+   display of the field-level widget or child frame when its containing frame or dialog box is displayed. If the frame or
+   dialog box containing the widget is visible, setting HIDDEN to FALSE for the widget makes the widget visible (the
+   VISIBLE attribute is set to TRUE). If the containing frame or dialog box is not visible, setting HIDDEN to FALSE has
+   no effect on the VISIBLE attribute of the widget.
+   Note: The HIDE statement sets the VISIBLE attribute for the widget to FALSE. It only sets the HIDDEN attribute to
+   TRUE if you hide a field-level widget or child frame whose containing frame is still visible.
+                                                                                   
+HonorProKeys property
+   (Windows only; Graphical interfaces only)
+   Determines who processes the GO, ENDKEY, HELP, and TAB keys: the AVM, or the ActiveX control to which the
+   property applies.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: Any ActiveX control
+   If the property is TRUE, which is the default, the AVM intercepts these keys and processes them as normal ABL key
+   events. If the property is FALSE, the keystrokes are sent to the ActiveX control for processing.
+   Note: This property resembles the HonorReturnKey property, which governs processing of the RETURN key, but
+   whereas the default setting for HonorProKeys is TRUE (the AVM gets the event), the default setting for HonorReturnKey
+   is FALSE (the ActiveX control gets the event).
+
+
+HonorReturnKey property
+   (Windows only; Graphical interfaces only)
+   Determines who processes the RETURN key: the AVM, or the ActiveX control to which the property applies.
+   If the property is TRUE, the AVM intercepts the key and processes it as a normal ABL RETURN key event. If the
+   property is FALSE, which is the default, the keystroke is sent to the ActiveX control for processing.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: Any ActiveX control
+   If a frame has a default button and an ActiveX control, and you want the RETURN key to activate the default button
+   regardless of who has focus, you must set the HonorReturnKey property of the ActiveX control to TRUE. Similarly, if
+   a frame has a default button and several ActiveX controls, and you want the RETURN key to activate the default button
+   regardless of who has focus, you must set the HonorReturnKey property of all the ActiveX controls in the frame to
+   TRUE.
+   This property resembles the HonorProKeys property, which governs processing of several other keys, but whereas the
+   default setting for HonorReturnKey is FALSE (the ActiveX control gets the event), the default setting for HonorProKeys
+   is TRUE (the AVM gets the event).
+
+
+HORIZONTAL attribute
+   The orientation of a slider, or of radio buttons in a radio set.
+   Data type: LOGICAL
+   Access: Readable/Writeable
+   Applies to: RADIO-SET widget, SLIDER widget
+   If HORIZONTAL is TRUE, the orientation is horizontal; if it is FALSE, the orientation is VERTICAL. By default, the
+   orientation of sliders is horizontal and the orientation of radio sets is vertical.
+   You can set this attribute only before the widget is realized.
+                                                                                  
+HTML-CHARSET attribute
+   (WebSpeed only)
+   The ABL version (as opposed to the MIME version) of the code page name of a Web request. Set by ABL when a
+   WebSpeed application incorporates dynamic code page support. The default is blank.
+   Data type: CHARACTER
+   Access: Readable/Writeable
+   Applies to: WEB-CONTEXT system handle
+   Once the AVM sets HTML-CHARSET, each time a Web browser sends a Web request to the application:
+   1. The request is received by the WebSpeed Agent. The AVM converts it from the HTML-CHARSET code page to
+      the Agent's CPINTERNAL code page.
+   2. The Agent responds to the request with a Web page. The AVM converts the Web page from the Agent's CPINTERNAL
+      code page to the HTML-CHARSET code page.
+          CAUTION: If the application modifies the contents of HTML-CHARSET, dynamic code-page support might
+          fail.
+
+
+
+HTML-END-OF-LINE attribute
+   Defaults to the newline character (ASCII 10; '~n'; '\n'). A null string value causes a NEWLINE character (not a null
+   string) to be output. You might want to set this to "~n" (the NEWLINE character) or to the null string (to force the
+   NEWLINE character). Depending on the other attribute values, using the NEWLINE rather than the <BR> tag can result
+   in more readable output when viewing document source in a browser.
+   Data type: CHARACTER
+   Access: Readable/Writeable
+   Applies to: WEB-CONTEXT system handle
+
+
+HTML-END-OF-PAGE attribute
+   Between stream pages, defaults to "<HR>". Output between stream pages to visually break up the sectioning caused by
+   the PAGED or PAGE-SIZE options of the OUTPUT TO "WEB" statement. Does not affect the line count of any stream
+   page.
+   Data type: CHARACTER
+   Access: Readable/Writeable
+   Applies to: WEB-CONTEXT system handle
+
+
+HTML-FRAME-BEGIN attribute
+   Before a SpeedScript frame, defaults to "<PRE>". Generally, if you change this value you must change the value of
+   HTML-FRAME-END. Output only before the data row(s) for the current iteration of a DOWN frame, not to column
+   headers (see also HTML-HEADER-BEGIN and HTML-HEADER-END). Applies to any side-labels displayed in the
+   frame, whether or not the frame is a DOWN frame.
+   Data type: CHARACTER
+   Access: Readable/Writeable
+
+
+   Applies to: WEB-CONTEXT system handle
+
+
+HTML-FRAME-END attribute
+   After a SpeedScript frame, defaults to "</PRE>". Generally, if you change this value you must change the value of
+   HTML-FRAME-BEGIN. Output at the end of the data row(s) for the current iteration of a DOWN frame.
+   Data type: CHARACTER
+   Access: Readable/Writeable
+   Applies to: WEB-CONTEXT system handle
+
+
+HTML-HEADER-BEGIN attribute
+   Before the column headers of a SpeedScript frame, defaults to "<PRE>". Generally, if you change this value you must
+   change the value of HTML-HEADER-END. Output at the beginning of the column header section of a DOWN frame.
+   Data type: CHARACTER
+   Access: Readable/Writeable
+   Applies to: WEB-CONTEXT system handle
+
+
+HTML-HEADER-END attribute
+   After the column headers of a SpeedScript frame, defaults to "</PRE>". Generally, if you change this value you must
+   change the value of HTML-HEADER-BEGIN. Output at the end of the column header section of a DOWN frame.
+   Data type: CHARACTER
+   Access: Readable/Writeable
+   Applies to: WEB-CONTEXT system handle
+
+
+HTML-TITLE-BEGIN attribute
+   Before a SpeedScript frame title, Defaults to the null string (""), no text. Generally, if you change this value you must
+   change the value of HTML-TITLE-END. Output before the frame's TITLE value. Setting to a color or bold tag might
+   improve readability.
+   Data type: CHARACTER
+   Access: Readable/Writeable
+   Applies to: WEB-CONTEXT system handle
+
+
+HTML-TITLE-END attribute
+   After a SpeedScript frame title, defaults to the null string (""), no text. Generally, if you change this value you must
+   change the value of HTML-TITLE-BEGIN. Output after the frame's TITLE value.
+   Data type: CHARACTER
+   Access: Readable/Writeable
+   Applies to: WEB-CONTEXT system handle
+                                                                                   
+HWND attribute
+   (Windows only; Graphical interfaces only)
+   An integer value for a Windows handle to the window that contains the widget.
+   Data type: INTEGER
+   Access: Read-only
+   Applies to: BROWSE widget (browse and cell), BUTTON widget, COMBO-BOX widget, CONTROL-FRAME widget,
+   DIALOG-BOX widget, EDITOR widget, FIELD-GROUP widget, FILL-IN widget, FRAME widget, IMAGE widget,
+   LITERAL widget, MENU widget, MENU-ITEM widget, RADIO-SET widget, RECTANGLE widget, SELECTION-LIST
+   widget, SLIDER widget, SUB-MENU widget, TEXT widget, TOGGLE-BOX widget, WINDOW widget
+   This attribute is supported for dynamic link library (DLL) access only in Windows. Some DLL routines require that
+   you pass this value.
+   For ABL window widgets, the Windows window that contains the widget is actually the parent of the Windows widget
+   referenced by HWND. Thus, to obtain the handle of the Windows window that contains the ABL window, you must
+   pass the value of HWND to the GetParent( ) function (in the user32.dll). Pass the result of GetParent( )
+   to the DLL routine that requires it.
+

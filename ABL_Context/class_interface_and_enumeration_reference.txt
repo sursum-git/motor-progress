@@ -1,0 +1,3909 @@
+﻿
+
+
+
+
+
+
+
+
+
+
+
+
+
+Class, Interface, and Enumeration Reference
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+1
+Class, Interface, and Enumeration Reference
+
+ABL supports three different categories of classes, interfaces, and enumerations:
+• Built-in (Progress.*)
+• OpenEdge ABL (OpenEdge.*)
+• Third-party
+
+Built-in (Progress.*)
+The reference entries in this section include classes, interfaces, and enumerations that are of general use as well as some that specifically support ABL access to .NET objects. The latter consists of classes in the following packages:
+• Progress.Data
+• Progress.Util
+• Progress.Windows
+For information on the properties and methods for each class or interface, see the Class Properties and Methods Reference. For information on the events for each class, see the Class Events Reference. For information on working with ABL classes and interfaces, see Develop Object-oriented ABL Applications. For information on working with .NET classes and interfaces, see Use .NET Classes in ABL Applications. For information on working with ABL enumerations, see the ENUM statement.
+
+OpenEdge ABL (OpenEdge.*)
+Information about the OpenEdge ABL classes, interfaces, and enumerations can be found in the OpenEdge ABL API Reference.
+
+This table shows the classes in the libraries that are part of the OpenEdge installation. If you want to use these classes, be sure the appropriate procedure library (.pl) file or archive file (.apl) is on the PROPATH.
+
+Note: The .apl versions of the listed libraries are signed archive libraries. You should choose the appropriate type (.pl or .apl) based on your security needs. For more information, see Manage Libraries in Manage ABL Applications.
+
+
+Library and primary packagesDescriptionMore informationdataadmin.pl dataadmin.apl
+• OpenEdge.DataAdminContains the database administration API for OpenEdge Management (OEM). Contains security token service (STS) utilities.See "Database Administration Entity Interface Reference" in OpenEdge Programming Interfaces.OpenEdge.BusinessLogic.pl OpenEdge.BusinessLogic.apl
+• Ccs.BusinessLogic
+• OpenEdge.BusinessLogicContains basic business entity classes and supporting code. Contains Common Component Specification (CCS) business entity interfaces and related types.OpenEdge.BusinessRules.pl OpenEdge.BusinessRules.apl
+• OpenEdge.BusinessRulesContains an ABL interface for calling Corticon Decision Services.OpenEdge.Core.pl OpenEdge.Core.apl
+• Ccs.common
+• Ccs.ServiceManager
+• OpenEdge.Core
+• OpenEdge.Logging
+• OpenEdge.SecurityContains the most commonly used components including logging, and service, session, and startup manager interfaces.OpenEdge.Messaging.pl OpenEdge.Messaging.apl
+• OpenEdge.MessagingContains the OpenEdge messaging API for working with third-party messaging platforms such as
+®	®
+Apache Kafka .See Use Apache® Kafka® with Progress® OpenEdge® for information on using the API with Kafka.OpenEdge.Net.pl OpenEdge.Net.apl
+• OpenEdge.Mobile
+• OpenEdge.Net
+• OpenEdge.WebContains common utilities and data writers for WebHandlers and HTTP clients.OpenEdge.ServerAdmin.pl OpenEdge.ServerAdmin.apl
+• OpenEdge.ApplicationServerContains administrative classes for querying and working with application server agents.
+
+Library and primary packagesDescriptionMore information• OpenEdge.RestOpenEdge.Security.pl OpenEdge.Security.apl
+• OpenEdge.SecurityContains classes and other types for working with the OpenEdge Authentication Gateway (OEAG). Includes interfaces for the policy and event callbacks.See "Configuring event callbacks" in Learn about the OpenEdge Authentication Gateway.Third-party
+OpenEdge also provides a set of third-party .NET controls from Infragistics, known as OpenEdge Ultra Controls for .NET (on Windows only). These controls only apply to .NET Framework. See the documentation provided by Infragistics, for more information on these classes.
+
+Built-in (Progress.*)
+The next topics describe the built-in Progress.* classes, interfaces and enumerations. For details, see the following topics:
+• Progress.ApplicationServer.AdapterTypes enumeration
+• Progress.Archive.ArchiveInfo class
+• Progress.Archive.SignaturePolicyIDs enumeration
+• Progress.Archive.ValidationPolicyIDs enumeration
+• Progress.Collections.HashMap<K,V> class
+• Progress.Collections.HashMapIterator<K,V> class
+• Progress.Collections.ICollection<T> interface
+• Progress.Collections.IComparable<T> interface
+• Progress.Collections.IComparer<T> interface
+• Progress.Collections.IEqualityComparer<T> interface
+• Progress.Collections.IHashable interface
+• Progress.Collections.IIterable<T> interface
+• Progress.Collections.IIterator<T> interface
+• Progress.Collections.IList<T> interface
+• Progress.Collections.IMap<K,V> interface
+• Progress.Collections.ISet<T> interface
+• Progress.Collections.KeySet<K> class
+• Progress.Collections.KeySetIterator<K> class
+• Progress.Collections.KeyValuePair<K,V> class
+• Progress.Collections.List<T> class
+• Progress.Collections.ListIterator <T> class
+
+• Progress.Collections.SortedSet<T> class
+• Progress.Collections.SortedSetIterator<T> class
+• Progress.Data.BindingSource class
+• Progress.Data.CancelCreateRowEventArgs class
+• Progress.Data.ChildrenAllowEdit class
+• Progress.Data.ChildrenAllowNew class
+• Progress.Data.ChildrenAllowRemove class
+• Progress.Data.ChildrenInputValue class
+• Progress.Data.ColumnPropDesc class
+• Progress.Data.CreateRowEventArgs class
+• Progress.Data.DataType enumeration class
+• Progress.Data.DummyRow class
+• Progress.Data.InputValue class
+• Progress.Data.OffEndEventArgs class
+• Progress.Data.SortRequestEventArgs class
+• Progress.Data.TableDesc class
+• Progress.Database.TempTableInfo class
+• Progress.Database.VSTTableId class
+• Progress.IO.BinarySerializer class
+• Progress.IO.ByteOrder enumeration
+• Progress.IO.FileInputStream class
+• Progress.IO.FileOutputStream class
+• Progress.IO.InputStream class
+• Progress.IO.JsonSerializer class
+• Progress.IO.MemoryInputStream class
+• Progress.IO.MemoryOutputStream class
+• Progress.IO.OutputStream class
+• Progress.Json.JsonError class
+• Progress.Json.JsonParser class
+• Progress.Json.JsonParserError class
+• Progress.Json.ObjectModel.JsonArray class
+• Progress.Json.ObjectModel.JsonConstruct class
+• Progress.Json.ObjectModel.JsonDataType class
+
+
+• Progress.Json.ObjectModel.JsonObject class
+• Progress.Json.ObjectModel.ObjectModelParser class
+• Progress.Lang.AppError class
+• Progress.Lang.Class class
+• Progress.Lang.Enum class
+• Progress.Lang.Error interface
+• Progress.Lang.FlagsEnum class
+• Progress.Lang.LockConflict class
+• Progress.Lang.MessagingError class
+• Progress.Lang.MessagingErrorAbort class
+• Progress.Lang.MessagingErrorFatal class
+• Progress.Lang.MessagingErrorRetriable class
+• Progress.Lang.Object class
+• Progress.Lang.OERequestInfo class
+• Progress.Lang.OEVersionInfo class
+• Progress.Lang.ParameterList class
+• Progress.Lang.ProError class
+• Progress.Lang.SoapFaultError class
+• Progress.Lang.Stop class
+• Progress.Lang.StopAfter class
+• Progress.Lang.StopError class
+• Progress.Lang.SysError class
+• Progress.Lang.UserInterrupt class
+• Progress.Reflect.AccessMode enumeration
+• Progress.Reflect.Constructor class
+• Progress.Reflect.DataType enumeration
+• Progress.Reflect.Event class
+• Progress.Reflect.Flags enumeration
+• Progress.Reflect.Method class
+• Progress.Reflect.Parameter class
+• Progress.Reflect.ParameterMode enumeration
+• Progress.Reflect.Property class
+• Progress.Reflect.Variable class
+
+• Progress.Security.PAMStatus class
+• Progress.Util.DateTimeHelper class
+• Progress.Util.DecimalHelper class
+• Progress.Util.EnumHelper class
+• Progress.Util.ResourceHelper class
+• Progress.Util.StringHelper class
+• Progress.Util.TypeHelper class
+• Progress.Web.IWebHandler interface
+• Progress.Windows.Form class
+• Progress.Windows.FormProxy class
+• Progress.Windows.IForm interface
+• Progress.Windows.MDIChildForm class
+• Progress.Windows.MDIChildRadForm class
+• Progress.Windows.MDIChildRadRibbonForm class
+• Progress.Windows.MDIChildShapedForm class
+• Progress.Windows.OERadForm class
+• Progress.Windows.OERadRibbonForm class
+• Progress.Windows.OEShapedForm class
+• Progress.Windows.UserControl class
+• Progress.Windows.WindowContainer class
+• System.Exception class (OpenEdge-enhanced)
+
+
+Progress.ApplicationServer.AdapterTypes enumeration
+This enumeration describes the transport used for the current request executing on a Progress Application Server.
+This class is FINAL and cannot be inherited.
+
+Serializable:
+Yes
+
+Super Class
+Progress.Lang.Enum class on page 76
+
+Progress.Archive.ArchiveInfo class
+
+Members
+
+MemberDescriptionUnexpectedInvalid or unexpected transport
+APSVOpenEdge application server transportSOAPSOAP transportRESTREST transportWEBHTTP transportPublic Methods
+
+GetEnum( ) method–See also
+AdapterType property
+
+
+Progress.Archive.ArchiveInfo class
+This class provides information from a manifest file for a given archive file.
+
+Serializable:
+No
+
+Constructor(s)
+
+fileName
+A CHARACTER expression that represents the name of the manifest file, which can be located via the PROPATH or an absolute file name.
+
+Note: The constructor raises an error if:
+• the file is not an archive file (.apl).
+• the archive file cannot be located or opened.
+• the manifest file (MANIFEST.MF) cannot be located or opened.
+• validation fails (if required).
+
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+BuildDate propertyComponent propertyFileName property (ArchiveInfo)IsSigned propertySignaturePolicy propertyTitle propertyValidationPolicy propertyVendor propertyVendorId propertyVersion propertyPublic Methods
+
+GetValue( ) method (ArchiveInfo)—Example
+The following example instantiates a new ArchiveInfo class for an archive file named myfile.apl, displays built-in properties, and retrieves a custom property.
+
+
+
+Progress.Archive.SignaturePolicyIDs enumeration
+This enumeration describes the values returned by the SignaturePolicy property in a Progress.Archive.ArchiveInfo class on page 9.
+
+Progress.Archive.ValidationPolicyIDs enumeration
+
+Serializable
+Yes
+
+Super Class
+Progress.Lang.Enum class on page 76
+
+Members
+
+MemberDescriptionOpenIndicates that the signed archive file can be loaded in the same session as non-signed files (standalone r-code or image files.
+.pl, or unsigned archive files).RequiredIndicates that the AVM will only allow signed archive files to be loaded. Access to any standalone r-code, image file, .pl file, archive with 'signature' set to 'open' or unsigned archive file is disallowed.
+
+Progress.Archive.ValidationPolicyIDs enumeration
+This enumeration describes the values returned by the ValidationPolicy property in a Progress.Archive.ArchiveInfo class on page 9 and indicate the action to take if validation fails.
+
+Serializable
+Yes
+
+Super Class
+Progress.Lang.Enum class on page 76
+
+Members
+
+MemberDescriptionNoneWhen the validation fails, the AVM will not take any action. The operation will continue without raising an error. The files within the archive file can be accessed with no restrictions.
+
+MemberDescription
+WarnWhen the validation fails, the AVM displays a warning message but continues with the execution.
+
+
+Note:
+• The AVM allows the session to suppress any type of warning messages (via startup parameters and SESSION attributes).
+• Warning messages are not caught by any CATCH blocks.
+
+
+.FailWhen the validation fails, the AVM will cause the operation to fail and will raise a STOP condition.
+
+Progress.Collections.HashMap<K,V> class
+Represents a strongly-typed collection of key-value pairs (map) backed by a hash table. A map contains unique keys, where each key is associated with a value. The values are not required to be unique. The key-value pairs make up the elements in the map collection. The ordering of the elements in the map collection is not important.
+The class is final and cannot be extended.
+
+Serializable:
+Yes
+
+Constructor(s)
+The following is the default constructor, which creates an instance of HashMap with a default initial capacity
+(3) and a default equality comparer.. The default equality comparer requires that the elements added to the collection implement the Progress.Collections.IHashable interface on page 22. Note that that requirement is enforced later while trying to add key-value pairs to the HashMap collection.
+
+The following constructor returns an instance of HashMap with the specified equality comparer. The comparer is used by the collection to get the hash code of the key object and also to determine if the collection already contains the given key. The constructor raises an error if the comparer object is not valid, or if the object does not implement IEqualityComparer<K,V> (if invoked dynamically), where K,V are the same types as is HashMap<K,V>.
+
+
+The following constructors are variations of those described above, where the constructors take an additional parameter that defines the initial capacity of the hash table for the collection. The capacity value must be greater than or equal to zero (0), otherwise the constructor raises an error.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+Progress.Collections.IMap<K,V> interface on page 25
+
+Public Properties
+
+Count property (Collections)IsEmpty property (Collections)Keys property—Public Methods
+
+Add( ) method (Map Collections)AddAll( ) method (Map Collections)Clear( ) method (Collections)Contains( ) method (Map Collections)ContainsKey( ) methodGetIterator( ) method (Collections)GetValue( ) method (Map Collections)Remove( ) method (Map Collections)Set( ) method (Map Collections)TryGetValue( ) methodPublic Events
+This class does not contain events.
+
+Examples
+The following example shows how to instantiate a HashMap using the default constructor and the default equality comparer.
+
+
+The following example shows how to instantiate a HashMap using a custom equality comparer.
+
+
+The following example shows how to create, manage, and iterate over a HashMap. The example uses an
+Employee class (shown) and assumes a class called Manager (not shown).
+
+
+
+VAR Progress.Collections.IMap<Employee,Manager> employeeMap.
+VAR Progress.Collections.HashMapIterator<Employee,Manager> iterator. VAR Employee employee1.
+VAR Manager manager1.
+VAR Progres.Collections.KeyValuePair<Employee,Manager> pair. employeeMap = NEW Progress.Collections.HashMasp<Employee,Manager>().
+// Add 4 key-value pairs to the collection
+employeeMap:Add(NEW Employee("thomas1","Thomas"), NEW Manager("George")). employeeMap:Add(NEW Employee("paul1", "Paul "), NEW Manager("George")). employeeMap:Add(NEW Employee("george1", "George"), NEW Manager("John")). employeeMap:Add(NEW Employee("john1", "John"), NEW Manager("Tim")).
+// Same key will not be added to the collection
+IF employeeMap:Add(NEW Employee("george1", "George"), NEW Manager("bruce1","Bruce")) EQ FALSE THEN
+MESSAGE "George is already in the map".
+// Print out the number of pairs in the set (4) MESSAGE "Count:" employeeMap:Count.
+employee1 = NEW Employee("paul1", "Paul").
+// Remove the pair using a given key if it exists IF employeeMap:ContainsKey(employee1) THEN
+employeeMap:Remove(employee1).
+// John now reports to David
+manager1 = NEW Manager("john1", "John"). employeeMap:Set(manager1, NEW Manager("david1", "David")).
+// Using a KeyValuePair is also allowed
+// Paul was removed above. Add Paul reporting to John
+pair = NEW Progress.Collections.KeyValuePair<Employee,Manager>(employee1, manager1).
+IF employeeMap:Add(pair1) EQ FALSE THEN MESSAGE "Paul is already in the map".
+// If hashmap contains key and value in pair, then remove it
+pair = NEW Progress.Collections.KeyValuePair<Employee,Manager>(employee1, NEW Manager("david1", "David")).
+// This won’t find it or remove it because there is no pair
+// with Paul and David.
+IF employeeMap:Contains(pair) THEN employeeMap:Remove(pair).
+// Iterate over the entries in the map
+// which should show the following in no particular order
+// Thomas -> George
+// Paul -> John
+// George -> John
+// John -> David
+iterator = CAST(employeeMap:GetIterator() Progress.Collections.HashMapIterator<Employee,Manager>).
+REPEAT WHILE iterator:MoveNext():
+MESSAGE iterator:Current:Key:FullName “->” iterator:Current:Value:FullName.
+END.
+
+
+Notes
+• The default initial capacity of the hash-table (number of buckets) is 3. If you can estimate the size of the HashMap, specifying the initial capacity eliminates the need to perform a number of resizing operations while adding elements to the collection. Note that the HashMap implementation never shrinks the hash table, if pairs are removed or the HashMap is cleared.
+
+• The HashMap implementation supports any object-oriented ABL object as keys and values. This includes
+.NET objects, however you must specify your own equality comparer when adding .NET objects to the
+HashMap.
+
+See also
+<T> Generic type reference, Progress.Collections.IEqualityComparer<T> interface on page 21, Progress.Collections.IHashable interface on page 22
+
+
+Progress.Collections.HashMapIterator<K,V> class
+Represents the type of the object returned by the GetIterator() method in a HashMap<K,V> object, allowing traversal of the elements in the hash map. The elements are returned in no specific order.
+The class is FINAL and cannot be extended.
+
+Serializable:
+No
+
+Constructor(s)
+The class constructor is reserved for system use only.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+Progress.Collections.IIterator<T> interface on page 24 where T is
+Progress.Collections.KeyValuePair<K,V>
+
+Public Properties
+
+Current property (Iterator)—Public Methods
+
+MoveNext( ) method (Iterator)Reset( ) method (Iterator)Public Events
+This class has no public events.
+
+Notes
+• The iterator is constructed with the generic information used to instantiate the HashMap class. For example, for a HashMap<Employee, Manager> object, the iterator is constructed as HashMapIterator<Employee, Manager>().
+• An iterator instance becomes invalid when the associated HashMap object has elements added or removed after the given HashMapIterator object is created. After that point, a new one can be acquired via the GetIterator() method.
+
+• The iterator traverses each of the key-value pair elements in the collection. Note that the Current property will not resolve to an invalid reference (that is, the Unknown value (?)) as you cannot delete a KeyValuePair<K,V> object. The key-value pair object may have a reference to an unknown or invalid key or value object (if they got deleted).
+
+See also
+<T> Generic type reference, GetIterator( ) method (Collections), Progress.Collections.HashMap<K,V> class on page 12
+
+
+Progress.Collections.ICollection<T> interface
+The Progress.Collections.ICollection<T> interface is common to all collections and defines properties and methods to manipulate generic collections.
+
+Super Interface
+Progress.Collections.IIterable<T> interface on page 23
+
+Public Properties
+
+Count property (Collections)IsEmpty property (Collections)Public Methods
+
+Add( ) method (Collections)AddAll( ) method (Collections)Clear( ) method (Collections)Contains( ) method (Collections)Remove( ) method (Collections)—
+
+Progress.Collections.IComparable<T> interface
+The Progress.Collections.IComparable<T> interface imposes an ordering on the objects of the class that implements it. Objects that implement this interface can be used as elements in a SortedSet, without the need to specify a custom comparer. The interface provides a method that is used to determine the order of a given element in relation to another element, for the purpose of sorting the elements. By implementing this interface and conforming to its contract, the object provides the natural sort order of the elements in the collection, that is, the natural ordering of the class.
+
+Public Properties
+The interface has no public properties.
+
+Public Methods
+
+CompareTo( ) method (Collections)—
+Example
+The following is an example of a class named Person, where the natural order is defined by the value of a property called Name:
+
+Notes
+• The following rules apply to the returned value of CompareTo().
+• If the returned value is less than 0 (zero), then the current object sorts before the object passed in.
+• If the returned value equals 0 (zero), then the current object occupies the same position in the sort order.
+• If the returned value is greater than 0 (zero), then the current object sorts after the object passed in.
+
+• The returned value itself has no meaning outside of being greater than, equal to, or less than zero. That is, if the returned value is 1, or 10, or 10000, they all mean the same thing as per the rules above.
+• The class implementing the interface may implement additional restrictions, such as raising an error if two objects are not comparable.
+• The CompareTo() method should not return the unknown value (?). The SortedSet collection implementation raises an error if the CompareTo() method returns the unknown value (?). It also raises an error if the CompareTo() method raises an error.
+• In order to implement this interface, the user-defined class that wants to be “comparable” needs to define the type argument as a specific class type (usually the same type as the class).
+
+See also
+<T> Generic type reference, Progress.Collections.IComparer<T> interface on page 19
+
+
+Progress.Collections.IComparer<T> interface
+The Progress.Collections.IComparer<T> interface provides a method to support the comparison of objects for equality.
+
+Public Properties
+The interface has no public properties.
+
+Public Methods
+
+Compare( ) method (Collections)—Notes
+• The following rules apply when comparing the objects:
+• If the returned value is less than 0 (zero), then the first object sorts before the second object.
+• If the returned value equals 0 (zero), then both objects occupy the same position in the sort order.
+• If the returned value is greater than 0 (zero), then the first object sorts after the second object.
+
+• For a SortedSet collection, an error is raised if the Compare() method returns the unknown value (?) or raises an exception or error.
+• In order to implement this interface, the comparer user-defined class needs to define the type argument as a specific class type, making it a comparer object for a specific type (or types that inherit that type).
+
+Example
+Assume there is a class named Person that defines default ordering for the class:
+
+
+This default ordering can be bypassed by using a custom comparer implementation and defining the ordering rules via the Compare() method. The following example defines a PersonComparer class that implements IComparer<T>, which can be used to override the default ordering defined in the Person class above. Note that the Person class does not need to implement IComparable<T>, but even if it does, the order is still defined by the comparer class below.
+
+In order to use the custom comparer, you would instantiate the SortedSet class, passing an instance of the comparer class. For example:
+
+See also
+<T> Generic type reference, Progress.Collections.IComparable<T> interface on page 18
+
+
+Progress.Collections.IEqualityComparer<T> interface
+The Progress.Collections.IEqualityComparer<T> interface provides an alternate implementation of HashCode() and Equals() to the map collection. It is used in situations where modifying a class is not possible, or the default implementations of HashCode() and/or Equals() of an object have undesirable behavior.
+
+Public Properties
+The interface has no public properties.
+
+Public Methods
+
+Equals( ) method (Map Collections)HashCode( ) method (IHashable)
+Notes
+• Two objects that are considered the same, must return the same hash code. If obj1:Equals(obj2) returns TRUE, then obj2:Equals(obj1) must also return TRUE, and obj1:HashCode() must be the same as obj2:HashCode(). That implies that the same values should be used when identifying equality and generating the hash code. Note that different objects may return the same hash code.
+• The HashCode() and Equals() methods should not return the Unknown value (?). If they do, an ERROR is raised.
+• A user-defined class must implement the IEqualityComparer interface to be able to work with a HashMap collection that needs to use a custom equality comparer. In order to implement this interface, the “equality comparer” user-defined class will need to define the type argument as a specific class type, making it a comparer object for a specific type (or types that inherit that type).
+
+Example
+
+See also
+<T> Generic type reference
+
+
+Progress.Collections.IHashable interface
+Progress.Collections.IHashable is an interface which allows objects to be used as keys. The interface provides the implementation for generating the hash code (via the HashCode() method) and is also capable of identifying when a key is considered the same (via the Equals() method).
+
+Public Properties
+The interface has no public properties.
+
+Public Methods
+
+Equals( ) methodHashCode( ) method (IHashable)Notes
+• The ABL HASH-CODE function can be used in your implementation of HashCode() to generate a hash code for data of various data types.
+
+• You should override the Equals() method (available on any Progress.Lang.Object) in order to properly identify when a key is the same as another key.
+• Two objects that are considered the same, must return the same hash code. If obj1:Equals(obj2) returns TRUE, then obj2:Equals(obj1) must also return TRUE, and obj1:HashCode() must be the same as obj2:HashCode(). That implies that the same values should be used when identifying equality and generating the hash code. Note that different objects may return the same hash code.
+• The HashCode() and Equals() methods should not return the Unknown value (?).
+
+Example
+The following is an example of a class named Employee, that implements the
+Progress.Collections.IHashable interface.
+
+
+
+Progress.Collections.IIterable<T> interface
+Progress.Collections.IIterable<T> interface is the root interface for all the collections classes. IIterable defines the most primitive set of operations that can be applied to a collection. All collections are iterable, indicating that the elements in the collection can be traversed and some operation can be applied to each element in the collection.
+
+Public Properties
+The interface has no public properties.
+
+Public Methods
+
+GetIterator( ) method (Collections)—
+See also
+<T> Generic type reference
+
+
+Progress.Collections.IIterator<T> interface
+The Progress.Collections.IIterator<T> interface provides common functionality for classes to traverse a collection of objects.
+
+Public Properties
+
+Current property (Iterator)—Public Methods
+
+MoveNext( ) method (Iterator)Reset( ) method (Iterator)Example
+The following example uses IIterator<T> to traverse a List<T> collection of objects.
+
+See also
+<T> Generic type reference
+
+
+Progress.Collections.IList<T> interface
+Defines the model for a list-based collection. List collections implement a one-based indexing of elements where the elements in the collection can be retrieved by using the index of the element within the collection. Iteration of the collection is performed in the indexed order of the elements (1, 2, 3, ...). Elements in the list may be duplicated.
+
+Super Interface
+Progress.Collections.ICollection<T> interface on page 18
+
+Public Properties
+The interface has no public properties other than those it inherits from it super class.
+
+Public Methods
+
+Get( ) method (List Collections)IndexOf( ) method (Collections)Insert( ) method (Collections)RemoveAt( ) method (Collections)Set( ) method (Collections)—See also
+<T> Generic type reference
+
+
+Progress.Collections.IMap<K,V> interface
+Progress.Collections.IMap<K,V> is the root interface for the HashMap collection class. Key-value pairs make up the elements of the collection, that is, it is a collection of Progress.Collections.KeyValuePair<K,V> elements. The class implementing the interface can have requirements on the key object based on its equality comparer’s implementation.
+The methods in the interface provide the ability to maintain the key-value pairs in the collection, retrieve a value given a key, and retrieve all keys in the collection.
+
+Super Class
+Progress.Collections.ICollection<T> interface on page 18, where T is
+Progress.Collections.KeyValuePair<K,V>
+
+Public Properties
+
+Keys property—Public Methods
+
+Add( ) method (Map Collections)ContainsKey( ) methodGetValue( ) method (Map Collections)Remove( ) method (Map Collections)Set( ) method (Map Collections)TryGetValue( ) methodSee also
+<T> Generic type reference
+
+
+Progress.Collections.ISet<T> interface
+Progress.Collections.ISet<T> is the root interface for all set collection classes. Progress.Collections.ISet<T> is primarily an interface to indicate that the collection conforms to specific rules about how duplicates are handled.
+
+Super Class
+Progress.Collections.ICollection<T> interface on page 18
+
+Public Properties
+This interface does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+
+Get( ) method (Set Collections)—See also
+<T> Generic type reference
+
+
+Progress.Collections.KeySet<K> class
+This class is used by the Keys property of Progress.Collections.HashMap<K,V> class on page 12 to return a set containing all the keys in the HashMap instance. This set is backed by the HashMap and is not a static copy of the keys in the map at the time the property is accessed. This means that any changes to the HashMap are reflected in the KeySet instance.
+KeySet does not allow operations that change the set. You can only access the keys in the set. The KeySet
+object is garbage collected when there are no more references to it. The class is FINAL and cannot be extended.
+Serializable:
+No
+
+Constructor(s)
+This class does not contain a constructor.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+Progress.Collections.ISet<T> interface on page 25
+
+Public Properties
+
+Count property (Collections)IsEmpty property (Collections)Public Methods
+
+Contains( ) method (Collections)Get( ) method (Set Collections)GetIterator( ) method (Collections)—
+Progress.Collections.KeySetIterator<K> class
+
+Public Events
+This class does not contain events.
+
+Notes
+• The Add(), AddAll(), Clear() and Remove() methods are not permitted with this class and raise an error if called.
+
+See also
+<T> Generic type reference
+
+
+Progress.Collections.KeySetIterator<K> class
+Represents the type of the object returned by the GetIterator( ) method (Collections) in a Progress.Collections.KeySet<K> class on page 26. It allows you to traverse the elements in the collection. The elements are returned in no specific order.
+The class is FINAL and cannot be extended.
+
+Serializable:
+No
+
+Constructor(s)
+The class constructor is reserved for system use only.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+Progress.Collections.IIterator<T> interface on page 24
+
+Public Properties
+
+Current property (Iterator)—Public Methods
+
+MoveNext( ) method (Iterator)Reset( ) method (Iterator)Public Events
+This class has no public events.
+
+See also
+<T> Generic type reference
+
+
+
+Progress.Collections.KeyValuePair<K,V> class
+Progress.Collections.KeyValuePair<K,V> is a class that holds a key-value pair for a Map collection. This class is FINAL and cannot be extended.
+Serializable:
+Yes
+
+Constructor(s)
+
+
+key
+A Progress.Lang.Object that is used as the key.
+
+value
+A Progress.Lang.Object value that is associated with the key.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+Key propertyValue propertyPublic Methods
+This class has no public methods.
+
+Public Events
+This class has no public events.
+
+See also
+<T> Generic type reference
+
+
+Progress.Collections.List<T> class
+Represents a strongly-typed list of objects that can be accessed by index. Provides methods to search and manipulate lists.
+
+This class is FINAL and cannot be extended.
+
+Serializable:
+Yes
+
+Constructor(s)
+
+
+initialCapacity
+An INTEGER value that specifies the initial capacity for the list. OpenEdge automatically maintains the size of the list, extending it as elements are added to it. For performance reasons, you may specify an initial capacity, if that is known at the time the list is created, to avoid the cost of constantly expanding the capacity of the list.
+The default initial capacity for a list is 10 elements.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+Progress.Collections.IList<T> interface on page 24
+
+Public Properties
+
+Count property (Collections)IsEmpty property (Collections)Public Methods
+
+Add( ) method (Collections)AddAll( ) method (Collections)Clear( ) method (Collections)Contains( ) method (Collections)Get( ) method (List Collections)GetIterator( ) method (Collections)IndexOf( ) method (Collections)Insert( ) method (Collections)Remove( ) method (Collections)RemoveAt( ) method (Collections)Set( ) method (Collections)—
+Example
+This example code shows how to create a list, add elements to the list, retrieve elements, replace elements, remove elements, and iterate over the list.
+
+Notes
+• The Progress.Collections.List<T> class supports any Progress.Lang.Object or System.Object
+from .NET.
+• Sequencing of elements in the list is maintained as objects are added, inserted, or removed.
+• The Unknown value (?) may appear any number of times within the list.
+• Duplicate elements are allowed in the list.
+• Elements in the list can be accessed using an INTEGER index. Indexes are one-based.
+• Elements in the list that are explicitly deleted, while still in the list, are treated as the Unknown value (?).
+• Progress.Collections.List<T> does not participate in transactional processing. That is, any changes made to the structure of a List are not backed out if they occur within a transaction that is backed out.
+• The Contains(), Remove(), and IndexOf() methods determine equality of based on invoking Equals(). Those methods call the Equals() method on the object in the list, passing the object being tested against. If Equals() is not overridden by the type supplied as a type argument to List, then the default behavior is to fall back to the built-in implementation (since all Progress Lang.Object’s have an Equals() implementation provided by Progress.Lang.Object). If both the object reference in the collection, and the object being tested are Unknown (?), then the AVM considers the objects equal.
+
+• For a List<T> object to be considered serializable, the concrete type specified in the type argument must also be serializable. That is, for List<Presidents>, the class type Presidents must also be serializable, if you want to serialize it or pass the list as a parameter in a remote call.
+
+See also
+<T> Generic type reference
+
+
+Progress.Collections.ListIterator <T> class
+The Progress.Collections.ListIterator <T> class represents the type of object returned by the
+GetIterator() method on a List<T> class and allows the traversal of elements in the list. This class is FINAL and cannot be extended.
+Serializable:
+No
+
+Constructor(s)
+The class constructor is reserved for system use only.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+Progress.Collections.IIterator<T> interface on page 24
+
+Public Properties
+
+Current property (Iterator)—Public Methods
+
+MoveNext( ) method (Iterator)Reset( ) method (Iterator)Notes
+• Progress.Collections.ListIterator<T> iterates over the elements in the natural sequential order of the list (1, 2, 3, …).
+• Progress.Collections.ListIterator<T> does not skip over elements whose values are Unknown (?) or invalid object references (deleted objects). Iteration traverses each of the Unknown (?) or invalid object reference elements, as if they were legitimate entries in the list. If an invalid object reference is encountered, then the iterator sets the Current property to the Unknown (?) value.
+• Progress.Collections.ListIterator<T> does not participate in transactional processing. That is, any changes made to the structure of a ListIterator<T> are not backed out if they occur within a transaction that is backed out.
+• An iterator instance becomes invalid when the associated list has elements added, removed, or replaced after the given ListIterator<T> object is created, as the elements are no longer in the exact original
+
+location they occupied when the iterator was created. A new one must be acquired via the GetIterator()
+method on the list collection.
+
+See also
+<T> Generic type reference
+
+
+Progress.Collections.SortedSet<T> class
+Represents a strongly-typed collection of unique objects that is maintained in sorted order. Provides properties and methods to search and manipulate sorted sets.
+
+Serializable:
+Yes
+
+Constructor(s)
+
+
+comparer
+An IComparer object that is used to order the values in the SortedSet<T>.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+Progress.Collections.ISet<T> interface on page 25
+
+Public Properties
+
+Count property (Collections)
+
+IsEmpty property (Collections)First property (Collections)
+
+Last property (Collections)Public Methods
+
+Add( ) method (Collections)
+
+Clear( ) method (Collections)AddAll( ) method (Collections)
+
+Contains( ) method (Collections)Get( ) method (Set Collections)GetIterator( ) method (Collections)Remove( ) method (Collections)—
+Public Events
+This class does not contain events.
+
+Examples
+The following example demonstrates how to instantiate a sorted set using the default comparer and a custom comparer.
+
+The following example demonstrates how to add elements to, and iterate over, a sorted set collection. The example assumes a class called President, which implements IComparable<T>, which sorts the elements in alphabetical order by the name passed in.
+
+Notes
+• The SortedSet implementation supports any object-oriented ABL object. This includes .NET objects, however you must specify your own comparer when adding .NET objects to a SortedSet (that is, natural ordering is not supported in this case).
+• The default constructor (with no parameters) creates an instance of SortedSet with a default comparer. The default comparer requires that the elements added to the collection implement Progress.Collection.IComparable<T>.
+• The custom constructor returns an instance of SortedSet with the specified comparer. The comparer is used by SortedSet to perform the comparison of objects when sorting the elements. The constructor raises an error if the comparer object is not valid, or if the object does not implement IComparer<T> (if invoked dynamically), where T is the same type as SortedSet<T>.
+• Duplicate elements are not allowed in the sorted set. Note that the comparer implementation is what actually defines what a duplicate element is, by the value returned by the CompareTo() or Compare() methods. The SortedSet itself does not participate in determining that an object is duplicate or not, it simply follows what the comparer implementation defines.
+
+• Explicitly deleting object instances while they are in a Sortedset is not supported. You should remove the element from the set before you delete the object instance, if you are still going to be interacting with the SortedSet in any way.
+
+See also
+<T> Generic type reference
+
+
+Progress.Collections.SortedSetIterator<T> class
+Represents the type of the object returned by the GetIterator() method on a SortedSet<T> class, allowing the traversal of elements in the sorted set. The elements are returned in the order defined by the comparer implementation used by the sorted set.
+This class is FINAL and cannot be extended.
+
+Serializable:
+No
+
+Constructor(s)
+The class constructor is reserved for system use only.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+Progress.Collections.IIterator<T> interface on page 24
+
+Public Properties
+
+Current property (Iterator)—Public Methods
+
+MoveNext( ) method (Iterator)Reset( ) method (Iterator)Public Events
+This class does not contain events.
+
+Notes
+• The iterator is constructed with the generic information used to instantiate the SortedSet. For example, for a SortedSet<Person> object, the iterator is constructed as SortedSetIterator<Person>().
+• An iterator instance becomes invalid when the associated SortedSet<T> object has elements added or removed after the given SortedSetIterator<T> object is created, as the elements are no longer in the exact original location they occupied when the iterator was created. A new one must be acquired via the GetIterator() method.
+
+• The iterator does not skip elements whose value is unknown, or an invalid object reference. Iteration traverses each of the unknown and invalid elements in the set as if they were legitimate entries in the set. If an invalid object reference (a deleted object reference) is encountered, then the iterator sets the Current property to the unknown value (?).
+
+See also
+<T> Generic type reference
+
+
+Progress.Data.BindingSource class
+(Windows only; GUI for .NET)
+A BindingSource object (the ProBindingSource) that allows you to bind a .NET control to one of the following ABL data source objects:
+• A query involving a temp-table, dataset, or database table (which can be a join query)
+• A Buffer object
+
+Note: Progress Software Corporation recommends that you open (or reopen) any query associated with a ProBindingSource instance using the PRESELECT option, which optimizes query performance.
+
+The Progress.Data.BindingSource class is an OpenEdge .NET class that extends the .NET System.Windows.Forms.BindingSource class. The ProBindingSource acts as a conduit between a .NET control and an ABL data source object. A bound .NET control considers the ProBindingSource to be its data source. In turn, the ProBindingSource sets the underlaying ABL data source object as its data source. For a complete overview of data binding between .NET controls and ABL data source objects, see Use .NET Classes in ABL Applications.
+
+Serializable:
+No
+
+Constructors
+
+
+query-hdl
+A HANDLE variable that represents the handle to a query object.
+
+dataset-hdl
+A HANDLE variable that represents the handle to a ProDataSet object.
+
+buffer-hdl
+A HANDLE variable that represents the handle to a buffer object.
+
+parent-buffer-name
+A CHARACTER variable that represents the name of a parent buffer in a ProDataSet object. This corresponds to the top-level table displayed in a hierarchical control (such as a grid or a treeview).
+
+parent-buffer-hdl
+A HANDLE variable that represents the handle to a parent buffer in a ProDataSet object. This corresponds to the top-level table displayed in a hierarchical control (such as a grid or a treeview).
+
+include-fields
+An optional CHARACTER expression that evaluates to a comma-separated list of fields in the ABL data source object to bind to the ProBindingSource. To include all fields, specify an asterisk (*) only in include-fields. To include all but a few fields, specify an asterisk (*) in include-fields and a comma-separated list of fields to exclude in except-fields. If include-fields contains specific fields, except-fields is ignored.
+When including fields for a ProDataSet object, you must specify a comma-separated list of fields to display in display order and qualify the field names with their buffer name. For example:
+
+You must specify at least one field from each table in the hierarchy to be displayed.
+When including fields for a query or a join query, you must specify a comma-separated list of fields to display in display order and you should qualify ambiguous field names with their buffer name.
+Do not specify a RAW temp-table or a database field in include-fields. If you explicitly specify a RAW field, the AVM generates a run-time error. If you specify an asterisk (*) to include all fields and there is a RAW field in the table, the AVM excludes it automatically even if it is not specified in except-fields.
+except-fields
+A CHARACTER expression that evaluates to a comma-separated list of fields in the ABL data source object to exclude from binding to the ProBindingSource. You can specify fields to exclude only when include-fields contains an asterisk (*). If you do not have any fields to exclude, you must specify the empty string (""). If include-fields contains specific fields, except-fields is ignored.
+
+report-mode
+When report-mode is set to true, it indicates that any control that binds to this ProBindingSource will be a non-graphical or reporting object. This allows the ProBindingSource to make optimizations to reduce memory usage.
+
+Binding to a query associated with a temp-table or database table
+When binding to a temp-table or database table through a query, consider the following:
+• The query may, or may not, be part of a ProDataSet object.
+• The query can be either static or dynamic.
+• You use a handle to access either a static or a dynamic query.
+• The query must be scrolling. That is, a static query must be defined with the SCROLLING keyword and a dynamic query, which defaults to scrolling, must remain that way (its FORWARD-ONLY attribute must be FALSE).
+• The query can be a join involving one or more tables. In this case, one row is displayed in the control for each result list entry.
+
+• The ProBindingSource takes information from the table schema definition and makes it available to the bound .NET control for headings and labels. The ProBindingSource determines headings and labels by using either the column label (if defined), the field label (if defined), or the field name from the schema.
+If the query is a join with duplicate field names in the tables, you should qualify the field names with the buffer names using the buffer-name.field-name syntax. Also, the ProBindingSource treats elements in an array field as separate fields and makes them unique by appending their array subscript using the array-name[subscript] syntax.
+• If the .NET control does not handle sorting on its own, you can do either of the following:
+• Let the ProBindingSource automatically sort records in the ABL data source object by setting the AutoSort property to TRUE.
+• Define a trigger to handle a SortRequest event.
+
+Note: If you need to reopen the query, you must do so using the QUERY-PREPARE and QUERY-OPEN methods (not the OPEN QUERY statement). Progress Software Corporation recommends that you reopen the query using the PRESELECT option, which optimizes query performance.
+
+
+• The ProBindingSource automatically changes currency in the query (as reflected by the Position property) as the selected row in the bound .NET control changes.
+
+Binding to a ProDataSet object
+Binding to a ProDataSet object enables you to create a hierarchical display of a parent buffer and its child buffers in the same .NET control (such as a grid or a treeview). When binding to a ProDataSet object, consider the following:
+• The ProDataSet object can contain one or more parent and child buffers (and a set of data relations describing the relationship between the parent and child buffers).
+• The ProDataSet object can be either static or dynamic.
+• You use a handle to access either a static or dynamic ProDataSet object.
+• You can identify a temp-table in a ProDataSet object by either its name or its handle.
+• To bind a hierarchy of parent and child buffers to a single .NET control, specify a parent buffer from the ProDataSet object as the top-level table to display in the .NET control. A parent buffer is typically a top-level buffer in the ProDataSet object, but it need not be. Any child buffers of the specified parent buffer are automatically included in the hierarchy. The ProBindingSource makes a buffer's data available to a bound
+.NET control as follows:
+• If you specify a parent buffer that is a top-level buffer, the ProBindingSource uses the buffer's top-level navigation query (specified by the TOP-NAV-QUERY attribute) to populate the primary set of records, and uses the data-relation queries associated with each of the child buffers for subsequent levels.
+• If you specify a parent buffer that is not a top-level buffer, the ProBindingSource uses the buffer's
+data-relation query to populate the primary set of records, and uses the data-relation queries associated with each of the child buffers for subsequent levels.
+• If you specify a buffer that is not a parent buffer (that is, a buffer that has no child buffers), the ProBindingSource binds to a single table. You can achieve this same result by binding to the buffer's top-level navigation query (specified by the TOP-NAV-QUERY attribute) or its data-relation query.
+• If you do not specify any buffer, the ProBindingSource binds to the first top-level buffer in the ProDataSet object. The first top-level buffer is based on the order in which the buffers were defined or added in the ProDataSet object, and it matches the result from GET-TOP-BUFFER(1).
+
+• To display both parent and child buffers within the same .NET control, use a single ProBindingSource instance bound to the ProDataSet object. To display the parent and child buffers in separate .NET controls, use separate ProBindingSource instances bound to their respective queries.
+• The ProBindingSource automatically changes currency in the parent buffer (as reflected by the Position property) as the selected parent or child row in the bound .NET control changes.
+For more information on how the ProBindingSource manages currency between parent and child buffers, including a code example, see the data-binding topics in Use .NET Classes in ABL Applications.
+• When the user first expands (not selects) a parent row in the bound .NET control, all of the child rows for that parent row are displayed. The ProBindingSource uses the ProDataSet object's data-relation query to create and maintain a unique query for all child rows related to the expanded parent row. For example, if the user expands multiple parent rows, there will be an open child query for each expanded parent row based on the corresponding parent record.
+• The ProBindingSource takes information from the ProDataSet object schema definition and makes it available to the bound .NET control for headings and labels. The ProBindingSource determines headings and labels by using either the column label (if defined), the field label (if defined), or the field name from the schema.
+
+Binding to a buffer object
+When binding to a temp-table or database buffer, consider the following:
+• The buffer might (but not necessarily) be part of a ProDataSet object.
+• The buffer can be either static or dynamic.
+• You use a handle to access either a static or dynamic buffer.
+• Use a buffer as a data source for one or more single-value controls (such as a check box or a text box).
+• The Position property value will always be set to zero. Therefore, you must manage currency for the buffer by changing the record in the ABL data source object programmatically.
+
+Binding to an unbound ProBindingSource instance
+An unbound ProBindingSource instance is created by invoking the ProBindingSource constructor with no parameters. When binding to an unbound ProBindingSource instance, consider the following:
+• To limit which fields are exposed in the data source object, use the SetFields( ) method before binding to the data source object.
+• You must bind an unbound ProBindingSource object instance to an ABL data source object at run time by setting the ProBindingSource's Handle property to the handle of the associated ABL data source object.
+• When you set the ProBindingSource's Handle property, the AVM includes, by default, all fields from the ABL data source object's schema in the .NET control. (This is equivalent to specifying an asterisk (*) in the include-fields parameter when invoking a ProBindingSource constructor with parameters.) If you want to limit the available fields, you must use the ProBindingSource's SetFields( ) method before you specify the Handle property. Attempting to use the SetFields( ) method after specifying the Handle property causes the ProBindingSource to throw a .NET exception.
+
+Super Class
+System.Windows.Forms.BindingSource class from .NET
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+AllowEdit propertyAllowNew propertyAllowRemove propertyAutoSort propertyAutoSync propertyAutoUpdate propertyBatching propertyChildAllowEdit propertyChildAllowNew propertyChildAllowRemove propertyChildInputValue propertyCount property (BindingSource)Handle propertyInputValue propertyMapNullToEmptyString propertyMaxDataGuess propertyNewRow propertyPosition property (BindingSource)RowModified propertySyncToSelectedRow propertyTableSchema propertyTag property (Progress.Data.BindingSource)UseFullFieldNames property—Public Methods
+
+Assign( ) method (Progress.Data.BindingSource)Dispose( ) methodRefresh( ) method (Progress.Data.BindingSource)RefreshAll( ) methodSetFields( ) method—Public Events
+
+AfterFetchNextBatch eventBeforeFetchNextBatch eventCreateRow eventCancelCreateRow eventOffEnd event (.NET)PositionChanged eventSortRequest event—Notes
+• Since you are working with a combination of .NET controls and ABL objects, it is important to remember that .NET control parameter and property indexes are always zero-based values and ABL indexes are always one-based values.
+• For information on the public class members inherited from the System.Windows.Forms.BindingSource
+class, refer to the .NET class library.
+
+
+Progress.Data.CancelCreateRowEventArgs class
+(Windows only; GUI for .NET)
+A CancelCreateRowEventArgs object instance that is an argument to an event handler for a
+CancelCreateRow event.
+
+Serializable:
+No
+
+Constructors
+This class contains a private constructor; you cannot instantiate it directly.
+
+Super Class
+System.EventArgs class from .NET
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+BandIndex propertyBufferHdl propertyBufferName propertyPublic Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Note
+For information on the public class members inherited from the System.EventArgs class, refer to the .NET class library.
+
+See also
+CancelCreateRow event, CreateRow event, CURRENT-QUERY( ) method, Progress.Data.CreateRowEventArgs class on page 43
+
+
+Progress.Data.ChildrenAllowEdit class
+(Windows only; GUI for .NET)
+ChildrenAllowEdit is an internal class used for the implementation of the ChildAllowEdit property of the Progress.Data.BindingSource class on page 35. There is no need to use ChildrenAllowEdit directly.
+
+
+Progress.Data.ChildrenAllowNew class
+(Windows only; GUI for .NET)
+ChildrenAllowNew is an internal class used for the implementation of the ChildAllowNew property of the Progress.Data.BindingSource class on page 35. There is no need to use ChildrenAllowNew directly.
+
+
+
+Progress.Data.ChildrenAllowRemove class
+(Windows only; GUI for .NET)
+ChildrenAllowRemove is an internal class used for the implementation of the ChildAllowRemove property of the Progress.Data.BindingSource class on page 35. There is no need to use ChildrenAllowRemove directly.
+
+
+Progress.Data.ChildrenInputValue class
+(Windows only; GUI for .NET)
+ChildrenInputValue is an internal class used for the implementation of the ChildInputValue property of the Progress.Data.BindingSource class on page 35. There is no need to use ChildrenInputValue directly.
+
+
+Progress.Data.ColumnPropDesc class
+(Windows only; GUI for .NET)
+A design-time object that the Visual Designer uses to describe a table column (field) as part of logical schema information that it associates with a Progress.Data.BindingSource class on page 35 instance using the Progress.Data.TableDesc class on page 49.
+
+Note: This class is designed for use by the Visual Designer. Though you can do so, it is not expected that you will use this in your own code.
+
+
+Serializable:
+No
+
+Constructor
+
+
+col-name
+A CHARACTER expression that represents the name of the table column.
+
+col-label
+A CHARACTER expression that represents a label for the table column. If col-label is set to the Unknown value (?), the label for the field is determined at run time according to OpenEdge column label rules.
+
+Note: A field label specified in a control always takes precedence over the field label supplied by the BindingSource.
+
+
+col-type
+A Progress.Data.DataType enumeration class on page 44 value that describes the ABL data type of the column.
+
+Super Class
+System.ComponentModel.PropertyDescriptor class from .NET
+
+Interfaces
+System.Runtime.Serialization.ISerializable interface from .NET
+
+Public Properties
+The public properties defined by this class are not supported for use in applications.
+
+Public Methods
+The public methods defined by this class are not supported for use in applications.
+
+Public Events
+The public events defined by this class are not supported for use in applications.
+
+Note
+For information on the public class members inherited from the
+System.ComponentModel.PropertyDescriptor class, refer to the .NET class library documentation.
+
+See also
+Progress.Data.BindingSource class on page 35, Progress.Data.DataType enumeration class on page 44, Progress.Data.TableDesc class on page 49
+
+
+Progress.Data.CreateRowEventArgs class
+(Windows only; GUI for .NET)
+A CreateRowEventArgs object instance that is an argument to an event handler for a CreateRow event.
+
+Serializable:
+No
+
+Constructors
+This class contains a private constructor; you cannot instantiate it directly.
+
+Super Class
+System.EventArgs class from .NET
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+BandIndex propertyBufferHdl propertyBufferName propertyCreated property––Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Note
+For information on the public class members inherited from the System.EventArgs class, refer to the .NET class library documentation.
+
+See also
+CancelCreateRow event, CreateRow event, CURRENT-QUERY( ) method, Progress.Data.CancelCreateRowEventArgs class on page 40
+
+
+Progress.Data.DataType enumeration class
+(Windows only; GUI for .NET)
+An enumeration whose members indicate the ABL built-in data types that are valid for use with the Progress.Data.BindingSource class on page 35 (the ProBindingSource).
+
+Members
+
+MemberDescriptionBLOBIndicates the BLOB data typeCHARACTERIndicates the CHARACTER data typeCLOBIndicates the CLOB data typeCOM_HANDLEIndicates the COM-HANDLE data typeDATEIndicates the DATE data typeDATETIMEIndicates the DATETIME data typeDATETIME_TZIndicates the DATETIME-TZ data typeDECIMALIndicates the DECIMAL data typeHANDLEIndicates the HANDLE data typeINT64Indicates the INT64 data type
+
+MemberDescriptionINTEGERIndicates the INTEGER data typeLOGICALIndicates the LOGICAL data typePROGRESS_LANG_OBJECTIndicates the Progress.Lang.Object class typeRECIDIndicates the RECID data typeROWIDIndicates the ROWID data typeUNKNOWNData type unknown (specified only at run time)Super Class
+System.Enum class from .NET
+
+Notes
+• For information on the System.Enum class, refer to the .NET class library documentation.
+• The ProBindingSource exposes an ABL BLOB field (a Binary Large Object) to any bound .NET control as a .NET System.Byte[] data type. Before binding a BLOB to a particular .NET control, check the .NET control's user documentation to see if it can render the type of file that the BLOB represents.
+For example, if you bind an image BLOB to a Microsoft DataGridView, the grid represents the BLOB as a Systems.Windows.Forms.DataGridViewImageColumn class. If the BLOB is not in a recognized format, the class throws an error. If you bind the same BLOB to an UltraGrid from the OpenEdge Advanced UI Controls, the grid represents the BLOB as an UltraGridColumn of the System.Byte[] data type. In order to display the image, you must then add an editor control to the column using something like the following code:
+
+
+• The ProBindingSource exposes an ABL CLOB field (a Character Large Object) to any bound .NET control as a .NET System.String data type. Be sure that the .NET control can handle that data type.
+
+See also
+Progress.Data.ColumnPropDesc class on page 42
+
+
+Progress.Data.DummyRow class
+(Windows only; GUI for .NET)
+Controls that do data binding need to be able to access rows of the data source they are bound to. Given the row, they can then ask for column values to display on the screen or to manipulate. Because real temp-table rows are not accessible to .NET, the ProBindingSource creates row objects in .NET of type Progress.Data.DummyRow. When the control asks for data from one of these rows, the ProBindingSource can then get the appropriate data from the AVM.
+
+Normally you do not need to, and should not, interact with this class. However, methods of some controls will return an instance of the Progress.Data.DummyRow class. The only property of interest would be the Index property. This is equivalent to the row number in the temp-table. For example, you could use it to do REPOSITION TO ROW index.
+
+Serializable:
+No
+
+Constructor(s)
+This class contains a private constructor; you cannot instantiate it directly.
+
+Super Class
+None
+
+Interfaces
+None
+
+Public Properties
+
+Index–Public Methods
+This class does not contain methods.
+
+Public Events
+This class does not contain events.
+
+See also
+Progress.Data.BindingSource class on page 35
+
+
+Progress.Data.InputValue class
+(Windows only; GUI for .NET)
+Provides indexers you can use to access the input value of the specified field in the current row of a table displayed in the bound .NET control.
+
+Note: Using an instance of this class is analogous to using the INPUT-VALUE attribute for a field value displayed in an ABL widget.
+
+
+Serializable:
+No
+
+Constructors
+This class does not contain a constructor.
+
+Super Class
+System.Object class from .NET
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Notes
+• The following code fragment illustrates how to use this class:
+
+
+• For information on the public class members inherited from the System.Object class, refer to the .NET class library documentation.
+
+See also
+ChildInputValue property, InputValue property
+
+
+Progress.Data.OffEndEventArgs class
+(Windows only; GUI for .NET)
+An OffEndEventArgs object instance that is an argument to an event handler for an OffEnd event.
+
+Serializable:
+No
+
+Constructors
+This class contains a private constructor; you cannot instantiate it directly.
+
+Super Class
+System.EventArgs class from .NET
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+RowsAdded property––Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Note
+For information on the public class members inherited from the System.EventArgs class, refer to the .NET class library documentation.
+
+See also
+Batching property, OffEnd event (.NET)
+
+
+Progress.Data.SortRequestEventArgs class
+(Windows only; GUI for .NET)
+A SortRequestEventArgs object instance that is an argument to an event handler for a SortRequest
+event.
+
+Serializable:
+No
+
+Constructors
+This class contains a private constructor; you cannot instantiate it directly.
+
+Super Class
+System.EventArgs class from .NET
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+ArrayIndex propertyAscending propertyBufferHdl propertyFieldIndex propertyFieldName propertySorted propertyPublic Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Note
+For information on the public class members inherited from the System.EventArgs class, refer to the .NET class library documentation.
+
+See also
+SortRequest event
+
+
+Progress.Data.TableDesc class
+(Windows only; GUI for .NET)
+A design-time object that the Visual Designer uses to store logical schema information that you specify for the data source associated with a Progress.Data.BindingSource class on page 35 instance. The specified logical schema can represent a single temp-table or a hierarchy of temp-tables in a ProDataSet, where the current instance describes the parent for a specified set of child tables.
+
+Note: This class is designed for use by the Visual Designer. Though you can do so, it is not expected that you will use this in your own code.
+
+
+Serializable:
+No
+
+Constructor
+
+
+name
+A CHARACTER expression that represents a table name for the logical schema.
+
+columns
+An array of Progress.Data.ColumnPropDesc class on page 42 instances that describe the fields of the table represented by this TableDesc instance.
+
+children
+An array of Progress.Data.TableDesc class instances that describe child tables of the parent table represented by this instance. If this table has no child tables, children is set to the Unknown value (?).
+
+Super Class
+System.Object class from .NET
+
+Interfaces
+System.Runtime.Serialization.ISerializable interface from .NET.
+
+Public Properties
+The public properties defined by this class are not supported for use in applications.
+
+Public Methods
+The public methods defined by this class are not supported for use in applications.
+
+Public Events
+The public events defined by this class are not supported for use in applications.
+
+Note
+For information on the public class members inherited from the System.Object class, refer to the .NET class library documentation.
+
+See also
+Progress.Data.BindingSource class on page 35, Progress.Data.ColumnPropDesc class on page 42, TableSchema property
+
+
+Progress.Database.TempTableInfo class
+This class provides information about a temp-table and its index.
+
+Serializable:
+No
+
+Constructors
+This class contains only a private constructor. You cannot instantiate it directly.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Progress.Database.VSTTableId class
+
+Public Properties
+
+ArchiveIndexStatistics propertyArchiveTableStatistics propertyTempTableCount propertyTempTablePeak property––Public Methods
+
+GetIndexInfoByID( ) methodGetIndexStatHistoryHandle( ) methodGetTableInfoByID( ) methodGetTableInfoByPosition( ) methodGetTableStatHistoryHandle( ) methodGetVSTHandle( ) methodPublic Events
+This class does not contain events.
+
+Notes
+For more information on using this class, see Troubleshoot ABL Applications.
+
+
+Progress.Database.VSTTableId class
+This class identifies the Virtual System Table (VST) ID when you need to access a dynamic VST temp-table.
+
+Serializable:
+No
+
+Constructors
+This class contains a private constructor. You cannot instantiate it directly.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Methods
+This class does not contain any methods.
+
+Public Properties
+
+ActBufferId propertyActIndexId propertyActIOFileId propertyActIOTypeId propertyActOtherId propertyActRecordId propertyActSpaceId propertyActSummaryId propertyBlockId property
+
+BuffStatusId propertyDbStatusId propertyFileListId propertyIndexStatId propertyMstrBlkId propertyStatBaseId propertyTableStatId propertyTransId propertyUserIOId propertyUserIndexStatId propertyUserTableStatId property–Public Events
+This class does not contain events.
+
+
+Progress.IO.BinarySerializer class
+Progress.IO.BinarySerializer provides functionality to serialize and deserialize ABL class-based objects in binary format. The serialization and deserialization are performed in conjunction with classes that inherit from Progress.IO.InputStream and Progress.IO.OutputStream.
+Progress.IO.BinarySerializer formats the data, and the stream classes determine where the data comes from and goes to. For example, Progress.IO.FileInputStream and Progress.IO.FileOutputStream are used for serialization to and deserialization from a file.
+
+Serializable:
+No
+
+Constructors
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces.
+
+Properties
+This class does not define properties.
+
+Public Methods
+
+Deserialize( ) method (BinarySerializer)Serialize( ) method (BinarySerializer)Public Events
+This class does not contain events.
+
+Progress.IO.ByteOrder enumeration
+
+Notes
+• See the entry for the Serialize( ) method for more information about which class members are serialized.
+
+See also
+Progress.IO.FileInputStream class on page 53, Progress.IO.FileOutputStream class on page 54, Progress.IO.InputStream class on page 55, Progress.IO.OutputStream class on page 63
+
+
+Progress.IO.ByteOrder enumeration
+An enumeration to support the MemoryOutputStream object's ByteOrder enum-type property.
+
+Members
+
+MemberDescriptionHostByteOrderThe byte order employed by the machine where the process is running.BigEndianByte ordering where the most significant value in a sequence is stored first (i.e.in the lowest address). Successive bytes are stored at successively higher addresses.
+For example, the two bytes required for the hexadecimal number 9A62 would be stored as 9A in the first address space and 62 in the second when byte ordering is big-endian.
+Note that Internet protocols use big-endian byte-ordering.LittleEndianByte ordering where the least significant value in a sequence is stored first (i.e.in the lowest address). Successive bytes are stored at successively higher addresses.
+For example, the two bytes required for the hexadecimal number 9A62 would be stored as 62 in the first address space and 9A in the second when byte ordering is little-endian.
+
+Progress.IO.FileInputStream class
+Progress.IO.FileInputStream extends Progress.IO.InputStream and provides functionality for reading from a file.
+
+Serializable:
+No
+
+Constructor
+
+
+filename
+A CHARACTER expression that represents the file from which the input stream will read. The constructor sets the FileName property of the stream to filename. The file name can include Unicode characters, and it can be absolute or relative to the current working directory. The AVM raises a runtime error if it can't open the file for reading.
+
+Super Class
+Progress.IO.InputStream class on page 55
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+
+FileName property–Public Methods
+
+Close( ) method (IO)SkipBytes( ) method (FileInputStream)Public Events
+This class does not define events.
+
+
+Progress.IO.FileOutputStream class
+Progress.IO.FileOutputStream extends Progress.IO.OutputStream and provides functionality for writing to a file.
+
+Serializable:
+No
+
+Constructor
+
+append
+A LOGICAL expression that indicates whether the output stream can be appended to. The constructor sets the Append property of the stream object to the value of append.
+filename
+A CHARACTER expression that represents the file to which the output stream will be written. The constructor sets the FileName property of the stream object to filename. The file name can include
+
+Unicode characters, and it can be absolute or relative to the current working directory. The AVM raises a runtime error if it can't open the file for writing.
+
+Super Class
+Progress.IO.OutputStream class on page 63
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+
+Append propertyFileName propertyPublic Methods
+
+Close( ) method (IO)Flush( ) method (FileOutputStream)Public Events
+This class does not define events.
+
+
+Progress.IO.InputStream class
+Progress.IO.InputStream is an abstract class that provides the default implementation for all input stream classes. For example, Progress.IO.InputStream is the class from which the Progress.IO.FileInputStream class is derived.
+
+Serializable:
+No
+
+Constructor
+This class contains a private constructor; as an abstract class, you cannot instantiate it directly.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+
+Closed property–
+Public Methods
+
+Close( ) method (IO)Read( ) method (InputStream)SkipBytes( ) method (InputStream)–Public Events
+This class does not define events.
+
+
+Progress.IO.JsonSerializer class
+Progress.IO.JsonSerializer provides functionality to serialize and deserialize ABL class-based objects in JSON format. The serialization and deserialization are performed in conjunction with classes that inherit from Progress.IO.InputStream and Progress.IO.OutputStream. Progress.IO.JsonSerializer formats the data, and the stream classes determine where the data comes from and goes to. For example, Progress.IO.FileInputStream and Progress.IO.FileOutputStream are used for serialization to and deserialization from a file.
+
+Serializable:
+No
+
+Constructors
+
+
+formatted
+When formatted is TRUE, the JSON string is formatted in a hierarchical manner using white space, carriage returns, and line feeds.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces.
+
+Properties
+
+Formatted property–Public Methods
+
+Deserialize( ) method (JsonSerializer)Serialize( ) method (JsonSerializer)
+Public Events
+This class does not contain events.
+
+Notes
+• See the entry for the Serialize( ) method for more information about which class members are serialized and the format of the object serialization.
+
+See also
+Progress.IO.FileInputStream class on page 53, Progress.IO.FileOutputStream class on page 54, Progress.IO.InputStream class on page 55, Progress.IO.OutputStream class on page 63
+
+
+Progress.IO.MemoryInputStream class
+This class is responsible for reading data from memory. It acts as a wrapper for MEMPTR read operations.
+Progress.IO.MemoryInputStream extends Progress.IO.InputStream:
+
+As with other input stream classes, the MemoryInputStream class maintains its own internal read position and eliminates the need to keep track of MEMPTR read positions.
+For input streams the expected network byte order is controlled by the underlying MEMPTR byte ordering. If the input stream was created using MemoryOutputStream, then the byte order is taken from the value of the ByteOrder property of the MemoryOutputStream. If instead the input stream was created from a MEMPTR, the SET-BYTE-ORDER statement must be used to control the byte ordering used by the MemoryInputStream read methods.
+
+Serializable:
+No
+
+Constructor
+
+mos
+An initialized MemoryOutputStream object that this input stream object will operate on.
+
+mem
+An initialized MEMPTR variable that this input stream object will operate on.
+
+Super Class
+Progress.IO.InputStream class on page 55
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+
+Data propertyPosition property (MemoryInputStream)Public Methods
+
+AvailableBytes( ) methodRead( ) method (MemoryInputStream)ReadByte( ) methodReadDouble( ) methodReadFloat( ) methodReadInt64( ) methodReadLong( ) methodReadLongchar( ) methodReadShort( ) methodReadString( ) methodReadUnsignedLong( ) methodReadUnsignedShort( ) methodReset( ) method (MemoryInputStream)SkipBytes( ) method (MemoryInputStream)Public Events
+This class does not define events.
+
+Examples
+Table 1: Read and write integer and decimal methods
+
+
+DEFINE VARIABLE myDate AS DATE INITIAL "1/1/2020". DEFINE VARIABLE myInt64 AS INT64 INITIAL 42.
+DEFINE VARIABLE myDouble AS DECIMAL INITIAL 42.42. DEFINE VARIABLE myFloat AS DECIMAL INITIAL 42.42. DEFINE VARIABLE myLong AS INTEGER INITIAL -53.
+DEFINE VARIABLE myShort AS INTEGER INITIAL -53. DEFINE VARIABLE myULong AS INTEGER INITIAL 123456789. DEFINE VARIABLE myUShort AS INTEGER INITIAL 12345.
+DEFINE VARIABLE inMs AS Progress.IO.MemoryInputStream. DEFINE VARIABLE outMs AS Progress.IO.MemoryOutputStream.
+outMs = NEW Progress.IO.MemoryOutputStream(). outMs:WriteLong(INTEGER(myDate)). outMs:WriteInt64(myInt64). outMs:WriteDouble(myDouble). outMs:WriteFloat(myFloat). outMs:WriteLong(myLong). outMs:WriteShort(myShort). outMs:WriteUnsignedLong(myULong). outMs:WriteUnsignedShort(myUShort).
+inMs = NEW Progress.IO.MemoryInputStream(INPUT outMs:Data). MESSAGE
+"ReadLong:" inMs:ReadLong() SKIP "ReadInt64:" inMs:ReadINT64() SKIP "ReadDouble:" inMs:ReadDouble() SKIP "ReadFloat:" inMs:ReadFloat() SKIP "ReadLong:" inMs:ReadLong() SKIP "ReadShort:" inMs:ReadShort() SKIP
+"ReadUnsignedLong:" inMs:ReadUnsignedLong() SKIP "ReadUnsignedShort:" inMs:ReadUnsignedShort() SKIP VIEW-AS ALERT-BOX.
+
+
+Table 2: Read and write string methods
+
+See also
+OpenEdge Programming Interfaces for more information about MEMPTR. Progress.IO.MemoryOutputStream class on page 60
+
+
+
+Progress.IO.MemoryOutputStream class
+This class is responsible for streaming data to memory. A MemoryOutputStream object enables write operations to memory and is expandable. It encapsulates the MEMPTR data type and simplifies MEMPTR operations.
+Progress.IO.MemoryOutputStream extends Progress.IO.OutputStream:
+
+As with other output stream classes, the MemoryOutputStream class maintains its own internal write position and eliminates the need to keep track of MEMPTR write positions.
+
+Serializable
+No
+
+Constructors
+
+
+size
+The Data and Length properties are initialized to the value specified by size. When size is not specified, the Data and Length properties are initialized to 0.
+Super Class
+Progress.IO.OutputStream class on page 63
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+
+ByteOrder propertyBytesWritten propertyData propertyLength property (MemoryOutputStream)Public Methods
+
+Clear( ) method (MemoryOutputStream)SetByteOrder( ) method
+
+Write( ) method (MemoryOutputStream)WriteByte( ) methodWriteDouble( ) methodWriteInt64( ) methodWriteFloat( ) methodWriteLong( ) methodWriteShort( ) methodWriteUnsignedLong( ) methodWriteUnsignedShort( ) method–Public Events
+This class does not define events.
+
+Note
+The following table illustrates values that result from constructors and Write( )/Clear( ) methods:
+
+Method/ConstructorValuesObj:LengthObj:BytesWrittenObj = NEW MemoryOutputStream()00Obj:Write(“12345”)55Obj:Clear()00Obj = NEW MemoryOutputStream(100)1000Obj:Write(“12345678”)1008Obj:Clear()1000
+Examples
+Table 3: READ & WRITE decimal and integer methods
+
+
+DEFINE VARIABLE myDate AS DATE INITIAL "1/1/2020". DEFINE VARIABLE myInt64 AS INT64 INITIAL 42.
+DEFINE VARIABLE myDouble AS DECIMAL INITIAL 42.42. DEFINE VARIABLE myFloat AS DECIMAL INITIAL 42.42. DEFINE VARIABLE myLong AS INTEGER INITIAL -53.
+DEFINE VARIABLE myShort AS INTEGER INITIAL -53. DEFINE VARIABLE myULong AS INTEGER INITIAL 123456789. DEFINE VARIABLE myUShort AS INTEGER INITIAL 12345.
+DEFINE VARIABLE inMs AS Progress.IO.MemoryInputStream. DEFINE VARIABLE outMs AS Progress.IO.MemoryOutputStream.
+outMs = NEW Progress.IO.MemoryOutputStream(). outMs:WriteLong(INTEGER(myDate)). outMs:WriteInt64(myInt64). outMs:WriteDouble(myDouble). outMs:WriteFloat(myFloat). outMs:WriteLong(myLong). outMs:WriteShort(myShort). outMs:WriteUnsignedLong(myULong). outMs:WriteUnsignedShort(myUShort).
+inMs = NEW Progress.IO.MemoryInputStream(INPUT outMs:Data). MESSAGE
+"ReadLong:" inMs:ReadLong() SKIP "ReadInt64:" inMs:ReadINT64() SKIP "ReadDouble:" inMs:ReadDouble() SKIP "ReadFloat:" inMs:ReadFloat() SKIP "ReadLong:" inMs:ReadLong() SKIP "ReadShort:" inMs:ReadShort() SKIP
+"ReadUnsignedLong:" inMs:ReadUnsignedLong() SKIP "ReadUnsignedShort:" inMs:ReadUnsignedShort() SKIP VIEW-AS ALERT-BOX.
+
+
+Table 4: READ & WRITE string methods
+
+See also
+OpenEdge Programming Interfaces for more information about MEMPTR. Progress.IO.MemoryInputStream class on page 57
+
+
+
+Progress.IO.OutputStream class
+Progress.IO.OutputStream is an abstract class that provides the default implementation for all output stream classes. For example, Progress.IO.OutputStream is the class from which the Progress.IO.FileOutputStream class is derived.
+
+Serializable:
+No
+
+Constructor
+This class contains a private constructor; as an abstract class, you cannot instantiate it directly.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+
+Closed property–Public Methods
+
+Close( ) method (IO)Flush( ) method (OutputStream)Write( ) method (OutputStream)–Public Events
+This class does not define events.
+
+Notes
+• All of the overloads of the Write( ) method are defined as abstract except for Write( INPUT target
+AS MEMPTR ). See the Write( ) method (OutputStream) entry for more information.
+
+
+Progress.Json.JsonError class
+This class raises an error when a failure specific to Progress.Json family of packages occur. For example, a JsonError is raised when a parameter is out of range or a reference is made to a non-existent property in a JsonObject.
+
+Serializable:
+Yes
+
+Constructor
+This class contains only a private constructor; you cannot instantiate it directly.
+
+Super Class
+Progress.Lang.SysError class on page 91
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+This class does not define properties.
+
+Public Methods
+This class does not define methods.
+
+Public Events
+This class does not contain events.
+
+
+Progress.Json.JsonParser class
+This is an abstract class that contains properties common to JSON parsers supported by ABL.
+
+Serializable:
+No
+
+Constructors
+This class contains a private constructor; as an abstract class, you cannot instantiate it directly.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+
+IgnoreComments property––Public Methods
+This class does not define any methods.
+
+Public Events
+This class does not define any events.
+
+
+
+Progress.Json.JsonParserError class
+This class raises an error when the syntax of the JSON being parsed is incorrect.
+
+Serializable:
+Yes
+
+Constructor
+This class contains only a private constructor; you cannot instantiate it directly.
+
+Super Class
+Progress.Json.JsonError class on page 63
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+
+Offset property––Public Methods
+This class does not define methods.
+
+Public Events
+This class does not define events.
+
+
+Progress.Json.ObjectModel.JsonArray class
+This class denotes an array containing a dynamic number of heterogeneous elements addressable by a numeric index. Since the number of elements is dynamic, the array can grow or shrink in size. Elements within the array can be another JsonArray, a JsonObject, a JSON value of any data type or the JSON Null value. JSON data types are String, Number and Boolean. Indexing into JsonArrays is 1-based.
+A JsonArray is heterogeneous because elements within the array may be of different data types. For example, an array may contain mostly numbers, but may contain some null values to indicate the absence of a value and may, contain strings to indicate special cases.
+
+Serializable:
+Yes
+
+Constructors
+
+PUBLICJsonArray()PUBLICJsonArray(INPUTinitial-size AS INTEGER )PUBLICJsonArray(INPUTinitial-value AS CHARACTER EXTENT )PUBLICJsonArray(INPUTinitial-value AS COM-HANDLE EXTENT )PUBLICJsonArray(INPUTinitial-value AS DATE EXTENT )PUBLICJsonArray(INPUTinitial-value AS DATETIME EXTENT )PUBLICJsonArray(INPUTinitial-value AS DATETIME-TZ EXTENT )PUBLICJsonArray(INPUTinitial-value AS DECIMAL EXTENT )PUBLICJsonArray(INPUTinitial-value AS HANDLE EXTENT )PUBLICJsonArray(INPUTinitial-value AS INT64 EXTENT )PUBLICJsonArray(INPUTinitial-value AS INTEGER EXTENT )PUBLICJsonArray(INPUTinitial-value AS LOGICAL EXTENT )PUBLICJsonArray(INPUTinitial-value AS LONGCHAR EXTENT )PUBLICJsonArray(INPUTinitial-value AS MEMPTR EXTENT )PUBLICJsonArray(INPUTinitial-value AS RAW EXTENT )PUBLICJsonArray(INPUTinitial-value AS RECID EXTENT )PUBLICJsonArray(INPUTinitial-value AS ROWID EXTENT )PUBLICJsonArray(INPUTinitial-value AS JsonObject EXTENT )PUBLICJsonArray(INPUTinitial-value AS JsonArray EXTENT )
+
+initial-size
+An INTEGER variable that represents the size of the new JsonArray. Each element is initialized to the JSON null value. If this value is 0, the array is empty. If this value is less than 0 or Unknown (?), a JsonError error is raised.
+initial-value
+An ABL array that contains values that are used to initialize elements in the new JsonArray. Each element of the ABL array is used to initialize one element in the JsonArray. The constructed JsonArray has as many elements as the length of the ABL array.
+Any Unknown (?) values within the ABL array results in a JSON null value in the JsonArray. If initial-value is Unknown (?), or is indeterminate, a JsonError is raised.
+
+Super Class
+Progress.Json.ObjectModel.JsonConstruct class on page 67
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+
+END_OF_ARRAY propertyLength property (JSON)–Public Methods
+
+Add( ) method (JsonArray)AddNull( ) method (JsonArray)AddNumber( ) method (JsonArray)Clone( ) method (JsonArray)GetCharacter( ) method (JsonArray)GetCOMHandle( ) method (JsonArray)GetDate( ) method (JsonArray)GetDatetime( ) method (JsonArray)GetDatetimeTZ( ) method (JsonArray)GetDecimal( ) method (JsonArray)GetHandle( ) method (JsonArray)GetInt64( ) method (JsonArray)GetInteger( ) method (JsonArray)GetJsonArray( ) method (JsonArray)GetJsonObject( ) method (JsonArray)GetJsonText( ) method (JsonArray)GetLogical( ) method (JsonArray)GetLongchar( ) method (JsonArray)GetMemptr( ) method (JsonArray)GetRaw( ) method (JsonArray)GetRecid( ) method (JsonArray)GetRowid( ) method (JsonArray)GetType( ) method (JsonArray)IsNull( ) method (JsonArray)Read( ) method (JsonArray)Remove( ) method (JsonArray)Set( ) method (JsonArray)SetNull( ) method (JsonArray)SetNumber( ) method (JsonArray)WriteFile( ) method (JsonArray)WriteFile( ) method (JsonArray)WriteStream( ) method (JsonArray)Public Events
+This class does not contain events.
+
+
+Progress.Json.ObjectModel.JsonConstruct class
+JsonConstruct is an abstract class from which JsonArray class and JsonObject class are derived.
+
+Serializable:
+No
+
+Constructor
+This class contains only a private constructor; you cannot instantiate it directly.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+This class does not define properties.
+
+Public Methods
+
+Write( ) method (JsonConstruct)WriteFile( ) method (JsonConstruct)WriteStream( ) method (JsonConstruct)–Public Events
+This class does not define events.
+
+
+Progress.Json.ObjectModel.JsonDataType class
+Indicates the data type of a value in the JSON string. This class is returned by the GetType( ) method on a Progress.Json.ObjectModel.JsonObject class on page 69 or Progress.Json.ObjectModel.JsonArray class on page 65.
+
+Serializable:
+No
+
+Constructor
+This class contains only a private constructor; you cannot instantiate it directly.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+
+Array propertyBoolean propertyNull propertyNumber propertyObject propertyString property
+The following table shows the mapping of property name to value.
+
+Property nameValueString1Number2Boolean3Object4Array5Null6
+Public Methods
+This class does not define methods.
+
+Public Events
+This class does not contain events.
+
+
+Progress.Json.ObjectModel.JsonObject class
+This class denotes a dynamic number of properties each addressable by a Unicode string called a name. The properties can be another JsonObject, a JsonArray, a value of any JSON data type or the JSON null value. JSON data types are String, Number and Boolean.
+
+Serializable:
+Yes
+
+Constructors
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+This class does not define properties.
+
+Public Methods
+
+Add( ) method (JsonObject)AddNull( ) method (JsonObject)AddNumber( ) method (JsonObject)Clone( ) method (JsonObject)GetCharacter( ) method (JsonObject)GetCOMHandle( ) method (JsonObject)
+
+GetDate( ) method (JsonObject)GetDatetime( ) method (JsonObject)GetDatetimeTZ( ) method (JsonObject)GetDecimal( ) method (JsonObject)GetHandle( ) method (JsonObject)GetInt64( ) method (JsonObject)GetInteger( ) method (JsonObject)GetJsonArray( ) method (JsonObject)GetJsonObject( ) method (JsonObject)GetJsonText( ) method (JsonObject)GetLogical( ) method (JsonObject)GetLongchar( ) method (JsonObject)GetMemptr( ) method (JsonObject)GetNames( ) method (JsonObject)GetRaw( ) method (JsonObject)GetRecid( ) method (JsonObject)GetRowid( ) method (JsonObject)GetType( ) method (JsonObject)Has( ) method (JsonObject)IsNull( ) method (JsonObject)Read( ) method (JsonObject)Remove( ) method (JsonObject)Set( ) method (JsonObject)SetNull( ) method (JsonObject)SetNumber( ) method (JsonObject)Write( ) method (JsonObject)WriteFile( ) method (JsonObject)WriteStream( ) method (JsonObject)Public Events
+This class does not define events.
+
+Notes
+The following example shows the constructor for JsonObject:
+
+In the above example, myObj is an empty object. The variable myLongchar is set to the value of "{ }".
+
+
+Progress.Json.ObjectModel.ObjectModelParser class
+This class is used to parse multiple sources of JSON streams.
+
+Serializable:
+Yes
+
+Constructors
+
+Super Class
+Progress.Json.JsonParser class on page 64
+
+Interfaces
+This class does not implement an interface.
+
+Public Properties
+This class does not define properties.
+
+Public Methods
+
+Parse( ) methodParseFile( ) methodPublic Events
+This class does not contain events.
+
+Notes
+The following example creates a parser and then parses JSON from the WebSpeed input stream:
+
+
+
+Progress.Lang.AppError class
+Progress.Lang.AppError is the super class of all application errors. An application error is simply any collection of data you need to provide necessary information about a condition.
+An application error can be raised either by using the RETURN ERROR or the UNDO, THROW statement.
+The following figure represents the hierarchy of ABL classes that provide Progress.Lang.AppError with all its features:
+
+
+
+
+
+Progress.Lang.ProError is the super class of all error objects in ABL. From Progress.Lang.Object it inherits the basic features of an ABL class. It also implements the Progress.Lang.Error interface which provides the basic properties and methods for handling errors.
+Progress.Lang.AppError adds the properties and methods needed for populating an AppError object with your error messages.
+You can create your own hierarchy of more complex AppError types by creating subclasses of AppError. When the AVM encounters the RETURN ERROR statement, it implicitly throws a Progress.Lang.AppError
+object and places any error string in the object's ReturnValue property. ReturnValue is included in the AppError object to provide a bridge between the older functionality of RETURN ERROR ErrorString and error objects. See ABL Error Handling, for more information.
+
+Serializable:
+Yes
+
+Constructors
+The following is the default constructor. This constructor creates an AppError object with an empty message list and does not set any properties.
+
+
+The following constructor creates an AppError object and assigns the first message on the object with the values from the ErrorMessage and MessageNumber arguments. It also sets the NumMessages property to
+1. This error message and message number can be accessed with the GetMessage(1) and
+GetMessageNum(1) methods.
+
+The following constructor creates an AppError object with the ReturnValue property set with the value of the ReturnValue parameter. This constructor is used when the AVM implicitly creates an AppError object for a RETURN ERROR ErrorString statement. You can also invoke this constructor directly (not common).
+
+Note: This constructor does not set an error message. If the AddMessage() method is not used to set one, no message is displayed if an object constructed this way is thrown and handled by default error handling.
+
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+ReturnValue property——Public Methods
+
+AddMessage( ) methodRemoveMessage( ) methodPublic Events
+This class does not contain events.
+
+Notes
+• All AppError instances, both those created implicitly and user-defined application errors, created with the NEW function (classes) appear on the SESSION:FIRST-OBJECT chain, just like any other user-defined object.
+
+See also
+CATCH statement, Progress.Lang.SysError class on page 91
+
+
+Progress.Lang.Class class
+Progress.Lang.Class provides type information about an ABL class or an interface. ABL provides a
+Progress.Lang.Class instance for each ABL class or interface type in the ABL session.
+
+This class is FINAL and cannot be inherited.
+
+Serializable:
+No
+
+Constructors
+This class contains only a private constructor; you cannot instantiate it directly.
+
+Super Class
+Progress.Lang.Object class
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+Package propertySuperClass propertyTypeName propertyPublic Methods
+
+GetClass( ) method (Progress.Lang.Class)GetConstructor( ) methodGetConstructors( ) methodGetEnumName( ) methodGetEnumNames( ) methodGetEnumValue( ) methodGetEnumValues( ) methodGetEvent( ) methodGetEvents( ) methodGetInterfaces( ) methodGetMethod( ) methodGetMethods( ) methodGetProperties( ) methodGetProperty( ) methodGetPropertyValue( ) methodGetTypeArguments( ) methodGetTypeParameters( ) methodGetVariable( ) methodGetVariables( ) methodHasStatics( ) methodHasWidgetPool( ) methodInvoke( ) method (Class)IsA( ) methodIsAbstract( ) methodIsEnum( ) methodIsFinal( ) methodIsFlagsEnum( ) methodIsGeneric( ) methodIsIndexed( ) methodIsInterface( ) method
+
+IsInstantiable( ) methodIsSerializable( ) methodNew( ) methodSetPropertyValue( ) methodPublic Events
+This class does not contain events.
+
+Notes
+• To obtain the object reference for the Progress.Lang.Class instance associated with a given ABL class or interface, you can use either the GetClass( ) method or the GET-CLASS function:
+• You can use the GetClass( ) method either as an instance method on an ABL class (any Progress.Lang.Object instance except a .NET type) or as a static method of Progress.Lang.Class using the following syntax:
+
+Where object-reference is the object reference to an ABL class instance for which you want to get the type information, expression is a CHARACTER expression that specifies the fully-qualified ABL object type name whose type information you want to get, and class-reference is the object reference for the Progress.Lang.Class instance containing that type information. For example:
+
+
+• Unlike the GetClass() method, GET-CLASS takes a type name as its argument instead of a CHARACTER expression that holds a type name. As a result, USING statements can be applied to the argument, and the compiler checks the type name at compile time. Use GET-CLASS with the following syntax:
+
+Where object-type-name is the type name of a class or interface, using the syntax described in the Type-name syntax reference entry.
+
+• You cannot explicitly delete a Progress.Lang.Class instance.
+• You can obtain additional information about a class's members using the Get methods listed above (e.g., GetConstructor( ), GetMethods( )) as well as the properties and methods of the Progress.Reflect.Constructor, Progress.Reflect.Event, Progress.Reflect.Method, Progress.Reflect.Property, and Progress.Reflect.Variable classes. See the entry of each class for more information.
+
+See also
+GET-CLASS function, Progress.Reflect.Constructor class on page 94, Progress.Reflect.Event class on page 95, Progress.Reflect.Method class on page 98, Progress.Reflect.Property class on page 100, Progress.Reflect.Variable class on page 100
+
+
+Progress.Lang.Enum class
+Progress.Lang.Enum provides a common set of methods that all ABL enums inherit. You cannot inherit from this class.
+Serializable:
+Yes
+
+Constructors
+This class contains only a private constructor; you cannot instantiate it directly.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces (beyond those it may inherit from its base class).
+
+Public Properties
+This class does not contain properties.
+
+Public Methods
+
+CompareTo( ) methodEquals( ) methodGetValue( ) methodToObject( ) methodToString( ) method (Object)—Public Events
+This class does not contain events.
+
+Notes
+• Although enums are implicitly class based, you cannot instantiate an enum using NEW. You must use the type-name syntax shown in the Enumeration member access entry to access the members defined in an enum or use the GetEnum( ) method to get an enum instance.
+
+
+
+Progress.Lang.Error interface
+The Progress.Lang.Error interface describes a common set of properties and methods that built-in ABL error classes implement. This interface cannot be implemented by a user-defined class. Instead, create a subclass of the Progress.Lang.AppError class to create your own type of ABL error object.
+This interface is also implemented by an OpenEdge-enhanced version of the .NET System.Exception class (OpenEdge-enhanced) on page 123. Because of this architecture, ABL recognizes .NET exceptions as error objects and ABL error handling features can recognize, handle, and rethrow .NET exceptions. The interface requires a class to implement the following properties:
+
+Public Properties
+
+CallStack propertyNumMessages propertySeverity propertyThe interface requires a class to implement the following methods:
+
+Public Methods
+
+GetMessage( ) method (Class)GetMessageNum( ) methodNotes
+• The Progress.Lang.Error interface is the error type that represents all possible errors in ABL, including
+.NET exceptions and STOP conditions with error messages. Specifying this interface in a CATCH statement creates an error handler that catches any error. For example:
+
+
+See also
+CATCH statement, Progress.Lang.AppError class on page 71, Progress.Lang.ProError class on page 86, Progress.Lang.StopError class on page 90, Progress.Lang.SysError class on page 91
+
+
+Progress.Lang.FlagsEnum class
+Progress.Lang.FlagsEnum provides a common set of methods that all ABL flag enums inherit. You cannot inherit from this class.
+Serializable:
+Yes
+
+Constructors
+This class contains only a private constructor; you cannot instantiate it directly.
+
+Super Class
+Progress.Lang.Enum class on page 76
+
+Interfaces
+This class does not implement interfaces (beyond those it may inherit from its base class).
+
+Public Properties
+This class does not contain properties.
+
+Public Methods
+
+IsFlagSet( ) methodToString( ) method (Object)Public Events
+This class does not contain events.
+
+Notes
+• There are three additional methods that you can use to set and unset flags for a flag enum type: the ToggleFlag( ) method, the SetFlag( ) method, and the UnsetFlag( ) method. These methods are not part of the implementation of Progress.Lang.FlagsEnum, but they are automatically available for all built-in and user-defined flag enums.
+
+
+Progress.Lang.LockConflict class
+The AVM throws an instance of the Progress.Lang.LockConflict class and raises the STOP condition when a time-out occurs while waiting for a record lock or when the user indicates they want to stop waiting.
+You can therefore catch instances of Progress.Lang.LockConflict in a CATCH block to trap each STOP condition raised by a time-out while waiting for a record lock. Its public properties provide information on the context in which the record lock is held.
+You cannot inherit from this class.
+
+Serializable:
+Yes
+
+Constructors
+The class constructors are reserved for system use only.
+
+Super Class
+Progress.Lang.Stop class on page 88
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+Device propertyTableName propertyUser propertyPublic Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events.
+
+Notes
+• To enable older behavior and prevent the AVM from throwing Progress.Lang.LockConflict objects, specify the Catch STOP (-catchStop) startup parameter with the value 0 (-catchStop 0).
+• You can specify the time-out period that an ABL application waits for the release of a record lock using the Lock Timeout (-lkwtmo) startup parameter.
+• In character mode only (running Linux, Unix, or character mode in Windows), the user can also press CTRL+C to cancel a wait on a record lock. Note that unlike any other AVM context, pressing this key in the context of waiting for a record lock in character mode both raises the STOP condition and throws a Progress.Lang.LockConflict object. In any other AVM context, pressing this key throws a Progress.Lang.UserInterrupt object instead of a LockConflict object. For more information, see the Progress.Lang.UserInterrupt class on page 92 description.
+• Like other class-based objects that are no longer referenced, the AVM automatically deletes LockConflict
+objects using garbage collection.
+
+See also
+CATCH statement, ON STOP phrase, Progress.Lang.Stop class on page 88
+
+
+Progress.Lang.MessagingError class
+The Progress.Lang.MessagingError class provides the functionality to retrieve error information when an error occurs in the underlying third-party messaging system.
+Progress.Lang.MessagingError inherits from Progress.Lang.SysError and therefore inherits all the common methods and properties needed for retrieving error information.
+
+Serializable:
+Yes
+
+Constructor(s)
+This class does not contain a constructor.
+
+Super Class
+Progress.Lang.SysError class on page 91
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events.
+
+See also
+CATCH statement, Progress.Lang.Error interface on page 77, Progress.Lang.ProError class on page 86
+
+
+Progress.Lang.MessagingErrorAbort class
+The AVM throws this error on a method when an error occurs such that the current transaction must be aborted.
+
+Serializable:
+Yes
+
+Constructor(s)
+This class does not contain a constructor.
+
+Super Class
+Progress.Lang.MessagingError class on page 79
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events.
+
+See also
+Progress.Lang.MessagingErrorFatal class on page 81, Progress.Lang.MessagingErrorRetriable class on page 81
+
+
+
+Progress.Lang.MessagingErrorFatal class
+The AVM throws this error on a method when a fatal error occurs that is not recoverable. The producer can no longer be used after this error.
+
+Serializable:
+Yes
+
+Constructor(s)
+This class does not contain a constructor.
+
+Super Class
+Progress.Lang.MessagingError class on page 79
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events.
+
+See also
+Progress.Lang.MessagingErrorAbort class on page 80, Progress.Lang.MessagingErrorRetriable class on page 81
+
+
+Progress.Lang.MessagingErrorRetriable class
+The AVM throws this error on a method when a retriable error occurs. The method may then be retried.
+
+Serializable:
+Yes
+
+Constructor(s)
+This class does not contain a constructor.
+
+Super Class
+Progress.Lang.MessagingError class on page 79
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events.
+
+See also
+Progress.Lang.MessagingErrorAbort class on page 80, Progress.Lang.MessagingErrorFatal class on page 81
+
+
+Progress.Lang.Object class
+Progress.Lang.Object provides a common set of properties and methods that all classes inherit. This set of properties and methods let you write common code to use with any user-defined class.
+Progress.Lang.Object is the root (ultimate super) class for all ABL classes and for all .NET classes referenced in an ABL session.
+
+Serializable:
+Yes
+
+Constructors
+
+Super Class
+This class does not inherit a super class.
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+NEXT-SIBLING propertyPREV-SIBLING property–
+Public Methods
+
+Clone( ) method (Progress.Lang.Object)Equals( ) methodGetClass( ) method (Progress.Lang.Object)ToString( ) method (Object)Public Events
+This class does not contain events.
+
+Notes
+You typically use this class to define a variable or parameter to represent more than one user-defined class type. For example:
+• When defining a field in a temp-table as a class, you must specify the class as Progress.Lang.Object.
+• When defining common methods to use with object instances of different user-defined classes, you must define their parameters using the Progress.Lang.Object class.
+
+
+Progress.Lang.OERequestInfo class
+Contains information pertaining to a specific remote procedure call and is transparently passed between application server sessions and clients in order to send and return contextual information. The information is relevant to the execution of a given request and can include client type, client version, client context identifier (CCID), and a deep copy of a client principal object.
+OpenEdge provides instances of this object that you can reference using handle attributes of any server object or asynchronous request object created in an application server client session, and using attributes of the SESSION system handle in an application server session (see the Notes for this class).
+
+Serializable:
+No
+
+Constructors
+This class does not contain a constructor.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+AdapterType propertyAgentId propertyClientContextId propertyProcedureName propertyRequestId propertySessionId property (OERequestInfo)ThreadId propertyVersionInfo property–
+Public Methods
+
+GetClientPrincipal( ) method (Progress.Lang.OERequestInfo)SetClientPrincipal( ) methodPublic Events
+This class does not contain events.
+
+Notes
+• In an application server (ABL) client session, you can reference separate instances of this class using the following attributes of a Server object handle or Asynchronous request object handle:
+• REQUEST-INFO attribute
+• RESPONSE-INFO attribute
+The instance is created the first time you access either of these attributes.
+• In an application server session, you can reference separate instances of this class using the following attributes of the SESSION system handle:
+• CURRENT-REQUEST-INFO attribute
+• CURRENT-RESPONSE-INFO attribute
+The instance is created the first time you access either of these attributes.
+• The AgentId property, the SessionId property (OERequestInfo), and the ThreadId property are for use with PAS for OpenEdge only.
+
+See also
+CURRENT-REQUEST-INFO attribute, CURRENT-RESPONSE-INFO attribute, REQUEST-INFO attribute, RESPONSE-INFO attribute
+
+
+Progress.Lang.OEVersionInfo class
+Contains information that identifies the specified software component of OpenEdge. OpenEdge provides instances of this class that you can reference using the LOCAL-VERSION-INFO attribute on the SESSION system handle and the VersionInfo property of the Progress.Lang.OERequestInfo class on page 83.
+
+Serializable:
+No
+
+Constructors
+This class does not contain a constructor.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+
+
+OEMajorVersion propertyOEMinorVersion propertyOEMaintVersion propertyOEClientType property––Public Methods
+This class does not contain any methods.
+
+Public Events
+This class does not contain events.
+
+Notes
+The OpenEdge software component that the properties of this class identify depends on the source of the object reference used to obtain this class instance.
+
+See also
+LOCAL-VERSION-INFO attribute, Progress.Lang.OERequestInfo class on page 83
+
+
+Progress.Lang.ParameterList class
+Stores the parameter values for a specific method or constructor call. Progress.Lang.ParameterList is a built-in ABL class that provides a common set of properties and methods in support of specific overloaded versions of the Invoke( ) method and the New( ) method of the Progress.Lang.Class class. A Progress.Lang.ParameterList object stores the parameter values for a specified method or constructor call and is used to pass all parameters.
+
+Serializable:
+No
+
+Constructor
+
+
+number-parameters
+Number of parameters that the object will contain.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+
+
+NumParameters property (ParameterList)–Public Methods
+
+Clear( ) method (Class)SetParameter( ) method (Class)Public Events
+This class does not contain events.
+
+Notes
+• The SetParameter( ) method is used to provide data for each parameter element.
+
+See also
+Progress.Lang.Class class on page 73, Invoke( ) method (Class), New( ) method
+
+
+Progress.Lang.ProError class
+Progress.Lang.ProError is the super class for all ABL built-in and user-defined classes that represent errors in the ABL structured error handling model. You cannot directly inherit from this class. Instead, the immediate subclasses of this class represent the two major types of classes in ABL:
+• Progress.Lang.SysError represents any error generated by the AVM.
+• Progress.Lang.AppError represents any error your application defines.
+Progress.Lang.ProError inherits from Progress.Lang.Object and therefore inherits all the common methods and properties needed for managing user-defined objects in ABL. It also implements the Progress.Lang.Error interface which provides all the properties and methods relevant for an error object.
+Specifically, this class provides the functionality to retrieve error messages, error numbers, and the contents of the error call stack.
+
+Serializable:
+Yes
+
+Constructors
+The class constructors are reserved for system use only.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+Progress.Lang.Error interface on page 77
+
+
+
+CallStack propertyNumMessages propertySeverity propertyPublic Methods
+
+GetMessage( ) method (Class)GetMessageNum( ) methodPublic Events
+This class does not contain events.
+
+Notes
+Like any other class-based object that is no longer referenced, the AVM automatically deletes both
+Progress.Lang.SysError objects and Progress.Lang.AppError objects using garbage collection.
+
+See also
+CATCH statement, Progress.Lang.AppError class on page 71, Progress.Lang.Error interface on page 77, Progress.Lang.SysError class on page 91
+
+
+Progress.Lang.SoapFaultError class
+Represents an ABL Soap fault response message generated by the AVM during a Web Service call from an ABL application.
+You can access the object using a CATCH statement for the Progress.Lang.SoapFaultError object. The SoapFault property in this object contains the handle to the Soap-Fault object. The Soap-Fault-Detail property of the handle provides the full detail about the Soap fault.
+SoapFaultError is a type of system error, and therefore you cannot instantiate the object with the NEW function (classes) or create a user-defined class that inherits from it.
+
+Definition
+This class is FINAL and cannot be inherited.
+
+Serializable:
+Yes
+
+Constructors
+The class constructors are reserved for system use only.
+
+Super Class
+Progress.Lang.SysError class on page 91
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+
+
+SoapFault property––Public Methods
+This class does not contain methods.
+
+Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Notes
+• SoapFaultError objects are put on the SESSION:FIRST-OBJECT chain when they are caught by a
+CATCH block.
+• Uncaught SoapFaultError objects are automatically deleted by the AVM and removed from the
+SESSION:FIRST-OBJECT chain.
+• Like other error objects, an error of type SoapFaultError can be thrown from an application server and handled by a CATCH block on an ABL client. However, the handle-based object that the SoapFault property points to is not recreated during the deserialization of the SoapFaultError object. For more information on serialization rules for objects, see the Parameter passing syntax entry.
+
+See also
+CATCH statement, Progress.Lang.SysError class on page 91
+
+
+Progress.Lang.Stop class
+When the AVM executes the STOP statement, it creates an instance of the Progress.Lang.Stop class. Progress.Lang.Stop is also the immediate super class for the following built-in objects that the AVM throws in response to the associated STOP conditions:
+• Progress.Lang.LockConflict — Thrown when a time-out occurs while waiting for a record lock or when the user indicates they want to stop waiting
+• Progress.Lang.StopAfter — Thrown when a time-out occurs in response to the STOP-AFTER setting on a DO, FOR, or REPEAT block
+• Progress.Lang.UserInterrupt — Thrown when the user interrupts the AVM by pressing the OS interrupt key
+You can therefore catch instances of Progress.Lang.Stop and any of its subclasses in a CATCH block to trap each associated STOP condition.
+You cannot inherit from this class.
+
+Serializable:
+Yes
+
+Constructors
+The class constructors are reserved for system use only.
+
+
+
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+CallStack property–Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events.
+
+Notes
+• To enable older behavior and prevent the AVM from throwing Progress.Lang.Stop objects, specify the Catch STOP (-catchStop) startup parameter with the value 0 (-catchStop 0).
+• By catching a Stop object with a CATCH block and testing the object's ultimate derived class type, you can identify what caused the AVM to raise the STOP condition and throw the object in the first place.
+• The CallStack property is always populated for a STOP condition, so there is no need to set the
+ERROR-STACK-TRACE attribute of the SESSION handle.
+• Like any other class-based object that is no longer referenced, the AVM automatically deletes Stop objects using garbage collection.
+
+See also
+CATCH statement, ON STOP phrase, Progress.Lang.LockConflict class on page 78, Progress.Lang.StopAfter class on page 89, Progress.Lang.StopError class on page 90, Progress.Lang.UserInterrupt class on page 92, STOP statement
+
+
+Progress.Lang.StopAfter class
+When enabled, the AVM throws an instance of this Progress.Lang.StopAfter class and raises the STOP
+condition when a time-out occurs in response to the STOP-AFTER setting on a DO, FOR, or REPEAT block.
+You can therefore catch instances of Progress.Lang.StopAfter in a CATCH block to trap each STOP
+condition raised by a time-out for a block that exceeds its STOP-AFTER setting, if any. You cannot inherit from this class.
+Serializable:
+Yes
+
+Constructors
+The class constructors are reserved for system use only.
+
+Super Class
+Progress.Lang.Stop class on page 88
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events.
+
+Notes
+• To enable older behavior and prevent the AVM from throwing Progress.Lang.StopAfter objects, specify the Catch STOP (-catchStop) startup parameter with the value 0 (-catchStop 0).
+• Like any other class-based object that is no longer referenced, the AVM automatically deletes StopAfter
+objects using garbage collection.
+
+See also
+CATCH statement, ON STOP phrase, DO statement, FOR statement, Progress.Lang.Stop class on page 88, REPEAT statement
+
+
+Progress.Lang.StopError class
+When the AVM encounters certain unexpected error conditions, it throws an instance of the Progress.Lang.StopError class containing messages associated with the originating error, and raises the STOP condition.
+Progress.Lang.StopError inherits common error handling abilities from Progress.Lang.ProError, which implements the Progress.Lang.Error interface. You can therefore catch this object in a CATCH block to trap error messages associated with the STOP condition.
+You cannot inherit from this class.
+
+Serializable:
+Yes
+
+Constructors
+The class constructors are reserved for system use only.
+
+Super Class
+Progress.Lang.SysError class on page 91
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events.
+
+Notes
+• To enable older behavior and prevent the AVM from throwing Progress.Lang.StopError objects, specify the Catch STOP (-catchStop) startup parameter with the value 0 (-catchStop 0).
+• StopError objects are put on the SESSION:FIRST-OBJECT chain when they are caught by a CATCH
+block.
+• Uncaught StopError objects are automatically deleted by the AVM and removed from the
+SESSION:FIRST-OBJECT chain.
+
+See also
+CATCH statement, ON STOP phrase, Progress.Lang.Error interface on page 77, Progress.Lang.ProError class on page 86 , Progress.Lang.Stop class on page 88
+
+
+Progress.Lang.SysError class
+When an ABL statement raises the error condition, the AVM throws an error. These errors are represented by the Progress.Lang.SysError class. Progress.Lang.SysError inherits common error handling abilities from Progress.Lang.ProError.
+You cannot inherit from this class.
+
+Serializable:
+Yes
+
+Constructors
+The class constructors are reserved for system use only.
+
+Super Class
+Progress.Lang.ProError class on page 86
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events.
+
+Notes
+• SysError objects are put on the SESSION:FIRST-OBJECT chain when they are caught by a CATCH block.
+• Uncaught SysError objects are automatically deleted by the AVM and removed from the SESSION:FIRST-OBJECT chain.
+
+See also
+CATCH statement, Progress.Lang.AppError class on page 71, Progress.Lang.Error interface on page 77, Progress.Lang.ProError class on page 86, Progress.Lang.SoapFaultError class on page 87, Progress.Lang.StopError class on page 90
+
+
+Progress.Lang.UserInterrupt class
+The AVM throws an instance of the Progress.Lang.UserInterrupt class and raises the STOP condition when the AVM detects that the user has pressed the STOP key (usually mapped to CTRL+C on Unix/Linux or CTRL+Break in Windows).
+You can therefore catch instances of Progress.Lang.UserInterrupt in a CATCH block to trap each STOP
+condition raised when the user interrupts the AVM in this way. You cannot inherit from this class.
+Serializable:
+Yes
+
+Constructors
+The class constructors are reserved for system use only.
+
+Super Class
+Progress.Lang.Stop class on page 88
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events.
+
+Notes
+• To enable older behavior and prevent the AVM from throwing Progress.Lang.UserInterrupt objects, specify the Catch STOP (-catchStop) startup parameter with the value 0 (-catchStop 0).
+• In character mode only (running Linux, Unix, or character mode in Windows), when in the context of waiting for a record lock, pressing CTRL+C cancels the wait and causes the AVM to raise the STOP condition and throw a Progress.Lang.LockConflict object (instead of throwing a Progress.Lang.UserInterrupt object as in other AVM contexts). For more information, see Progress.Lang.LockConflict class on page 78.
+• Like other class-based objects that are no longer referenced, the AVM automatically deletes UserInterrupt
+objects using garbage collection.
+
+See also
+CATCH statement, ON STOP phrase, Progress.Lang.Stop class on page 88
+
+
+Progress.Reflect.AccessMode enumeration
+This enumeration describes the access mode of a given class member. Its members are returned as values of the AccessMode property of Progress.Reflect.Constructor, Progress.Reflect.Event, Progress.Reflect.Method, Progress.Reflect.Property, and Progress.Reflect.Variable instances.
+This class is FINAL and cannot be inherited.
+
+Serializable:
+Yes
+
+Super Class
+Progress.Lang.Enum class on page 76
+
+Members
+
+MemberDescriptionPublicThe class member is public.PackageProtectedThe class member is package-protected.ProtectedThe class member is protected.PackagePrivateThe class member is package-private.PrivateThe class member is private.
+Public Methods
+
+GetEnum( ) method–
+
+Progress.Reflect.Constructor class
+Progress.Reflect.Constructor provides information about an ABL or .NET class constructor. This class is FINAL and cannot be inherited.
+Serializable:
+No
+
+Constructors
+This class only contains a private constructor.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces.
+
+Public Properties
+
+AccessMode propertyName property (Reflect)NumParameters property (Reflect)OriginatingClass property––Public Methods
+
+GetParameters( ) methodInvoke( ) method (Constructor)ToString( ) method (Reflect)–
+
+Progress.Reflect.DataType enumeration
+This enumeration describes the data type of a given class member. Its members are returned for the ReturnType property of Progress.Reflect.Method instances and for the DataType property of Progress.Reflect.Variable, Progress.Reflect.Parameter, and Progress.Reflect.Property instances.
+This class is FINAL and cannot be inherited.
+
+Serializable:
+Yes
+
+Progress.Reflect.Event class
+
+Super Class
+Progress.Lang.Enum class on page 76
+
+Members
+
+AnyType1BufferByte2CharacterCOMHandleDataSetDataSetHandleDateDateTimeDateTimeTZDecimalDouble2Float2HandleInt64IntegerLogicalLongcharMemptrObjectRawRecidRowidShort2SingleCharacter2TableTableHandleUnsignedByte2UnsignedInt2UnsignedInt642UnsignedShort2Void3Public Methods
+
+GetEnum( ) method–
+
+Progress.Reflect.Event class
+Progress.Reflect.Event provides information about an ABL or .NET class event. This class is FINAL and cannot be inherited.
+Serializable:
+No
+
+Constructors
+This class only contains a private constructor.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+1 Indicates that any data type could be returned or passed as a parameter, including an array of any data type.
+2 Applies only to .NET objects.
+3 Indicates a VOID method. This member is only returned for a method object.
+
+Interfaces
+This class does not implement interfaces.
+
+Public Properties
+
+AccessMode propertyDeclaringClass propertyIsAbstract propertyIsOverride propertyIsStatic propertyName property (Reflect)NumHandlerParameters propertyOriginatingClass property–Public Methods
+
+GetHandlerParameters( ) methodToString( ) method (Reflect)–
+
+Progress.Reflect.Flags enumeration
+This enumeration describes the type of class members you want as results from GetConstructor(), GetConstructors(), GetEvent(), GetEvents(), GetMethod(), GetMethods(), GetProperty(), GetProperties(), GetVariable(), or GetVariables(). Because Progress.Reflect.Flags is a flag enumeration, multiple flags can be set at one time.
+This class is FINAL and cannot be inherited.
+
+Serializable:
+Yes
+
+Super Class
+Progress.Lang.FlagsEnum class on page 77
+
+Members
+
+MemberDescriptionPublicReturns public class members.PackageProtectedReturns package-protected class members.ProtectedReturns protected class members.PackagePrivateReturns package-private class members.PrivateReturns private class members.StaticReturns static class members.
+Progress.Reflect.Flags enumeration
+
+
+MemberDescriptionInstanceReturns instance class members.DeclaredOnlyReturns class members only declared on the given class type, excluding inherited members.Public Methods
+
+GetEnum( ) methodSetFlag( ) methodToggleFlag( ) methodUnsetFlag( ) methodNotes
+• The members for Progress.Reflect.Flags can be thought of as three groups:
+• Access mode flags: Public, PackageProtected, Protected, PackagePrivate, Private
+• Scope flags: Static, Instance
+• Class-level flags: DeclaredOnly
+No results will be returned unless you're using at least one flag from the access mode set and one flag from the scope set are indicated. (The exception to this is the GetConstructor() method, which will raise an error if the Static flag is set. See the GetConstructor( ) method entry for details.)
+• You can specify more than one flag from the access mode and scope groups. For example, setting both Public and Private flags for use with GetMethods() will return all methods that are either public or private as long as they satisfy any other criteria you indicate.
+• By default, a method used with a Progress.Reflect.Flags parameter will return class members from the entire class hierarchy unless DeclaredOnly is specified. (The exception to this is the GetConstructor() method, which will not return a super class's constructor. See the GetConstructor( ) method entry for details.)
+• Use bitwise OR to set multiple flags. This code fragment will set a Progress.Reflect.Flags instance to be used to indicate public, static class members:
+
+Alternatively, use SetFlag( ) to set multiple flags. The following code achieves the same result as the previous example:
+
+
+
+
+Progress.Reflect.Method class
+Progress.Reflect.Method provides information about an ABL or .NET class method. This class is FINAL and cannot be inherited.
+Serializable
+No
+
+Constructors
+This class only contains a private constructor.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces.
+
+Public Properties
+
+AccessMode propertyDeclaringClass propertyIsAbstract propertyIsFinal propertyIsOverride propertyIsStatic propertyName property (Reflect)NumParameters property (Reflect)OriginatingClass propertyReturnExtent propertyReturnType propertyReturnTypeName propertyPublic Methods
+
+GetParameters( ) methodInvoke( ) method (Method)ToString( ) method (Reflect)–
+
+Progress.Reflect.Parameter class
+Progress.Reflect.Parameter provides parameter information for an ABL or .NET class constructor, event handler, or method.
+This class is FINAL and cannot be inherited.
+
+Serializable
+No
+
+Constructors
+This class only contains a private constructor.
+
+Progress.Reflect.ParameterMode enumeration
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces.
+
+Public Properties
+
+DataType propertyDataTypeName property (Reflect)Extent propertyMode propertyName property (Reflect)Position property (Parameter)Public Methods
+
+ToString( ) method (Reflect)–
+
+Progress.Reflect.ParameterMode enumeration
+This enumeration describe the mode of a given parameter. Its members are returned as values of the Mode property of Progress.Reflect.Parameter instances. Because Progress.Reflect.ParameterMode is a flag enumeration, multiple flags can be set at one time.
+This class is FINAL and cannot be inherited.
+
+Serializable:
+Yes
+
+Super Class
+Progress.Lang.FlagsEnum class on page 77
+
+Members
+
+MemberDescriptionInputThe parameter is INPUT.
+OutputThe parameter is OUTPUT.InputOutputThe parameter is INPUT-OUTPUT. This member is a combination of the Input and Output members.AppendAPPEND is specified on the parameter definition (for a temp table or ProDataSet).BindBIND is specified on the parameter definition (for a temp table or ProDataSet).
+Public Methods
+
+GetEnum( ) methodSetFlag( ) methodToggleFlag( ) methodUnsetFlag( ) method
+
+Progress.Reflect.Property class
+Progress.Reflect.Property provides information about an ABL or .NET class property. This class is FINAL and cannot be inherited.
+Serializable:
+No
+
+Constructors
+This class only contains a private constructor.
+
+Super Class
+Progress.Reflect.Variable class on page 100
+
+Interfaces
+This class does not implement interfaces.
+
+Public Properties
+
+CanRead propertyCanWrite propertyGetterAccessMode propertyIsAbstract propertyIsFinal propertyIsIndexed propertyIsOverride propertySetterAccessMode property–
+
+Progress.Reflect.Variable class
+Progress.Reflect.Variable provides information about an ABL or .NET class data member or property. This class is FINAL and cannot be inherited.
+Serializable
+No
+
+Constructors
+This class only contains a private constructor.
+
+Progress.Security.PAMStatus class
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces.
+
+Public Properties
+
+AccessMode propertyDataType propertyDataTypeName property (Reflect)DeclaringClass propertyExtent propertyIsStatic propertyName property (Reflect)OriginatingClass property–Public Methods
+
+Get( ) methodSet( ) method (Reflect)ToString( ) method (Reflect)–
+
+Progress.Security.PAMStatus class
+A class whose static members are the valid status codes that can be returned by an ABL authentication callback procedure, which can be called during the execution of an OpenEdge user authentication operation. See OpenEdge Programming Interfaces for more information about authentication callback procedures.
+
+Definition
+This class is FINAL and cannot be inherited.
+
+Serializable:
+No
+
+Constructors
+This class only contains a private constructor.
+
+Super Class
+Progress.Lang.Object class on page 82
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+AccessDenied propertyAccessRevoked propertyAccountDisabled propertyAccountExpired propertyAuthenticationAccess propertyAuthenticationFailed property
+
+Custom propertyInvalidConfiguration propertyLoginDenied propertyLoginLockout propertyMaxTries propertyMissingCredentials propertyPasswordExpired propertyPermissionDenied propertySuccess propertyUnknownUser property––Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events.
+
+Notes
+• An authentication callback procedure must return one of the values specified on the above table, otherwise the AVM raises a standard authentication failure error (PAMStatus:AuthenticationFailed).
+• The values associated with each property of this class conform to Identity Management (IdM) standards. The AVM maps them to the corresponding values defined by the RFC 86 PAM (Pluggable Authentication Modules) API specification.
+
+
+Progress.Util.DateTimeHelper class
+(Windows only; .NET)
+A helper class that provides a set of static Create( ) method overloads for initializing DATETIME values in ABL.
+
+Note: This class is used primarily by the Visual Designer during code generation. You should not expect to use this class directly.
+
+
+Serializable:
+No
+
+Constructors
+This class does not contain a constructor.
+
+Super Class
+This class does not inherit a super class.
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+
+Create( ) method (DATETIME)–Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+See also
+Progress.Util.DecimalHelper class on page 103, Progress.Util.StringHelper class on page 106
+
+
+Progress.Util.DecimalHelper class
+(Windows only; .NET)
+A helper class that provides a set of static Create( ) method overloads for initializing DECIMAL values in ABL.
+
+Note: This class is used primarily by the Visual Designer during code generation. You should not expect to use this class directly.
+
+
+Serializable:
+No
+
+Constructors
+This class does not contain a constructor.
+
+Super Class
+This class does not inherit a super class.
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+
+Create( ) method (DECIMAL)–Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+See also
+Progress.Util.DateTimeHelper class on page 102, Progress.Util.StringHelper class on page 106
+
+
+
+Progress.Util.EnumHelper class
+(Windows only; .NET)
+A helper class that provides a set of static methods you can use to perform operations on .NET enumeration types in ABL.
+
+Serializable:
+No
+
+Constructors
+This class does not contain a constructor.
+
+Super Class
+This class does not inherit a super class.
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties.
+
+Public Methods
+
+Add( ) method (Progress.Util.EnumHelper)And( ) methodAreEqual( ) methodAreNotEqual( ) methodComplement( ) methodIsGreater( ) methodIsGreaterOrEqual( ) methodIsLess( ) methodIsLessOrEqual( ) methodOr( ) methodSubtract( ) methodXor( ) methodPublic Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Notes
+• The functionality for all of the methods of this class, except for Add( ) and Subtract( ), can be accomplished for .NET enums using ABL operators (e.g., you can use GE or >= operator instead of IsGreaterOrEqual( ), NOT operator (bitwise) instead of Complement( ), etc.). These methods are still supported for backward compatibility.
+
+• Some Progress.Util.EnumHelper methods return a System.Enum class instance. If you want to use the returned System.Enum instance as a different enumeration type, you must cast the instance to that specific type using the CAST function. For example:
+
+
+• For information on the System.Enum class and .NET enumeration types, refer to the .NET class library documentation.
+• For information on user-defined enumerations in ABL, see the ENUM statement.
+
+See also
+CAST function, DELETE OBJECT statement
+
+
+Progress.Util.ResourceHelper class
+(Windows only; .NET)
+A helper class that provides a static method you can use to retrieve the contents of a .NET XML resource (.resx) file associated with a given .NET form class.
+
+Serializable:
+No
+
+Constructors
+This class does not contain a constructor.
+
+Super Class
+This class does not inherit a super class.
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+
+Load( ) method (Class)–
+Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Notes
+For more information on using this ResourceHelper class, see the topics on creating and using forms and controls in Use .NET Classes in ABL Applications.
+
+See also
+Progress.Windows.Form class on page 108
+
+
+Progress.Util.StringHelper class
+(Windows only; .NET)
+A helper class that provides a set of static Create( ) method overloads for initializing CHARACTER values in ABL.
+
+Note: This class is used primarily by the Visual Designer during code generation. You should not expect to use this class directly.
+
+
+Serializable:
+No
+
+Constructors
+This class does not contain a constructor.
+
+Super Class
+This class does not inherit a super class.
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+
+Create( ) method (CHARACTER)–Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+See also
+Progress.Util.DateTimeHelper class on page 102, Progress.Util.DecimalHelper class on page 103
+
+
+
+Progress.Util.TypeHelper class
+(Windows only; .NET)
+A helper class that provides a static method you can use to get a System.Type instance for a .NET class using a fully-qualified class name. Use this helper class when you need to get the type of an object for which you have no instance and cannot instantiate an instance.
+
+Serializable:
+No
+
+Constructors
+This class does not contain a constructor.
+
+Super Class
+This class does not inherit a super class.
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+
+GetType( ) method (TypeHelper)–Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Note
+If the class has not been previously referenced, the assembly containing the class must be listed in the
+assemblies.xml file, which needs to be on the PROPATH at run time.
+
+
+Progress.Web.IWebHandler interface
+The Progress.Web.IWebHandler interface provides common functionality for classes designed to handle HTTP requests received by WebSpeed applications running on a Progress Application Server. This interface is implemented by OpenEdge.Web.WebHandler, but if you create your own handler class that does not extend OpenEdge.Web.WebHandler, your class must also implement this interface.
+Classes that implement this interface are registered in the openedge.properties file of the application.
+
+Public Properties
+The interface has no public properties.
+
+Public Methods
+
+HandleRequest( ) method (IWebHandler)–
+
+Progress.Windows.Form class
+(Windows only; GUI for .NET)
+Lets you create the following types of .NET forms in an ABL session (that co-exist with traditional ABL windows and dialog boxes):
+• A modal form, which is similar to an ABL modal dialog box.
+• A non-modal form, which is similar to an ABL non-modal window.
+• A non-modal Multiple-Document Interface (MDI) parent form, which is not supported by the traditional ABL GUI.
+
+Serializable:
+No
+
+Constructors
+
+Super Class
+System.Windows.Forms.Form class from .NET
+
+Interfaces
+Progress.Windows.IForm interface on page 113
+
+Public Properties
+
+DisposeDialogOnClose propertyNextForm propertyPrevForm propertyProWinHandle propertyPublic Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Example
+The following example shows a simple ABL class that inherits from Progress.Windows.Form create a non-modal form with two buttons that looks behaves like a dialog box, except that it is non-modal:
+
+
+USING System.Windows.Forms.* FROM ASSEMBLY.
+CLASS DemoForm INHERITS Progress.Windows.Form:
+
+/* Variables for buttons on the form */ DEFINE PRIVATE VARIABLE OkBtn	AS Button.
+DEFINE PRIVATE VARIABLE CancelBtn AS Button.
+CONSTRUCTOR DemoForm ( ):
+InitializeComponent( ).
+END CONSTRUCTOR.
+/* Event handlers for buttons on the form */ METHOD PUBLIC VOID okButton_Click
+( sender AS System.Object, e AS System.EventArgs ):
+THIS-OBJECT:DialogResult = DialogResult:Ok. THIS-OBJECT:Close ( ).
+END METHOD.
+METHOD PRIVATE VOID cancelButton_Click
+( sender AS System.Object, e AS System.EventArgs ):
+THIS-OBJECT:DialogResult = DialogResult:Cancel. THIS-OBJECT:Close ( ).
+END METHOD.
+/* Display and wait for this non-modal form to close.
+    The caller blocks at a call to this method	*/ METHOD PUBLIC VOID Wait ( ):
+WAIT-FOR Application:Run ( THIS-OBJECT ).
+END METHOD.
+METHOD PRIVATE VOID InitializeComponent ( ):
+/* Instantiate button classes */ OkBtn	= NEW Button ( ).
+CancelBtn = NEW Button ( ).
+/* Initialize the form and buttons */ THIS-OBJECT:Text	= "<form title>". OkBtn:Text	= "OK".
+CancelBtn:Text	= "Cancel". OkBtn:DialogResult	= DialogResult:OK. CancelBtn:DialogResult = DialogResult:Cancel.
+/* Set the size and location of the form and buttons */ THIS-OBJECT:Size	= NEW System.Drawing.Size( 300, 300 ). OkBtn:Size	= NEW System.Drawing.Size( 75, 23 ).
+OkBtn:Location	= NEW System.Drawing.Point( 121, 231 ).
+OkBtn:Anchor	= CAST( Progress.Util.EnumHelper:Or (AnchorStyles:Bottom,
+AnchorStyles:Right ), AnchorStyles).
+CancelBtn:Size	= NEW System.Drawing.Size( 75, 23 ). CancelBtn:Location = NEW System.Drawing.Point( 205, 231 ).
+CancelBtn:Anchor	= CAST( Progress.Util.EnumHelper:Or (AnchorStyles:Bottom,
+AnchorStyles:Right ), AnchorStyles ).
+/* Subscribe to events */ OkBtn:Click:Subscribe( okButton_Click ).
+CancelBtn:Click:Subscribe( cancelButton_Click ).
+
+
+
+To instantiate DemoForm and display the non-modal form, you can run a procedure that contains the following code:
+
+For more examples, see the topics on creating and using forms and controls in Use .NET Classes in ABL Applications.
+
+Notes
+• A modal form, which is similar to an ABL dialog box, has the following characteristics:
+• The form is displayed using the .NET ShowDialog( ) method invoked from a WAIT-FOR statement.
+• The form must be closed before you can access any other non-modal forms.
+• The form does not appear in the system taskbar.
+• The form typically has a dialog box border style.
+• The form typically has one or more buttons to close the form (such as OK or Cancel).
+• The form has no affordances in the title bar for minimizing or maximizing the form.
+• The form cannot contain a menu bar.
+
+• A non-modal form, which is similar to an ABL window, has the following characteristics:
+• The form is displayed using either the .NET Show( ) method or the Application:Run( ) method invoked from a WAIT-FOR statement.
+• The form does not prevent access to other forms.
+• The form does appear in the system taskbar.
+• The form typically has a window border style.
+• The form has affordances in the title bar for minimizing, maximizing, and closing the form.
+• The form typically contains a menu bar.
+
+• A Multiple-Document Interface (MDI) parent form, which is the foundation for an MDI application, has the following characteristics:
+• The form is a non-modal container form.
+• The form is displayed using the .NET Application:Run( ) method invoked from a WAIT-FOR
+statement.
+• The form does not prevent access to other forms.
+
+• The form contains a main menu bar, toolbar, and status bar.
+• The form has affordances in the title bar for minimizing, maximizing, and closing the form.
+• The form does appear in the system taskbar.
+• The form has one or more associated child forms that provide for user interaction with the application. Child forms can be minimized, maximized, and resized within the MDI container.
+
+Note: To associate a child form with a parent form, use the Progress.Windows.Form class to create a child form and set the child's .NET MDIParent property to the parent form.
+
+
+• The form contains a client area in which all child forms are displayed.
+• When a parent form is closed, the FormClosing events of all child forms are raised before the parent form's FormClosing event is raised.
+
+• To display a modal form, you must invoke the WAIT-FOR statement with the form's input-blocking
+ShowDialog( ) method, which does the following:
+• Suspends execution of the current block.
+• Prepares and displays the specified form in a wait (blocking) state until the .NET form is closed by either the user or the application.
+Execution resumes after the specified form is closed.
+
+Note: Unlike in a .NET application, invoking the ShowDialog( ) method in an ABL session does not, by itself, cause modal forms to display. Instead, you must invoke the WAIT-FOR statement to display these forms. For more information, see the WAIT-FOR statement (.NET objects) reference entry in this book.
+
+For information on the .NET ShowDialog( ) method inherited from the System.Windows.Forms.Form
+class, refer to the .NET class library documentation.
+• To display a non-modal form, you must invoke the WAIT-FOR statement with the input-blocking
+Application:Run( ) method, which does the following:
+• Suspends execution of the current block
+• Prepares the specified form by invoking its .NET Show( ) method
+• Displays the specified form in a wait (blocking) state until the form is closed by either the user or the application
+This statement will also display any additional non-modal forms that you have previously prepared by setting their Visible property to TRUE and invoking their .NET Show( ) method. After the specified form is closed, any additional non-modal forms currently displayed are also closed and execution resumes.
+If you do not specify a form, the WAIT-FOR statement displays and blocks for input on any non-modal forms that have been previously prepared by setting their Visible property to TRUE and invoking their .NET Show( ) method. In this case, all non-modal forms currently displayed can be closed and execution can resume only after the application invokes the Application:Exit( ) method.
+
+Note: Unlike in a .NET application, invoking the Show( ) method in an ABL session does not, by itself, cause non-modal forms to display. Instead, you must invoke the WAIT-FOR statement to display these forms. For more information, see the WAIT-FOR statement (.NET objects) reference entry in this book.
+
+
+For information on the .NET Show( ) and Application:Run( ) methods inherited from the
+System.Windows.Forms.Form class, refer to the .NET class library documentation.
+• To handle a .NET form event while the WAIT-FOR statement is blocking execution, you must write and subscribe an event handler to the specified event prior to invoking the WAIT-FOR statement. For more information on event handlers for .NET events, see the Class Events Reference.
+• In most cases, it is best to create a delegate class that encapsulates the form definition and related methods. For information on using delegate classes for forms, see Use .NET Classes in ABL Applications.
+• For information on the public class members inherited from the System.Windows.Forms.Form class, refer to the .NET class library documentation.
+
+See also
+Progress.Util.ResourceHelper class on page 105, WAIT-FOR statement (.NET and ABL)
+
+
+Progress.Windows.FormProxy class
+(Windows only; GUI for .NET)
+A .NET form wrapper for an ABL window. ABL provides a Progress.Windows.FormProxy instance for each ABL window that you create in an ABL session where a .NET form is referenced.
+
+Note: When mixing ABL windows and .NET forms in a single application, you can access all windows and forms on a single form chain using the same form-based properties and attributes.
+
+
+Serializable:
+No
+
+Constructors
+This class contains a protected constructor; you cannot instantiate it directly.
+
+Super Class
+System.Object class from .NET
+
+Interfaces
+Progress.Windows.IForm interface on page 113
+
+Public Properties
+
+NextForm propertyPrevForm propertyProWinHandle propertyPublic Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Notes
+• This class allows you to manage ABL windows along with .NET forms in an ABL session. It allows ABL windows to participate in the session form chain (starting with SESSION:FIRST-FORM and ending with SESSION:LAST-FORM) and to be referenced by form-oriented ABL elements such as the ACTIVE-FORM system reference. However, all program interaction with ABL windows must still be accomplished using ABL window attributes, methods, and events on the window handle (specified by the ProWinHandle property). For information on using ABL windows along with .NET forms in your application, see Use .NET Classes in ABL Applications.
+• ABL does not create an instance of this class for the ABL default window, as the default window is typically not used in a GUI application.
+• ABL handles all creation and destruction for instances of this class. Therefore, instances of this class never appear on the session object chain, and their NEXT-SIBLING property and PREV-SIBLING property (inherited from the Progress.Lang.Object class on page 82) are always set to the Unknown value (?).
+• For information on the public class members inherited from the System.Object class, refer to the .NET class library documentation.
+
+See also
+ACTIVE-FORM system reference, FIRST-FORM attribute, LAST-FORM attribute
+
+
+Progress.Windows.IForm interface
+(Windows only; GUI for .NET)
+Provides for interoperability between ABL GUI windows and .NET forms. All OpenEdge .NET form-based classes in ABL implement this interface.
+
+Public Properties
+
+NextForm propertyPrevForm propertyProWinHandle propertyPublic Methods
+This interface does not contain method prototypes.
+
+Notes
+• There is no need for user-defined classes to implement this interface.
+• For information on the use of this interface when working with the form chain in an OpenEdge session, see
+Use .NET Classes in ABL Applications.
+
+See also
+Progress.Windows.Form class on page 108, Progress.Windows.FormProxy class on page 112
+
+
+Progress.Windows.MDIChildForm class
+(Windows only; GUI for .NET)
+
+A .NET form designed for use as an MDI child form that allows you to embed the client area of an ABL window for display in the client area of the form. This allows the widgets in the ABL client area to be displayed in the
+.NET MDI child form, but also allows you to interact with these widgets much as if they were still displayed in the original ABL window.
+
+Serializable:
+No
+
+Constructor
+
+
+mdi-parent
+An object reference to a .NET form that you have initialized as an MDI parent form.
+
+abl-window
+A handle to an ABL window whose client area you want to embed in the MDI child form.
+
+Super Class
+Progress.Windows.Form class on page 108
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+EmbeddedWindow property––Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Notes
+• To embed the client area of an ABL window in a .NET MDI child form, instantiate this class to create the form, setting the constructor parameters to reference the parent MDI form and the ABL window whose client area you want to embed. If you later want to change the ABL window whose client area is embedded in this form, you can set its EmbeddedWindow property to the handle of a different ABL window. Note that you can make this change only if the previous ABL window has not been realized, or after you first delete this realized window before resetting the property. For more information on how ABL supports the behavior of the ABL window and its client area embedded in a Progress.Windows.MdiChildForm, see the EmbeddedWindow property reference entry.
+• The client area of a Progress.Windows.MdiChildForm is designed to contain only the ABL widgets from the client area of a single ABL window. If you want to create an MDI child form that contains the client
+
+areas of multiple ABL windows, initialize a Progress.Windows.Form object as an MDI child form and add a
+Progress.Windows.WindowContainer object to this form for each ABL window.
+
+Caution: You can also add .NET controls to the client area of a Progress.Windows.MdiChildForm by using the Add( ) method on the inherited System.Windows.Forms.Control+ControlCollection inner class referenced by the inherited Controls property. However, Progress Software Corporation recommends that you do not use this method to add .NET controls to a Progress.Windows.MdiChildForm because this can result in unexpected control and form behavior.
+
+
+• The menus from an embedded ABL window are not added either to the MDI child or its parent forms. You must add any associated menu and toolbar functionality to the appropriate form using corresponding .NET controls.
+• The message and status areas of an embedded ABL window are not included in the MDI child form. Any messages normally displayed in the message area of the ABL window appear in an ABL alert box and any status messages normally displayed in the status area of the ABL window are ignored.
+• As you resize the form, either manually or programmatically, the AVM automatically resizes the embedded client area of the ABL window to fill the client area of the Progress.Windows.MdiChildForm.
+• The AVM passes all unhandled keystrokes in an embedded ABL client area to the form that contains it. This means that you can interact with menus and use menu and toolbar accelerator keys even when focus is on the embedded client area.
+
+See also
+Progress.Windows.WindowContainer class on page 122
+
+
+Progress.Windows.MDIChildRadForm class
+(Windows only; GUI for .NET)
+Progress.Windows.MDIChildRadForm is a .NET form based on the RadForm class available in Telerik UI for WinForms. It has the same functionality as described in the entry for the Progress.Windows.MDIChildForm class on page 113.
+
+Note: Using this class requires that Telerik be installed.
+
+
+Serializable:
+No
+
+Constructor
+
+
+mdi-parent
+An object reference to a .NET form that you have initialized as an MDI parent form.
+
+abl-window
+A handle to an ABL window whose client area you want to embed in the MDI child form.
+
+Super Class
+Telerik.WinControls.UI.RadForm class
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+See also
+Progress.Windows.MDIChildForm class on page 113
+
+
+Progress.Windows.MDIChildRadRibbonForm class
+(Windows only; GUI for .NET)
+Progress.Windows.MDIChildRadRibbonForm is a .NET form based on the RadRibbonForm class available in Telerik UI for WinForms. It has the same functionality as described in the entry for the Progress.Windows.MDIChildForm class on page 113.
+
+Note: Using this class requires that Telerik be installed.
+
+
+Serializable:
+No
+
+Constructor
+
+
+mdi-parent
+An object reference to a .NET form that you have initialized as an MDI parent form.
+
+abl-window
+A handle to an ABL window whose client area you want to embed in the MDI child form.
+
+Super Class
+Telerik.WinControls.UI.RadRibbonForm class
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+See also
+Progress.Windows.MDIChildForm class on page 113
+
+
+
+Progress.Windows.MDIChildShapedForm class
+(Windows only; GUI for .NET)
+Progress.Windows.MDIChildShapedForm is a .NET form based on the ShapedForm class available in Telerik UI for WinForms. It has the same functionality as described in the entry for the Progress.Windows.MDIChildForm class on page 113.
+
+Note: Using this class requires that Telerik be installed.
+
+
+Serializable:
+No
+
+Constructor
+
+
+mdi-parent
+An object reference to a .NET form that you have initialized as an MDI parent form.
+
+abl-window
+A handle to an ABL window whose client area you want to embed in the MDI child form.
+
+Super Class
+Telerik.WinControls.UI.ShapedForm class
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+See also
+Progress.Windows.MDIChildForm class on page 113
+
+
+Progress.Windows.OERadForm class
+(Windows only; GUI for .NET)
+Progress.Windows.OERadForm is a .NET form based on the RadForm class available in Telerik UI for WinForms. It has the same functionality as described in the entry for the Progress.Windows.Form class on page 108.
+
+Note: Using this class requires that Telerik be installed.
+
+
+Serializable:
+No
+
+Constructors
+
+Super Class
+Telerik.WinControls.UI.RadForm class
+
+Interfaces
+Progress.Windows.IForm interface on page 113
+
+See also
+Progress.Windows.Form class on page 108
+
+
+Progress.Windows.OERadRibbonForm class
+(Windows only; GUI for .NET)
+Progress.Windows.OERadRibbonForm is a .NET form based on the RadRibbonForm class available in Telerik UI for WinForms. It has the same functionality as described in the entry for the Progress.Windows.Form class on page 108.
+
+Note: Using this class requires that Telerik be installed.
+
+
+Serializable:
+No
+
+Constructors
+
+Super Class
+Telerik.WinControls.UI.RadRibbonForm class
+
+Interfaces
+Progress.Windows.IForm interface on page 113
+
+See also
+Progress.Windows.Form class on page 108
+
+
+
+Progress.Windows.OEShapedForm class
+(Windows only; GUI for .NET)
+Progress.Windows.OEShapedForm is a .NET form based on the ShapedForm class available in Telerik UI for WinForms. It has the same functionality as described in the entry for the Progress.Windows.Form class on page 108.
+
+Note: Using this class requires that Telerik be installed.
+
+
+Serializable:
+No
+
+Constructors
+
+Super Class
+Telerik.WinControls.UI.ShapedForm class
+
+Interfaces
+Progress.Windows.IForm interface on page 113
+
+See also
+Progress.Windows.Form class on page 108
+
+
+Progress.Windows.UserControl class
+(Windows only; GUI for .NET)
+A control container class that lets you combine and use a set of user-defined controls as a single control in ABL.
+
+Serializable:
+No
+
+Constructors
+
+Super Class
+System.Windows.Forms.UserControl class from .NET
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+This class does not contain properties (beyond those it inherits from its base class).
+
+Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Example
+The following example shows a simple class that creates a user control container that contains a text box and a button:
+
+
+The following class instantiates this user control and adds it to a form:
+
+To instantiate DemoUserControlForm and display the form with the user control, you can run a procedure that contains the following code:
+
+For more examples, see the topics on creating and using forms and controls in Use .NET Classes in ABL Applications.
+
+Notes
+• Once you have created an instance of a control container and added your existing controls to the container, you can add the container instance to a form as you would any single control. The controls included in the control container are displayed when the form is displayed.
+• For more information on using this control container class, see the topics on creating and using forms and controls in Use .NET Classes in ABL Applications.
+• For information on the public class members inherited from the System.Windows.Forms.UserControl
+class, refer to the .NET class library documentation.
+
+See also
+Progress.Windows.Form class on page 108
+
+
+
+Progress.Windows.WindowContainer class
+(Windows only; GUI for .NET)
+A control container that allows you to embed the client area of an ABL window for display in a .NET form. When added to a .NET form, this container allows the embedded ABL client area to appear as though it is added directly to the client area of the .NET form. This allows the widgets in the ABL client area to be displayed in the .NET form, but also allows you to interact with these widgets much as if they were still displayed in the original ABL window.
+
+Serializable:
+No
+
+Constructor
+
+Super Class
+System.Windows.Forms.UserControl class from .NET
+
+Interfaces
+This class does not implement interfaces (beyond those it inherits from its base class).
+
+Public Properties
+
+EmbeddedWindow property––Public Methods
+This class does not contain methods (beyond those it inherits from its base class).
+
+Public Events
+This class does not contain events (beyond those it inherits from its base class).
+
+Notes
+• To embed the client area of an ABL window in a .NET form, set the EmbeddedWindow property of the WindowContainer to the handle of the ABL window and add the WindowContainer to a Progress.Windows.Form class on page 108 instance. For more information on how ABL supports the behavior of the ABL window and its client area embedded in a form using a Progress.Windows.WindowContainer, see the EmbeddedWindow property reference entry.
+• You can use multiple instances of this class to embed the client areas of one or more ABL windows in the client area of any single .NET form. However, a Progress.Windows.MDIChildForm is designed to embed the client area of only one ABL window that you associate with the object. For more information, see the Progress.Windows.MDIChildForm class on page 113 reference entry.
+• The menus from an embedded ABL window are not added to any form to which you add the WindowContainer. You must add any associated menu or toolbar functionality to the form using corresponding .NET controls.
+
+• For any WindowContainer that you add to a Progress.Windows.Form, you must programmatically resize and reposition the WindowContainer to fit the client area of the form as it is being resized.
+• When you embed the client area of an ABL window in a form, the window and its widgets do not interact directly with other .NET controls that may be added to the form. This means, for example, the embedded client area does not participate in the tab order of the form. Thus, there is no way to tab into the embedded client area from another .NET control or WindowContainer, and there is no way to tab out of the embedded client area into another .NET control or WindowContainer. All tabbing within an embedded client area stays within the WindowContainer where it is embedded.
+• The AVM passes all unhandled keystrokes in an embedded ABL client area to the form that contains it. This means that you can interact with menus and use menu and toolbar accelerator keys even when focus is on the embedded client area.
+
+See also
+Progress.Windows.MDIChildForm class on page 113
+
+
+System.Exception class (OpenEdge-enhanced)
+(Windows only; .NET)
+.NET errors are represented by error objects known as exceptions, and the .NET System.Exception class is the base class for all .NET Exception objects. To enable an ABL application to trap .NET exceptions that are raised from .NET objects, OpenEdge has enhanced System.Exception to implement the Progress.Lang.Error interface. By implementing this interface, most .NET exceptions that are raised in the ABL context can be handled by both traditional and structured ABL error handling constructs in much the same way as ABL errors.
+When using structured error handling, you can catch and throw a System.Exception object and consult the same properties and methods as for a Progress.Lang.ProError class on page 86.
+
+Serializable:
+No
+
+Constructors
+
+Super Class
+System.Object class from .NET
+
+Interfaces
+Progress.Lang.Error interface on page 77
+
+Public Properties
+
+CallStack propertyNumMessages propertySeverity property
+Public Methods
+
+GetMessage( ) method (Class)GetMessageNum( ) methodPublic Events
+This class does not contain events.
+
+Notes
+• Some .NET UI controls trap and handle errors before they get to the AVM. However, some kinds of exceptions, such as System.AccessViolationException, cause Application:Run( ) to terminate and raise a STOP condition on the executing WAIT-FOR or PROCESS EVENTS statement. You can trap this condition using the ON STOP phrase of an enclosing block. However, because Application:Run( ) exits and all displayed forms are closed, the most that you can do is to clean-up and attempt a graceful close of your application.
+• All .NET exceptions have a Message property from the System.Exception base class. In addition, if there was a chain of errors that lead to the current exception, an InnerException property references the most recent Exception object in that chain of Exception objects, and so on, for any number of inner exceptions. Each inner exception, then, is just another Exception object (or something derived from it), with its own Message property. In addition, specific types of Exception objects have additional information available from custom properties. For example, the FileNotFoundException has a FileName property, which is the name of the file that cannot be found.
+Your ABL application can access all of the messages in the .NET Exception object (i.e., the message from the object itself plus any from inner exceptions) using the methods of Progress.Lang.Error. However, if you want to access any additional information such as the FileName custom property of the FileNotFoundException object, you must do so using the native properties and methods of the .NET Exception object itself.
+
+See also
+PROCESS EVENTS statement, Progress.Lang.Error interface on page 77, WAIT-FOR statement (.NET and ABL)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

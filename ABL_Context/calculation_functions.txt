@@ -1,0 +1,440 @@
+ABSOLUTE function
+   Returns the absolute value of a numeric value.
+
+  Syntax
+
+       ABSOLUTE ( n )
+
+
+   n
+                An integer or decimal expression. The return value is the same format as n.
+
+   Example
+   This procedure calculates the number of miles you drive between highway exit ramps.
+   r-abs.p
+
+       DEFINE VARIABLE mark-start AS DECIMAL NO-UNDO.
+       DEFINE VARIABLE mark-finish AS DECIMAL NO-UNDO.
+       DEFINE VARIABLE units       AS LOGICAL NO-UNDO FORMAT "miles/kilometers".
+
+       FORM
+         mark-start LABEL "Mile marker for highway on-ramp" SKIP
+         mark-finish LABEL "Mile marker next to your exit" SKIP(1)
+         units LABEL "Measure in <m>iles or <k>ilometers" SKIP(1)
+         WITH FRAME question SIDE-LABELS
+         TITLE "This program calculates distance driven.".
+
+       UPDATE mark-start mark-finish units WITH FRAME question.
+
+       DISPLAY
+         "You have driven" ABSOLUTE(mark-start - mark-finish) units
+         WITH NO-LABELS FRAME answer.
+
+
+DECIMAL function
+   Converts an expression of any data type, with the exception of BLOB, CLOB, and RAW, to a DECIMAL value.
+
+   Syntax
+
+       DECIMAL ( expression )
+
+
+   expression
+                If expression is a CHARACTER, then it must be valid for conversion into a number. (For example,
+                1.67 is valid but 1.x3 is not valid.) If expression is LOGICAL, then the result is 0 if expression is
+                FALSE and 1 if expression is TRUE. If expression is a DATE, then the result is the number of days
+                from 1/1/4713 B.C. to that date. If the value of expression is the Unknown value (?), then the result
+                is also the Unknown value (?).
+
+   Example
+   The example procedure lets the user enter new values for CreditLimit in a special form. If the user enters the letter
+   a, the procedure uses the standard a credit of 5000; if the user enters b, the procedure uses a value of 2000; if the user
+   presses RETURN, the procedure uses a value of 1000. Otherwise, the user can enter any value for CreditLimit.
+   The DECIMAL function converts the value entered into a decimal value.
+                                                                                                
+   r-decml.p
+
+     DEFINE VARIABLE new-max AS CHARACTER NO-UNDO FORMAT "x(10)".
+
+     REPEAT:
+       PROMPT-FOR Customer.CustNum WITH FRAME credit.
+       FIND Customer USING Customer.CustNum.
+       DISPLAY Customer.CustNum Customer.Name Customer.CreditLimit
+         WITH FRAME credit DOWN.
+       DISPLAY "Enter one of:" SKIP(1)
+         "a = 5000" SKIP
+         "b = 2000" SKIP
+         "RETURN = 1000"
+         "A dollar value"
+         WITH FRAME vals COLUMN 60.
+       SET new-max WITH FRAME credit.
+             IF new-max = "a" THEN Customer.CreditLimit = 5000.
+       ELSE IF new-max = "b" THEN Customer.CreditLimit = 2000.
+       ELSE IF new-max > "0" AND new-max < "999,999.99" THEN
+         Customer.CreditLimit = DECIMAL(new-max).
+       ELSE Customer.CreditLimit = 1000.
+
+       DISPLAY Customer.CreditLimit WITH FRAME credit.
+     END.
+
+
+GET-FLOAT function
+
+Returns the 4-byte floating-point value at the specified memory location as a DECIMAL value.
+
+   Syntax
+
+       GET-FLOAT ( source , position )
+
+
+   source
+              A function or variable that returns a RAW or MEMPTR value. If source is the Unknown value (?),
+              GET-FLOAT returns the Unknown value (?).
+   position
+              An integer value greater than 0 that indicates the byte position where you want to find the information.
+              If position is greater than the length of source, the AVM returns the Unknown value (?). If position
+              is less than 1, the AVM generates a run-time error.
+
+   Examples
+   For examples of how to use the GET-FLOAT function, see the GET-BYTE function on page 587 reference entry.
+
+   Notes
+   •   This function supports byte-swapping only if source is a MEMPTR data type. The function will first examine the
+       byte-order setting of the MEMPTR and then swap the bytes appropriately before interpreting them. The AVM does
+       not swap the bytes in the MEMPTR's memory, but does the byte-swap as it creates the return value.
+   •   For more information on using the MEMPTR and RAW data types, see OpenEdge Programming Interfaces.
+
+   
+
+GET-INT64 function
+   Returns the signed 64-bit value at the specified memory location as an INT64 value.
+
+   Syntax
+
+       GET-INT64 ( source , position )
+
+
+   source
+              A function or variable that returns a RAW or MEMPTR value. If source is the Unknown value (?),
+              GET-INT64 returns the Unknown value (?).
+   position
+              An integer value greater than 0 that indicates the byte position where you want to find the information.
+              If position is greater than the length of source, the AVM returns the Unknown value (?). If position
+              is less than 1, the AVM generates a run-time error.
+
+   Example
+   The following example demonstrates how to get values in and out of RAW and MEMPTR values:
+
+   r-getint64.p
+
+     DEFINE       VARIABLE    myint64      AS   INT64       NO-UNDO INITIAL 7888999000.
+     DEFINE       VARIABLE    myint        AS   INTEGER     NO-UNDO INITIAL 2345.
+     DEFINE       VARIABLE    myraw        AS   RAW         NO-UNDO.
+     DEFINE       VARIABLE    result64     AS   INT64       NO-UNDO.
+     DEFINE       VARIABLE    result1      AS   INTEGER     NO-UNDO.
+     DEFINE       VARIABLE    mymem        AS   MEMPTR      NO-UNDO.
+
+     ASSIGN
+       PUT-LONG(myraw,1)             =   myint
+       result1                       =   GET-LONG(myraw,1)
+       PUT-INT64(myraw,1)            =   myint64
+       result64                      =   GET-INT64(myraw,1).
+
+     MESSAGE "raw version " result1 result64.
+
+     ASSIGN
+       result1                       =   ?
+       result64                      =   ?
+       SET-SIZE(mymem)               =   40
+       PUT-LONG(mymem,1)             =   myint
+       result1                       =   GET-LONG(mymem,1)
+       PUT-INT64(mymem,1)            =   myint64
+       result64                      =   GET-INT64(mymem,1).
+
+     MESSAGE "memptr version " result1 result64.
+
+     result1 = get-int64(mymem,1) NO-ERROR.
+
+     MESSAGE "store getint64 in int gives" ERROR-STATUS:GET-MESSAGE(1).
+     MESSAGE "doing put-long of in64" myint64.
+
+     PUT-LONG(mymem,1) = myint64 NO-ERROR.
+
+     MESSAGE "storeint64 with put-long gives" ERROR-STATUS:GET-MESSAGE(1).
+     SET-SIZE(mymem) = 0.
+
+
+INT64 function
+   Takes any data type and returns an INT64 value, if the conversion is possible. This function takes most common data
+   types except for RAW and MEMPTR.
+
+Syntax
+
+  INT64 ( expression )
+
+
+expression
+             A constant, field name, variable name, or expression whose value can be of any data type except for
+             RAW and MEMPTR. The function behaves as described for the following data types:
+             •   If the value of expression is a CHARACTER, it must be valid for conversion into a number (for
+                 example, "1.67" is valid, "1.x3" is not).
+             •   If expression is an object reference (CLASS), the result is the ABL-generated ID for the class
+                 instance.
+             •   If expression is a reference to an instance of an enum, the result is the underlying numeric value
+                 of that instance.
+             •   If expression is a LOGICAL, the result is 0 if expression is FALSE and the result is 1 if expression
+                 is TRUE.
+             •   If expression is a DATE, the result is the number of days from 1/1/4713 B.C. to that day. If
+                 expression is the Unknown value (?), the result is the Unknown value (?).
+
+Example
+The following example demonstrates how to use the INT64 function to convert a variety of data types to the INT64 data
+type:
+r-int64.p
+
+  DEFINE VARIABLE myint   AS INTEGER   NO-UNDO
+    INITIAL 2000000000 FORMAT "->>,>>>,>>>,>>>".
+  DEFINE VARIABLE myint64 AS INT64     NO-UNDO
+    INITIAL 333444555666 FORMAT "->>,>>>,>>>,>>>,>>>".
+  DEFINE VARIABLE mychar AS CHARACTER NO-UNDO INITIAL                                "2234.3".
+  DEFINE VARIABLE mydec   AS DECIMAL   NO-UNDO INITIAL                               "240,234.05".
+  DEFINE VARIABLE mybool AS LOGICAL    NO-UNDO INITIAL                               TRUE.
+  DEFINE VARIABLE mydate AS DATE       NO-UNDO INITIAL                               01/01/06.
+  DEFINE VARIABLE myhdl   AS HANDLE    NO-UNDO.
+
+  DEFINE FRAME x WITH TITLE "emptyframe".
+  myhdl = FRAME x:handle.
+
+  MESSAGE        "integer    of   integer expression is" INTEGER(myint).
+  MESSAGE        "integer    of   int64 expression is" INTEGER(myint64 - 333000000000).
+  MESSAGE        "integer    of   int64 >2gig is" INTEGER(myint64).
+  MESSAGE        "integer    of   char is" INTEGER(mychar).
+  MESSAGE        "integer    of   dec is" INTEGER(mydec).
+  MESSAGE        "integer    of   bool is" INTEGER(mybool).
+  MESSAGE        "integer    of   date is" INTEGER(mydate).
+  MESSAGE        "integer    of   handle is" INTEGER(myhdl).
+  MESSAGE        " ".
+  MESSAGE        "int64   of   integer expression is" INT64(myint).
+  MESSAGE        "int64   of   int64 expression is" INT64(myint64 - 333000000000).
+  MESSAGE        "int64   of   int64 >2gig is" INT64(myint64).
+  MESSAGE        "int64   of   char is" INT64(mychar).
+  MESSAGE        "int64   of   dec is" INT64(mydec).
+  MESSAGE        "int64   of   bool is" INT64(mybool).
+  MESSAGE        "int64   of   date is" INT64(mydate).
+  MESSAGE        "int64   of   handle is" INT64(myhdl).
+  MESSAGE        " ".
+
+
+LOG function
+   Calculates the logarithm of an expression using a specified base and returns that logarithm as a DECIMAL value.
+
+   Syntax
+
+       LOG ( expression [ , base ] )
+
+
+   expression
+                A decimal expression that you want the logarithm of. Expression must be greater than 0.
+   base
+                A numeric expression that is the base you want to use. If you do not specify a base, LOG returns the
+                natural logarithm, base (e). Base must be greater than 0 but not 1.
+
+   Example
+   This procedure prompts the user for a base and a number, and then displays the log of the number. The VALIDATE
+   option on the UPDATE statement ensures that the user enters a base value greater than 1 and a number greater than 0.
+   r-log.p
+
+       DEFINE VARIABLE base   AS DECIMAL NO-UNDO FORMAT ">>>,>>>.9999".
+       DEFINE VARIABLE number AS DECIMAL NO-UNDO.
+
+       REPEAT:
+         UPDATE base VALIDATE(base > 1, "Base must be greater than 1").
+         REPEAT:
+            UPDATE number VALIDATE(number > 0, "Number must be positive").
+            DISPLAY number LOG(number, base) LABEL "LOG(NUMBER, BASE)".
+         END.
+       END.
+
+
+
+   Notes
+   •   The LOG function is accurate to approximately 10 decimal places.
+   •   After converting the base and exponent to floating-point format, the LOG function uses standard system routines.
+       On some machines, the logarithm routines do not handle large numbers well and might cause your terminal to hang.
+   •   If expression or base are less than or equal to 0, the Unknown value (?) is returned. If base is 1, a runtime error
+       occurs.
+
+
+MAXIMUM function
+   Compares two or more values and returns the largest value.
+
+   Syntax
+
+       MAXIMUM ( expression , expression [ , expression ] ... )
+
+   expression
+                A constant, field name, variable name, or expression. If there is a mixture of decimal and integer data
+                types, decimal type is returned.
+
+   Example
+   In this procedure, if the CreditLimit value is under 20,000, the procedure adds 10,000 to that value. Otherwise, the
+   procedure sets CreditLimit to 30,000. The MAXIMUM function determines the greater of the original CreditLimit
+   value and the new cred-lim2 value.
+   r-maxmum.p
+
+       DEFINE VARIABLE cred-lim2 AS DECIMAL NO-UNDO FORMAT ">>,>>9.99".
+
+       FOR EACH Customer NO-LOCK:
+         cred-lim2 = IF Customer.CreditLimit < 20000 THEN
+            Customer.CreditLimit + 10000 ELSE 30000.
+         DISPLAY Customer.CreditLimit cred-lim2
+            MAXIMUM(cred-lim2, Customer.CreditLimit)
+              LABEL "Maximum of these two values".
+       END.
+
+
+
+   Notes
+   •   When comparing character values, if at least one of the character fields is defined as case sensitive, then MAXIMUM
+       treats all of the values as case sensitive for the sake of the comparisons. If none of the values is case sensitive,
+       MAXIMUM treats lowercase letters as if they were uppercase letters.
+   •   You cannot compare data of different DATE, DATETIME, and DATETIME-TZ data types to each other using
+       MAXIMUM. You must first convert different date and datetime data types to the same data type before doing a
+       comparison between them.
+
+
+MINIMUM function
+   Compares two or more values and returns the smallest.
+
+   Syntax
+
+       MINIMUM ( expression , expression[ , expression]... )
+
+
+   expression
+                A constant, field name, variable name, or expression. If there is a mixture of decimal and integer data
+                types, decimal type is returned.
+
+   Example
+   This procedure prompts the user for an item number and how many of the item they want. If the number of items a user
+   wants (stored in the want variable) is the minimum of the want variable and the OnHand field, the procedure displays
+   an "enough in stock" message. Otherwise, the procedure displays a "not enough in stock" message.
+   r-minmum.p
+
+       DEFINE VARIABLE want NO-UNDO LIKE on-hand LABEL "How many do you want?".
+       DEFINE VARIABLE ans AS LOGICAL NO-UNDO.
+
+       REPEAT:
+         PROMPT-FOR Item.ItemNum want.
+         FIND Item NO-LOCK USING Item.ItemNum.
+         ans = FALSE.
+         IF MINIMUM(INPUT want, Item.OnHand) = INPUT want THEN DO:
+            MESSAGE "We have enough" Item.ItemName "in stock.".
+            MESSAGE "Any other items to check?" UPDATE ans.
+            IF NOT ans THEN LEAVE.
+         END.
+         ELSE DO:
+            MESSAGE "We only have" Item.OnHand Item.ItemName "in stock.".
+            MESSAGE "Any other items to check?"
+            UPDATE ans.
+            IF NOT ans THEN LEAVE.
+         END.
+       END.
+
+   Notes
+   •   When comparing character values, if at least one of the character fields is defined as case sensitive, then MINIMUM
+       treats all of the values as case sensitive for the sake of the comparisons. If none of the values is case sensitive,
+       MINIMUM treats lowercase letters as if they were uppercase letters.
+   •   You cannot compare data of different DATE, DATETIME, and DATETIME-TZ data types to each other using
+       MINIMUM. You must first convert different date and datetime data types to the same data type before doing a
+       comparison between them.
+
+ 
+
+
+MODULO operator
+   Determines the remainder after division.
+
+   Syntax
+
+       expression MODULO base
+
+
+   expression
+                An integer expression. If the expression could result in a decimal value, then that value will be rounded
+                before the MODULO operation occurs. This may or may not produce a result that is sensible for your
+                business logic. For code readability, such an expression should be explicitly converted to an integer
+                expression with attention to whether or not a rounded or truncated integer is correct for your application.
+                See the INTEGER, ROUND, and TRUNCATE functions
+   base
+                A positive integer expression that is the modulo base. For example, angles measured in degrees use a
+                base of 360 for modulo arithmetic. 372 MODULO 360 is 12.
+
+   Example
+   This procedure determines the number of trucks required to ship a given quantity of material, and how much material
+   is left over from a less than full truck load:
+   r-modulo.p
+
+       REPEAT:
+        SET qty-avail AS INTEGER LABEL "Qty. Avail.".
+        SET std-cap AS INTEGER LABEL "Std. Truck Capacity".
+        DISPLAY TRUNCATE(qty-avail / std-cap,0) FORMAT ">,>>9" LABEL "# Full Loads"
+
+          qty-avail MODULO std-cap LABEL "Qty. Left".
+       END.
+
+
+ROUND function
+   Rounds a decimal expression to a specified number of places after the decimal point.
+                                                                                                   
+   Syntax
+
+       ROUND ( expression , precision )
+
+
+   expression
+                A decimal expression.
+   precision
+                A non-negative integer expression whose value is the number of places you want in the decimal result
+                of the ROUND function.
+
+   Example
+   This procedure increases all CreditLimit values by 10 percent, rounding those values to the nearest $100:
+   r-round.p
+
+       FOR EACH Customer:
+         DISPLAY Customer.CustNum Customer.Name Customer.CreditLimit.
+         Customer.CreditLimit = ROUND((Customer.CreditLimit * 1.1) / 100 ,0) * 100.
+         PAUSE.
+         DISPLAY Customer.CreditLimit.
+       END.
+
+
+SQRT function
+   Returns the square root (as a DECIMAL value) of an expression you specify.
+
+   Syntax
+
+       SQRT ( expression )
+
+
+   expression
+                A numeric expression. If the value of the expression is negative, SQRT returns the Unknown value
+                (?).
+
+   Example
+   This procedure prompts for a number and then displays the square root of that number:
+                                                                                                        
+   r-sqrt.p
+
+       DEFINE VARIABLE iNum AS INTEGER NO-UNDO FORMAT ">,>>9"
+         LABEL "Enter a number between 1 and 9,999".
+
+       REPEAT WITH SIDE-LABELS CENTERED
+         TITLE "SQUARE ROOT GENERATOR" COLUMN 20 1 DOWN:
+         DISPLAY SKIP(2).
+         SET iNum SKIP(2).
+         DISPLAY "The square root of " + STRING(iNum) + " is" FORMAT "x(27)"
+            SQRT(num) FORMAT ">>>.9999".
+       END.
+

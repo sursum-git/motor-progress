@@ -1,0 +1,182 @@
+ADD TABLE "SursumQueryJob"
+  AREA "Schema Area"
+  DUMP-NAME "sursumqueryjob"
+
+ADD FIELD "jobId" OF "SursumQueryJob" AS character
+  FORMAT "x(60)"
+  INITIAL ""
+  POSITION 2
+
+ADD FIELD "jobStatus" OF "SursumQueryJob" AS character
+  FORMAT "x(20)"
+  INITIAL "queued"
+  POSITION 3
+
+ADD FIELD "executionMode" OF "SursumQueryJob" AS character
+  FORMAT "x(20)"
+  INITIAL ""
+  POSITION 4
+
+ADD FIELD "requestJson" OF "SursumQueryJob" AS character
+  FORMAT "x(32000)"
+  INITIAL ""
+  POSITION 5
+
+ADD FIELD "planJson" OF "SursumQueryJob" AS character
+  FORMAT "x(32000)"
+  INITIAL ""
+  POSITION 6
+
+ADD FIELD "requestContextJson" OF "SursumQueryJob" AS character
+  FORMAT "x(32000)"
+  INITIAL ""
+  POSITION 7
+
+ADD FIELD "workerContextJson" OF "SursumQueryJob" AS character
+  FORMAT "x(32000)"
+  INITIAL ""
+  POSITION 8
+
+ADD FIELD "createdAt" OF "SursumQueryJob" AS datetime
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  POSITION 9
+
+ADD FIELD "startedAt" OF "SursumQueryJob" AS datetime
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  POSITION 10
+
+ADD FIELD "finishedAt" OF "SursumQueryJob" AS datetime
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  POSITION 11
+
+ADD FIELD "lockedAt" OF "SursumQueryJob" AS datetime
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  POSITION 12
+
+ADD FIELD "heartbeatAt" OF "SursumQueryJob" AS datetime
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  POSITION 13
+
+ADD FIELD "lockedByAgent" OF "SursumQueryJob" AS character
+  FORMAT "x(80)"
+  INITIAL ""
+  POSITION 14
+
+ADD FIELD "lockedByPid" OF "SursumQueryJob" AS character
+  FORMAT "x(40)"
+  INITIAL ""
+  POSITION 15
+
+ADD FIELD "lockedByWorker" OF "SursumQueryJob" AS character
+  FORMAT "x(80)"
+  INITIAL ""
+  POSITION 16
+
+ADD FIELD "lockedByMode" OF "SursumQueryJob" AS character
+  FORMAT "x(20)"
+  INITIAL ""
+  POSITION 17
+
+ADD FIELD "attempts" OF "SursumQueryJob" AS integer
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  POSITION 18
+
+ADD FIELD "maxAttempts" OF "SursumQueryJob" AS integer
+  FORMAT "->,>>>,>>9"
+  INITIAL "3"
+  POSITION 19
+
+ADD FIELD "nextRunAt" OF "SursumQueryJob" AS datetime
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  POSITION 20
+
+ADD FIELD "resultPath" OF "SursumQueryJob" AS character
+  FORMAT "x(260)"
+  INITIAL ""
+  POSITION 21
+
+ADD FIELD "recordsReturned" OF "SursumQueryJob" AS integer
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  POSITION 22
+
+ADD FIELD "hasMore" OF "SursumQueryJob" AS logical
+  FORMAT "yes/no"
+  INITIAL "no"
+  POSITION 23
+
+ADD FIELD "errorCode" OF "SursumQueryJob" AS character
+  FORMAT "x(80)"
+  INITIAL ""
+  POSITION 24
+
+ADD FIELD "errorMessage" OF "SursumQueryJob" AS character
+  FORMAT "x(320)"
+  INITIAL ""
+  POSITION 25
+
+ADD FIELD "errorDetail" OF "SursumQueryJob" AS character
+  FORMAT "x(1000)"
+  INITIAL ""
+  POSITION 26
+
+ADD INDEX "jobId" ON "SursumQueryJob"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "jobId" ASCENDING
+
+ADD INDEX "jobStatusNextRun" ON "SursumQueryJob"
+  INDEX-FIELD "jobStatus" ASCENDING
+  INDEX-FIELD "nextRunAt" ASCENDING
+
+ADD INDEX "createdAt" ON "SursumQueryJob"
+  INDEX-FIELD "createdAt" ASCENDING
+
+ADD TABLE "SursumQueryJobEvent"
+  AREA "Schema Area"
+  DUMP-NAME "sursumqueryjobevent"
+
+ADD FIELD "eventId" OF "SursumQueryJobEvent" AS character
+  FORMAT "x(100)"
+  INITIAL ""
+  POSITION 2
+
+ADD FIELD "jobId" OF "SursumQueryJobEvent" AS character
+  FORMAT "x(60)"
+  INITIAL ""
+  POSITION 3
+
+ADD FIELD "eventStatus" OF "SursumQueryJobEvent" AS character
+  FORMAT "x(20)"
+  INITIAL ""
+  POSITION 4
+
+ADD FIELD "eventMessage" OF "SursumQueryJobEvent" AS character
+  FORMAT "x(320)"
+  INITIAL ""
+  POSITION 5
+
+ADD FIELD "eventContextJson" OF "SursumQueryJobEvent" AS character
+  FORMAT "x(32000)"
+  INITIAL ""
+  POSITION 6
+
+ADD FIELD "eventTime" OF "SursumQueryJobEvent" AS datetime
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  POSITION 7
+
+ADD INDEX "eventId" ON "SursumQueryJobEvent"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "eventId" ASCENDING
+
+ADD INDEX "jobEventTime" ON "SursumQueryJobEvent"
+  INDEX-FIELD "jobId" ASCENDING
+  INDEX-FIELD "eventTime" ASCENDING
+
+.
+PSC
+cpstream=ISO8859-1
+.
+00000000000000000000000000000000

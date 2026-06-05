@@ -1,0 +1,30 @@
+ADD FIELD "requestJson" OF "SursumQueryJob" AS character
+  FORMAT "x(32000)"
+  INITIAL ""
+  POSITION 5
+
+ADD FIELD "planJson" OF "SursumQueryJob" AS character
+  FORMAT "x(32000)"
+  INITIAL ""
+  POSITION 6
+
+ADD FIELD "requestContextJson" OF "SursumQueryJob" AS character
+  FORMAT "x(32000)"
+  INITIAL ""
+  POSITION 7
+
+ADD FIELD "workerContextJson" OF "SursumQueryJob" AS character
+  FORMAT "x(32000)"
+  INITIAL ""
+  POSITION 8
+
+ADD FIELD "eventContextJson" OF "SursumQueryJobEvent" AS character
+  FORMAT "x(32000)"
+  INITIAL ""
+  POSITION 6
+
+.
+PSC
+cpstream=ISO8859-1
+.
+00000000000000000000000000000000

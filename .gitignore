@@ -1,0 +1,36 @@
+# OpenEdge build artifacts
+*.r
+*.pl
+*.protrace
+*.lg
+
+# Local database files
+db/*.db
+db/*.d1
+db/*.d2
+db/*.b1
+db/*.b2
+db/*.lg
+db/*.lk
+
+# Generated output and benchmarks
+output/
+
+# Local PASOE instance runtime
+pasoe/sursum-pasoe-dev/
+pasoe/sursum-pasoe-dev/logs/
+pasoe/sursum-pasoe-dev/temp/
+pasoe/sursum-pasoe-dev/work/
+pasoe/sursum-pasoe-dev/bin/
+pasoe/sursum-pasoe-dev/conf/
+pasoe/sursum-pasoe-dev/common/
+pasoe/sursum-pasoe-dev/lib/
+pasoe/sursum-pasoe-dev/webapps/
+
+# Editor/system noise
+.DS_Store
+Thumbs.db
+
+# Local scratch state
+temp/last_async_job.txt
+db/*.lic

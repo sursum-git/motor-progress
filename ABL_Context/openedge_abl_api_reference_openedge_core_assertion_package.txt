@@ -1,0 +1,199 @@
+Assertion
+Parent Package:         OpenEdge.Core
+Classes
+          AssertArray                  Assertions of truth for various arrays
+          AssertError                  Assertions specific to error messages
+          AssertFile                   Assertions specific to files
+          AssertJson                   Assertions specific to JSON constructs
+          AssertObject                 Assertions specific to Object(s)
+    
+AssertArray
+Namespace: OpenEdge.Core.Assertion
+Type: Class          
+Parent Classes: Progress.Lang.Object
+Inherits: Progress.Lang.Object
+Purpose: Assertions of truth for various arrays
+Methods:
+Equals (character[], character[])       /** Asserts that array 'a' equals array 'b'. @param character the known array @param character the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(datetime-tz[], datetime-tz[]) /** Asserts that array 'a' equals array 'b'. @param datetime-tz the known array @param datetime-tz the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(datetime[], datetime[]) /** Asserts that array 'a' equals array 'b'. @param datetime the known array @param datetime the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(date[], date[]) /** Asserts that array 'a' equals array 'b'. @param date the known array @param date the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(decimal[], decimal[]) /** Asserts that array 'a' equals array 'b'. @param decimal the known array @param decimal the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(handle[], handle[]) /** Asserts that array 'a' equals array 'b'. @param handle the known array @param handle the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(int64[], int64[]) /** Asserts that array 'a' equals array 'b'. @param int64 the known array @param int64 the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(integer[], integer[]) /** Asserts that array 'a' equals array 'b'. @param integer the known array @param integer the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(logical[], logical[]) /** Asserts that array 'a' equals array 'b'. @param logical the known array @param logical the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(longchar[], longchar[]) /** Asserts that array 'a' equals array 'b'. @param longchar the known array @param longchar the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(memptr[], memptr[]) /** Asserts that array 'a' equals array 'b'. @param memptr the known array @param memptr the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(Object[], Object[]) /** Asserts that array 'a' equals array 'b'. @param Object the known array @param Object the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(raw[], raw[]) /** Asserts that array 'a' equals array 'b'. @param raw the known array @param raw the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(recid[], recid[]) /** Asserts that array 'a' equals array 'b'. @param recid the known array @param recid the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+Equals(rowid[], rowid[]) /** Asserts that array 'a' equals array 'b'. @param rowid the known array @param rowid the comparison array @throws AssertionFailedError Error thrown if arrays differ */
+HasDeterminateExtent(character[]) /** Asserts that the character extent is set. @param character the value to check @throws AssertionFailedError Error thrown if character extent is not set */
+HasDeterminateExtent(character[], character) /** Asserts that the character extent is set. @param character the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if character extent is not set */
+HasDeterminateExtent(datetime-tz[]) /** Asserts that the datetime-tz extent is set. @param datetime-tz the value to check @throws AssertionFailedError Error thrown if datetime-tz extent is not set */
+HasDeterminateExtent(datetime-tz[], character) /** Asserts that the datetime-tz extent is set. @param datetime-tz the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if datetime-tz extent is not set */
+HasDeterminateExtent(datetime[]) /** Asserts that the datetime extent is set. @param datetime the value to check @throws AssertionFailedError Error thrown if datetime extent is not set */
+HasDeterminateExtent(datetime[], character) /** Asserts that the datetime extent is set. @param datetime the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if datetime extent is not set */
+HasDeterminateExtent(date[]) /** Asserts that the date extent is set. @param date the value to check @throws AssertionFailedError Error thrown if date extent is not set */
+HasDeterminateExtent(date[], character) /** Asserts that the date extent is set. @param date the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if date extent is not set */
+HasDeterminateExtent(decimal[]) /** Asserts that the decimal extent is set. @param decimal the value to check @throws AssertionFailedError Error thrown if decimal extent is not set */
+HasDeterminateExtent(decimal[], character) /** Asserts that the decimal extent is set. @param decimal the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if decimal extent is not set */
+HasDeterminateExtent(handle[]) /** Asserts that the handle extent is set. @param handle the value to check @throws AssertionFailedError Error thrown if handle extent is not set */
+HasDeterminateExtent(handle[], character) /** Asserts that the handle extent is set. @param handle the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if handle extent is not set */
+HasDeterminateExtent(int64[]) /** Asserts that the int64 extent is set. @param int64 the value to check @throws AssertionFailedError Error thrown if int64 extent is not set */
+HasDeterminateExtent(int64[], character) /** Asserts that the int64 extent is set. @param int64 the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if int64 extent is not set */
+HasDeterminateExtent(integer[]) /** Asserts that the integer extent is set. @param integer the value to check @throws AssertionFailedError Error thrown if integer extent is not set */
+HasDeterminateExtent(integer[], character) /** Asserts that the integer extent is set. @param integer the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if integer extent is not set */
+HasDeterminateExtent(logical[]) /** Asserts that the logical extent is set. @param logical the value to check @throws AssertionFailedError Error thrown if logical extent is not set */
+HasDeterminateExtent(logical[], character) /** Asserts that the logical extent is set. @param logical the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if logical extent is not set */
+HasDeterminateExtent(longchar[]) /** Asserts that the longchar extent is set. @param longchar the value to check @throws AssertionFailedError Error thrown if longchar extent is not set */
+HasDeterminateExtent(longchar[], character) /** Asserts that the longchar extent is set. @param longchar the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if longchar extent is not set */
+HasDeterminateExtent(memptr[]) /** Asserts that the memptr extent is set. @param memptr the value to check @throws AssertionFailedError Error thrown if memptr extent is not set */
+HasDeterminateExtent(memptr[], character) /** Asserts that the memptr extent is set. @param memptr the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if memptr extent is not set */
+HasDeterminateExtent(Object[]) /** Asserts that the Object extent is set. @param Object the value to check @throws AssertionFailedError Error thrown if Object extent is not set */
+HasDeterminateExtent(Object[], character) /** Asserts that the Object extent is set. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object extent is not set */
+HasDeterminateExtent(raw[]) /** Asserts that the raw extent is set. @param raw the value to check @throws AssertionFailedError Error thrown if raw extent is not set */
+HasDeterminateExtent(raw[], character) /** Asserts that the raw extent is set. @param raw the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if raw extent is not set */
+HasDeterminateExtent(recid[]) /** Asserts that the recid extent is set. @param recid the value to check @throws AssertionFailedError Error thrown if recid extent is not set */
+HasDeterminateExtent(recid[], character) /** Asserts that the recid extent is set. @param recid the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if recid extent is not set */
+HasDeterminateExtent(rowid[]) /** Asserts that the rowid extent is set. @param rowid the value to check @throws AssertionFailedError Error thrown if rowid extent is not set */
+HasDeterminateExtent(rowid[], character) /** Asserts that the rowid extent is set. @param rowid the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if rowid extent is not set */
+IsIndeterminateArray(character[]) /** Asserts that the character extent is not set. @param character the value to check @throws AssertionFailedError Error thrown if character extent is set */
+IsIndeterminateArray(character[], character) /** Asserts that the character extent is not set. @param character the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if character extent is set */
+IsIndeterminateArray(datetime-tz[]) /** Asserts that the datetime-tz extent is not set. @param datetime-tz the value to check @throws AssertionFailedError Error thrown if datetime-tz extent is set */
+IsIndeterminateArray(datetime-tz[], character) /** Asserts that the datetime-tz extent is not set. @param datetime-tz the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if datetime-tz extent is set */
+IsIndeterminateArray(datetime[]) /** Asserts that the datetime extent is not set. @param datetime the value to check @throws AssertionFailedError Error thrown if datetime extent is set */
+IsIndeterminateArray(datetime[], character) /** Asserts that the datetime extent is not set. @param datetime the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if datetime extent is set */
+IsIndeterminateArray(date[]) /** Asserts that the date extent is not set. @param date the value to check @throws AssertionFailedError Error thrown if date extent is set */
+IsIndeterminateArray(date[], character) /** Asserts that the date extent is not set. @param date the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if date extent is set */
+IsIndeterminateArray(decimal[]) /** Asserts that the decimal extent is not set. @param decimal the value to check @throws AssertionFailedError Error thrown if decimal extent is set */
+IsIndeterminateArray(decimal[], character) /** Asserts that the decimal extent is not set. @param decimal the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if decimal extent is set */
+IsIndeterminateArray(handle[]) /** Asserts that the handle extent is not set. @param handle the value to check @throws AssertionFailedError Error thrown if handle extent is set */
+IsIndeterminateArray(handle[], character) /** Asserts that the handle extent is not set. @param handle the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if handle extent is set */
+IsIndeterminateArray(int64[]) /** Asserts that the int64 extent is not set. @param int64 the value to check @throws AssertionFailedError Error thrown if int64 extent is set */
+IsIndeterminateArray(int64[], character) /** Asserts that the int64 extent is not set. @param int64 the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if int64 extent is set */
+IsIndeterminateArray(integer[]) /** Asserts that the integer extent is not set. @param integer the value to check @throws AssertionFailedError Error thrown if integer extent is set */
+IsIndeterminateArray(integer[], character) /** Asserts that the integer extent is not set. @param integer the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if integer extent is set */
+IsIndeterminateArray(logical[]) /** Asserts that the logical extent is not set. @param logical the value to check @throws AssertionFailedError Error thrown if logical extent is set */
+IsIndeterminateArray(logical[], character) /** Asserts that the logical extent is not set. @param logical the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if logical extent is set */                   
+IsIndeterminateArray(longchar[]) /** Asserts that the longchar extent is not set. @param longchar the value to check @throws AssertionFailedError Error thrown if longchar extent is set */
+IsIndeterminateArray(longchar[], character) /** Asserts that the longchar extent is not set. @param longchar the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if longchar extent is set */
+IsIndeterminateArray(memptr[]) /** Asserts that the memptr extent is not set. @param memptr the value to check @throws AssertionFailedError Error thrown if memptr extent is set */
+IsIndeterminateArray(memptr[], character) /** Asserts that the memptr extent is not set. @param memptr the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if memptr extent is set */
+IsIndeterminateArray(Object[]) /** Asserts that the Object extent is not set. @param Object the value to check @throws AssertionFailedError Error thrown if Object extent is set */
+IsIndeterminateArray(Object[], character) /** Asserts that the Object extent is not set. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object extent is set */
+IsIndeterminateArray(raw[]) /** Asserts that the raw extent is not set. @param raw the value to check @throws AssertionFailedError Error thrown if raw extent is set */
+IsIndeterminateArray(raw[], character) /** Asserts that the raw extent is not set. @param raw the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if raw extent is set */
+IsIndeterminateArray(recid[]) /** Asserts that the recid extent is not set. @param recid the value to check @throws AssertionFailedError Error thrown if recid extent is set */
+IsIndeterminateArray(recid[], character) /** Asserts that the recid extent is not set. @param recid the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if recid extent is set */
+IsIndeterminateArray(rowid[]) /** Asserts that the rowid extent is not set. @param rowid the value to check @throws AssertionFailedError Error thrown if rowid extent is set */
+IsIndeterminateArray(rowid[], character) /** Asserts that the rowid extent is not set. @param rowid the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if rowid extent is set */
+
+AssertError
+Namespace: OpenEdge.Core.Assertion
+Type: Class                      
+Parent Classes: Progress.Lang.Object
+Inherits: Progress.Lang.Object
+Purpose: Assertions specific to error messages
+Methods:
+HasErrorMessage ()	/** Asserts that last executed statement raised an error message. @throws AssertionFailedError Error thrown if no error message exists */
+HasErrorStatus ()	/** Asserts that last executed statement raised an error. @throws AssertionFailedError Error thrown if no error exists */
+NoErrorMessage ()	/** Asserts that last executed statement raised no error message. @throws AssertionFailedError Error thrown if error message exists */
+NoErrorStatus ()	/** Asserts that last executed statement raised no error. @throws AssertionFailedError Error thrown if error exists */
+
+AssertFile
+Namespace: OpenEdge.Core.Assertion
+Type: Class                        AssertFile
+Parent Classes: Progress.Lang.Object
+Inherits: Progress.Lang.Object
+Purpose: Asserts that a folder exists.
+Methods:
+DirectoryDoesNotExist (character) /** Asserts that a folder does not exist. @param character The name of the directory being checked @throws AssertionFailedError Error thrown if the file exists */
+DirectoryExists (character) /** Asserts that a folder exists. @param character The name of the directory being checked @throws AssertionFailedError Error thrown if the file does not exist */
+FileDoesNotExist (character) /** Asserts that a file does not exist. @param character The name of the file being checked @throws AssertionFailedError Error thrown if the file exists */
+FileExists (character) /** Asserts that a file exists. @param character The name of the file being checked @throws AssertionFailedError Error thrown if the file does not exist */
+FileInPropath (character) /** Asserts that a file exists in propath. @param character The name of the file being checked @throws AssertionFailedError Error thrown if the file does not exist */
+
+AssertJson
+Namespace: OpenEdge.Core.Assertion
+Type: Class                      AssertJson
+Parent Classes: Progress.Lang.Object
+Inherits: Progress.Lang.Object
+Purpose: Asserts that a JSON object has a specific number of properties
+Methods:
+HasProperty(JsonObject, character) /** Asserts that a Json object has a particularly-named property (of any type). @param JsonObject The JSON object being checked @param character The name of the property being checked @throws AssertionFailedError Error thrown if the property does not exist */
+HasPropertyCount(JsonObject, integer) /** Asserts that a JSON object has a specific number of properties @param JsonObject The JSON object being checked @param integer The number of properties it must have @throws AssertionFailedError Error thrown if the JSON object is not valid @throws AssertionFailedError Error thrown if the property count is negative @throws AssertionFailedError Error thrown if the number of properties is not equal to the count */
+IndexIsNull(JsonArray, integer) /** Asserts that an array extent value is null @param JsonArray The JSON object being checked @param integer The index being checked @throws AssertionFailedError Error thrown if the property does not exist */
+IndexIsType(JsonArray, integer, JsonDataTypeEnum) /** Asserts that a JSON Array has a index of a particular type. @param JsonArray The JSON object being checked @param integer The index being checked @param JsonDataTypeEnum The data type being checked @throws AssertionFailedError Error thrown if the property does not exist */
+IndexNotNull(JsonArray, integer) /** Asserts that an array extent value is null @param JsonArray The JSON object being checked @param integer The index being checked @throws AssertionFailedError Error thrown if the property does not exist */
+PropertyIsNull(JsonObject, character) /** Asserts that a the value of a property is null @param JsonObject The JSON object being checked @param character The name of the property being checked @throws AssertionFailedError Error thrown if the property does not exist */
+PropertyIsType(JsonObject, character, JsonDataTypeEnum) /** Asserts that a JSON Object has a particularly-named property of a particular type. @param JsonObject The JSON object being checked @param character The name of the property being checked @param JsonDataTypeEnum The data type being checked @throws AssertionFailedError Error thrown if the property does not exist */
+PropertyNotNull(JsonObject, character) /** Asserts that a the value of a property is not null @param JsonObject The JSON object being checked @param character The name of the property being checked @throws AssertionFailedError Error thrown if the property does not exist */
+
+AssertObject
+Namespace:                        OpenEdge.Core.Assertion
+Type: Class                       AssertObject
+Parent Classes: Progress.Lang.Object
+Inherits: Progress.Lang.Object
+Purpose: Assertions specific to Object(s)
+Methods:
+Equals (Object,Object)          /** Asserts that value 'a' equals 'b'. @param Object the known value @param Object the comparison value @throws AssertionFailedError Error thrown if values differ */
+HasDeterminateExtent (Object[])	/** Asserts that the Object extent is set. @param Object the value to check @throws AssertionFailedError Error thrown if Object extent is not set */
+HasDeterminateExtent (Object[], character)	/** Asserts that the Object extent is set. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object extent is not set */
+IsAbstract (Class)       /** Asserts that the given type is an abstract. @param Progress.Lang.Class the type to check @throws AssertionFailedError Error thrown if the type is not abstract*/
+IsFinal (Class)          /** Asserts that the given type is final. @param Progress.Lang.Class the type to check @throws AssertionFailedError Error thrown if the type is final*/
+IsIndeterminateArray (Object[])	/** Asserts that the Object extent is not set. @param Object the value to check @throws AssertionFailedError Error thrown if Object extent is set */
+IsIndeterminateArray (Object[], character)	/** Asserts that the Object extent is not set. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object extent is set */
+IsInterface (Class)      /** Asserts that the given type is an interface. @param Progress.Lang.Class the type to check @throws AssertionFailedError Error thrown if the type is not an interface*/
+IsNull (Object)          /** Asserts that the Object is unknown. @param Object the value to check @throws AssertionFailedError Error thrown if Object is not unknown */
+IsNull (Object, character)         /** Asserts that the Object is unknown. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object is is unknown */
+IsNull (Object[])         /** Asserts that the Object array is unknown. @param Object the value to check @throws AssertionFailedError Error thrown if Object is not unknown */
+IsNull (Object[], character)         /** Asserts that the Object array is unknown. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object is not unknown */
+IsSerializable (Object)   /* Asserts that the given object can be serialized. @param Obejct The object to check. */
+IsType (handle, DataTypeEnum)           /** Asserts that a handle is valid and of a particular datatype @param handle The handle being checked. @param DataTypeEnum The type the handle/variable being checked should be. @throws AssertionFailedError Error thrown if the handle is not valid or not of a particular datatype*/
+IsType (handle, DataTypeEnum, character)          /** Asserts that a handle is valid and of a particular datatype @param handle The handle being checked. @param DataTypeEnum The type the handle/variable being checked should be. @param character The name of the variable/handle. @throws AssertionFailedError Error thrown if the handle is not valid or not of a particular datatype.*/
+IsType (Object, Class)    /** Asserts that a object is valid and of a particular type @param Progress.Lang.Object The Object being checked. @param Progress.Lang.Class The type the being checked. @throws AssertionFailedError Error thrown if the object is not valid and not of particular type.*/
+IsType (Object[], Class)         /** Asserts that a object extent is valid and of a particular type for each array item @param Progress.Lang.Object The Object being checked. @param
+ Progress.Lang.Class The type the being checked. @throws AssertionFailedError Error thrown if the object array is not valid any of the array item is not of particular type.*/
+IsUnknown (Object)        /** Asserts that the Object is unknown. @param Object the value to check @throws AssertionFailedError Error thrown if Object is not unknown */
+IsUnknown (Object, character)       /** Asserts that the Object is unknown. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object is unknown */
+IsUnknown (Object[])      /** Asserts that the Object array is unknown. @param Object the value to check @throws AssertionFailedError Error thrown if Object is not unknown */
+IsUnknown (Object[], character)     /** Asserts that the Object array is unknown. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object is not unknown */
+NotAbstract (Class)       /** Asserts that the given type is not an abstract. @param Progress.Lang.Class the type to check @throws AssertionFailedError Error thrown if the type is abstract*/
+NotEqual (Object, Object)         /** Asserts that value 'a' differs from 'b'. @param Object the known value @param Object the comparison value @throws AssertionFailedError Error thrown if values are equal */
+NotFinal (Class)          /** Asserts that the given type is not final. @param Progress.Lang.Class the type to check @throws AssertionFailedError Error thrown if the type is final*/
+NotInterface (Class)      /** Asserts that the given type is not an interface. @param Progress.Lang.Class the type to check @throws AssertionFailedError Error thrown if the type is an interface*/
+NotNull (Object)          /** Asserts that the Object is not unknown. @param Object the value to check @throws AssertionFailedError Error thrown if Object is unknown */
+NotNull (Object, character)          /** Asserts that the Object is not unknown. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object is unknown */
+NotNull (Object[])        /** Asserts that the Object array is not unknown. @param Object the value to check @throws AssertionFailedError Error thrown if Object is unknown */
+NotNull (Object[], character)       /** Asserts that the Object array is not unknown. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object is unknown */
+NotNullOrEmpty (ICollection)           /** Asserts that the ICollection is not unknown or empty. @param ICollection the value to check @throws AssertionFailedError Error thrown if ICollection is unknown */
+NotNullOrEmpty (ICollection, character)          /** Asserts that the ICollection is not unknown or empty. @param ICollection the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if ICollection is unknown */
+NotNullOrEmpty (ICollection[])           /** Asserts that the ICollection array is not unknown or empty. @param ICollection the value to check @throws AssertionFailedError Error thrown if ICollection is unknown */
+NotNullOrEmpty (ICollection[], character)          /** Asserts that the ICollection array is not unknown or empty. @param ICollection the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if ICollection is unknown */
+NotNullOrEmpty (IMap)         /** Asserts that the IMap is not unknown or empty. @param IMap the value to check @throws AssertionFailedError Error thrown if IMap is unknown */
+NotNullOrEmpty (IMap, character)          /** Asserts that the IMap is not unknown or empty. @param IMap the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if IMap is unknown */
+NotNullOrEmpty (IMap[])         /** Asserts that the IMap array is not unknown or empty. @param IMap the value to check @throws AssertionFailedError Error thrown if IMap is unknown */
+NotNullOrEmpty (IMap[], character)          /** Asserts that the IMap array is not unknown or empty. @param IMap the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if IMap is unknown */
+NotNullOrEmpty (Object)         /** Asserts that the Object is not unknown or empty. @param Object the value to check @throws AssertionFailedError Error thrown if Object is unknown */
+NotNullOrEmpty (Object, character)         /** Asserts that the Object is not unknown or empty. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object is unknown */
+NotNullOrEmpty (Object[])          /** Asserts that the Object array is not unknown or empty. @param Object the value to check @throws AssertionFailedError Error thrown if Object is unknown */
+NotNullOrEmpty (Object[], character)         /** Asserts that the Object array is not unknown or empty. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object is unknown */
+NotSerializable (Object)         /* Asserts that the given object cannot be serialized. @param Progress.Lang.Object The object to check. */
+NotType (handle, DataTypeEnum)        /** Asserts that a handle is valid and not of a particular datatype @param handle The handle being checked. @param DataTypeEnum The type the handle/variable being checked should be. @throws AssertionFailedError Error thrown if the handle is not valid or of a particular datatype*/
+NotType (handle, DataTypeEnum, character)        /** Asserts that a handle is valid and not of a particular datatype @param handle The handle being checked. @param DataTypeEnum The type the handle/variable being checked should be. @param character the identifying name for the AssertionFailedError. @throws AssertionFailedError Error thrown if the handle is not valid or of a particular datatype*/
+NotType (Object, Class)         /** Asserts that a object is valid and not of a particular type @param Progress.Lang.Object The Object being checked. @param Progress.Lang.Class The type the being checked. @throws AssertionFailedError Error thrown if the object is not valid and of particular type.*/
+NotUnknown (Object)      /** Asserts that the Object is not unknown. @param Object the value to check @throws AssertionFailedError Error thrown if Object is unknown */
+NotUnknown (Object, character)      /** Asserts that the Object is not unknown. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object is unknown */
+NotUnknown (Object[])              /** Asserts that the Object array is not unknown. @param Object the value to check @throws AssertionFailedError Error thrown if Object is unknown */
+NotUnknown (Object[], character)	 /** Asserts that the Object array is not unknown. @param Object the value to check @param character the identifying name for the AssertionFailedError
+ @throws AssertionFailedError Error thrown if Object is unknown */
+NotUnknownOrEmpty (ICollection)       /** Asserts that the ICollection is not unknown or empty. @param ICollection the value to check @throws AssertionFailedError Error thrown if ICollection is unknown */
+NotUnknownOrEmpty (ICollection, character)	/** Asserts that the ICollection is not unknown or empty. @param ICollection the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if ICollection is unknown */
+NotUnknownOrEmpty (IMap)       /** Asserts that the IMap is not unknown or empty. @param IMap the value to check @throws AssertionFailedError Error thrown if IMap is unknown */
+NotUnknownOrEmpty (IMap, character)      /** Asserts that the IMap is not unknown or empty. @param IMap the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if IMap is unknown */
+NotUnknownOrEmpty (Object)      /** Asserts that the Object is not unknown or empty. @param Object the value to check @throws AssertionFailedError Error thrown if Object is unknown */
+NotUnknownOrEmpty (Object, character)       /** Asserts that the Object is not unknown or empty. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object is unknown */
+NotUnknownOrEmpty (Object[])      /** Asserts that the Object array is not unknown or empty. @param Object the value to check @throws AssertionFailedError Error thrown if Object is unknown */
+NotUnknownOrEmpty (Object[], character)        /** Asserts that the Object array is not unknown or empty. @param Object the value to check @param character the identifying name for the AssertionFailedError @throws AssertionFailedError Error thrown if Object is unknown */
