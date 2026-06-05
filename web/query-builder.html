@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sursum Dynamic Query Builder</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="query-builder.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Sursum Dynamic Query</p>
+        <h1>Construtor visual de consultas e pipelines</h1>
+        <p class="lead">Monte uma consulta simples, multi-tabela ou um pipeline com map, distinct, group e aggregate sem escrever ABL livre.</p>
+      </div>
+      <div class="endpoint-card">
+        <label for="apiUrl">Endpoint PASOE</label>
+        <input id="apiUrl" value="http://localhost:8890/web/SursumDynamicQuery/query">
+        <button id="loadCustomerSample">Exemplo Customer</button>
+        <button id="loadAdvancedSample">Pipeline avançado</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="panel builder">
+        <div class="panel-title">
+          <h2>1. Consulta</h2>
+          <span>Fonte, projeção, filtros e paginação</span>
+        </div>
+
+        <div class="grid two">
+          <label>Execução
+            <input id="execution">
+          </label>
+          <label>Pipeline version
+            <input id="pipelineVersion" placeholder="v1">
+          </label>
+        </div>
+
+        <div class="grid three">
+          <label>Tabela
+            <input id="sourceTable" placeholder="Customer">
+          </label>
+          <label>Alias
+            <input id="sourceAlias" placeholder="customer">
+          </label>
+          <label>Campos disponíveis
+            <input id="sourceFields" placeholder="CustNum,Name,State,Balance">
+          </label>
+        </div>
+
+        <div class="action-row">
+          <button id="addSource">Adicionar fonte</button>
+          <button id="clearSources">Limpar fontes</button>
+        </div>
+        <div id="sourcesGrid"></div>
+
+        <div class="divider"></div>
+
+        <div class="grid four">
+          <label>Alias
+            <input id="selectAlias" placeholder="customer">
+          </label>
+          <label>Campo
+            <input id="selectField" placeholder="CustNum">
+          </label>
+          <label>Nome de saída
+            <input id="selectOutput" placeholder="codigo">
+          </label>
+          <label>&nbsp;
+            <button id="addSelect">Adicionar campo</button>
+          </label>
+        </div>
+        <div id="selectGrid"></div>
+
+        <div class="divider"></div>
+
+        <div class="grid five">
+          <label>Alias
+            <input id="filterAlias" placeholder="customer">
+          </label>
+          <label>Campo
+            <input id="filterField" placeholder="CustNum">
+          </label>
+          <label>Operador
+            <input id="filterOperator">
+          </label>
+          <label>Valor
+            <input id="filterValue" placeholder="1">
+          </label>
+          <label>&nbsp;
+            <button id="addFilter">Adicionar filtro</button>
+          </label>
+        </div>
+        <div id="filtersGrid"></div>
+
+        <div class="divider"></div>
+
+        <div class="grid four">
+          <label>Alias
+            <input id="orderAlias" placeholder="customer">
+          </label>
+          <label>Campo
+            <input id="orderField" placeholder="CustNum">
+          </label>
+          <label>Direção
+            <input id="orderDirection">
+          </label>
+          <label>&nbsp;
+            <button id="addOrder">Adicionar ordenação</button>
+          </label>
+        </div>
+        <div id="ordersGrid"></div>
+
+        <div class="grid three compact">
+          <label>Página
+            <input id="page" value="1">
+          </label>
+          <label>Page size
+            <input id="pageSize" value="500">
+          </label>
+          <label>Modo de montagem
+            <input id="requestMode">
+          </label>
+        </div>
+      </section>
+
+      <section class="panel pipeline">
+        <div class="panel-title">
+          <h2>2. Pipeline</h2>
+          <span>Preparação e transformação pós-query</span>
+        </div>
+
+        <div class="grid three">
+          <label>Step
+            <input id="stepType">
+          </label>
+          <label>Payload JSON
+            <textarea id="stepPayload" rows="5" placeholder='{"fields":["uf"]}'></textarea>
+          </label>
+          <label class="step-actions">&nbsp;
+            <button id="addStep">Adicionar step</button>
+            <button id="addPipelineFromForm">Gerar pipeline da consulta</button>
+            <button id="clearPipeline">Limpar pipeline</button>
+          </label>
+        </div>
+        <div id="pipelineGrid"></div>
+
+        <div class="operator-help">
+          <h3>Operadores suportados</h3>
+          <div class="chips">
+            <span>source</span><span>join</span><span>select</span><span>filter</span><span>sort</span><span>limit</span><span>map</span><span>distinct</span><span>group</span><span>aggregate</span><span>output</span>
+          </div>
+          <p><strong>map:</strong> renomeia/reprojeta campos. <strong>distinct:</strong> remove duplicados. <strong>group:</strong> agrupa campos. <strong>aggregate:</strong> count, sum, min, max, avg.</p>
+        </div>
+      </section>
+
+      <section class="panel preview">
+        <div class="panel-title">
+          <h2>3. JSON e execução</h2>
+          <span>Preview, validação visual e chamada REST</span>
+        </div>
+        <div class="action-row">
+          <button id="buildJson">Atualizar JSON</button>
+          <button id="copyJson">Copiar JSON</button>
+          <button id="runQuery">Executar na API</button>
+        </div>
+        <textarea id="jsonPreview" spellcheck="false"></textarea>
+        <div id="statusBox" class="status-box">Pronto.</div>
+      </section>
+
+      <section class="panel results">
+        <div class="panel-title">
+          <h2>4. Resultado</h2>
+          <span>Dados retornados pela API</span>
+        </div>
+        <div id="resultGrid"></div>
+      </section>
+    </main>
+  </div>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="query-builder.js"></script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sursum Query File Runner</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="query-file-runner.css">
+</head>
+<body>
+  <main class="page">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">PASOE Dynamic Query</p>
+        <h1>Executar consulta por arquivo JSON</h1>
+        <p class="lead">Selecione o arquivo da extração atual, envie para a API do PASOE e visualize o retorno em um Grid Kendo UI.</p>
+      </div>
+      <aside class="api-card">
+        <label for="apiUrl">Endpoint da API</label>
+        <input id="apiUrl" value="http://localhost:8890/web/SursumDynamicQuery/query">
+        <div class="api-hint">A página envia o conteúdo do arquivo JSON como body da requisição.</div>
+      </aside>
+    </section>
+
+    <section class="layout">
+      <div class="panel runner">
+        <div class="panel-title">
+          <h2>1. Arquivo da consulta</h2>
+          <span>JSON estruturado ou pipeline</span>
+        </div>
+
+        <label class="file-picker">
+          <input id="queryFile" type="file" accept=".json,application/json">
+          <span>Selecionar arquivo JSON</span>
+        </label>
+
+        <div class="quick-actions">
+          <button id="loadSimpleSample">Carregar exemplo simples</button>
+          <button id="loadAdvancedSample">Carregar pipeline avançado</button>
+          <button id="runQuery">Executar no PASOE</button>
+        </div>
+
+        <div class="file-meta">
+          <div><strong>Arquivo:</strong> <span id="fileName">nenhum</span></div>
+          <div><strong>Tamanho:</strong> <span id="fileSize">0 bytes</span></div>
+          <div><strong>Status:</strong> <span id="parseStatus">aguardando arquivo</span></div>
+        </div>
+
+        <div class="panel-title slim">
+          <h2>2. Preview JSON</h2>
+          <span>Editável antes do envio</span>
+        </div>
+        <textarea id="jsonPreview" spellcheck="false"></textarea>
+      </div>
+
+      <div class="panel result">
+        <div class="panel-title">
+          <h2>3. Resultado</h2>
+          <span>Dados retornados pela API</span>
+        </div>
+        <div id="statusBox" class="status-box">Pronto.</div>
+        <div class="stats">
+          <div><span id="statSuccess">-</span><label>success</label></div>
+          <div><span id="statRecords">0</span><label>recordsReturned</label></div>
+          <div><span id="statHasMore">-</span><label>hasMore</label></div>
+        </div>
+        <div id="resultGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="query-file-runner.js"></script>
+</body>
+</html>

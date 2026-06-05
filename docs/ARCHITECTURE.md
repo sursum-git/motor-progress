@@ -16,6 +16,16 @@ JSON request
   -> resultado JSON ou fila async
 ```
 
+Tambem existe um fluxo por arquivo JSON para extracoes batch:
+
+```text
+arquivo request.json
+  -> runners/RunDynamicQueryFromJson.p -param request=...;output=...
+  -> DynamicQueryRequestSerializer
+  -> DynamicMultiTableQueryService:executeSyncNow
+  -> arquivo result.json
+```
+
 ## Componentes principais
 
 | Classe/arquivo | Responsabilidade |
@@ -32,6 +42,7 @@ JSON request
 | `DynamicQueryWorkerService.cls` | Processamento dos jobs pendentes |
 | `DynamicQueryResultWriter.cls` | Escrita atomica do resultado JSON |
 | `PasoeExecutionContext.cls` | Captura de contexto de execucao/auditoria |
+| `runners/RunDynamicQueryFromJson.p` | Runner generico que executa qualquer request JSON recebido por parametro |
 
 ## Fluxo sync
 
@@ -76,11 +87,11 @@ POST /jobs/drain
   -> marca completed ou failed
 ```
 
-## Pipeline inicial
+## Pipeline
 
-O pipeline atual e de preparo de consulta. Ele foi criado para permitir evolucao futura sem quebrar o contrato.
+O pipeline aceita steps de preparo de consulta e transformacoes pos-query sobre o JSON retornado.
 
-Steps suportados no contrato inicial:
+Steps suportados:
 
 | Step | Finalidade |
 |---|---|
@@ -90,9 +101,13 @@ Steps suportados no contrato inicial:
 | `filter` | Define condicoes estruturadas |
 | `sort` | Define ordenacao |
 | `limit` | Define paginacao/limite |
+| `map` | Reprojeta/renomeia campos no resultado |
+| `distinct` | Remove duplicidades por campos |
+| `group` | Agrupa linhas por campos |
+| `aggregate` | Aplica `count`, `sum`, `min`, `max` ou `avg` |
 | `output` | Define forma de saida |
 
-Nao ha suporte atual a `map`, `group`, `aggregate` ou transformacoes complexas.
+`map`, `distinct`, `group` e `aggregate` rodam apos a query, sobre o `JsonArray` retornado.
 
 ## Seguranca
 
@@ -104,7 +119,8 @@ Regras de seguranca:
 - operadores devem ser suportados pelo tipo do campo;
 - qualquer expressao livre deve ser rejeitada;
 - toda consulta deve usar `NO-LOCK`;
-- joins devem ser explicitos, sem inferencia automatica.
+- joins explicitos continuam recomendados;
+- join inferido existe apenas para duas fontes sem join declarado, preferindo campo comum `CustNum` e falhando se houver ambiguidade.
 
 ## Decisao sobre BOs legadas
 
@@ -117,4 +133,3 @@ Motivo:
 - `boConsDin.p` foi desenhado para uma tabela;
 - a nova camada precisa suportar multi-tabela, fila e pipeline;
 - OOABL facilita isolamento de validacao, plano, execucao e auditoria.
-

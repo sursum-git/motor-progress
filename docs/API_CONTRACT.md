@@ -45,7 +45,7 @@ Aceita `execution = sync | async | auto`.
 | `select` | array | nao | Campos selecionados no formato estruturado |
 | `filters` | array | nao | Filtros estruturados |
 | `orderBy` | array | nao | Ordenacao |
-| `pipeline` | array | nao | Pipeline inicial de preparo |
+| `pipeline` | array | nao | Pipeline de preparo e transformacao pos-query |
 
 ## `sources`
 
@@ -85,8 +85,10 @@ Exemplo conceitual:
 Regras:
 
 - somente `INNER` e `LEFT` no ciclo atual;
-- joins devem ser explicitos;
-- nao ha inferencia automatica de relacionamento;
+- joins explicitos sao recomendados;
+- existe inferencia restrita para exatamente duas fontes sem join declarado;
+- a inferencia prefere `CustNum` quando existe nas duas fontes;
+- se houver ambiguidade, a request falha antes de executar;
 - campos do join devem existir;
 - aliases devem existir em `sources`.
 
@@ -96,9 +98,9 @@ Exemplo:
 
 ```json
 {
-  "alias": "c",
+  "sourceAlias": "c",
   "field": "State",
-  "operator": "eq",
+  "operator": "=",
   "value": "MA"
 }
 ```
@@ -107,14 +109,15 @@ Operadores tipicos:
 
 | Operador | Descricao |
 |---|---|
-| `eq` | Igual |
-| `ne` | Diferente |
-| `gt` | Maior que |
-| `ge` | Maior ou igual |
-| `lt` | Menor que |
-| `le` | Menor ou igual |
+| `=` | Igual |
+| `<>` | Diferente |
+| `>` | Maior que |
+| `>=` | Maior ou igual |
+| `<` | Menor que |
+| `<=` | Menor ou igual |
+| `between` | Intervalo |
 | `contains` | Contem, apenas para campos texto |
-| `startsWith` | Inicia com, apenas para campos texto |
+| `begins` | Inicia com, apenas para campos texto |
 
 Regras:
 
@@ -129,7 +132,7 @@ Exemplo:
 
 ```json
 {
-  "alias": "c",
+  "sourceAlias": "c",
   "field": "CustNum",
   "direction": "ASC"
 }
@@ -162,6 +165,56 @@ Regras:
   ]
 }
 ```
+
+## Pipeline avancado
+
+Exemplo com transformacao pos-query:
+
+```json
+{
+  "execution": "sync",
+  "pipeline": [
+    {
+      "type": "source",
+      "payload": "{\"nome\":\"Customer\",\"alias\":\"customer\",\"campos\":\"CustNum,Name,State,Balance\"}"
+    },
+    {
+      "type": "select",
+      "payload": "{\"fields\":[{\"sourceAlias\":\"customer\",\"field\":\"CustNum\",\"outputAlias\":\"codigo\"},{\"sourceAlias\":\"customer\",\"field\":\"Name\",\"outputAlias\":\"nome\"},{\"sourceAlias\":\"customer\",\"field\":\"State\",\"outputAlias\":\"estado\"},{\"sourceAlias\":\"customer\",\"field\":\"Balance\",\"outputAlias\":\"saldo\"}]}"
+    },
+    {
+      "type": "map",
+      "payload": "{\"fields\":[{\"from\":\"estado\",\"to\":\"uf\"},{\"from\":\"saldo\",\"to\":\"saldo\"}]}"
+    },
+    {
+      "type": "group",
+      "payload": "{\"fields\":[\"uf\"]}"
+    },
+    {
+      "type": "aggregate",
+      "payload": "{\"op\":\"sum\",\"field\":\"saldo\",\"as\":\"saldoTotal\"}"
+    }
+  ]
+}
+```
+
+Steps suportados:
+
+| Step | Tipo |
+|---|---|
+| `source` | preparo |
+| `join` | preparo |
+| `select` | preparo |
+| `filter` | preparo |
+| `sort` | preparo |
+| `limit` | preparo |
+| `map` | pos-query |
+| `distinct` | pos-query |
+| `group` | pos-query |
+| `aggregate` | pos-query |
+| `output` | saida |
+
+`payload` e uma string JSON para permitir persistencia do pipeline como texto.
 
 ## Resposta async
 
@@ -252,4 +305,3 @@ Codigos comuns:
 | `JOIN_REQUIRED` | Consulta multi-tabela sem join seguro |
 | `JOB_ID_REQUIRED` | Status/resultado sem jobId |
 | `NOT_FOUND` | Endpoint nao encontrado |
-

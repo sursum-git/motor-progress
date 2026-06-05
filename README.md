@@ -9,6 +9,8 @@ Projeto ABL/OOABL para consulta dinamica segura em banco Progress/OpenEdge, com 
 - fila assincrona persistida em banco (`async`);
 - worker em `CLIENT` batch ou `PASOE`;
 - resultado JSON em arquivo;
+- runner generico que recebe arquivo JSON por parametro;
+- interface web Kendo UI para montar e executar consultas;
 - endpoint HTTP WEB para validacao local no PASOE;
 - benchmarks de paginacao e contagem em tabela grande.
 
@@ -35,6 +37,8 @@ O request da API descreve fontes, campos, filtros, ordenacao, pagina e pipeline 
 | `sursum/` | Classes OOABL do motor de consulta |
 | `rest/` | Fachadas REST/WEB para PASOE |
 | `workers/` | Entradas de worker CLIENT/PASOE e programas APSV auxiliares |
+| `runners/` | Executores genericos por arquivo JSON |
+| `web/` | Interfaces Kendo UI e assets locais |
 | `db/` | Schemas `.df` e loaders da fila async |
 | `temp/` | Programas locais de validacao, benchmark e smoke test |
 | `conf/pasoe/` | Referencia de configuracao da instancia PASOE local |
@@ -100,8 +104,34 @@ Invoke-RestMethod `
 
 - [Arquitetura](docs/ARCHITECTURE.md)
 - [Contrato da API](docs/API_CONTRACT.md)
+- [Executor por arquivo JSON](docs/JSON_EXTRACTION_RUNNER.md)
+- [Interfaces web Kendo UI](docs/WEB_UI.md)
 - [Fila async e workers](docs/ASYNC_QUEUE.md)
 - [Setup local e PASOE](docs/SETUP_PASOE.md)
 - [Benchmarks e paginacao](docs/BENCHMARKS.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 
+## Extracoes por arquivo JSON
+
+O fluxo recomendado para muitas extracoes e criar um arquivo `.json` por consulta/pipeline e executar o runner generico:
+
+```powershell
+& "C:\Progress\OpenEdge\bin\_progres.exe" -b `
+  -db "D:\opencode\motor-progress\db\sports2000" -1 -ld DICTDB `
+  -p "D:\opencode\motor-progress\runners\RunDynamicQueryFromJson.p" `
+  -param "request=D:\opencode\motor-progress\examples\extractions\customer-simple.json;output=D:\opencode\motor-progress\output\extracts\customer-simple-result.json"
+```
+
+Assim uma nova extracao exige apenas um novo arquivo JSON, sem recompilar programa ABL especifico.
+
+## Interfaces web
+
+Páginas locais:
+
+```text
+web/query-builder.html
+web/query-file-runner.html
+```
+
+- `query-builder.html`: monta visualmente requests simples, multi-tabela e pipelines.
+- `query-file-runner.html`: lê um arquivo JSON da consulta atual, chama a API PASOE e mostra o resultado em Grid Kendo UI.

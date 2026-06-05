@@ -18,3 +18,4 @@ COMPILE VALUE("DynamicQueryWorkerService.cls") SAVE.
 COMPILE VALUE("DynamicQueryRestResource.cls") SAVE.
 COMPILE VALUE("DynamicQueryWebHandler.cls") SAVE.
 COMPILE VALUE("workers/BenchmarkCustomerCountOnServer.p") SAVE.
+COMPILE VALUE("runners/RunDynamicQueryFromJson.p") SAVE.
