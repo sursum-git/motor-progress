@@ -1,0 +1,9 @@
+{
+  "database": "DICTDB",
+  "leftTable": "Customer",
+  "leftField": "CustNum",
+  "rightTable": "Order",
+  "rightField": "CustNum",
+  "type": "INNER",
+  "fileName": "dictdb__customer__order.json"
+}

@@ -258,6 +258,132 @@ GET /web/SursumDynamicQuery/jobs/{jobId}/result
 
 Retorna o JSON gravado em arquivo pelo worker.
 
+## Metadados para o designer web
+
+### Listar bancos conectados
+
+```http
+GET /web/SursumDynamicQuery/metadata/databases
+```
+
+Retorna os bancos conectados na sessao PASOE, usando o logical name como chave para metadados, requests e relacoes salvas.
+
+Resposta:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "name": "DICTDB",
+      "logicalName": "DICTDB",
+      "physicalName": "D:\\opencode\\motor-progress\\db\\sports2000",
+      "type": "PROGRESS"
+    }
+  ]
+}
+```
+
+### Listar tabelas
+
+```http
+GET /web/SursumDynamicQuery/metadata/tables
+```
+
+Retorna as tabelas visiveis no dicionario `_File`, excluindo tabelas internas que comecam com `_`.
+
+Parametro opcional:
+
+| Query string | Descricao |
+|---|---|
+| `database` | Banco logico conectado no PASOE, por exemplo `DICTDB` |
+
+Resposta:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "name": "Customer",
+      "database": "DICTDB",
+      "label": "Customer",
+      "dumpName": "customer"
+    }
+  ]
+}
+```
+
+### Listar campos de uma tabela
+
+```http
+GET /web/SursumDynamicQuery/metadata/tables/{table}/fields?database=DICTDB
+```
+
+Resposta:
+
+```json
+{
+  "success": true,
+  "database": "DICTDB",
+  "table": "Customer",
+  "data": [
+    {
+      "name": "CustNum",
+      "database": "DICTDB",
+      "type": "integer",
+      "label": "Cust Num",
+      "format": ">>>>9",
+      "mandatory": false,
+      "extent": 0,
+      "indices": "CustNum"
+    }
+  ]
+}
+```
+
+### Salvar relacao reutilizavel
+
+```http
+POST /web/SursumDynamicQuery/metadata/relations
+```
+
+Body:
+
+```json
+{
+  "leftTable": "Customer",
+  "leftField": "CustNum",
+  "rightTable": "Order",
+  "rightField": "CustNum",
+  "database": "DICTDB",
+  "type": "INNER"
+}
+```
+
+A relacao e persistida em arquivo JSON no servidor:
+
+```text
+conf/relations/dictdb__customer__order.json
+```
+
+Regras:
+
+- `leftTable` e `rightTable` aceitam apenas letras, numeros e `_`;
+- `database` tambem aceita apenas letras, numeros e `_`;
+- o nome do arquivo e normalizado para minusculo;
+- o banco logico fica no inicio do arquivo para evitar colisao entre bancos com tabelas de mesmo nome;
+- a ordem do nome do arquivo e alfabetica, para reutilizar a mesma relacao em buscas invertidas;
+- o conteudo salvo permanece JSON estruturado, sem ABL livre.
+
+### Buscar relacao reutilizavel
+
+```http
+GET /web/SursumDynamicQuery/metadata/relations/{left}/{right}?database=DICTDB
+```
+
+Retorna a relacao salva para o par de tabelas.
+
 ## Acionar worker PASOE
 
 ```http

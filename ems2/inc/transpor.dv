@@ -1,0 +1,25 @@
+/*****************************************************************************
+** transpor.dv
+** Arquivo: transporte
+*****************************************************************************/
+
+not (can-find (first emitente use-index transporte where
+                     emitente.cod-transp = transporte.cod-transp)
+     or
+     can-find (first pedido-compr use-index transporte where
+                     pedido-compr.cod-transp = transporte.cod-transp)
+     or
+     transporte.cod-transp = ?
+     or
+     can-find (first ped-venda use-index ch-transp where
+                     ped-venda.nome-transp = transporte.nome-abrev)
+     or
+     can-find (first estab-cli use-index ch-transp where
+                     estab-cli.nome-transp = transporte.nome-abrev)
+     or
+     can-find (first gr-cli use-index ch-transp where
+                     gr-cli.cod-transp = transporte.cod-transp)
+     or
+     can-find (first nota-fiscal use-index ch-transp where
+                     nota-fiscal.nome-transp = transporte.nome-abrev))
+/* fim */

@@ -1,0 +1,611 @@
+{"database":"DICTDB","kind":"tables","table":"","updatedAt":"06/05/2026 10:45:34.077-03:00","data":[
+  {
+    "name": "Benefits",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Benefits",
+    "label": "",
+    "dumpName": "benefits",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "BillTo",
+    "database": "DICTDB",
+    "displayName": "DICTDB.BillTo",
+    "label": "",
+    "dumpName": "billto",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Bin",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Bin",
+    "label": "",
+    "dumpName": "bin",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Customer",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Customer",
+    "label": "",
+    "dumpName": "customer",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Department",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Department",
+    "label": "",
+    "dumpName": "departme",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Employee",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Employee",
+    "label": "",
+    "dumpName": "employee",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Family",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Family",
+    "label": "",
+    "dumpName": "family",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Feedback",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Feedback",
+    "label": "",
+    "dumpName": "feedback",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "InventoryTrans",
+    "database": "DICTDB",
+    "displayName": "DICTDB.InventoryTrans",
+    "label": "",
+    "dumpName": "inventor",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Invoice",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Invoice",
+    "label": "",
+    "dumpName": "invoice",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Item",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Item",
+    "label": "",
+    "dumpName": "item",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "LocalDefault",
+    "database": "DICTDB",
+    "displayName": "DICTDB.LocalDefault",
+    "label": "",
+    "dumpName": "localdef",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Order",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Order",
+    "label": "",
+    "dumpName": "order",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "OrderLine",
+    "database": "DICTDB",
+    "displayName": "DICTDB.OrderLine",
+    "label": "",
+    "dumpName": "orderlin",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "POLine",
+    "database": "DICTDB",
+    "displayName": "DICTDB.POLine",
+    "label": "",
+    "dumpName": "poline",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "PurchaseOrder",
+    "database": "DICTDB",
+    "displayName": "DICTDB.PurchaseOrder",
+    "label": "",
+    "dumpName": "purchase",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "RefCall",
+    "database": "DICTDB",
+    "displayName": "DICTDB.RefCall",
+    "label": "",
+    "dumpName": "refcall",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Salesrep",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Salesrep",
+    "label": "",
+    "dumpName": "salesrep",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "ShipTo",
+    "database": "DICTDB",
+    "displayName": "DICTDB.ShipTo",
+    "label": "",
+    "dumpName": "shipto",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "State",
+    "database": "DICTDB",
+    "displayName": "DICTDB.State",
+    "label": "",
+    "dumpName": "state",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Supplier",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Supplier",
+    "label": "",
+    "dumpName": "supplier",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "SupplierItemXref",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SupplierItemXref",
+    "label": "",
+    "dumpName": "suppitem",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "SursumQueryJob",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SursumQueryJob",
+    "label": "",
+    "dumpName": "sursumqueryjob",
+    "lastUpdate": "1780617833"
+  },
+  {
+    "name": "SursumQueryJobEvent",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SursumQueryJobEvent",
+    "label": "",
+    "dumpName": "sursumqueryjobevent",
+    "lastUpdate": "1780617833"
+  },
+  {
+    "name": "SYSBIGINTSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSBIGINTSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCALCTABLE",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSCALCTABLE",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCHARSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSCHARSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCHKCONSTR_NAME_MAP",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSCHKCONSTR_NAME_MAP",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCOLAUTH",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSCOLAUTH",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCOLSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSCOLSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCOLUMNS",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSCOLUMNS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCOLUMNS_FULL",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSCOLUMNS_FULL",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSDATATYPES",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSDATATYPES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSDATESTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSDATESTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSDBAUTH",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSDBAUTH",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSFLOATSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSFLOATSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSIDXSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSIDXSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSINDEXES",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSINDEXES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSINTSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSINTSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSNCHARSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSNCHARSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSNUMSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSNUMSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSNVARCHARSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSNVARCHARSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSPROCAUTH",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSPROCAUTH",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSPROCBIN",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSPROCBIN",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSPROCCOLUMNS",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSPROCCOLUMNS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSPROCEDURES",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSPROCEDURES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSPROCTEXT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSPROCTEXT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSREALSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSREALSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSROLES",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSROLES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSSCHEMAS",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSSCHEMAS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSSEQAUTH",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSSEQAUTH",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSSEQUENCES",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSSEQUENCES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSSMINTSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSSMINTSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSSQL_PROPERTIES",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSSQL_PROPERTIES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSSYNONYMS",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSSYNONYMS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTABAUTH",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSTABAUTH",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTABLES",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSTABLES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTABLES_FULL",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSTABLES_FULL",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTBLSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSTBLSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTIMESTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSTIMESTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTINYINTSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSTINYINTSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTRIGCOLS",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSTRIGCOLS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTRIGGER",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSTRIGGER",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTSSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSTSSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTSTZSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSTSTZSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSVARCHARSTAT",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSVARCHARSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSVIEWS",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSVIEWS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSVIEWS_NAME_MAP",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYSVIEWS_NAME_MAP",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYS_CHKCOL_USAGE",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYS_CHKCOL_USAGE",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYS_CHK_CONSTRS",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYS_CHK_CONSTRS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYS_KEYCOL_USAGE",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYS_KEYCOL_USAGE",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYS_REF_CONSTRS",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYS_REF_CONSTRS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYS_TBL_CONSTRS",
+    "database": "DICTDB",
+    "displayName": "DICTDB.SYS_TBL_CONSTRS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "TimeSheet",
+    "database": "DICTDB",
+    "displayName": "DICTDB.TimeSheet",
+    "label": "",
+    "dumpName": "timeshee",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Vacation",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Vacation",
+    "label": "",
+    "dumpName": "vacation",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Warehouse",
+    "database": "DICTDB",
+    "displayName": "DICTDB.Warehouse",
+    "label": "",
+    "dumpName": "warehous",
+    "lastUpdate": "1703173634"
+  }
+]
+}

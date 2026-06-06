@@ -1,0 +1,153 @@
+{"database":"sports2000","kind":"fields","table":"order","updatedAt":"06/06/2026 00:32:33.872-03:00","data":[
+  {
+    "name": "Ordernum",
+    "database": "sports2000",
+    "type": "integer",
+    "label": "Order Num",
+    "format": "zzzzzzzzz9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "CustNum",
+    "database": "sports2000",
+    "type": "integer",
+    "label": "Cust Num",
+    "format": ">>>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "OrderDate",
+    "database": "sports2000",
+    "type": "date",
+    "label": "Ordered",
+    "format": "99\/99\/99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "ShipDate",
+    "database": "sports2000",
+    "type": "date",
+    "label": "Shipped",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "PromiseDate",
+    "database": "sports2000",
+    "type": "date",
+    "label": "Promised",
+    "format": "99\/99\/99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Carrier",
+    "database": "sports2000",
+    "type": "character",
+    "label": "Carrier",
+    "format": "x(25)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Instructions",
+    "database": "sports2000",
+    "type": "character",
+    "label": "Instructions",
+    "format": "x(50)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "PO",
+    "database": "sports2000",
+    "type": "character",
+    "label": "PO",
+    "format": "x(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Terms",
+    "database": "sports2000",
+    "type": "character",
+    "label": "Terms",
+    "format": "x(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "SalesRep",
+    "database": "sports2000",
+    "type": "character",
+    "label": "Sales Rep",
+    "format": "x(4)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "BillToID",
+    "database": "sports2000",
+    "type": "integer",
+    "label": "Bill To ID",
+    "format": "zzzzzzzzz9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "ShipToID",
+    "database": "sports2000",
+    "type": "integer",
+    "label": "Ship To ID",
+    "format": "zzzzzzzzz9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "OrderStatus",
+    "database": "sports2000",
+    "type": "character",
+    "label": "Order Status",
+    "format": "x(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "WarehouseNum",
+    "database": "sports2000",
+    "type": "integer",
+    "label": "Warehouse Num",
+    "format": "zzzzzzzzz9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Creditcard",
+    "database": "sports2000",
+    "type": "character",
+    "label": "Credit Card",
+    "format": "x(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  }
+]
+}

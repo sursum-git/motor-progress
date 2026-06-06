@@ -1,0 +1,10 @@
+Implementation-Vendor  : Progress Software Corporation
+Implementation-Version : 12.8.0
+Package-Type           : gui
+Project-Name           : adeweb
+Build-Date             : 2023-12-13T10:54:01.175Z
+Build-OS               : Windows Server 2022 amd64 10.0
+Build-JDK              : 17.0.3 Eclipse Adoptium 17.0.3+7
+Build-Version          : release-12.8.x-f42084b
+DLC-Version            : 12.8.0.0
+DLC-Bitness            : 64

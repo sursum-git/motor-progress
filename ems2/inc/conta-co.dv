@@ -1,0 +1,19 @@
+/*****************************************************************************
+** conta-co.dv
+** Arquivo: conta-contab
+*****************************************************************************/
+
+  not (can-find(first rel-conta
+            where rel-conta.ep-codigo   = conta-contab.ep-codigo
+              and rel-conta.ct-codigo-p = conta-contab.ct-codigo
+              and rel-conta.sc-codigo-p = conta-contab.sc-codigo) or
+       can-find(first rel-conta
+            where rel-conta.ep-codigo   = conta-contab.ep-codigo
+              and rel-conta.ct-codigo-f = conta-contab.ct-codigo
+              and rel-conta.sc-codigo-f = conta-contab.sc-codigo) or
+       can-find(first movimento
+            where movimento.ep-codigo   = conta-contab.ep-codigo
+              and movimento.ct-codigo   = conta-contab.ct-codigo
+              and movimento.sc-codigo   = conta-contab.sc-codigo))
+
+/* fim */

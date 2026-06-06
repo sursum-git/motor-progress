@@ -1,0 +1,162 @@
+ADD TABLE "meta_cp_relacs"
+  AREA "dados"
+  DUMP-NAME "meta_cp_relacs"
+
+ADD FIELD "meta_cp_relac_id" OF "meta_cp_relacs" AS int64 
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  LABEL "ID"
+  POSITION 2
+  MAX-WIDTH 8
+  COLUMN-LABEL "ID"
+  ORDER 10
+
+ADD FIELD "meta_tb_relac_id" OF "meta_cp_relacs" AS int64 
+  FORMAT ">>>,>>>,>>9"
+  INITIAL "0"
+  LABEL "ID Meta Tb."
+  POSITION 3
+  MAX-WIDTH 8
+  COLUMN-LABEL "ID Meta Tb."
+  ORDER 20
+
+ADD FIELD "cod_cp_01" OF "meta_cp_relacs" AS character 
+  FORMAT "x(80)"
+  INITIAL ""
+  LABEL "Campo Tb.01"
+  POSITION 4
+  MAX-WIDTH 160
+  COLUMN-LABEL "Campo Tb.01"
+  ORDER 30
+
+ADD FIELD "cod_cp_02" OF "meta_cp_relacs" AS character 
+  FORMAT "x(80)"
+  INITIAL ""
+  LABEL "Campo Tb.02"
+  POSITION 5
+  MAX-WIDTH 160
+  COLUMN-LABEL "Campo Tb.02"
+  ORDER 40
+
+ADD FIELD "dt_hr_registro" OF "meta_cp_relacs" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  INITIAL ?
+  LABEL "Dt.Hr.Registro"
+  POSITION 6
+  MAX-WIDTH 8
+  COLUMN-LABEL "Dt.Hr.Registro"
+  ORDER 50
+
+ADD TABLE "meta_tb_relacs"
+  AREA "dados"
+  DUMP-NAME "sursum999"
+
+ADD FIELD "meta_tb_relac_id" OF "meta_tb_relacs" AS int64 
+  FORMAT ">>>,>>>,>>9"
+  INITIAL "0"
+  LABEL "ID"
+  POSITION 2
+  MAX-WIDTH 8
+  COLUMN-LABEL "ID"
+  ORDER 10
+
+ADD FIELD "num_tipo_relac_tb_01" OF "meta_tb_relacs" AS integer 
+  FORMAT ">,>>>,>>9"
+  INITIAL "0"
+  LABEL "Tp.Relac.Tb.01"
+  POSITION 3
+  MAX-WIDTH 4
+  ORDER 30
+
+ADD FIELD "num_tipo_relac_tb_02" OF "meta_tb_relacs" AS integer 
+  FORMAT ">>9"
+  INITIAL "0"
+  LABEL "Tp.Relac.Tb.02"
+  POSITION 4
+  MAX-WIDTH 4
+  ORDER 40
+
+ADD FIELD "cod_tb_01" OF "meta_tb_relacs" AS character 
+  FORMAT "x(50)"
+  INITIAL ""
+  LABEL "Tb.01"
+  POSITION 5
+  MAX-WIDTH 100
+  COLUMN-LABEL "Tb.01"
+  ORDER 50
+
+ADD FIELD "cod_tb_02" OF "meta_tb_relacs" AS character 
+  FORMAT "x(50)"
+  INITIAL ""
+  LABEL "Tb.02"
+  POSITION 6
+  MAX-WIDTH 100
+  COLUMN-LABEL "Tb.02"
+  ORDER 60
+
+ADD FIELD "num_lista" OF "meta_tb_relacs" AS integer 
+  FORMAT ">,>>>,>>9"
+  INITIAL "0"
+  LABEL "Lista"
+  POSITION 7
+  MAX-WIDTH 4
+  COLUMN-LABEL "Lista"
+  ORDER 70
+
+ADD FIELD "log_lista" OF "meta_tb_relacs" AS logical 
+  FORMAT "Sim/NÆo"
+  INITIAL "NÆo"
+  LABEL "Op‡äes em Lista?"
+  POSITION 8
+  MAX-WIDTH 1
+  COLUMN-LABEL "Op‡äes em Lista?"
+  ORDER 80
+
+ADD FIELD "log_of" OF "meta_tb_relacs" AS logical 
+  FORMAT "Sim/NÆo"
+  INITIAL "NÆo"
+  LABEL "Relacionamento por ""OF"""
+  POSITION 9
+  MAX-WIDTH 1
+  COLUMN-LABEL "Relacionamento por ""OF"""
+  ORDER 90
+
+ADD FIELD "cps_of" OF "meta_tb_relacs" AS character 
+  FORMAT "x(500)"
+  INITIAL ""
+  LABEL "Campos Relacto.  ""OF"""
+  POSITION 10
+  MAX-WIDTH 1000
+  COLUMN-LABEL "Campos Relacto.  ""OF"""
+  ORDER 100
+
+ADD FIELD "dt_hr_registro" OF "meta_tb_relacs" AS datetime 
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  INITIAL ?
+  LABEL "Dt.Hr.Registro"
+  POSITION 11
+  MAX-WIDTH 8
+  COLUMN-LABEL "Dt.Hr.Registro"
+  ORDER 110
+
+ADD INDEX "primario" ON "meta_tb_relacs" 
+  AREA "indices"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "meta_tb_relac_id" ASCENDING 
+
+ADD INDEX "ind_tb_01" ON "meta_tb_relacs" 
+  AREA "indices"
+  INDEX-FIELD "cod_tb_01" ASCENDING 
+  INDEX-FIELD "cod_tb_02" ASCENDING 
+
+ADD INDEX "ind_tb_02" ON "meta_tb_relacs" 
+  AREA "indices"
+  INDEX-FIELD "cod_tb_02" ASCENDING 
+  INDEX-FIELD "cod_tb_01" ASCENDING 
+
+.
+PSC
+cpstream=ibm850
+.
+0000003394

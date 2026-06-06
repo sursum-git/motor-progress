@@ -320,9 +320,27 @@ CLASS DynamicMultiTableQueryService:
     END METHOD.
 
     METHOD PRIVATE CHARACTER buildPhysicalTableName(INPUT pcBanco AS CHARACTER, INPUT pcTabela AS CHARACTER):
+        ASSIGN pcBanco = THIS-OBJECT:resolveDatabaseName(pcBanco).
         IF pcBanco <> "" THEN
             RETURN pcBanco + "." + pcTabela.
         RETURN pcTabela.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER resolveDatabaseName(INPUT pcDatabase AS CHARACTER):
+        DEFINE VARIABLE iDb AS INTEGER NO-UNDO.
+        DEFINE VARIABLE cPhysical AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cName AS CHARACTER NO-UNDO.
+        ASSIGN cName = TRIM(pcDatabase).
+        IF cName = "" OR cName = ? THEN
+            RETURN "".
+        DO iDb = 1 TO NUM-DBS:
+            IF LC(LDBNAME(iDb)) = LC(cName) THEN
+                RETURN LDBNAME(iDb).
+            ASSIGN cPhysical = REPLACE(PDBNAME(iDb), "/", "~\").
+            IF LC(cName) = LC(ENTRY(NUM-ENTRIES(cPhysical, "~\"), cPhysical, "~\")) THEN
+                RETURN LDBNAME(iDb).
+        END.
+        RETURN cName.
     END METHOD.
 
     METHOD PRIVATE LONGCHAR buildPlanJson(INPUT poRequest AS DynamicQueryRequestModel, INPUT pcExecutionMode AS CHARACTER):

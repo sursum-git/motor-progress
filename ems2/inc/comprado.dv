@@ -1,0 +1,19 @@
+/*****************************************************************************
+** comprado.dv
+** Arquivo: comprador  ( componente do produto Magnus utilizado pelo EMS)
+*****************************************************************************/
+
+not (can-find (first familia use-index comprador where
+                     familia.cod-comprado = comprador.cod-comprado)) and
+not (can-find (first item use-index comprador where
+                     item.cod-comprado = comprador.cod-comprado)) and
+not (can-find (first ordem-compra use-index comprador where
+                     ordem-compra.cod-comprado = comprador.cod-comprado)) and
+not (can-find (first cotacao-item use-index comprador where
+                     cotacao-item.cod-comprado = comprador.cod-comprado)) and
+not (can-find (first aprov-comp use-index comprador where
+                     aprov-comp.cod-comprado = comprador.cod-comprado)) and
+not (comprador.cod-comprado = ?)
+
+/* fim */
+

@@ -1,0 +1,11 @@
+/*****************************************************************************
+** mensagem.dv
+** Arquivo: mensagem
+*****************************************************************************/
+
+not (can-find (first pedido-compr where
+                     pedido-compr.cod-mensagem = mensagem.cod-mensagem)
+     or
+     mensagem.cod-mensagem = ?)
+
+/* fim */

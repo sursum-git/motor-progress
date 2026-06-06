@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sursum Consultas Salvas</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="query-builder.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Sursum Dynamic Query</p>
+        <h1>Consultas existentes</h1>
+        <p class="lead">Gerencie os JSONs de extracao salvos no navegador. Use Novo para criar uma consulta e Alterar para abrir o builder por etapas.</p>
+      </div>
+      <div class="endpoint-card">
+        <label for="companyFilter">Empresa/cliente</label>
+        <input id="companyFilter" placeholder="Selecione a empresa">
+        <label for="searchQuery">Pesquisar</label>
+        <input id="searchQuery" placeholder="Nome, tabela, pipeline">
+        <div class="action-row tight">
+          <button id="newQuery">Novo</button>
+          <button id="refreshQueries">Atualizar grid</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-title">
+        <h2>Consultas salvas</h2>
+        <span>Persistencia local em localStorage</span>
+      </div>
+      <div id="queriesGrid"></div>
+      <div id="statusBox" class="status-box">Pronto.</div>
+    </section>
+  </div>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="query-list.js"></script>
+</body>
+</html>

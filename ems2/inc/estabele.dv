@@ -1,0 +1,34 @@
+/****************************************************************************
+** estabele.dv
+** Arquivo: estabelec
+*****************************************************************************/
+
+not (can-find (first pedido-compr use-index end-entrega where
+                     pedido-compr.end-entrega = estabelec.cod-estabel)
+    or
+    can-find (first pedido-compr use-index end-cobranca where
+                    pedido-compr.end-cobranca = estabelec.cod-estabel)
+    or
+    can-find (first bem where bem.cod-estabel = estabelec.cod-estabel)
+    or
+    can-find (first titulo use-index estabel where
+                    titulo.cod-estabel = estabelec.cod-estabel)
+    or
+    can-find (first ped-venda use-index ch-estcli where
+                    ped-venda.cod-estabel = estabelec.cod-estabel)
+    or
+    can-find (first estab-cli use-index ch-estcli where
+                    estab-cli.cod-estabel = estabelec.cod-estabel)
+    or
+    can-find (first regiao use-index ch-estabel where
+                    regiao.cod-estabel = estabelec.cod-estabel)
+    or
+    can-find (first para-ped use-index ch-estabel where
+                    para-ped.estab-padrao = estabelec.cod-estabel)
+    or
+    can-find (first nota-fiscal of estabelec)
+    or
+    can-find (first tit-ap use-index estab where
+                    tit-ap.cod-estabel = estabelec.cod-estabel))
+
+/* fim */

@@ -1,0 +1,10 @@
+Implementation-Vendor  : Progress Software Corporation
+Implementation-Version : 12.8.0
+Package-Type           : sources
+Project-Name           : netlib
+Build-Date             : 2023-12-13T10:48:33.921Z
+Build-OS               : Linux amd64 4.18.0-372.9.1.el8.x86_64
+Build-JDK              : 17.0.3 Eclipse Adoptium 17.0.3+7
+Build-Version          : release-12.8.x-02018cf
+DLC-Version            : 12.8.0.0
+DLC-Bitness            : 64

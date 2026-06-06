@@ -1,0 +1,9 @@
+Implementation-Vendor: Progress Software Corporation
+Implementation-Version: 12.8.0
+Vendor-URL: https://www.progress.com
+Package-Type: gui
+Project-Name: promessaging
+Build-Date: 2023-12-13
+Build-OS: Windows Server 2022 amd64 10.0
+Build-JDK: 17.0.3 Eclipse Adoptium 17.0.3+7
+Created-By: Gradle 7.6

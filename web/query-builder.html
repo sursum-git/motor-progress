@@ -12,52 +12,137 @@
     <header class="hero">
       <div>
         <p class="eyebrow">Sursum Dynamic Query</p>
-        <h1>Construtor visual de consultas e pipelines</h1>
-        <p class="lead">Monte uma consulta simples, multi-tabela ou um pipeline com map, distinct, group e aggregate sem escrever ABL livre.</p>
+        <div class="title-row">
+          <h1>Designer visual de consultas e pipelines</h1>
+          <button id="pageHelpToggle" class="help-icon" type="button" data-help="Construa a consulta em etapas, use metadados do PASOE, salve o JSON da extracao e execute o resultado em uma tela separada.">?</button>
+        </div>
       </div>
       <div class="endpoint-card">
-        <label for="apiUrl">Endpoint PASOE</label>
-        <input id="apiUrl" value="http://localhost:8890/web/SursumDynamicQuery/query">
-        <button id="loadCustomerSample">Exemplo Customer</button>
-        <button id="loadAdvancedSample">Pipeline avançado</button>
+        <div class="endpoint-field">
+          <label for="queryName">Nome da consulta</label>
+          <input id="queryName" placeholder="Clientes ativos por UF">
+        </div>
+        <div class="endpoint-field">
+          <label for="apiCompany">Empresa/cliente</label>
+          <input id="apiCompany" placeholder="Selecione a empresa">
+        </div>
+        <div class="endpoint-field">
+          <label for="apiEndpoint">Endpoint PASOE base</label>
+          <input id="apiEndpoint" placeholder="Selecione o endpoint">
+        </div>
+        <input id="apiBaseUrl" type="hidden" value="http://localhost:8890/web/SursumDynamicQuery">
+        <div class="action-row tight">
+          <button id="backToQueryList">Consultas salvas</button>
+          <button id="saveQuery">Salvar consulta</button>
+          <button id="saveQueryAs">Salvar como</button>
+          <button id="openEndpointConfig">Arquivo de endpoints</button>
+        </div>
       </div>
     </header>
 
-    <main class="workspace">
-      <section class="panel builder">
+    <nav class="wizard-nav" aria-label="Etapas da consulta">
+      <button class="wizard-step is-active" data-step="1"><strong>1</strong><span>Metadados</span></button>
+      <button class="wizard-step" data-step="2"><strong>2</strong><span>Fontes</span></button>
+      <button class="wizard-step" data-step="3"><strong>3</strong><span>Selecao</span></button>
+      <button class="wizard-step" data-step="4"><strong>4</strong><span>Filtros</span></button>
+      <button class="wizard-step" data-step="5"><strong>5</strong><span>Ordenacao</span></button>
+      <button class="wizard-step" data-step="6"><strong>6</strong><span>Relacoes</span></button>
+      <button class="wizard-step" data-step="7"><strong>7</strong><span>Pipeline</span></button>
+      <button class="wizard-step" data-step="8"><strong>8</strong><span>JSON</span></button>
+    </nav>
+
+    <main class="wizard-workspace">
+      <section class="panel wizard-panel is-active" data-step-panel="1">
         <div class="panel-title">
-          <h2>1. Consulta</h2>
-          <span>Fonte, projeção, filtros e paginação</span>
+          <h2>1. Metadados e configuracao base</h2>
+          <span>Carrega bancos, tabelas e campos disponiveis</span>
         </div>
 
-        <div class="grid two">
-          <label>Execução
+        <div class="grid three">
+          <label>Execucao
             <input id="execution">
           </label>
           <label>Pipeline version
             <input id="pipelineVersion" placeholder="v1">
           </label>
+          <label>Modo de montagem
+            <input id="requestMode">
+          </label>
         </div>
 
-        <div class="grid three">
+        <div class="action-row">
+          <button id="loadMetadata">Atualizar tabelas/bancos</button>
+          <button id="loadCustomerSample">Exemplo Customer</button>
+          <button id="loadAdvancedSample">Pipeline avancado</button>
+        </div>
+
+        <div class="metadata-load-box" id="metadataLoadBox">
+          <div class="metadata-load-title">Metadados</div>
+          <div id="metadataLoadText">Aguardando carga inicial.</div>
+          <div class="metadata-progress"><div id="metadataProgressBar"></div></div>
+        </div>
+
+        <div class="wizard-help">
+          <strong>Como usar:</strong> carregue primeiro os metadados. Em consultas multi-banco, selecione o banco diretamente em cada fonte, nao apenas neste combo.
+        </div>
+      </section>
+
+      <section class="panel wizard-panel" data-step-panel="2">
+        <div class="panel-title">
+          <h2>2. Fontes de dados</h2>
+          <span>Tabelas, aliases e campos disponiveis</span>
+        </div>
+
+        <div class="grid four">
+          <label>Banco da fonte
+            <input id="sourceDatabase" placeholder="Banco da tabela">
+          </label>
           <label>Tabela
             <input id="sourceTable" placeholder="Customer">
           </label>
           <label>Alias
             <input id="sourceAlias" placeholder="customer">
           </label>
-          <label>Campos disponíveis
-            <input id="sourceFields" placeholder="CustNum,Name,State,Balance">
+          <label>&nbsp;
+            <button id="searchTable">Buscar tabela</button>
           </label>
         </div>
 
         <div class="action-row">
           <button id="addSource">Adicionar fonte</button>
           <button id="clearSources">Limpar fontes</button>
+          <button id="loadTable">Carregar tabela</button>
         </div>
         <div id="sourcesGrid"></div>
+      </section>
 
-        <div class="divider"></div>
+      <div id="tableSearchWindow" class="search-window">
+        <div class="grid two">
+          <label>Pesquisar tabela
+            <input id="tableSearchText" placeholder="codigo, descricao ou dump-name">
+          </label>
+          <label class="step-actions">&nbsp;
+            <button id="applyTableSearch">Pesquisar</button>
+            <button id="reloadTableSearch">Recarregar banco</button>
+          </label>
+        </div>
+        <div id="tableSearchGrid"></div>
+      </div>
+
+      <section class="panel wizard-panel" data-step-panel="3">
+        <div class="panel-title">
+          <h2>3. Selecao</h2>
+          <span>Define os campos retornados pela consulta</span>
+        </div>
+
+        <div class="grid two" id="selectionSourceRow">
+          <label>Tabela/fonte
+            <input id="selectionSource" placeholder="Selecione a tabela/fonte">
+          </label>
+          <label>&nbsp;
+            <span class="field-note">Quando houver mais de uma fonte, os campos abaixo sao filtrados pela tabela selecionada.</span>
+          </label>
+        </div>
 
         <div class="grid four">
           <label>Alias
@@ -66,7 +151,7 @@
           <label>Campo
             <input id="selectField" placeholder="CustNum">
           </label>
-          <label>Nome de saída
+          <label>Nome de saida
             <input id="selectOutput" placeholder="codigo">
           </label>
           <label>&nbsp;
@@ -74,8 +159,22 @@
           </label>
         </div>
         <div id="selectGrid"></div>
+      </section>
 
-        <div class="divider"></div>
+      <section class="panel wizard-panel" data-step-panel="4">
+        <div class="panel-title">
+          <h2>4. Filtros</h2>
+          <span>Define restricoes antes da execucao da consulta</span>
+        </div>
+
+        <div class="grid two" id="filterSourceRow">
+          <label>Tabela/fonte
+            <input id="filterSelectionSource" placeholder="Selecione a tabela/fonte">
+          </label>
+          <label>&nbsp;
+            <span class="field-note">Os campos de filtro sao carregados conforme a tabela/fonte selecionada.</span>
+          </label>
+        </div>
 
         <div class="grid five">
           <label>Alias
@@ -95,8 +194,22 @@
           </label>
         </div>
         <div id="filtersGrid"></div>
+      </section>
 
-        <div class="divider"></div>
+      <section class="panel wizard-panel" data-step-panel="5">
+        <div class="panel-title">
+          <h2>5. Ordenacao e paginacao</h2>
+          <span>Define ordenacao e tamanho da pagina retornada</span>
+        </div>
+
+        <div class="grid two" id="orderSourceRow">
+          <label>Tabela/fonte
+            <input id="orderSelectionSource" placeholder="Selecione a tabela/fonte">
+          </label>
+          <label>&nbsp;
+            <span class="field-note">Os campos de ordenacao sao carregados conforme a tabela/fonte selecionada.</span>
+          </label>
+        </div>
 
         <div class="grid four">
           <label>Alias
@@ -105,32 +218,69 @@
           <label>Campo
             <input id="orderField" placeholder="CustNum">
           </label>
-          <label>Direção
+          <label>Direcao
             <input id="orderDirection">
           </label>
           <label>&nbsp;
-            <button id="addOrder">Adicionar ordenação</button>
+            <button id="addOrder">Adicionar ordenacao</button>
           </label>
         </div>
         <div id="ordersGrid"></div>
 
         <div class="grid three compact">
-          <label>Página
+          <label>Pagina
             <input id="page" value="1">
           </label>
           <label>Page size
             <input id="pageSize" value="500">
           </label>
-          <label>Modo de montagem
-            <input id="requestMode">
+          <label>&nbsp;
+            <span class="field-note">A paginacao tambem entra no step limit quando o pipeline for gerado.</span>
           </label>
         </div>
       </section>
 
-      <section class="panel pipeline">
+      <section class="panel wizard-panel" data-step-panel="6">
         <div class="panel-title">
-          <h2>2. Pipeline</h2>
-          <span>Preparação e transformação pós-query</span>
+          <h2>6. Relacoes reutilizaveis</h2>
+          <span>Arquivos em conf/relations/bancoA__tabelaA__bancoB__tabelaB.json</span>
+        </div>
+        <div class="grid six">
+          <label>Banco esquerdo
+            <input id="relationLeftDatabase" placeholder="Banco esquerdo">
+          </label>
+          <label>Tabela esquerda
+            <input id="relationLeftTable" placeholder="Customer">
+          </label>
+          <label>Campo esquerdo
+            <input id="relationLeftField" placeholder="CustNum">
+          </label>
+          <label>Banco direito
+            <input id="relationRightDatabase" placeholder="Banco direito">
+          </label>
+          <label>Tabela direita
+            <input id="relationRightTable" placeholder="Order">
+          </label>
+          <label>Campo direito
+            <input id="relationRightField" placeholder="CustNum">
+          </label>
+          <label>Tipo
+            <input id="relationType">
+          </label>
+        </div>
+        <div class="action-row">
+          <button id="saveRelation">Salvar relacao</button>
+          <button id="loadRelation">Buscar relacao</button>
+          <button id="addRelationAsJoin">Adicionar como join</button>
+        </div>
+        <div id="joinsGrid"></div>
+        <textarea id="relationPreview" spellcheck="false" placeholder="Relacao JSON reutilizavel"></textarea>
+      </section>
+
+      <section class="panel wizard-panel" data-step-panel="7">
+        <div class="panel-title">
+          <h2>7. Pipeline</h2>
+          <span>Preparacao e transformacao pos-query</span>
         </div>
 
         <div class="grid three">
@@ -157,32 +307,31 @@
         </div>
       </section>
 
-      <section class="panel preview">
+      <section class="panel wizard-panel" data-step-panel="8">
         <div class="panel-title">
-          <h2>3. JSON e execução</h2>
-          <span>Preview, validação visual e chamada REST</span>
+          <h2>8. JSON da consulta</h2>
+          <span>Salve a consulta ou envie para pagina de resultado</span>
         </div>
         <div class="action-row">
           <button id="buildJson">Atualizar JSON</button>
           <button id="copyJson">Copiar JSON</button>
-          <button id="runQuery">Executar na API</button>
+          <button id="downloadJson">Baixar JSON</button>
+          <button id="openResultPage">Abrir resultado</button>
         </div>
         <textarea id="jsonPreview" spellcheck="false"></textarea>
-        <div id="statusBox" class="status-box">Pronto.</div>
-      </section>
-
-      <section class="panel results">
-        <div class="panel-title">
-          <h2>4. Resultado</h2>
-          <span>Dados retornados pela API</span>
-        </div>
-        <div id="resultGrid"></div>
       </section>
     </main>
+
+    <footer class="wizard-footer">
+      <button id="prevStep">Etapa anterior</button>
+      <div id="statusBox" class="status-box">Pronto.</div>
+      <button id="nextStep">Proxima etapa</button>
+    </footer>
   </div>
 
   <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
   <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
   <script src="query-builder.js"></script>
 </body>
 </html>

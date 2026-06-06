@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sursum Endpoints PASOE</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="query-builder.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Sursum Dynamic Query</p>
+        <h1>Arquivo de endpoints PASOE</h1>
+        <p class="lead">Agrupe endpoints por empresa/cliente, salve em arquivo JSON e mantenha o localStorage apenas como cache/fallback para as telas do builder e resultado.</p>
+      </div>
+      <div class="endpoint-card">
+        <label for="configFile">Importar arquivo JSON</label>
+        <input id="configFile" type="file" accept=".json,application/json">
+        <div class="action-row tight">
+          <button id="exportFile">Baixar arquivo</button>
+          <button id="saveWithPicker">Salvar no arquivo</button>
+          <button id="backToBuilder">Voltar ao builder</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-title">
+        <h2>Empresas e endpoints cadastrados</h2>
+        <span>Formato sugerido: sursum-endpoints.json</span>
+      </div>
+
+      <div class="grid three">
+        <label>Empresa atual
+          <input id="companyCombo" placeholder="Selecione a empresa">
+        </label>
+        <label>Nova empresa
+          <input id="companyName" placeholder="Cliente ABC">
+        </label>
+        <label>&nbsp;
+          <button id="addCompany">Adicionar empresa</button>
+          <button id="removeCompany">Remover empresa</button>
+        </label>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="grid three">
+        <label>Ambiente/PASOE
+          <input id="endpointName" placeholder="Local PASOE">
+        </label>
+        <label>URL base
+          <input id="endpointUrl" placeholder="http://localhost:8890/web/SursumDynamicQuery">
+        </label>
+        <label>&nbsp;
+          <button id="addEndpoint">Adicionar endpoint</button>
+        </label>
+      </div>
+
+      <div id="endpointsGrid"></div>
+
+      <div class="panel-title slim">
+        <h2>Preview do arquivo</h2>
+        <span>Este JSON e a fonte portavel da configuracao</span>
+      </div>
+      <textarea id="filePreview" spellcheck="false"></textarea>
+      <div id="statusBox" class="status-box">Pronto.</div>
+    </section>
+  </div>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="endpoint-config.js"></script>
+</body>
+</html>

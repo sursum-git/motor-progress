@@ -1,0 +1,1613 @@
+{"database":"ems2med","kind":"fields","table":"ped-item","updatedAt":"06/06/2026 10:45:53.798-03:00","data":[
+  {
+    "name": "nome-abrev",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Cliente",
+    "format": "x(12)",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nr-pedcli",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Pedido Cliente",
+    "format": "x(12)",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nr-sequencia",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Seqüência",
+    "format": ">>,>>9",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "it-codigo",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Item",
+    "format": "x(16)",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nr-ordem",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Ordem Compra Cliente",
+    "format": "zzzzz9,99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "parcela",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Parcela",
+    "format": ">>>>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-entorig",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Entrega Orig",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-entrega",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Entrega",
+    "format": "99\/99\/9999",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-canseq",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Cancelamento",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "desc-cancela",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Motivo Cancelamento",
+    "format": "x(2000)",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-reativ",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Reativação",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-suspensao",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Suspensão",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qt-pedida",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Quantidade Pedida",
+    "format": ">>,>>>,>>9.9999",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qt-atendida",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Qt Atendida",
+    "format": ">>,>>>,>>9.9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qt-pendente",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Quantidade Pendente",
+    "format": ">>,>>>,>>9.9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qt-devolvida",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Qt Devolvida",
+    "format": ">>,>>>,>>9.9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-devolucao",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Devolução",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "desc-devol",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Motivo Devolução",
+    "format": "x(2000)",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "vl-pretab",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Preço Tabela",
+    "format": ">>>,>>>,>>9.99999",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "vl-preori",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Preço Original",
+    "format": ">>>,>>>,>>9.99999",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "vl-preuni",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Preço Líquido",
+    "format": ">>>,>>>,>>9.99999",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "per-des-item",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Perc Desconto",
+    "format": "->>9.99999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "per-minfat",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "% Min Fat Parcial",
+    "format": ">9.99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-sit-item",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Situação",
+    "format": "99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "user-impl",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Usuário Implantação",
+    "format": "x(12)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-userimp",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Implantação",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "user-alte",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Usuário Ult Alt",
+    "format": "x(12)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-useralt",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Última Alteração",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "user-canc",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Usuário Cancelamento",
+    "format": "x(12)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-usercan",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Cancelamento",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "user-reat",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Usuário Reativação",
+    "format": "x(12)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-userrea",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Reativação",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "user-devol",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Usuário Devolução",
+    "format": "x(12)",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-userdev",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Data Devolução",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "user-susp",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Usuário Suspensão",
+    "format": "x(12)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-usersusp",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Suspensão",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "aliquota-ipi",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Alíquota IPI",
+    "format": ">>9.99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "ind-icm-ret",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Retém ICMS Fonte",
+    "format": "Sim\/Não",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "vl-merc-abe",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Valor Líquido Aberto",
+    "format": ">>>>,>>>,>>9.99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "vl-liq-it",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Valor Líquido",
+    "format": ">>>>,>>>,>>9.99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "vl-liq-abe",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Valor Total Aberto",
+    "format": ">>>>,>>>,>>9.99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "vl-tot-it",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Valor Total Item",
+    "format": ">>>>,>>>,>>9.99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nr-tabpre",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Tab Preços",
+    "format": "x(8)",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "tp-preco",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Tipo Preço",
+    "format": "99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "per-des-icms",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Perc Desc ICMS",
+    "format": "->>9.99999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nat-operacao",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Natureza operação",
+    "format": "x(06)",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "tipo-atend",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Tipo Atendimento",
+    "format": "99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "observacao",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Observação",
+    "format": "x(2000)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "ind-componen",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Tipo Componente",
+    "format": "99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qt-fatenf",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Qt Ent Futura",
+    "format": ">>,>>>,>>9.9999",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-refer",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Referência",
+    "format": "x(8)",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qt-transfer",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Quantidade Transferida",
+    "format": ">>,>>>,>>9.9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "desc-txt",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Desconto",
+    "format": "x(50)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qt-alocada",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Qt Alocada",
+    "format": ">>,>>>,>>9.9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-sit-pre",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Situação Alocação",
+    "format": "99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-max-fat",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Máxima Fat",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "tp-aloc-lote",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Tipo Alocação Lote",
+    "format": "99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-min-fat",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Dt Mínima Fat",
+    "format": "99\/99\/9999",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "esp-ped",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Espécie Pedido",
+    "format": "99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "perc-fornec",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "% Fornecimento",
+    "format": ">>9.99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qt-lote-min",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Qt Lote Mínimo",
+    "format": ">>>,>>>,>>9.9999",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cd-freq",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Freq Fornec",
+    "format": ">>9",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nr-progcli",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Programa Cliente",
+    "format": "x(35)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nr-versao",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Versão",
+    "format": ">>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-entrega",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Entrega",
+    "format": "x(12)",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cd-origem",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Origem",
+    "format": "99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "vl-pauta",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Valor Pauta",
+    "format": ">>>>,>>>,>>9.99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qt-log-aloca",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Qt Alocada",
+    "format": ">>,>>>,>>9.9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "tp-adm-lote",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Política Administração Lote",
+    "format": "99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "ind-fat-qtfam",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Fatura Quantidade Família",
+    "format": "sim\/não",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "config-alter",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Altera Configuração",
+    "format": "Sim\/Não",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nr-config",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Nr Configuração",
+    "format": ">>>,>>>,>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cons-mrp",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Considera MRP",
+    "format": "Sim\/Não",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cons-pmp",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Considera  PV",
+    "format": "Sim\/Não",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nr-ord-produ",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Nr Ordem Produção",
+    "format": ">>>,>>>,>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nr-programa",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Programa",
+    "format": ">>>,>>>,>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qt-trans-mp",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Quantidade Transferida(MP)",
+    "format": ">>,>>>,>>9.9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "log-ordens-emitidas",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Ordens Emitidas",
+    "format": "Sim\/Não",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "aloca-canc-saldo",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Aloca CE e Cancela Saldo",
+    "format": "Sim\/Não",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "aliquota-tax",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Percent Imposto",
+    "format": ">>9.99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-isencao",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Cod Isenção",
+    "format": ">>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-tax",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Cod Imp",
+    "format": ">>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-vat",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Cod Imp",
+    "format": ">>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "aliquota-iva",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Alíquota IVA",
+    "format": ">>9.99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qt-ordens",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Qtd em Ordens",
+    "format": ">>,>>>,>>9.9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "char-1",
+    "database": "ems2med",
+    "type": "character",
+    "label": "",
+    "format": "x(100)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "char-2",
+    "database": "ems2med",
+    "type": "character",
+    "label": "",
+    "format": "x(100)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dec-1",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "",
+    "format": "->>>>>>>>>>>9.99999999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dec-2",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "",
+    "format": "->>>>>>>>>>>9.99999999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "int-1",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "",
+    "format": "->>>>>>>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "int-2",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "",
+    "format": "->>>>>>>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "log-1",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "",
+    "format": "Sim\/Não",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "log-2",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "",
+    "format": "Sim\/Não",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "data-1",
+    "database": "ems2med",
+    "type": "date",
+    "label": "",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "data-2",
+    "database": "ems2med",
+    "type": "date",
+    "label": "",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "vl-desconto",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Vl Desconto",
+    "format": ">>,>>9.99999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-cond-esp",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Cond Pgto Especial",
+    "format": ">>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-sit-com",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Situação Avaliação Comercial",
+    "format": "99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "motivo-alt-sit-quota",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Motivo Alter Situação Quota",
+    "format": "x(2000)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dat-alter-sit",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Alteração Situação",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-usu-alt-sit",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Usuário Alteração Situação",
+    "format": "x(12)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "check-sum",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Check-sum",
+    "format": "x(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "log-usa-tabela-desconto",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Usa Tabela Descontos",
+    "format": "Sim\/Não",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-pct-desconto-tab-preco",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Perc Desc Tabela Preços",
+    "format": "->9.99999",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "des-pct-desconto-inform",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Perc Desc Informado",
+    "format": "x(50)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-desconto-inform",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Valor Desconto Informado",
+    "format": ">>>,>>>,>>9.99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-pct-desconto-total",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Perc Desc Total",
+    "format": "->>9.9999",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "log-concede-bonif-qtd",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Concede Bonif Qtd",
+    "format": "Sim\/Não",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-pct-bonif",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Perc Bonificação",
+    "format": "->9.999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-pct-desconto-periodo",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Perc Desc Período",
+    "format": "->9.999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-pct-desconto-prazo",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Perc Desc Prazo",
+    "format": "->9.999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-desconto-total",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Valor Desconto Total",
+    "format": ">>>,>>>,>>9.99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-desconto-bonif",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Valor Desconto Bonif",
+    "format": ">>>,>>>,>>9.99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "num-sequencia-bonif",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Seqüência Bonif",
+    "format": ">>,>>9",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-desconto",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Desconto",
+    "format": "->>>,>>>,>>9.99999",
+    "mandatory": false,
+    "extent": 5,
+    "indices": ""
+  },
+  {
+    "name": "qt-un-fat",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Qtdade UM Fatur",
+    "format": ">>,>>>,>>9.9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "vl-preori-un-fat",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Preço Original UM Fatur",
+    "format": ">>>,>>>,>>9.99999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-mot-canc-cot",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Cod Mot Cancelamento",
+    "format": ">>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "user-aprov-cot",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Usuário Aprov Cotação",
+    "format": "X(12)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-aprov-cot",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Data Aprov Cotação",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "user-lib-cot",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Usuário Lib Cotação",
+    "format": "X(12)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dt-lib-cot",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Data Lib Cotação",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-sit-preco",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Situação Avaliação Preço",
+    "format": "99",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "user-preco",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Usuário Aprovação",
+    "format": "x(12)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dat-aprov-preco",
+    "database": "ems2med",
+    "type": "date",
+    "label": "Aprov Preços",
+    "format": "99\/99\/9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "desc-lib-preco",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Motivo Liberação Preços",
+    "format": "x(76)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "endereco_text",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Endereço Completo",
+    "format": "X(2000)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "des-un-medida",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Unidade Medida",
+    "format": "xx",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "dec-ftconv-unest",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Ft Conv Unid Estoque",
+    "format": ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "ind-origem-fator",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Origem Fator Conversão",
+    "format": "9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "num-casa-dec-unest",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Número Casas Decimais",
+    "format": ">9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cd-jurisdicao-ent",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Código Jurisdição",
+    "format": "X(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-estab-ctr",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Estab Ctr",
+    "format": "x(5)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nr-contrato",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Nr Contrato",
+    "format": ">>>,>>>,>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nr-seq-contr-it",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Sequência Item Contr",
+    "format": ">>,>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "ind-drop-shipment",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Usa Drop Shipment",
+    "format": "yes\/no",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "nr-anexo",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Anexo",
+    "format": "X(12)",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-class-fis",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Classificação Fiscal",
+    "format": "X(8)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-un",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Unidade Medida",
+    "format": "x(2)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-cta-contab",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Conta Contábil",
+    "format": "x(17)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-cust-contab",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Custo Contábil",
+    "format": "x(12)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "log-desc-item-cli",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Desconto Item Cliente",
+    "format": "Sim\/Não",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "log-canc-saldo",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Cancela Saldo",
+    "format": "Sim\/Não",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-aliq-iss",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Alíquota ISS",
+    "format": "->>,>>9.99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qtd-alocar",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Quantidade Alocar",
+    "format": "->>,>>9.99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-ipi",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Valor IPI",
+    "format": ">>>>,>>>,>>9.9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "ind-orig-entrada",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Origem Entrada",
+    "format": ">9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "log-preco-unid-medid-estoq",
+    "database": "ems2med",
+    "type": "logical",
+    "label": "Preço Unidade Medida Estoque",
+    "format": "Sim\/Não",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-frete",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Valor Frete",
+    "format": ">>>,>>>,>>>,>>9.99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-seguro",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Valor Seguro",
+    "format": ">>>,>>>,>>>,>>9.99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-embal",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Valor Embalagem",
+    "format": ">>>,>>>,>>>,>>9.99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-unid-negoc",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Unidade Negócio",
+    "format": "X(3)",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-tax-ptlidad",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Taxa Pontualidade",
+    "format": ">>9.99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-tax-apldo",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Taxa Aplicada",
+    "format": ">>9.99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "qti-dias-carenc",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Qt.dias carencia",
+    "format": "9999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-familia-mater",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Família",
+    "format": "x(8)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "val-preco-suger",
+    "database": "ems2med",
+    "type": "decimal",
+    "label": "Preco Sugerido",
+    "format": ">>>,>>>,>>9.99999",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "sc-codigo",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Centro de custo Contabil",
+    "format": "x(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "ct-codigo",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Conta",
+    "format": "x(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "num-id-campanha-crm",
+    "database": "ems2med",
+    "type": "integer",
+    "label": "Campanha Crm",
+    "format": ">>>>,>>9",
+    "mandatory": true,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "cod-ord-compra",
+    "database": "ems2med",
+    "type": "character",
+    "label": "Número Ordem Compra",
+    "format": "x(15)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  }
+]
+}

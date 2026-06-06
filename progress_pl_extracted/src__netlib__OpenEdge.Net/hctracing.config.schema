@@ -1,0 +1,96 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "description": "Schema for HTTP tracing configuration, v. 1.0.0",
+    "definitions": {
+        "typeName": {
+            "description": "An OOABL type (class/interface/enum) name",
+            "type": "string",
+            "pattern": "^[A-Za-z]+[A-Za-z$0-9-&#%.]+[A-Za-z$0-9-&#%]*$",
+            "minLength": 1
+        },
+        "ruleSet" :{
+            "description": "Zero or more trace rules",
+            "type": ["object", "null"],
+            "patternProperties": {
+                "^[A-Za-z]+[A-Za-z$0-9-&#%.]+[A-Za-z$0-9-&#%]*$": {
+                    "description": "The property names must be the name of a class that inherits OpenEdge.Net.HTTP.Trace.TraceRule",
+                    "type": "object",
+                    "properties": {
+                        "policy": {
+                            "type": "string",
+                            "description": "What policy this rule applies",
+                            "enum": ["allow-all","deny-all"]
+                        },
+                        "exceptions": {
+                            "type": ["array", "null"],
+                            "description": "A set of exceptions to the rule. May be of any type, and are interpreted by the rule"
+                        }
+                    },
+                    "required": ["policy"]
+                }
+            }
+        },
+        "outputConfig": {
+            "description": "Configuration for a formatter or writer (or other configuration that has an implementation and options)",
+            "type": ["object", "null"],
+            "properties": {
+                "implementation": {
+                    "description": "An OOABL class name that provides an implementation. The type depends on the parent (so a 'formatter' has a predefined/hard-coded type)",
+                    "$ref": "#/definitions/typeName"
+                },
+                "options": {
+                    "description": "Options to be provided to the implementation. Values will depend on the implementation",
+                    "$ref": "#/definitions/typeName"
+                }
+            }
+        }
+    },
+    "enabled": {
+        "type": "boolean",
+        "description": "TRUE to enable HTTP request tracing, other values disable tracing"
+    },
+    "output": {
+        "type": "object",
+        "description": "Contains information about the kind of tracing, and where the trace data should be sent",
+        "properties": {
+            "type": {
+                "description": "Where trace data will be sent",
+                "type": "string",
+                "enum": [
+                    "proxy", "local", "none"
+                ]
+            },
+            "proxyUri": {
+                "description": "The URL of the proxy server to which to send the request",
+                "type": "string"
+            },
+            "formatter": {
+                "description": "An optional formatter to use. Must implement OpenEdge.Net.HTTP.Trace.Formatter.ITraceFormatter",
+                "$ref": "#/definitions/outputConfig"
+            },
+            "writer": {
+                "description": "An optional writer to use. Must implement OpenEdge.Net.HTTP.Trace.Formatter.ITraceWriter",
+                "$ref": "#/definitions/outputConfig"
+            }
+        },
+        "required":["type"]
+    },
+    "rules": {
+        "type": "object",
+        "description": "Groups of tracing rules, for filtering and for request and response data",
+        "properties": {
+            "filter": {
+                "$ref": "#/definitions/ruleSet"
+            },
+            "request": {
+                "$ref": "#/definitions/ruleSet"
+            },
+            "response": {
+                "$ref": "#/definitions/ruleSet"
+            }
+        }
+    },
+    "required": [
+        "enabled"
+    ]
+}

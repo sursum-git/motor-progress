@@ -193,6 +193,7 @@ CLASS DynamicQueryValidationService:
                 RETURN NO.
             END.
 
+            oMeta:setBanco(THIS-OBJECT:resolveDatabaseName(ttReqSource.tableBanco)).
             oMeta:carregarCampos(cTable, "").
             oMeta:getCampos(OUTPUT TABLE ttMeta).
             IF NOT CAN-FIND(FIRST ttMeta) THEN DO:
@@ -554,6 +555,23 @@ CLASS DynamicQueryValidationService:
                 RETURN YES.
         END.
         RETURN NO.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER resolveDatabaseName(INPUT pcDatabase AS CHARACTER):
+        DEFINE VARIABLE iDb AS INTEGER NO-UNDO.
+        DEFINE VARIABLE cPhysical AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cName AS CHARACTER NO-UNDO.
+        ASSIGN cName = TRIM(pcDatabase).
+        IF cName = "" OR cName = ? THEN
+            RETURN "DICTDB".
+        DO iDb = 1 TO NUM-DBS:
+            IF LC(LDBNAME(iDb)) = LC(cName) THEN
+                RETURN LDBNAME(iDb).
+            ASSIGN cPhysical = REPLACE(PDBNAME(iDb), "/", "~\").
+            IF LC(cName) = LC(ENTRY(NUM-ENTRIES(cPhysical, "~\"), cPhysical, "~\")) THEN
+                RETURN LDBNAME(iDb).
+        END.
+        RETURN cName.
     END METHOD.
 
     METHOD PRIVATE LOGICAL isFieldBlocked(INPUT pcType AS CHARACTER, INPUT pcField AS CHARACTER):

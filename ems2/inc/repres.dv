@@ -1,0 +1,18 @@
+/*****************************************************************************
+** repres.dv
+** Arquivo: repres
+*****************************************************************************/
+
+not (can-find (first emitente use-index repres where
+                     emitente.cod-rep = repres.cod-rep)
+     or
+     can-find (first rep-tit use-index represent where
+                     rep-tit.cod-rep = repres.cod-rep)
+     or
+     can-find (first ped-repre use-index ch-repped where
+                     ped-repre.nome-ab-rep = repres.nome-abrev)
+     or
+     can-find (first gr-cli use-index ch-repres where
+                     gr-cli.cod-rep = repres.cod-rep))
+
+/* fim */

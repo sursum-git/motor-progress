@@ -1,0 +1,48 @@
+﻿
+Library                             Files Target                            
+-------                             ----- ------                            
+gui\ablunit.pl                          2 gui__ablunit                      
+gui\adecomm.pl                        219 gui__adecomm                      
+gui\adecomp.pl                          5 gui__adecomp                      
+gui\adedesk.pl                          2 gui__adedesk                      
+gui\adedict.pl                         63 gui__adedict                      
+gui\adeedit.pl                          6 gui__adeedit                      
+gui\adeicon.pl                        607 gui__adeicon                      
+gui\aderes.pl                         188 gui__aderes                       
+gui\adeshar.pl                         78 gui__adeshar                      
+gui\adeuib.pl                         404 gui__adeuib                       
+gui\adeweb.pl                          39 gui__adeweb                       
+gui\adexml.pl                           9 gui__adexml                       
+gui\dataadmin.pl                        1 gui__dataadmin                    
+gui\messaging\OpenEdge.Messaging.pl    68 gui__messaging__OpenEdge.Messaging
+gui\netlib\OpenEdge.Net.pl              1 gui__netlib__OpenEdge.Net         
+gui\OpenEdge.BusinessLogic.pl          47 gui__OpenEdge.BusinessLogic       
+gui\OpenEdge.Core.pl                  221 gui__OpenEdge.Core                
+gui\OpenEdge.ServerAdmin.pl             1 gui__OpenEdge.ServerAdmin         
+gui\prodict.pl                        372 gui__prodict                      
+gui\protools.pl                        66 gui__protools                     
+gui\rules\OpenEdge.BusinessRules.pl     1 gui__rules__OpenEdge.BusinessRules
+sports.pl                              16 sports                            
+sports2000.pl                          25 sports2000                        
+sports2020.pl                          25 sports2020                        
+src\adeedit.pl                         28 src__adeedit                      
+src\netlib\OpenEdge.Net.pl            270 src__netlib__OpenEdge.Net         
+src\OpenEdge.BusinessLogic.pl          47 src__OpenEdge.BusinessLogic       
+src\OpenEdge.Core.pl                  243 src__OpenEdge.Core                
+src\OpenEdge.ServerAdmin.pl            24 src__OpenEdge.ServerAdmin         
+tty\ablunit.pl                          2 tty__ablunit                      
+tty\adecomm.pl                        178 tty__adecomm                      
+tty\adecomp.pl                          5 tty__adecomp                      
+tty\adeedit.pl                          6 tty__adeedit                      
+tty\adeshar.pl                         34 tty__adeshar                      
+tty\dataadmin.pl                        1 tty__dataadmin                    
+tty\messaging\OpenEdge.Messaging.pl    68 tty__messaging__OpenEdge.Messaging
+tty\netlib\OpenEdge.Net.pl              1 tty__netlib__OpenEdge.Net         
+tty\OpenEdge.BusinessLogic.pl          47 tty__OpenEdge.BusinessLogic       
+tty\OpenEdge.Core.pl                  221 tty__OpenEdge.Core                
+tty\OpenEdge.ServerAdmin.pl             1 tty__OpenEdge.ServerAdmin         
+tty\prodict.pl                        372 tty__prodict                      
+tty\rules\OpenEdge.BusinessRules.pl     1 tty__rules__OpenEdge.BusinessRules
+
+
+

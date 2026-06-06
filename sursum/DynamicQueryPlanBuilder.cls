@@ -334,8 +334,26 @@ CLASS DynamicQueryPlanBuilder:
         INPUT pcTable  AS CHARACTER,
         INPUT pcBanco  AS CHARACTER):
         DEFINE VARIABLE cSourceExpr AS CHARACTER NO-UNDO.
+        ASSIGN pcBanco = THIS-OBJECT:resolveDatabaseName(pcBanco).
         ASSIGN cSourceExpr = IF pcBanco = "" THEN pcTable ELSE pcBanco + "." + pcTable.
         RETURN cSourceExpr.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER resolveDatabaseName(INPUT pcDatabase AS CHARACTER):
+        DEFINE VARIABLE iDb AS INTEGER NO-UNDO.
+        DEFINE VARIABLE cPhysical AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cName AS CHARACTER NO-UNDO.
+        ASSIGN cName = TRIM(pcDatabase).
+        IF cName = "" OR cName = ? THEN
+            RETURN "".
+        DO iDb = 1 TO NUM-DBS:
+            IF LC(LDBNAME(iDb)) = LC(cName) THEN
+                RETURN LDBNAME(iDb).
+            ASSIGN cPhysical = REPLACE(PDBNAME(iDb), "/", "~\").
+            IF LC(cName) = LC(ENTRY(NUM-ENTRIES(cPhysical, "~\"), cPhysical, "~\")) THEN
+                RETURN LDBNAME(iDb).
+        END.
+        RETURN cName.
     END METHOD.
 
     METHOD PRIVATE CHARACTER qualifyField(INPUT pcTable AS CHARACTER, INPUT pcField AS CHARACTER):

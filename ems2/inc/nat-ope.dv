@@ -1,0 +1,12 @@
+/*****************************************************************************
+** nat-ope.dv
+** Arquivo: natur-oper
+*****************************************************************************/
+
+not (can-find (first ped-venda use-index ch-natoper where
+                     ped-venda.nat-operacao = natur-oper.nat-operacao)
+     or
+     can-find (first emitente use-index ch-natope where
+                     emitente.nat-operacao = natur-oper.nat-operacao))
+
+/* fim */

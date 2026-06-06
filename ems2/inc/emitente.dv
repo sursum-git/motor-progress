@@ -1,0 +1,53 @@
+/*****************************************************************************
+** emitente.dv
+** Arquivo: emitente
+*****************************************************************************/
+
+not (can-find (first item-fornec use-index quem-vende where
+                     item-fornec.cod-emit = emitente.cod-emit)
+    or
+    can-find (first ordem-compra use-index emitente where
+                    ordem-compra.cod-emit = emitente.cod-emit)
+    or
+    can-find (first cotacao-item use-index emitente where
+                    cotacao-item.cod-emit = emitente.cod-emit)
+    or
+    can-find (first pedido-compr use-index emitente where
+                    pedido-compr.cod-emit = emitente.cod-emit)
+    or
+    can-find (first titulo use-index emitente where
+                    titulo.cod-emitente = emitente.cod-emit)
+    or
+    (emitente.cod-emit = ?)
+    or
+    can-find (first estab-cli use-index ch-cliest where
+                    estab-cli.nome-abrev = emitente.nome-abrev)
+    or
+    can-find (first ped-venda use-index ch-pedido where
+                    ped-venda.nome-abrev = emitente.nome-abrev)
+    or
+    can-find (first info-cli use-index ch-cliinf where
+                    info-cli.nome-abrev = emitente.nome-abrev)
+    or
+    can-find (first item-cli use-index ch-cli-item where
+                    item-cli.nome-abrev = emitente.nome-abrev)
+    or
+    can-find (first tit-ap use-index fornec where
+                    tit-ap.cod-fornec = emitente.cod-emitente)
+    or
+    can-find (first mov-ap use-index fornec where
+                    mov-ap.cod-fornec = emitente.cod-emitente)
+    or
+    can-find (first tb-pr-cc where
+                    tb-pr-cc.nome-abrev = emitente.nome-abrev)
+    or
+    can-find (first nota-fiscal use-index ch-pedido where
+                    nota-fiscal.nome-ab-cli = emitente.nome-abrev)
+    or
+    can-find (first doc-fiscal use-index ch-emitente where
+                    doc-fiscal.cod-emitente = emitente.cod-emitente)
+    or
+    can-find (first prog-cli use-index nr-progcli where
+                    prog-cli.nome-abrev = emitente.nome-abrev))
+
+/* fim */

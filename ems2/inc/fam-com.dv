@@ -1,0 +1,28 @@
+/*****************************************************************************
+** fam-com.dv
+** Arquivo: fam-comerc
+*****************************************************************************/
+
+not (can-find (first cot-item  
+                     where cot-item.fm-cod-com = fam-comerc.fm-cod-com)
+     or
+     can-find (first item     
+                     where item.fm-cod-com = fam-comerc.fm-cod-com)
+     or
+     can-find (first pl-it-estab 
+                     where pl-it-estab.fm-cod-com = fam-comerc.fm-cod-com)
+     or 
+     can-find (first comissao
+                     where comissao.fm-cod-com = fam-comerc.fm-cod-com)
+     or
+     can-find (first fat-estat
+                     where fat-estat.fm-cod-com = fam-comerc.fm-cod-com)
+     or
+     can-find (first item-caixa
+                     where item-caixa.fm-cod-com = fam-comerc.fm-cod-com)
+     or
+     can-find (first trad-fam  
+                     where trad-fam.fm-cod-com  = fam-comerc.fm-cod-com))
+
+/* fim */
+

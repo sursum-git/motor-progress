@@ -3,11 +3,15 @@ Catalogo OO de metadados baseado no dicionario Progress.
 Nao executa fonte procedural legado.
 */
 
+USING Progress.Json.ObjectModel.JsonArray.
+USING Progress.Json.ObjectModel.JsonObject.
+
 CLASS DynamicMetadataService:
     {esbo/boMetaDados.i}
 
     DEFINE PRIVATE VARIABLE cTabela AS CHARACTER NO-UNDO.
     DEFINE PRIVATE VARIABLE cBanco  AS CHARACTER NO-UNDO INIT "DICTDB".
+    DEFINE PRIVATE VARIABLE cBancoExibicao AS CHARACTER NO-UNDO.
     DEFINE PRIVATE VARIABLE cCampos AS CHARACTER NO-UNDO.
     DEFINE PRIVATE VARIABLE cTipoRetCpExtent AS CHARACTER NO-UNDO INIT "unico".
     DEFINE PRIVATE VARIABLE cCaracterOri AS CHARACTER NO-UNDO.
@@ -27,6 +31,11 @@ CLASS DynamicMetadataService:
     METHOD PUBLIC VOID setBanco(INPUT pcBanco AS CHARACTER):
         IF pcBanco <> "" AND pcBanco <> ? THEN
             ASSIGN cBanco = pcBanco.
+    END METHOD.
+
+    METHOD PUBLIC VOID setBancoExibicao(INPUT pcBanco AS CHARACTER):
+        IF pcBanco <> "" AND pcBanco <> ? THEN
+            ASSIGN cBancoExibicao = pcBanco.
     END METHOD.
 
     METHOD PUBLIC VOID setCampos(INPUT pcCampos AS CHARACTER):
@@ -94,7 +103,137 @@ CLASS DynamicMetadataService:
         THIS-OBJECT:carregarIndices(pcTabela).
     END METHOD.
 
+    METHOD PUBLIC JsonArray getTablesJson(INPUT pcFilter AS CHARACTER):
+        DEFINE VARIABLE jaTables AS JsonArray NO-UNDO.
+        DEFINE VARIABLE joTable AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cFilter AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE hFile AS HANDLE NO-UNDO.
+        DEFINE VARIABLE hQuery AS HANDLE NO-UNDO.
+        DEFINE VARIABLE hLastChange AS HANDLE NO-UNDO.
+        DEFINE VARIABLE cPrepare AS CHARACTER NO-UNDO.
+
+        ASSIGN jaTables = NEW JsonArray()
+               cFilter = LC(TRIM(pcFilter)).
+
+        CREATE BUFFER hFile FOR TABLE cBanco + "._File" NO-ERROR.
+        IF NOT VALID-HANDLE(hFile) THEN
+            RETURN jaTables.
+
+        CREATE QUERY hQuery.
+        hQuery:SET-BUFFERS(hFile).
+        ASSIGN cPrepare = "FOR EACH " + cBanco + "._File NO-LOCK WHERE "
+                        + cBanco + "._File._File-Name <> " + QUOTER("") + " AND "
+                        + "SUBSTRING(" + cBanco + "._File._File-Name,1,1) <> " + QUOTER("_")
+                        + " BY " + cBanco + "._File._File-Name".
+        hQuery:QUERY-PREPARE(cPrepare) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            DELETE OBJECT hQuery NO-ERROR.
+            DELETE OBJECT hFile NO-ERROR.
+            RETURN jaTables.
+        END.
+
+        hQuery:QUERY-OPEN().
+        REPEAT:
+            hQuery:GET-NEXT().
+            IF hQuery:QUERY-OFF-END THEN
+                LEAVE.
+
+            IF cFilter <> "" AND INDEX(LC(STRING(hFile:BUFFER-FIELD("_File-Name"):BUFFER-VALUE)), cFilter) = 0 THEN
+                NEXT.
+
+            ASSIGN joTable = NEW JsonObject().
+            joTable:Add("name", STRING(hFile:BUFFER-FIELD("_File-Name"):BUFFER-VALUE)).
+            joTable:Add("database", THIS-OBJECT:getBancoTb()).
+            joTable:Add("displayName", THIS-OBJECT:getBancoTb() + "." + STRING(hFile:BUFFER-FIELD("_File-Name"):BUFFER-VALUE)).
+            joTable:Add("label", IF hFile:BUFFER-FIELD("_File-Label"):BUFFER-VALUE = ? THEN "" ELSE STRING(hFile:BUFFER-FIELD("_File-Label"):BUFFER-VALUE)).
+            joTable:Add("dumpName", IF hFile:BUFFER-FIELD("_Dump-Name"):BUFFER-VALUE = ? THEN "" ELSE STRING(hFile:BUFFER-FIELD("_Dump-Name"):BUFFER-VALUE)).
+            ASSIGN hLastChange = hFile:BUFFER-FIELD("_Last-Change") NO-ERROR.
+            IF VALID-HANDLE(hLastChange) THEN
+                joTable:Add("lastUpdate", IF hLastChange:BUFFER-VALUE = ? THEN "" ELSE STRING(hLastChange:BUFFER-VALUE)).
+            ELSE
+                joTable:Add("lastUpdate", "").
+            jaTables:Add(joTable).
+        END.
+
+        hQuery:QUERY-CLOSE().
+        DELETE OBJECT hQuery NO-ERROR.
+        DELETE OBJECT hFile NO-ERROR.
+
+        RETURN jaTables.
+    END METHOD.
+
+    METHOD PUBLIC JsonArray getFieldsJson(INPUT pcTable AS CHARACTER):
+        DEFINE VARIABLE jaFields AS JsonArray NO-UNDO.
+        DEFINE VARIABLE joField AS JsonObject NO-UNDO.
+        DEFINE VARIABLE hFile AS HANDLE NO-UNDO.
+        DEFINE VARIABLE hField AS HANDLE NO-UNDO.
+        DEFINE VARIABLE hQuery AS HANDLE NO-UNDO.
+        DEFINE VARIABLE cPrepare AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE rFile AS RECID NO-UNDO.
+
+        ASSIGN jaFields = NEW JsonArray().
+
+        CREATE BUFFER hFile FOR TABLE cBanco + "._File" NO-ERROR.
+        CREATE BUFFER hField FOR TABLE cBanco + "._Field" NO-ERROR.
+        IF NOT VALID-HANDLE(hFile) OR NOT VALID-HANDLE(hField) THEN DO:
+            IF VALID-HANDLE(hFile) THEN DELETE OBJECT hFile NO-ERROR.
+            IF VALID-HANDLE(hField) THEN DELETE OBJECT hField NO-ERROR.
+            RETURN jaFields.
+        END.
+
+        hFile:FIND-FIRST("WHERE _File-Name = " + QUOTER(pcTable), NO-LOCK) NO-ERROR.
+        IF NOT hFile:AVAILABLE THEN DO:
+            DELETE OBJECT hFile NO-ERROR.
+            DELETE OBJECT hField NO-ERROR.
+            RETURN jaFields.
+        END.
+
+        ASSIGN rFile = hFile:RECID.
+
+        CREATE QUERY hQuery.
+        hQuery:SET-BUFFERS(hField).
+        ASSIGN cPrepare = "FOR EACH " + cBanco + "._Field NO-LOCK "
+                        + "WHERE " + cBanco + "._Field._File-Recid = " + STRING(rFile) + " "
+                        + "BY " + cBanco + "._Field._Order".
+        hQuery:QUERY-PREPARE(cPrepare) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            DELETE OBJECT hQuery NO-ERROR.
+            DELETE OBJECT hFile NO-ERROR.
+            DELETE OBJECT hField NO-ERROR.
+            RETURN jaFields.
+        END.
+
+        hQuery:QUERY-OPEN().
+        REPEAT:
+            hQuery:GET-NEXT().
+            IF hQuery:QUERY-OFF-END THEN
+                LEAVE.
+            IF hField:RECID <> ? AND hField:BUFFER-FIELD("_File-Recid"):BUFFER-VALUE <> rFile THEN
+                NEXT.
+
+            ASSIGN joField = NEW JsonObject().
+            joField:Add("name", STRING(hField:BUFFER-FIELD("_Field-Name"):BUFFER-VALUE)).
+            joField:Add("database", THIS-OBJECT:getBancoTb()).
+            joField:Add("type", THIS-OBJECT:normalizeDataType(STRING(hField:BUFFER-FIELD("_Data-Type"):BUFFER-VALUE))).
+            joField:Add("label", IF hField:BUFFER-FIELD("_Label"):BUFFER-VALUE = ? THEN "" ELSE STRING(hField:BUFFER-FIELD("_Label"):BUFFER-VALUE)).
+            joField:Add("format", IF hField:BUFFER-FIELD("_Format"):BUFFER-VALUE = ? THEN "" ELSE STRING(hField:BUFFER-FIELD("_Format"):BUFFER-VALUE)).
+            joField:Add("mandatory", LOGICAL(hField:BUFFER-FIELD("_Mandatory"):BUFFER-VALUE)).
+            joField:Add("extent", INTEGER(hField:BUFFER-FIELD("_Extent"):BUFFER-VALUE)).
+            joField:Add("indices", "").
+            jaFields:Add(joField).
+        END.
+
+        hQuery:QUERY-CLOSE().
+        DELETE OBJECT hQuery NO-ERROR.
+        DELETE OBJECT hFile NO-ERROR.
+        DELETE OBJECT hField NO-ERROR.
+
+        RETURN jaFields.
+    END METHOD.
+
     METHOD PUBLIC CHARACTER getBancoTb():
+        IF cBancoExibicao <> "" THEN
+            RETURN cBancoExibicao.
         IF cBanco <> "" THEN
             RETURN cBanco.
         IF LDBNAME("DICTDB") <> ? THEN
@@ -125,40 +264,79 @@ CLASS DynamicMetadataService:
     METHOD PRIVATE VOID loadCampos():
         DEFINE VARIABLE iOrd AS INTEGER NO-UNDO.
         DEFINE VARIABLE cListaIndices AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE hFile AS HANDLE NO-UNDO.
+        DEFINE VARIABLE hField AS HANDLE NO-UNDO.
+        DEFINE VARIABLE hQuery AS HANDLE NO-UNDO.
+        DEFINE VARIABLE cPrepare AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE rFile AS RECID NO-UNDO.
 
         EMPTY TEMP-TABLE ttCampos.
         IF cTabela = "" OR NOT lRetCampos THEN
             RETURN.
 
-        FIND FIRST DICTDB._File
-             WHERE DICTDB._File._File-Name = cTabela
-             NO-LOCK NO-ERROR.
-        IF NOT AVAILABLE DICTDB._File THEN
+        CREATE BUFFER hFile FOR TABLE cBanco + "._File" NO-ERROR.
+        CREATE BUFFER hField FOR TABLE cBanco + "._Field" NO-ERROR.
+        IF NOT VALID-HANDLE(hFile) OR NOT VALID-HANDLE(hField) THEN DO:
+            IF VALID-HANDLE(hFile) THEN DELETE OBJECT hFile NO-ERROR.
+            IF VALID-HANDLE(hField) THEN DELETE OBJECT hField NO-ERROR.
             RETURN.
+        END.
 
-        FOR EACH DICTDB._Field OF DICTDB._File NO-LOCK BY DICTDB._Field._Order:
-            IF cCampos <> "" AND NOT CAN-DO(cCampos, DICTDB._Field._Field-Name) THEN
+        hFile:FIND-FIRST("WHERE _File-Name = " + QUOTER(cTabela), NO-LOCK) NO-ERROR.
+        IF NOT hFile:AVAILABLE THEN DO:
+            DELETE OBJECT hFile NO-ERROR.
+            DELETE OBJECT hField NO-ERROR.
+            RETURN.
+        END.
+
+        ASSIGN rFile = hFile:RECID.
+
+        CREATE QUERY hQuery.
+        hQuery:SET-BUFFERS(hField).
+        ASSIGN cPrepare = "FOR EACH " + cBanco + "._Field NO-LOCK "
+                        + "WHERE " + cBanco + "._Field._File-Recid = " + STRING(rFile) + " "
+                        + "BY " + cBanco + "._Field._Order".
+        hQuery:QUERY-PREPARE(cPrepare) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            DELETE OBJECT hQuery NO-ERROR.
+            DELETE OBJECT hFile NO-ERROR.
+            DELETE OBJECT hField NO-ERROR.
+            RETURN.
+        END.
+
+        hQuery:QUERY-OPEN().
+        REPEAT:
+            hQuery:GET-NEXT().
+            IF hQuery:QUERY-OFF-END THEN
+                LEAVE.
+
+            IF cCampos <> "" AND NOT CAN-DO(cCampos, STRING(hField:BUFFER-FIELD("_Field-Name"):BUFFER-VALUE)) THEN
                 NEXT.
 
             ASSIGN iOrd = iOrd + 1
-                   cListaIndices = THIS-OBJECT:getIndexListForField(RECID(DICTDB._Field)).
+                   cListaIndices = THIS-OBJECT:getIndexListForField(hField:RECID).
 
             CREATE ttCampos.
-            ASSIGN ttCampos.id          = RECID(DICTDB._Field)
+            ASSIGN ttCampos.id          = hField:RECID
                    ttCampos.ordem       = iOrd
-                   ttCampos.nome        = THIS-OBJECT:substCaracter(DICTDB._Field._Field-Name)
-                   ttCampos.tipo        = THIS-OBJECT:normalizeDataType(DICTDB._Field._Data-Type)
-                   ttCampos.formato     = DICTDB._Field._Format
-                   ttCampos.labelCampo  = DICTDB._Field._Label
-                   ttCampos.extensao    = DICTDB._Field._Extent
-                   ttCampos.qtDecimais  = DICTDB._Field._Decimals
-                   ttCampos.obrigatorio = DICTDB._Field._Mandatory
+                   ttCampos.nome        = THIS-OBJECT:substCaracter(STRING(hField:BUFFER-FIELD("_Field-Name"):BUFFER-VALUE))
+                   ttCampos.tipo        = THIS-OBJECT:normalizeDataType(STRING(hField:BUFFER-FIELD("_Data-Type"):BUFFER-VALUE))
+                   ttCampos.formato     = STRING(hField:BUFFER-FIELD("_Format"):BUFFER-VALUE)
+                   ttCampos.labelCampo  = STRING(hField:BUFFER-FIELD("_Label"):BUFFER-VALUE)
+                   ttCampos.extensao    = INTEGER(hField:BUFFER-FIELD("_Extent"):BUFFER-VALUE)
+                   ttCampos.qtDecimais  = INTEGER(hField:BUFFER-FIELD("_Decimals"):BUFFER-VALUE)
+                   ttCampos.obrigatorio = LOGICAL(hField:BUFFER-FIELD("_Mandatory"):BUFFER-VALUE)
                    ttCampos.indices     = cListaIndices
-                   ttCampos.lista       = DICTDB._Field._Valexp
-                   ttCampos.numRecid    = RECID(DICTDB._Field)
-                   ttCampos.tabela      = DICTDB._File._File-Name
+                   ttCampos.lista       = STRING(hField:BUFFER-FIELD("_Valexp"):BUFFER-VALUE)
+                   ttCampos.numRecid    = hField:RECID
+                   ttCampos.tabela      = STRING(hFile:BUFFER-FIELD("_File-Name"):BUFFER-VALUE)
                    ttCampos.banco       = THIS-OBJECT:getBancoTb().
         END.
+
+        hQuery:QUERY-CLOSE().
+        DELETE OBJECT hQuery NO-ERROR.
+        DELETE OBJECT hFile NO-ERROR.
+        DELETE OBJECT hField NO-ERROR.
     END METHOD.
 
     METHOD PRIVATE VOID loadIndices():
