@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sursum Dynamic Query</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <style>
+    :root {
+      --app-bg: #f4f6f8;
+      --app-panel: #ffffff;
+      --app-border: #d9e0e7;
+      --app-text: #17202a;
+      --app-muted: #5f6b7a;
+      --app-accent: #0f766e;
+      --app-accent-weak: #e1f3f0;
+      --sidebar-width: 312px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--app-text);
+      background: linear-gradient(180deg, #f8fafc 0%, var(--app-bg) 100%);
+      font-family: "Segoe UI", Tahoma, sans-serif;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+      padding: 18px 16px;
+      border-right: 1px solid var(--app-border);
+      background: var(--app-panel);
+    }
+
+    .brand {
+      padding: 4px 4px 12px;
+      border-bottom: 1px solid var(--app-border);
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      margin: 6px 0 0;
+      color: var(--app-muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .menu-filter input {
+      width: 100%;
+    }
+
+    #menuTree {
+      min-height: 0;
+      overflow: auto;
+      padding: 2px 0 10px;
+    }
+
+    #menuTree .k-treeview-leaf {
+      border-radius: 6px;
+    }
+
+    #menuTree .k-selected {
+      color: #063a34;
+      background: var(--app-accent-weak);
+    }
+
+    .menu-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .menu-item-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .menu-item-open {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      color: var(--app-muted);
+      text-decoration: none;
+      font-size: 13px;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .menu-item-open:hover {
+      color: #063a34;
+      background: var(--app-accent-weak);
+    }
+
+    .content {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-width: 0;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--app-border);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(8px);
+    }
+
+    .page-title {
+      min-width: 0;
+    }
+
+    .page-title h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+      font-weight: 700;
+    }
+
+    .page-title p {
+      margin: 4px 0 0;
+      color: var(--app-muted);
+      font-size: 12px;
+      line-height: 1.35;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .toolbar .k-button {
+      min-width: 38px;
+    }
+
+    .frame-wrap {
+      min-width: 0;
+      min-height: 0;
+      padding: 12px;
+    }
+
+    #contentFrame {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: calc(100vh - 119px);
+      border: 1px solid var(--app-border);
+      background: #ffffff;
+    }
+
+    .statusbar {
+      min-height: 34px;
+      padding: 8px 18px;
+      border-top: 1px solid var(--app-border);
+      color: var(--app-muted);
+      background: #ffffff;
+      font-size: 12px;
+    }
+
+    @media (max-width: 860px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--app-border);
+      }
+
+      #menuTree {
+        max-height: 230px;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      #contentFrame {
+        min-height: 68vh;
+      }
+    }
+
+    #menuJsonObject {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <object id="menuJsonObject" data="menu-pages.json" type="application/json" aria-hidden="true"></object>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1 class="brand-title">Sursum Dynamic Query</h1>
+        <p class="brand-subtitle">Menu central das paginas web do projeto.</p>
+      </div>
+
+      <div class="menu-filter">
+        <input id="menuSearch" placeholder="Filtrar paginas">
+      </div>
+
+      <nav id="menuTree" aria-label="Menu de paginas"></nav>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div class="page-title">
+          <h1 id="currentTitle">Carregando menu</h1>
+          <p id="currentDescription">Aguarde enquanto a fonte JSON e lida.</p>
+        </div>
+        <div class="toolbar">
+          <button id="reloadPage" type="button" class="k-button k-button-md k-rounded-md k-button-solid k-button-solid-base" title="Recarregar pagina">Recarregar</button>
+          <button id="openPage" type="button" class="k-button k-button-md k-rounded-md k-button-solid k-button-solid-primary" title="Abrir em nova aba">Abrir</button>
+        </div>
+      </header>
+
+      <section class="frame-wrap">
+        <iframe id="contentFrame" title="Pagina selecionada"></iframe>
+      </section>
+
+      <footer id="statusBar" class="statusbar">Pronto.</footer>
+    </main>
+  </div>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script>
+    (function () {
+      const menuUrl = "menu-pages.json";
+      const fallbackMenu = [
+        { text: "Inicio", expanded: true, items: [
+          { text: "Selecao de contexto", url: "context-selector.html", description: "Define cliente e ambiente base para todas as demais paginas." }
+        ] },
+        { text: "Consultas", expanded: true, items: [
+          { text: "Construtor de query", url: "query-builder.html", description: "Montagem visual de consultas dinamicas." },
+          { text: "Consulta por Tabela", url: "query-wizard-3steps.html", description: "Fluxo guiado para montar e executar consultas." },
+          { text: "Lista de queries", url: "query-list.html", description: "Consulta e manutencao das queries salvas." },
+          { text: "Resultado de query", url: "query-result.html", description: "Visualizacao direta de resultados." },
+          { text: "Runner de arquivo", url: "query-file-runner.html", description: "Execucao de consultas a partir de arquivo." }
+        ] },
+        { text: "Metadados", expanded: true, items: [
+          { text: "Navegador de tabelas", url: "table-browser.html", description: "Busca de campos, indices e joins por banco e tabela." },
+          { text: "Configuracao de campos", url: "field-metadata-config.html", description: "Ajustes manuais dos metadados de campos." },
+          { text: "Armazenamento de metadados", url: "metadata-storage-config.html", description: "Configuracao do local de cache dos metadados." },
+          { text: "Aliases de bancos", url: "database-alias-config.html", description: "Edicao visual dos aliases de bancos conectados." }
+        ] },
+        { text: "Logica", expanded: true, items: [
+          { text: "Lista de logicas", url: "logic-list.html", description: "Consulta das regras e logicas disponiveis." },
+          { text: "Construtor de logica", url: "logic-builder.html", description: "Edicao visual de regras de logica." }
+        ] },
+        { text: "Configuracao", expanded: true, items: [
+          { text: "Clientes", url: "client-config.html", description: "Cadastro separado dos clientes do contexto." },
+          { text: "Ambientes", url: "endpoint-config.html", description: "Cadastro separado dos ambientes PASOE." },
+          { text: "Vinculos", url: "link-config.html", description: "Liga cliente, ambiente e companyId." }
+        ] }
+      ];
+      let activeItem = null;
+      let allItems = [];
+
+      function setStatus(message) {
+        $("#statusBar").text(message);
+      }
+
+      function flatten(items, target) {
+        (items || []).forEach(function (item) {
+          if (item.url) {
+            target.push(item);
+          }
+          flatten(item.items, target);
+        });
+      }
+
+      function firstPage(items) {
+        for (let i = 0; i < items.length; i += 1) {
+          if (items[i].url) {
+            return items[i];
+          }
+          const child = firstPage(items[i].items || []);
+          if (child) {
+            return child;
+          }
+        }
+        return null;
+      }
+
+      function pageFromQuery(items) {
+        const params = new URLSearchParams(window.location.search);
+        const page = params.get("page");
+        if (!page) {
+          return null;
+        }
+        return items.find(function (item) {
+          return item.url === page;
+        }) || null;
+      }
+
+      function openItem(item, updateQuery) {
+        if (!item || !item.url) {
+          return;
+        }
+
+        activeItem = item;
+        $("#currentTitle").text(item.text || item.url);
+        $("#currentDescription").text(item.description || item.url);
+        $("#contentFrame").attr("src", item.url);
+        setStatus("Pagina carregada: " + item.url);
+
+        if (updateQuery && window.history && window.history.replaceState) {
+          window.history.replaceState(null, "", "?page=" + encodeURIComponent(item.url));
+        }
+      }
+
+      function filterTree(value) {
+        const tree = $("#menuTree").data("kendoTreeView");
+        const term = (value || "").toLowerCase();
+
+        if (!tree) {
+          return;
+        }
+
+        if (!term) {
+          tree.dataSource.filter({});
+          tree.expand(".k-item");
+          return;
+        }
+
+        tree.dataSource.filter({
+          logic: "or",
+          filters: [
+            { field: "text", operator: "contains", value: term },
+            { field: "description", operator: "contains", value: term }
+          ]
+        });
+        tree.expand(".k-item");
+        decorateMenuOpenLinks();
+      }
+
+      function decorateMenuOpenLinks() {
+        const tree = $("#menuTree").data("kendoTreeView");
+        if (!tree) {
+          return;
+        }
+
+        $("#menuTree .k-treeview-item-content").each(function () {
+          const node = $(this).closest(".k-treeview-item")[0];
+          const item = node ? tree.dataItem(node) : null;
+          const leaf = $(this).find(".k-treeview-leaf").first();
+          const label = leaf.find(".k-treeview-leaf-text").first();
+
+          if (!item || !item.text || !leaf.length || !label.length) {
+            return;
+          }
+
+          if (leaf.find(".menu-item-row").length) {
+            return;
+          }
+
+          const encodedText = kendo.htmlEncode(item.text || "");
+          if (item.url) {
+            leaf.html(
+              "<span class='menu-item-row'>"
+                + "<span class='menu-item-label'>" + encodedText + "</span>"
+                + "<a class='menu-item-open' href='" + kendo.htmlEncode(item.url) + "' target='_blank' title='Abrir em nova aba' aria-label='Abrir em nova aba' data-menu-open='1'>↗</a>"
+              + "</span>"
+            );
+          } else {
+            leaf.html("<span class='menu-item-label'>" + encodedText + "</span>");
+          }
+        });
+      }
+
+      function initMenu(menuData, fromFallback) {
+        allItems = [];
+        flatten(menuData, allItems);
+
+        $("#menuTree").kendoTreeView({
+          dataSource: menuData,
+          dataTextField: "text",
+          loadOnDemand: false,
+          select: function (event) {
+            const item = this.dataItem(event.node);
+            if (item && item.url) {
+              openItem(item, true);
+            } else {
+              this.toggle(event.node);
+            }
+          }
+        });
+
+        $("#menuSearch").kendoTextBox({
+          change: function () {
+            filterTree(this.value());
+          }
+        });
+        $("#menuSearch").on("input", function () {
+          filterTree(this.value);
+        });
+
+        $("#reloadPage").on("click", function () {
+          const frame = document.getElementById("contentFrame");
+          if (frame && frame.contentWindow) {
+            frame.contentWindow.location.reload();
+          }
+        });
+        $("#menuTree").on("click", "[data-menu-open='1']", function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          const href = $(this).attr("href");
+          if (href) {
+            window.open(href, "_blank");
+          }
+        });
+        $("#openPage").on("click", function () {
+          if (activeItem && activeItem.url) {
+            window.open(activeItem.url, "_blank");
+          }
+        });
+
+        decorateMenuOpenLinks();
+        openItem(pageFromQuery(allItems) || firstPage(menuData), false);
+        setStatus(fromFallback ? "Menu carregado pelo fallback local." : "Menu carregado de " + menuUrl + ".");
+      }
+
+      function parseMenuJson(text) {
+        const data = JSON.parse(text || "[]");
+        if (!Array.isArray(data)) {
+          throw new Error("A fonte do menu deve ser um array JSON.");
+        }
+        return data;
+      }
+
+      function readMenuFromObject() {
+        return new Promise(function (resolve, reject) {
+          const object = document.getElementById("menuJsonObject");
+          let done = false;
+
+          function tryRead() {
+            if (done) {
+              return;
+            }
+
+            try {
+              const doc = object.contentDocument || (object.contentWindow && object.contentWindow.document);
+              const text = doc && doc.body ? doc.body.innerText : "";
+              if (text) {
+                done = true;
+                resolve(parseMenuJson(text));
+              }
+            } catch (error) {
+              done = true;
+              reject(error);
+            }
+          }
+
+          object.addEventListener("load", tryRead, { once: true });
+          window.setTimeout(function () {
+            if (!done) {
+              tryRead();
+            }
+            if (!done) {
+              reject(new Error("Nao foi possivel ler " + menuUrl + "."));
+            }
+          }, 700);
+        });
+      }
+
+      $.ajax({ url: menuUrl, dataType: "text", cache: false })
+        .done(function (text) {
+          try {
+            initMenu(parseMenuJson(text), false);
+          } catch (error) {
+            readMenuFromObject()
+              .then(function (data) {
+                initMenu(data, false);
+              })
+              .catch(function () {
+                initMenu(fallbackMenu, true);
+              });
+          }
+        })
+        .fail(function () {
+          readMenuFromObject()
+            .then(function (data) {
+              initMenu(data, false);
+            })
+            .catch(function () {
+              initMenu(fallbackMenu, true);
+            });
+        });
+    }());
+  </script>
+</body>
+</html>

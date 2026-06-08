@@ -1,0 +1,196 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consulta por Etapas - Sursum</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="query-wizard-3steps.css">
+</head>
+<body>
+  <div class="qw-shell">
+    <header class="qw-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Sursum Dynamic Query</p>
+        <h1>Consulta em 3 etapas</h1>
+        <p class="hero-lead">Selecione banco e tabela, monte filtros por índices e dinâmicos e execute no PASOE com grid Kendo.</p>
+      </div>
+      <div class="hero-tools">
+        <label for="apiCompany">Empresa
+          <input id="apiCompany" placeholder="Selecione a empresa">
+        </label>
+        <label for="contextSummary">Cliente e ambiente
+          <div id="contextSummary" class="hero-lead">Selecione o contexto na pagina inicial.</div>
+        </label>
+        <input id="apiBaseUrl" type="hidden" value="http://localhost:8890/web/SursumDynamicQuery">
+        <div class="action-row">
+          <button id="openContextSelector">Selecionar contexto</button>
+          <button id="refreshMetadata">Atualizar metadados</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="step-nav" aria-label="Etapas da consulta">
+      <button class="step-item is-active" data-step="1"><strong>1</strong><span>Fonte</span></button>
+      <button class="step-item" data-step="2"><strong>2</strong><span>Filtros</span></button>
+      <button class="step-item" data-step="3"><strong>3</strong><span>Resultado</span></button>
+    </nav>
+
+    <main class="step-workspace">
+      <section class="panel is-active" data-step-panel="1">
+        <div class="panel-title">
+          <h2>Etapa 1 - Banco e tabela</h2>
+          <span>Selecione o banco e encontre a tabela para consulta.</span>
+        </div>
+
+        <div class="grid two compact">
+          <label for="databaseCombo">Banco
+            <input id="databaseCombo" placeholder="TODOS ou banco">
+          </label>
+          <label for="selectedTable">Tabela selecionada
+            <input id="selectedTable" placeholder="Digite ou selecione pelo buscador">
+          </label>
+        </div>
+
+        <div class="action-row">
+          <button id="openTableSearch" type="button">Abrir busca de tabela</button>
+          <button id="clearSelection" type="button">Limpar selecao</button>
+        </div>
+
+        <div class="status-box" id="stepStatus">Aguardando selecao de banco e consulta.</div>
+      </section>
+
+      <section class="panel" data-step-panel="2">
+        <div class="panel-title">
+          <h2>Etapa 2 - filtros por índices e filtros dinâmicos</h2>
+          <span>Use as abas de índices e a seção de filtros dinâmicos para montar a consulta.</span>
+        </div>
+
+        <div id="tableSelectedInfo" class="hero-lead">Selecione uma tabela na etapa 1.</div>
+
+        <div id="indexFilterTabs"></div>
+        <div id="dynamicFilterSection" class="dynamic-filter-section">
+          <div class="panel-title">
+            <h2>Filtros dinâmicos</h2>
+            <span>Adicione filtros fora dos índices definidos para esta tabela.</span>
+          </div>
+          <div class="dynamic-filter-grid">
+            <label for="dynamicFilterField">Campo
+              <input id="dynamicFilterField" />
+            </label>
+            <label for="dynamicFilterOperator">Operador
+              <input id="dynamicFilterOperator" />
+            </label>
+            <label for="dynamicFilterValue">Valor
+              <div id="dynamicFilterValueWrap"><input id="dynamicFilterValue" /></div>
+            </label>
+            <button id="addDynamicFilter" type="button">Adicionar filtro dinâmico</button>
+          </div>
+        </div>
+
+        <div class="panel-title"><h2>Filtros usados</h2></div>
+        <div class="action-row">
+          <button id="clearFilters" type="button">Limpar filtros</button>
+          <button id="openForeignKeySearch" type="button">Buscar chaves estrangeiras</button>
+        </div>
+        <div id="filtersGrid"></div>
+      </section>
+
+      <section class="panel" data-step-panel="3">
+        <div class="panel-title">
+          <h2>Etapa 3 - Resultado da consulta</h2>
+          <span>Grid Kendo com dados retornados e duplo clique para abrir o registro.</span>
+        </div>
+
+        <div class="grid three compact">
+          <label for="queryPage">Pagina
+            <input id="queryPage" value="1">
+          </label>
+          <label for="queryPageSize">Tamanho da pagina
+            <input id="queryPageSize" value="200">
+          </label>
+          <label>
+            <span style="opacity:0">.</span>
+            <button id="runQuery" type="button">Executar consulta</button>
+          </label>
+        </div>
+
+        <div id="resultStatus" class="status-box">Sem consulta executada.</div>
+        <div id="dataGrid"></div>
+      </section>
+    </main>
+
+    <footer class="step-footer">
+      <button id="prevStep" type="button">Etapa anterior</button>
+      <div id="footerStatus" class="status-box">Pronto.</div>
+      <button id="nextStep" type="button">Proxima etapa</button>
+    </footer>
+  </div>
+
+  <div id="tableSearchWindow">
+    <div class="window-head">
+      <div class="grid two">
+        <label for="tableSearchText">Buscar tabela
+          <input id="tableSearchText" placeholder="codigo, descricao ou dump-name">
+        </label>
+        <label>&nbsp;
+          <button id="applyTableSearch" type="button">Filtrar</button>
+          <button id="cancelTableSearch" type="button">Fechar</button>
+        </label>
+      </div>
+    </div>
+    <div id="tableSearchGrid"></div>
+  </div>
+
+  <div id="foreignKeySearchWindow">
+    <div class="window-head">
+      <div class="grid two">
+        <label for="foreignKeySearchText">Buscar chave estrangeira
+          <input id="foreignKeySearchText" placeholder="tabela, campo ou tabela relacionada">
+        </label>
+        <label>&nbsp;
+          <button id="applyForeignKeySearch" type="button">Filtrar</button>
+          <button id="closeForeignKeySearch" type="button">Fechar</button>
+        </label>
+      </div>
+    </div>
+    <div id="foreignKeySearchGrid"></div>
+  </div>
+
+  <div id="recordWindow">
+    <div class="record-header">
+      <div>
+        <h3>Registro da tabela</h3>
+        <div id="recordInfo"></div>
+      </div>
+      <div class="record-join-select-wrap">
+        <select id="recordJoinTable"></select>
+      </div>
+    </div>
+    <div id="recordForm" class="record-form-grid"></div>
+    <div class="action-row">
+      <button id="closeRecord" type="button">Fechar</button>
+    </div>
+  </div>
+
+  <div id="relatedRecordWindow">
+    <div class="record-header">
+      <div>
+        <h3>Registros relacionados</h3>
+        <div id="relatedRecordInfo"></div>
+      </div>
+    </div>
+    <div id="relatedRecordGrid"></div>
+    <div class="action-row">
+      <button id="closeRelatedRecord" type="button">Fechar</button>
+    </div>
+  </div>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="context-manager.js"></script>
+  <script src="query-wizard-3steps.js"></script>
+</body>
+</html>

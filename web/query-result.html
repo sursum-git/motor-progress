@@ -16,13 +16,14 @@
         <p class="lead">Execute a consulta gerada pelo designer ou carregue um arquivo JSON e visualize o retorno em um Grid Kendo UI.</p>
       </div>
       <aside class="api-card">
-        <label for="apiCompany">Empresa/cliente</label>
+        <label for="apiCompany">Empresa</label>
         <input id="apiCompany" placeholder="Selecione a empresa">
-        <label for="apiEndpoint">Endpoint cadastrado</label>
-        <input id="apiEndpoint" placeholder="Selecione o endpoint">
+        <label for="contextSummary">Cliente e ambiente</label>
+        <div id="contextSummary" class="api-hint">Selecione o contexto na pagina inicial.</div>
         <label for="apiUrl">Endpoint da API</label>
         <input id="apiUrl" value="http://localhost:8890/web/SursumDynamicQuery/query">
         <div class="quick-actions">
+          <button id="openContextSelector">Selecionar contexto</button>
           <button id="openEndpointConfig">Arquivo de endpoints</button>
         </div>
         <div class="api-hint">O body da requisicao e sempre o JSON da consulta atual.</div>
@@ -79,6 +80,7 @@
   <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
   <script src="vendor/kendo/js/kendo.all.min.js"></script>
   <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="context-manager.js"></script>
   <script src="query-result.js"></script>
 </body>
 </html>

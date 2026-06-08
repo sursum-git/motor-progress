@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
@@ -23,19 +23,25 @@
           <input id="queryName" placeholder="Clientes ativos por UF">
         </div>
         <div class="endpoint-field">
-          <label for="apiCompany">Empresa/cliente</label>
+          <label for="apiCompany">Empresa</label>
           <input id="apiCompany" placeholder="Selecione a empresa">
         </div>
         <div class="endpoint-field">
-          <label for="apiEndpoint">Endpoint PASOE base</label>
-          <input id="apiEndpoint" placeholder="Selecione o endpoint">
+          <label for="contextSummary">Cliente e ambiente</label>
+          <div id="contextSummary" class="field-note">Selecione o contexto na pagina inicial.</div>
         </div>
         <input id="apiBaseUrl" type="hidden" value="http://localhost:8890/web/SursumDynamicQuery">
         <div class="action-row tight">
+          <button id="openContextSelector">Selecionar contexto</button>
           <button id="backToQueryList">Consultas salvas</button>
           <button id="saveQuery">Salvar consulta</button>
           <button id="saveQueryAs">Salvar como</button>
           <button id="openEndpointConfig">Arquivo de endpoints</button>
+          <button id="openDatabaseAliasConfig">Aliases de bancos</button>
+          <button id="openMetadataStorageConfig">Pasta metadados</button>
+          <button id="openFieldMetadataConfig">Campos e opcoes</button>
+          <button id="openMetadataSyncWizard">Sincronizar metadados (.zip/.p)</button>
+          <button id="openLogicBuilder">Motor de logica</button>
         </div>
       </div>
     </header>
@@ -283,27 +289,65 @@
           <span>Preparacao e transformacao pos-query</span>
         </div>
 
-        <div class="grid three">
-          <label>Step
-            <input id="stepType">
-          </label>
-          <label>Payload JSON
-            <textarea id="stepPayload" rows="5" placeholder='{"fields":["uf"]}'></textarea>
-          </label>
-          <label class="step-actions">&nbsp;
-            <button id="addStep">Adicionar step</button>
-            <button id="addPipelineFromForm">Gerar pipeline da consulta</button>
-            <button id="clearPipeline">Limpar pipeline</button>
-          </label>
+        <div class="pipeline-layout">
+          <aside class="pipeline-flow-card">
+            <h3>Fluxo atual</h3>
+            <div id="pipelineFlow" class="pipeline-flow"></div>
+            <div class="action-row tight">
+              <button id="addPipelineFromForm">Regenerar base</button>
+              <button id="clearPipeline">Limpar pipeline</button>
+            </div>
+          </aside>
+
+          <section class="pipeline-editor-card">
+            <div class="grid three">
+              <label>Tipo do passo
+                <input id="stepType">
+              </label>
+              <label>Campo principal
+                <input id="pipelineField" placeholder="saldo">
+              </label>
+              <label>Nome de saida
+                <input id="pipelineAlias" placeholder="saldoTotal">
+              </label>
+            </div>
+
+            <div class="grid three">
+              <label>Operacao
+                <input id="pipelineOperation" placeholder="sum">
+              </label>
+              <label>Campos/lista
+                <input id="pipelineFields" placeholder="codigo,nome,uf">
+              </label>
+              <label>Formato de saida
+                <input id="pipelineOutputFormat" placeholder="json">
+              </label>
+            </div>
+
+            <div class="grid two">
+              <label>Expressao / transformacao
+                <input id="pipelineExpression" placeholder="substring(char-1,1,2)">
+              </label>
+              <label>Payload JSON gerado
+                <textarea id="stepPayload" rows="5" placeholder='{ "fields":["uf"] }'></textarea>
+              </label>
+            </div>
+
+            <div class="action-row tight">
+              <button id="previewStepPayload">Gerar payload</button>
+              <button id="addStep">Adicionar step</button>
+            </div>
+          </section>
         </div>
+
         <div id="pipelineGrid"></div>
 
         <div class="operator-help">
           <h3>Operadores suportados</h3>
           <div class="chips">
-            <span>source</span><span>join</span><span>select</span><span>filter</span><span>sort</span><span>limit</span><span>map</span><span>distinct</span><span>group</span><span>aggregate</span><span>output</span>
+            <span>source</span><span>join</span><span>select</span><span>filter</span><span>sort</span><span>limit</span><span>map</span><span>distinct</span><span>group</span><span>aggregate</span><span>calculated</span><span>output</span>
           </div>
-          <p><strong>map:</strong> renomeia/reprojeta campos. <strong>distinct:</strong> remove duplicados. <strong>group:</strong> agrupa campos. <strong>aggregate:</strong> count, sum, min, max, avg.</p>
+          <p><strong>map:</strong> renomeia/reprojeta campos. <strong>calculated:</strong> cria campo derivado, como substring de char-1/char-2. <strong>distinct:</strong> remove duplicados. <strong>group:</strong> agrupa campos. <strong>aggregate:</strong> count, sum, min, max, avg.</p>
         </div>
       </section>
 
@@ -332,6 +376,8 @@
   <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
   <script src="vendor/kendo/js/kendo.all.min.js"></script>
   <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="context-manager.js"></script>
   <script src="query-builder.js"></script>
 </body>
 </html>
+

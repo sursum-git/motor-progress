@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Selecao de contexto</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="query-builder.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Sursum Dynamic Query</p>
+        <h1>Selecao de cliente e ambiente</h1>
+        <p class="lead">Defina o contexto operacional uma vez. As demais paginas vao ler esta selecao do localStorage e mostrar apenas a empresa vinculada ao ambiente.</p>
+      </div>
+      <div class="endpoint-card">
+        <div class="endpoint-field">
+          <label for="clientCombo">Cliente</label>
+          <input id="clientCombo" placeholder="Selecione o cliente">
+        </div>
+        <div class="endpoint-field">
+          <label for="environmentCombo">Ambiente</label>
+          <input id="environmentCombo" placeholder="Selecione o ambiente">
+        </div>
+        <div class="endpoint-field">
+          <label for="selectedEndpoint">Endpoint resolvido</label>
+          <input id="selectedEndpoint" readonly>
+        </div>
+        <div class="action-row tight">
+          <button id="saveSelection">Aplicar contexto</button>
+          <button id="openEndpointConfig">Configurar contextos</button>
+          <button id="openBuilder">Abrir builder</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wizard-workspace">
+      <section class="panel is-active">
+        <div class="panel-title">
+          <h2>Resumo</h2>
+          <span>Persistencia da selecao atual</span>
+        </div>
+        <div class="metadata-load-box">
+          <div class="metadata-load-title">Contexto ativo</div>
+          <div id="selectionSummary">Nenhum contexto definido.</div>
+        </div>
+        <div class="wizard-help">
+          <strong>Regra:</strong> esta pagina grava `cliente`, `ambiente` e a empresa padrao do ambiente. Nas demais telas, a empresa continua selecionavel sem trocar o ambiente.
+        </div>
+      </section>
+    </main>
+
+    <footer class="wizard-footer">
+      <div></div>
+      <div id="statusBox" class="status-box">Pronto.</div>
+      <div></div>
+    </footer>
+  </div>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="context-manager.js"></script>
+  <script src="context-selector.js"></script>
+</body>
+</html>

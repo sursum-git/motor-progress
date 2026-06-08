@@ -1,0 +1,121 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consulta de metadados por tabela</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="query-builder.css">
+  <link rel="stylesheet" href="table-browser.css">
+</head>
+<body>
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">
+          Sursum Dynamic Query - Consulta de metadados por tabela
+          <span id="metadataHelp" class="help-icon" tabindex="0" aria-label="Ajuda">?</span>
+        </p>
+      </div>
+      <div class="endpoint-card">
+        <div class="endpoint-field">
+          <label for="apiCompany">Empresa</label>
+          <input id="apiCompany" placeholder="Selecione a empresa">
+        </div>
+        <div class="endpoint-field">
+          <label for="contextSummary">Cliente e ambiente</label>
+          <div id="contextSummary" class="field-note">Selecione o contexto na pagina inicial.</div>
+        </div>
+        <input id="apiBaseUrl" type="hidden" value="http://localhost:8890/web/SursumDynamicQuery">
+        <div class="endpoint-field">
+          <label for="dbCombo">Banco de dados</label>
+          <input id="dbCombo">
+        </div>
+        <div class="endpoint-field">
+          <label for="tableName">Tabela</label>
+          <input id="tableName" placeholder="Ex.: ped-venda">
+        </div>
+        <div class="action-row tight">
+          <button id="openContextSelector">Selecionar contexto</button>
+          <button id="findTableBtn">Buscar Metadados</button>
+          <button id="refreshMetadata">Atualizar metadados</button>
+          <button id="addCompanyBtn">Novo contexto</button>
+          <button id="openEndpointConfig">Arquivo de endpoints</button>
+          <button id="saveEndpointFile">Salvar endpoints JSON</button>
+          <button id="clearBtn">Limpar</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wizard-workspace">
+      <section class="panel is-active">
+        <div class="panel-title">
+          <h2>Resultados</h2>
+          <span id="resultSummary">Escolha banco e tabela para carregar os metadados.</span>
+        </div>
+        <div id="metadataTabs">
+          <ul>
+            <li class="k-state-active">Campos</li>
+            <li>Índices</li>
+            <li>Joins</li>
+          </ul>
+          <div>
+            <div id="fieldsGrid"></div>
+          </div>
+          <div>
+            <div id="indexesGrid"></div>
+          </div>
+          <div>
+            <div id="joinsGrid"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="wizard-footer">
+      <div></div>
+      <div id="statusBox" class="status-box">Pronto.</div>
+      <div></div>
+    </footer>
+  </div>
+
+  <div id="tableSelectorWindow">
+    <p>Foram encontradas <strong>várias</strong> tabelas com esse nome. Selecione a desejada:</p>
+    <div id="tableSelectorGrid"></div>
+    <div class="action-row tight">
+      <button id="applyTableSelection">Selecionar</button>
+      <button id="cancelTableSelection">Cancelar</button>
+    </div>
+  </div>
+
+  <div id="addCompanyWindow" style="display:none">
+    <form id="addCompanyForm">
+      <div class="endpoint-field">
+        <label for="newCompanyName">Nome do cliente</label>
+        <input id="newCompanyName" name="newCompanyName" required data-required-msg="Informe o nome do cliente." placeholder="Ex.: Cliente ABC">
+        <span class="k-invalid-msg" data-for="newCompanyName"></span>
+      </div>
+      <div class="endpoint-field">
+        <label for="newCompanyEndpointName">Nome do ambiente</label>
+        <input id="newCompanyEndpointName" name="newCompanyEndpointName" required data-required-msg="Informe o nome do ambiente." placeholder="Ex.: PASOE produção">
+        <span class="k-invalid-msg" data-for="newCompanyEndpointName"></span>
+      </div>
+      <div class="endpoint-field">
+        <label for="newCompanyEndpointUrl">URL do endpoint</label>
+        <input id="newCompanyEndpointUrl" name="newCompanyEndpointUrl" required data-required-msg="Informe a URL do endpoint." data-endpointurl="true" data-endpointurl-msg="Informe uma URL válida, por exemplo: http://localhost:8890/web/SursumDynamicQuery." placeholder="http://localhost:8890/web/SursumDynamicQuery">
+        <span class="k-invalid-msg" data-for="newCompanyEndpointUrl"></span>
+      </div>
+      <div class="action-row tight">
+        <button id="confirmAddCompany" type="button">Salvar</button>
+        <button id="cancelAddCompany" type="button">Cancelar</button>
+      </div>
+    </form>
+  </div>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="context-manager.js"></script>
+  <script src="table-browser.js"></script>
+</body>
+</html>

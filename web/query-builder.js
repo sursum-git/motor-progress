@@ -1,6 +1,8 @@
 (function () {
   const STORAGE_KEY = "sursumCurrentQueryJson";
   const LIBRARY_KEY = "sursumSavedQueries";
+  const API_URL_KEY = "sursumApiBaseUrl";
+  const DEFAULT_API = "http://localhost:8890/web/SursumDynamicQuery";
   const ENDPOINTS_KEY = "sursumApiEndpoints";
   const SELECTED_COMPANY_KEY = "sursumSelectedCompany";
   const SELECTED_ENDPOINT_KEY = "sursumSelectedApiEndpoint";
@@ -26,6 +28,18 @@
     pipeline: []
   };
 
+  window.pipelineSummary = function (item) {
+    let payload = {};
+    try { payload = JSON.parse(item.payload || "{}"); } catch (_) {}
+    if (item.type === "aggregate") return (payload.op || "sum") + "(" + (payload.field || "*") + ") -> " + (payload.as || "");
+    if (item.type === "group" || item.type === "distinct") return "campos: " + (payload.fields || []).join(", ");
+    if (item.type === "map") return "map: " + (payload.fields || []).map((f) => (f.from || "") + " -> " + (f.to || "")).join(", ");
+    if (item.type === "calculated") return (payload.name || payload.as || "") + " = " + (payload.expression || "");
+    if (item.type === "output") return "formato: " + (payload.format || "json");
+    if (item.type === "limit") return "pagina " + (payload.page || 1) + ", tamanho " + (payload.pageSize || 500);
+    return JSON.stringify(payload);
+  };
+
   function initWidgets() {
     state.endpointConfig = loadEndpointConfig();
     state.companies = state.endpointConfig.companies;
@@ -38,16 +52,23 @@
       ],
       dataTextField: "text",
       dataValueField: "value",
-      value: "object"
+      value: "object",
+      change: onRequestModeChanged
     });
     $("#filterOperator").kendoDropDownList({ dataSource: ["=", "<>", ">", ">=", "<", "<=", "between", "begins", "contains"], value: ">=" });
     $("#orderDirection").kendoDropDownList({ dataSource: ["ASC", "DESC"], value: "ASC" });
     $("#relationType").kendoDropDownList({ dataSource: ["INNER", "LEFT"], value: "INNER" });
     $("#stepType").kendoDropDownList({
-      dataSource: ["source", "join", "select", "filter", "sort", "limit", "map", "distinct", "group", "aggregate", "output"],
+      dataSource: ["source", "join", "select", "filter", "sort", "limit", "map", "distinct", "group", "aggregate", "calculated", "output"],
       value: "map",
-      change: setStepPayloadTemplate
+      change: onPipelineStepTypeChanged
     });
+    $("#pipelineOperation").kendoDropDownList({ dataSource: ["sum", "count", "min", "max", "avg"], value: "sum", change: buildVisualStepPayload });
+    $("#pipelineField").kendoComboBox({ dataTextField: "name", dataValueField: "name", filter: "contains", dataSource: state.fields, change: buildVisualStepPayload });
+    $("#pipelineAlias").kendoTextBox();
+    $("#pipelineFields").kendoTextBox();
+    $("#pipelineExpression").kendoTextBox();
+    $("#pipelineOutputFormat").kendoDropDownList({ dataSource: ["json"], value: "json", change: buildVisualStepPayload });
 
     $("button").kendoButton();
     $("#pageHelpToggle").kendoTooltip({
@@ -62,13 +83,7 @@
       dataSource: state.companies,
       change: onApiCompanyChanged
     });
-    $("#apiEndpoint").kendoComboBox({
-      dataTextField: "name",
-      dataValueField: "id",
-      filter: "contains",
-      dataSource: state.endpoints,
-      change: applySelectedEndpoint
-    });
+    refreshEndpointCombo(localStorage.getItem(SELECTED_ENDPOINT_KEY));
     ["#sourceDatabase", "#relationLeftDatabase", "#relationRightDatabase"].forEach((selector) => {
       $(selector).kendoComboBox({
         dataTextField: "name",
@@ -142,7 +157,8 @@
     ]);
     createGrid("#pipelineGrid", state.pipeline, [
       { field: "type", title: "Step", width: 120 },
-      { field: "payload", title: "Payload" },
+      { title: "Resumo", template: "#= pipelineSummary(data) #" },
+      { field: "payload", title: "Payload tecnico", width: 360 },
       removeColumn("pipeline")
     ]);
     $("#tableSearchWindow").kendoWindow({
@@ -166,6 +182,7 @@
         { field: "database", title: "Banco", width: 150 }
       ]
     });
+    onPipelineStepTypeChanged();
   }
 
   function createGrid(selector, data, columns) {
@@ -209,7 +226,9 @@
     $("#loadRelation").on("click", loadRelation);
     $("#addRelationAsJoin").on("click", addRelationAsJoin);
     $("#addStep").on("click", addStep);
-    $("#addPipelineFromForm").on("click", function () { state.pipeline = withIds(buildPipelineFromForm()); refreshAll(); });
+    $("#previewStepPayload").on("click", buildVisualStepPayload);
+    $("#pipelineAlias, #pipelineFields, #pipelineExpression").on("input", buildVisualStepPayload);
+    $("#addPipelineFromForm").on("click", function () { regeneratePipelineBase(true); });
     $("#clearPipeline").on("click", function () { state.pipeline = []; refreshAll(); });
     $("#buildJson").on("click", refreshJson);
     $("#copyJson").on("click", copyJson);
@@ -217,7 +236,13 @@
     $("#openResultPage").on("click", openResultPage);
     $("#saveQuery").on("click", saveCurrentQuery);
     $("#saveQueryAs").on("click", saveCurrentQueryAs);
+    $("#openContextSelector").on("click", function () { window.location.href = "context-selector.html"; });
     $("#openEndpointConfig").on("click", function () { window.location.href = "endpoint-config.html"; });
+    $("#openDatabaseAliasConfig").on("click", function () { window.location.href = "database-alias-config.html"; });
+    $("#openMetadataStorageConfig").on("click", function () { window.location.href = "metadata-storage-config.html"; });
+    $("#openFieldMetadataConfig").on("click", function () { window.location.href = "field-metadata-config.html"; });
+    $("#openMetadataSyncWizard").on("click", function () { window.location.href = "metadata-sync-wizard.html"; });
+    $("#openLogicBuilder").on("click", function () { window.location.href = "logic-list.html"; });
     $("#pageHelpToggle").on("dblclick", copyPageHelp);
     $("#backToQueryList").on("click", function () { window.location.href = "query-list.html"; });
     $("#prevStep").on("click", function () { showStep(state.currentStep - 1); });
@@ -236,6 +261,15 @@
     $(".wizard-panel[data-step-panel='" + next + "']").addClass("is-active");
     $("#prevStep").prop("disabled", next === 1);
     $("#nextStep").prop("disabled", next === MAX_STEP);
+    if (next === 7) ensurePipelineBase();
+    refreshJson();
+  }
+
+  function onRequestModeChanged() {
+    if (dropdownValue("#requestMode") === "pipeline") {
+      ensurePipelineBase();
+      setStatus("Modo pipeline ativado. A base foi gerada automaticamente a partir da consulta.", "ok");
+    }
     refreshJson();
   }
 
@@ -329,7 +363,7 @@
     $.getJSON(apiBase() + "/metadata/tables/" + encodeURIComponent(table) + "/fields?database=" + encodeURIComponent(sourceDatabase()))
       .done(function (response) {
         if (!response.success) throw new Error(apiError(response));
-        state.fields = response.data || [];
+        state.fields = response.fields || response.data || [];
         refreshFieldWidgets();
         setStatus("Campos carregados para " + sourceDatabase() + "." + table + ": " + state.fields.length, "ok");
         if (typeof done === "function") done();
@@ -347,7 +381,7 @@
     $.getJSON(apiBase() + "/metadata/tables/" + encodeURIComponent(source.nome) + "/fields?database=" + encodeURIComponent(source.banco))
       .done(function (response) {
         if (!response.success) throw new Error(apiError(response));
-        state.fields = response.data || [];
+        state.fields = response.fields || response.data || [];
         refreshFieldWidgets();
         applyStepThreeSource(source);
         setStatus("Campos carregados para " + source.banco + "." + source.nome + ": " + state.fields.length, "ok");
@@ -521,6 +555,8 @@
       const combo = $(selector).data("kendoComboBox");
       if (combo) combo.setDataSource(new kendo.data.DataSource({ data: state.fields }));
     });
+    const pipelineField = $("#pipelineField").data("kendoComboBox");
+    if (pipelineField) pipelineField.setDataSource(new kendo.data.DataSource({ data: state.fields }));
   }
 
   function refreshRelationSourceCombos() {
@@ -598,6 +634,8 @@
   function addSource() {
     const table = inputValue("#sourceTable", "Customer");
     const alias = inputValue("#sourceAlias", table.charAt(0).toLowerCase() + table.slice(1));
+    const existingSources = state.sources.slice();
+    const newSource = { nome: canonicalTableName(table), alias, banco: sourceDatabase() };
     if (!sourceDatabase()) {
       setStatus("Selecione o banco da fonte antes de adicionar a tabela.", "error");
       return;
@@ -606,7 +644,8 @@
       setStatus("Tabela nao encontrada no banco " + sourceDatabase() + ": " + table, "error");
       return;
     }
-    addItem("sources", { nome: canonicalTableName(table), alias, banco: sourceDatabase() });
+    addItem("sources", newSource);
+    autoLoadJoinsForSource(newSource, existingSources);
   }
 
   function addSelectField(fieldName) {
@@ -713,9 +752,67 @@
       return;
     }
 
+    addJoinFromRelation(relation, false);
+  }
+
+  function autoLoadJoinsForSource(newSource, existingSources) {
+    if (!newSource || !existingSources || !existingSources.length) return;
+    let found = 0;
+    let completed = 0;
+    const total = existingSources.length;
+    setStatus("Buscando relacoes salvas para " + (newSource.banco || "") + "." + newSource.nome + "...", "");
+
+    existingSources.forEach((source) => {
+      tryLoadRelationForSources(source, newSource, function (added) {
+        if (added) found += 1;
+        completed += 1;
+        if (completed === total) {
+          if (found > 0) setStatus("Joins automaticos adicionados: " + found + ".", "ok");
+          else setStatus("Fonte adicionada. Nenhuma relacao salva encontrada para joins automaticos.", "ok");
+        }
+      });
+    });
+  }
+
+  function tryLoadRelationForSources(leftSource, rightSource, done) {
+    fetchSavedRelation(leftSource, rightSource)
+      .done(function (response) {
+        if (response && response.success && addJoinFromRelation(response.relation || response, true)) {
+          done(true);
+          return;
+        }
+        fetchSavedRelation(rightSource, leftSource)
+          .done(function (reverseResponse) {
+            done(!!(reverseResponse && reverseResponse.success && addJoinFromRelation(reverseResponse.relation || reverseResponse, true)));
+          })
+          .fail(function () { done(false); });
+      })
+      .fail(function () {
+        fetchSavedRelation(rightSource, leftSource)
+          .done(function (reverseResponse) {
+            done(!!(reverseResponse && reverseResponse.success && addJoinFromRelation(reverseResponse.relation || reverseResponse, true)));
+          })
+          .fail(function () { done(false); });
+      });
+  }
+
+  function fetchSavedRelation(leftSource, rightSource) {
+    return $.getJSON(apiBase() + "/metadata/relations/" + encodeURIComponent(leftSource.nome) + "/" + encodeURIComponent(rightSource.nome) +
+      "?leftDatabase=" + encodeURIComponent(leftSource.banco || "") +
+      "&rightDatabase=" + encodeURIComponent(rightSource.banco || ""));
+  }
+
+  function addJoinFromRelation(relation, silent) {
+    const validation = validateRelation(relation);
+    if (validation) {
+      if (!silent) setStatus(validation, "error");
+      return false;
+    }
+
     const leftAlias = aliasForTable(relation.leftTable || relation.left);
     const rightAlias = aliasForTable(relation.rightTable || relation.right);
-    addItem("joins", {
+    state.joins.push({
+      __id: newId(),
       type: relation.type || "INNER",
       leftAlias,
       leftDatabase: relation.leftDatabase || relation.database || selectedDatabase(),
@@ -724,6 +821,8 @@
       rightDatabase: relation.rightDatabase || relation.database || selectedDatabase(),
       rightField: relation.rightField
     });
+    refreshAll();
+    return true;
   }
 
   function validateRelation(relation) {
@@ -760,6 +859,7 @@
   }
 
   function addStep() {
+    buildVisualStepPayload();
     addItem("pipeline", { type: dropdownValue("#stepType"), payload: inputValue("#stepPayload", "{}") });
   }
 
@@ -778,6 +878,7 @@
     refreshGrid("#filtersGrid", state.filters);
     refreshGrid("#ordersGrid", state.orderBy);
     refreshGrid("#pipelineGrid", state.pipeline);
+    refreshPipelineFlow();
     refreshJson();
   }
 
@@ -824,6 +925,29 @@
     return steps;
   }
 
+  function ensurePipelineBase() {
+    if (dropdownValue("#requestMode") !== "pipeline") return;
+    if (!state.sources.length) return;
+    if (!state.pipeline.length || onlyGeneratedBaseSteps(state.pipeline)) {
+      regeneratePipelineBase(false);
+    }
+  }
+
+  function regeneratePipelineBase(showMessage) {
+    const advanced = (state.pipeline || []).filter((item) => !isGeneratedBaseStep(item));
+    state.pipeline = withIds(buildPipelineFromForm().concat(advanced.map((item) => ({ type: item.type, payload: item.payload }))));
+    refreshAll();
+    if (showMessage) setStatus("Base do pipeline regenerada. Steps avancados foram preservados.", "ok");
+  }
+
+  function onlyGeneratedBaseSteps(steps) {
+    return (steps || []).every(isGeneratedBaseStep);
+  }
+
+  function isGeneratedBaseStep(item) {
+    return ["source", "join", "select", "filter", "sort", "limit", "output"].includes(item.type);
+  }
+
   function step(type, payload) {
     return { type, payload: JSON.stringify(cleanObject(payload)) };
   }
@@ -853,9 +977,61 @@
       distinct: { fields: ["codigo"] },
       group: { fields: ["uf"] },
       aggregate: { op: "sum", field: "saldo", as: "saldoTotal" },
+      calculated: { name: "tipo-final", type: "character", sourceFields: ["char-1"], expression: "substring(char-1,1,2)" },
       output: { format: "json" }
     };
     $("#stepPayload").val(JSON.stringify(templates[type] || {}, null, 2));
+  }
+
+  function onPipelineStepTypeChanged() {
+    $(".pipeline-editor-card").attr("data-step-type", dropdownValue("#stepType"));
+    buildVisualStepPayload();
+  }
+
+  function buildVisualStepPayload() {
+    const type = dropdownValue("#stepType");
+    const field = comboOrInputValue("#pipelineField");
+    const alias = inputValue("#pipelineAlias", "");
+    const fields = splitCsv(inputValue("#pipelineFields", ""));
+    const expression = inputValue("#pipelineExpression", "");
+    const op = dropdownValue("#pipelineOperation") || "sum";
+    let payload = {};
+
+    if (type === "source" || type === "join" || type === "select" || type === "filter" || type === "sort" || type === "limit") {
+      setStepPayloadTemplate();
+      return;
+    }
+    if (type === "map") {
+      payload = { fields: fields.length ? fields.map((name) => ({ from: name, to: name })) : [{ from: field || "codigo", to: alias || field || "codigo" }] };
+    } else if (type === "distinct" || type === "group") {
+      payload = { fields: fields.length ? fields : [field || "codigo"] };
+    } else if (type === "aggregate") {
+      payload = { op, field: field || "saldo", as: alias || (op + capitalize(field || "campo")) };
+    } else if (type === "calculated") {
+      payload = {
+        name: alias || field || "campo-calculado",
+        type: "character",
+        sourceFields: fields,
+        expression: expression || "substring(char-1,1,2)"
+      };
+    } else if (type === "output") {
+      payload = { format: dropdownValue("#pipelineOutputFormat") || "json" };
+    }
+
+    $("#stepPayload").val(JSON.stringify(payload, null, 2));
+  }
+
+  function refreshPipelineFlow() {
+    const target = $("#pipelineFlow");
+    if (!target.length) return;
+    if (!state.pipeline.length) {
+      target.html("<div class='pipeline-empty'>Nenhum step. Gere a base da consulta ou adicione um bloco.</div>");
+      return;
+    }
+    target.html(state.pipeline.map((item, index) => {
+      const summary = window.pipelineSummary(item).replace(/[<>&]/g, (ch) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;" }[ch]));
+      return `<div class="pipeline-node"><span>${index + 1}</span><strong>${item.type}</strong><small>${summary}</small></div>`;
+    }).join("<div class='pipeline-arrow'>↓</div>"));
   }
 
   function loadCustomerSample() {
@@ -1098,11 +1274,27 @@
   }
 
   function loadEndpointConfig() {
+    if (window.SursumContext && typeof SursumContext.getLegacyConfig === "function") {
+      const legacy = SursumContext.getLegacyConfig();
+      const config = normalizeEndpointConfig(legacy);
+      localStorage.setItem(ENDPOINTS_KEY, JSON.stringify(config, null, 2));
+      syncContextSelectionFromLegacy();
+      return config;
+    }
+
     let raw = null;
     try { raw = JSON.parse(localStorage.getItem(ENDPOINTS_KEY) || "null"); } catch (_) {}
     const config = normalizeEndpointConfig(raw);
     localStorage.setItem(ENDPOINTS_KEY, JSON.stringify(config, null, 2));
     return config;
+  }
+
+  function syncContextSelectionFromLegacy() {
+    if (!window.SursumContext || typeof SursumContext.getCurrentCompany !== "function") return;
+    const company = SursumContext.getCurrentCompany();
+    const environment = SursumContext.getCurrentEnvironment();
+    if (company) localStorage.setItem(SELECTED_COMPANY_KEY, company.id);
+    if (environment) localStorage.setItem(SELECTED_ENDPOINT_KEY, environment.id);
   }
 
   function normalizeEndpointConfig(raw) {
@@ -1130,57 +1322,191 @@
     return list;
   }
 
-  function selectedCompany() {
+  function contextEndpointConfig() {
+    if (window.SursumContext && typeof window.SursumContext.getConfig === "function") {
+      return window.SursumContext.getConfig();
+    }
+    return null;
+  }
+
+  function companiesForSelection() {
+    const config = contextEndpointConfig();
+    const environment = currentEnvironment();
+    if (config && environment && Array.isArray(config.companies)) {
+      return config.companies.filter((item) => item.environmentId === environment.id);
+    }
+    return state.companies || [];
+  }
+
+  function currentClient() {
+    if (window.SursumContext && typeof window.SursumContext.getCurrentClient === "function") {
+      const client = window.SursumContext.getCurrentClient();
+      if (client) {
+        return client;
+      }
+    }
+
+    const config = contextEndpointConfig();
+    if (config && Array.isArray(config.clients) && config.clients.length) {
+      const selectedId = (config.selected || {}).clientId;
+      return config.clients.find((item) => item.id === selectedId) || config.clients[0] || null;
+    }
+
     const selectedId = localStorage.getItem(SELECTED_COMPANY_KEY);
-    return state.companies.find((company) => company.id === selectedId) || state.companies.find((company) => company.isDefault) || state.companies[0];
+    return (state.companies || []).find((item) => item.id === selectedId) || (state.companies || [])[0] || null;
+  }
+
+  function currentEnvironment() {
+    if (window.SursumContext && typeof window.SursumContext.getCurrentEnvironment === "function") {
+      const environment = window.SursumContext.getCurrentEnvironment();
+      if (environment) {
+        return environment;
+      }
+    }
+
+    const selectedId = localStorage.getItem(SELECTED_ENDPOINT_KEY);
+    return (state.endpoints || []).find((item) => item.id === selectedId) || (state.endpoints || [])[0] || null;
+  }
+
+  function endpointUrl(endpoint) {
+    if (!endpoint) {
+      return DEFAULT_API;
+    }
+    return endpoint.pasoeBaseUrl || endpoint.url || DEFAULT_API;
+  }
+
+  function companyForEnvironment(environmentId, clientId) {
+    const config = contextEndpointConfig();
+    if (!config || !Array.isArray(config.companies)) {
+      return null;
+    }
+
+    const companies = config.companies || [];
+    const exact = companies.find((item) => item.environmentId === environmentId && (!clientId || item.clientId === clientId));
+    if (exact) {
+      return exact;
+    }
+
+    if (!environmentId) {
+      return companies.find((item) => !clientId || item.clientId === clientId) || companies[0] || null;
+    }
+
+    return null;
+  }
+  function updateContextSummary() {
+    const client = currentClient();
+    const environment = currentEnvironment();
+    const target = $("#contextSummary");
+    if (!target.length) return;
+    if (!client || !environment) {
+      target.text("Selecione o contexto na pagina inicial.");
+      return;
+    }
+    target.text((client.name || client.id) + " / " + (environment.name || environment.id));
+  }
+
+  function selectedCompany() {
+    if (window.SursumContext && typeof window.SursumContext.getCurrentCompany === "function") {
+      const company = window.SursumContext.getCurrentCompany();
+      if (company) {
+        return company;
+      }
+    }
+    const companies = companiesForSelection();
+    const selectedId = localStorage.getItem(SELECTED_COMPANY_KEY);
+    return companies.find((item) => item.id === selectedId) || companies[0] || null;
   }
 
   function endpointsForSelectedCompany() {
-    const company = selectedCompany();
-    return company ? company.endpoints || [] : [];
+    const environment = currentEnvironment();
+    return environment ? [environment] : [];
   }
 
   function refreshEndpointCombo(selectedId) {
     const companyCombo = $("#apiCompany").data("kendoComboBox");
-    const company = selectedCompany();
-    if (companyCombo && company) {
-      companyCombo.setDataSource(new kendo.data.DataSource({ data: state.companies }));
-      companyCombo.dataSource.read();
-      companyCombo.value(company.id);
-      companyCombo.refresh();
+    const companies = companiesForSelection();
+    const selected = selectedCompany() || companies[0] || null;
+
+    state.companies = companies;
+
+    if (companyCombo) {
+      companyCombo.setDataSource(new kendo.data.DataSource({ data: companies }));
+      if (selected && selected.id) {
+        companyCombo.value(selected.id);
+      }
     }
+
     state.endpoints = endpointsForSelectedCompany();
-    const combo = $("#apiEndpoint").data("kendoComboBox");
-    if (!combo) return;
-    combo.setDataSource(new kendo.data.DataSource({ data: state.endpoints }));
-    combo.dataSource.read();
-    const preferred = selectedId || localStorage.getItem(SELECTED_ENDPOINT_KEY);
-    const endpoint = state.endpoints.find((item) => item.id === preferred) || state.endpoints.find((item) => item.isDefault) || state.endpoints[0];
-    combo.value(endpoint ? endpoint.id : "");
-    combo.refresh();
-    applySelectedEndpoint();
+    if (selected && selected.id) {
+      localStorage.setItem(SELECTED_COMPANY_KEY, selected.id);
+    }
+    applySelectedEndpoint(selectedId);
+    updateContextSummary();
   }
 
   function onApiCompanyChanged() {
-    const combo = $("#apiCompany").data("kendoComboBox");
-    const companyId = combo ? combo.value() : "";
-    if (companyId) localStorage.setItem(SELECTED_COMPANY_KEY, companyId);
-    refreshEndpointCombo("");
+    const companyId = this.value();
+    const client = currentClient();
+    const environment = currentEnvironment();
+    if (companyId) {
+      localStorage.setItem(SELECTED_COMPANY_KEY, companyId);
+    }
+    if (client && environment && window.SursumContext && typeof window.SursumContext.setSelection === "function") {
+      window.SursumContext.setSelection(client.id, environment.id, companyId || "");
+    }
+    refreshEndpointCombo(localStorage.getItem(SELECTED_ENDPOINT_KEY));
   }
 
-  function applySelectedEndpoint() {
-    const combo = $("#apiEndpoint").data("kendoComboBox");
-    const id = combo ? combo.value() : "";
-    const endpoint = state.endpoints.find((item) => item.id === id) || state.endpoints[0];
-    if (!endpoint) return;
-    $("#apiBaseUrl").val(endpoint.url || "");
-    if (endpoint.companyId) localStorage.setItem(SELECTED_COMPANY_KEY, endpoint.companyId);
-    localStorage.setItem(SELECTED_ENDPOINT_KEY, endpoint.id);
-    localStorage.setItem("sursumApiBaseUrl", endpoint.url || "");
+  function applySelectedEndpoint(explicitId) {
+    const endpointId = typeof explicitId === "string" ? explicitId : localStorage.getItem(SELECTED_ENDPOINT_KEY);
+    const endpoint = currentEnvironment()
+      || (state.endpoints || []).find((item) => item.id === endpointId)
+      || (state.endpoints || [])[0]
+      || null;
+
+    if (!endpoint) {
+      updateContextSummary();
+      return;
+    }
+
+    state.apiBase = endpointUrl(endpoint);
+    $("#apiBaseUrl").val(state.apiBase);
+    localStorage.setItem(API_URL_KEY, state.apiBase);
+    localStorage.setItem(SELECTED_ENDPOINT_KEY, endpoint.id || "");
+
+    const client = currentClient();
+    const clientId = endpoint.clientId || (client && client.id) || "";
+    const configuredCompany = companyForEnvironment(endpoint.id, clientId);
+    const currentCompanySelection = selectedCompany();
+    const preferredCompany = currentCompanySelection && currentCompanySelection.environmentId === endpoint.id
+      ? currentCompanySelection
+      : configuredCompany;
+
+    if (window.SursumContext && typeof window.SursumContext.setSelection === "function") {
+      window.SursumContext.setSelection(clientId, endpoint.id || "", preferredCompany ? preferredCompany.id : "");
+      const selectedCompany = typeof window.SursumContext.getCurrentCompany === "function"
+        ? window.SursumContext.getCurrentCompany()
+        : preferredCompany;
+      const company = selectedCompany && selectedCompany.environmentId === endpoint.id ? selectedCompany : preferredCompany;
+      if (company && company.id) {
+        localStorage.setItem(SELECTED_COMPANY_KEY, company.id);
+      }
+    } else if (endpoint.companyId) {
+      localStorage.setItem(SELECTED_COMPANY_KEY, endpoint.companyId);
+    }
+    updateContextSummary();
   }
 
   function apiBase() {
-    return inputValue("#apiBaseUrl", "http://localhost:8890/web/SursumDynamicQuery").replace(/\/+$/, "");
+    return inputValue("#apiBaseUrl", currentContextApiBase() || "http://localhost:8890/web/SursumDynamicQuery").replace(/\/+$/, "");
+  }
+
+  function currentContextApiBase() {
+    if (window.SursumContext && typeof SursumContext.getCurrentEnvironment === "function") {
+      const environment = SursumContext.getCurrentEnvironment();
+      if (environment && environment.pasoeBaseUrl) return environment.pasoeBaseUrl;
+    }
+    return localStorage.getItem("sursumApiBaseUrl") || "";
   }
 
   function selectedDatabase() {
@@ -1253,6 +1579,19 @@
     return value === "" ? fallback : value;
   }
 
+  function comboOrInputValue(selector) {
+    return inputValue(selector, "");
+  }
+
+  function splitCsv(value) {
+    return String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+  }
+
+  function capitalize(value) {
+    const text = String(value || "");
+    return text ? text.charAt(0).toUpperCase() + text.slice(1) : "";
+  }
+
   function setComboValue(selector, value) {
     const widget = $(selector).data("kendoComboBox");
     if (widget) {
@@ -1302,3 +1641,4 @@
     });
   });
 })();
+

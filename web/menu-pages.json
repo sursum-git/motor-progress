@@ -1,0 +1,107 @@
+[
+  {
+    "text": "Inicio",
+    "expanded": true,
+    "items": [
+      {
+        "text": "Selecao de contexto",
+        "url": "context-selector.html",
+        "description": "Define cliente e ambiente base para todas as demais paginas."
+      }
+    ]
+  },
+  {
+    "text": "Consultas",
+    "expanded": true,
+    "items": [
+      {
+        "text": "Construtor de query",
+        "url": "query-builder.html",
+        "description": "Montagem visual de consultas dinamicas."
+      },
+      {
+        "text": "Consulta por Tabela",
+        "url": "query-wizard-3steps.html",
+        "description": "Fluxo guiado para montar e executar consultas."
+      },
+      {
+        "text": "Lista de queries",
+        "url": "query-list.html",
+        "description": "Consulta e manutencao das queries salvas."
+      },
+      {
+        "text": "Resultado de query",
+        "url": "query-result.html",
+        "description": "Visualizacao direta de resultados."
+      },
+      {
+        "text": "Runner de arquivo",
+        "url": "query-file-runner.html",
+        "description": "Execucao de consultas a partir de arquivo."
+      }
+    ]
+  },
+  {
+    "text": "Metadados",
+    "expanded": true,
+    "items": [
+      {
+        "text": "Navegador de tabelas",
+        "url": "table-browser.html",
+        "description": "Busca de campos, indices e joins por banco e tabela."
+      },
+      {
+        "text": "Configuracao de campos",
+        "url": "field-metadata-config.html",
+        "description": "Ajustes manuais dos metadados de campos."
+      },
+      {
+        "text": "Armazenamento de metadados",
+        "url": "metadata-storage-config.html",
+        "description": "Configuracao do local de cache dos metadados."
+      },
+      {
+        "text": "Aliases de bancos",
+        "url": "database-alias-config.html",
+        "description": "Edicao visual dos aliases de bancos conectados."
+      }
+    ]
+  },
+  {
+    "text": "Logica",
+    "expanded": true,
+    "items": [
+      {
+        "text": "Lista de logicas",
+        "url": "logic-list.html",
+        "description": "Consulta das regras e logicas disponiveis."
+      },
+      {
+        "text": "Construtor de logica",
+        "url": "logic-builder.html",
+        "description": "Edicao visual de regras de logica."
+      }
+    ]
+  },
+  {
+    "text": "Configuracao",
+    "expanded": true,
+    "items": [
+      {
+        "text": "Clientes",
+        "url": "client-config.html",
+        "description": "Cadastro separado dos clientes do contexto."
+      },
+      {
+        "text": "Ambientes",
+        "url": "endpoint-config.html",
+        "description": "Cadastro separado dos ambientes PASOE."
+      },
+      {
+        "text": "Vinculos",
+        "url": "link-config.html",
+        "description": "Liga cliente, ambiente e companyId."
+      }
+    ]
+  }
+]

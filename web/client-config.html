@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Cadastro de ambientes e empresas</title>
+  <title>Configuracao de clientes</title>
   <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
   <link rel="stylesheet" href="query-builder.css">
 </head>
@@ -12,8 +12,8 @@
     <header class="hero">
       <div>
         <p class="eyebrow">Sursum Dynamic Query</p>
-        <h1>Cadastro de ambientes e empresas</h1>
-        <p class="lead">Cadastre os ambientes PASOE e as empresas de cada ambiente. O vinculo do ambiente com cliente fica em uma tela separada.</p>
+        <h1>Configuracao de clientes</h1>
+        <p class="lead">Mantenha o cadastro de clientes separado dos ambientes. O mesmo arquivo JSON continua sendo a fonte unica de configuracao.</p>
       </div>
       <div class="endpoint-card">
         <div class="endpoint-field">
@@ -21,7 +21,7 @@
           <input id="configFile" type="file" accept=".json,application/json">
         </div>
         <div class="action-row tight">
-          <button id="openClientConfig">Abrir clientes</button>
+          <button id="openEnvironmentConfig">Abrir ambientes</button>
           <button id="openLinkConfig">Abrir vinculos</button>
           <button id="exportFile">Baixar arquivo</button>
           <button id="saveWithPicker">Salvar no arquivo</button>
@@ -31,48 +31,28 @@
 
     <section class="panel">
       <div class="panel-title">
-        <h2>Ambientes</h2>
-        <span>Formato sugerido: sursum-endpoints.json</span>
+        <h2>Clientes</h2>
+        <span>Cadastro base para selecionar contexto e vincular ambientes</span>
       </div>
-
-      <div class="divider"></div>
-
-      <div class="grid two">
-        <label>Ambiente/PASOE
-          <input id="endpointName" placeholder="Local PASOE">
-        </label>
-        <label>URL base
-          <input id="endpointUrl" placeholder="http://localhost:8890/web/SursumDynamicQuery">
-          <button id="addEndpoint">Adicionar ambiente</button>
-        </label>
-      </div>
-
-      <div id="endpointsGrid"></div>
-
-      <div class="divider"></div>
 
       <div class="grid three">
-        <label>Ambiente atual
-          <input id="environmentCombo" placeholder="Selecione o ambiente">
+        <label>Cliente atual
+          <input id="clientCombo" placeholder="Selecione o cliente">
         </label>
-        <label>Nome interno
-          <input id="companyName" placeholder="CompanyId producao">
+        <label>Novo cliente
+          <input id="clientName" placeholder="Cliente ABC">
         </label>
-        <label>Valor do parametro companyId
-          <input id="companyCode" placeholder="empresa-xpto">
+        <label>&nbsp;
+          <button id="addClient">Adicionar cliente</button>
+          <button id="removeClient">Remover cliente</button>
         </label>
       </div>
 
-      <div class="action-row tight" style="margin: 8px 0 16px;">
-        <button id="addCompany">Salvar empresa do ambiente</button>
-        <button id="removeCompany">Remover empresa do ambiente</button>
-      </div>
-
-      <div id="companiesGrid"></div>
+      <div id="clientsGrid"></div>
 
       <div class="panel-title slim">
         <h2>Preview do arquivo</h2>
-        <span>Este JSON e a fonte portavel da configuracao</span>
+        <span>Mesmo arquivo usado pelas demais paginas</span>
       </div>
       <textarea id="filePreview" spellcheck="false"></textarea>
       <div id="statusBox" class="status-box">Pronto.</div>
@@ -83,6 +63,6 @@
   <script src="vendor/kendo/js/kendo.all.min.js"></script>
   <script src="vendor/kendo/kendo-license.js"></script>
   <script src="context-manager.js"></script>
-  <script src="endpoint-config.js"></script>
+  <script src="client-config.js"></script>
 </body>
 </html>
