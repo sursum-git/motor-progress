@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Handbook Operacional - Sursum Dynamic Query</title>
+  <style>
+    :root {
+      --bg: #f3f6f9;
+      --panel: #ffffff;
+      --text: #1d2733;
+      --muted: #617182;
+      --border: #d7dee6;
+      --accent: #0f766e;
+      --accent-soft: #e1f3f0;
+      --code: #0b1220;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #f8fbfc 0%, var(--bg) 100%);
+      color: var(--text);
+      font: 15px/1.6 "Segoe UI", Tahoma, sans-serif;
+    }
+
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+    }
+
+    .hero {
+      padding: 28px 30px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at top right, #d8f2ee 0, transparent 34%),
+        linear-gradient(135deg, #ffffff 0%, #f6fbfa 100%);
+      box-shadow: 0 18px 48px rgba(18, 38, 63, 0.08);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 34px;
+      line-height: 1.15;
+    }
+
+    .lead {
+      max-width: 840px;
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      gap: 22px;
+      margin-top: 24px;
+      align-items: start;
+    }
+
+    .toc,
+    .content section {
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: var(--panel);
+      box-shadow: 0 10px 28px rgba(18, 38, 63, 0.05);
+    }
+
+    .toc {
+      position: sticky;
+      top: 20px;
+      padding: 18px 18px 12px;
+    }
+
+    .toc h2 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+
+    .toc a {
+      display: block;
+      padding: 7px 10px;
+      border-radius: 10px;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .toc a:hover {
+      background: var(--accent-soft);
+      color: #07463f;
+    }
+
+    .content {
+      display: grid;
+      gap: 18px;
+    }
+
+    .content section {
+      padding: 24px 26px;
+    }
+
+    h2 {
+      margin: 0 0 14px;
+      font-size: 24px;
+      line-height: 1.2;
+    }
+
+    h3 {
+      margin: 20px 0 8px;
+      font-size: 17px;
+    }
+
+    p {
+      margin: 0 0 12px;
+    }
+
+    ul,
+    ol {
+      margin: 0 0 14px 20px;
+      padding: 0;
+    }
+
+    li + li {
+      margin-top: 4px;
+    }
+
+    code {
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: #eef2f7;
+      color: var(--code);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.94em;
+    }
+
+    pre {
+      margin: 10px 0 14px;
+      padding: 14px 16px;
+      overflow: auto;
+      border-radius: 14px;
+      background: #0f172a;
+      color: #e5eef8;
+      font: 13px/1.55 Consolas, "Courier New", monospace;
+    }
+
+    .note {
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+      border-radius: 12px;
+      background: var(--accent-soft);
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin: 12px 0;
+    }
+
+    .card {
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #fbfcfe;
+    }
+
+    .card strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 920px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: static;
+      }
+
+      h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="hero">
+      <p class="eyebrow">Codex Context</p>
+      <h1>Handbook Operacional</h1>
+      <p class="lead">
+        Guia consolidado para operar, desenvolver e retomar o projeto Sursum Dynamic Query em qualquer instalacao do Codex com OpenEdge e PASOE disponiveis.
+      </p>
+    </header>
+
+    <div class="layout">
+      <nav class="toc" aria-label="Sumario">
+        <h2>Sumario</h2>
+        <a href="#sec-1">1. O que e este projeto</a>
+        <a href="#sec-2">2. Objetivo funcional</a>
+        <a href="#sec-3">3. Mapa de pastas</a>
+        <a href="#sec-4">4. Contextos que devem ser lidos</a>
+        <a href="#sec-5">5. Entrada principal da aplicacao web</a>
+        <a href="#sec-6">6. Modelo funcional de contexto</a>
+        <a href="#sec-7">7. Regra atual da UI</a>
+        <a href="#sec-8">8. Paginas web importantes</a>
+        <a href="#sec-9">9. Backend: classes principais</a>
+        <a href="#sec-10">10. Contrato atual da API</a>
+        <a href="#sec-11">11. Estado operacional do PASOE</a>
+        <a href="#sec-12">12. Fluxo de bootstrap em nova maquina</a>
+        <a href="#sec-13">13. O que o Git leva e o que nao leva</a>
+        <a href="#sec-14">14. Fluxo de desenvolvimento web</a>
+        <a href="#sec-15">15. Fluxo de desenvolvimento ABL</a>
+        <a href="#sec-16">16. Fluxo de troubleshooting rapido</a>
+        <a href="#sec-17">17. Diagnostico recente de .d</a>
+        <a href="#sec-18">18. Estado atual do versionamento</a>
+        <a href="#sec-19">19. Regras de continuidade</a>
+        <a href="#sec-20">20. Resumo operacional curto</a>
+      </nav>
+
+      <main class="content">
+        <section id="sec-1">
+          <h2>1. O que e este projeto</h2>
+          <p>Este repositorio implementa um motor de consulta dinamica em Progress/OpenEdge com exposicao via PASOE/REST e uma UI web Kendo para operar o motor.</p>
+          <div class="grid">
+            <div class="card">
+              <strong>Backend</strong>
+              OOABL para validacao, plano, execucao, fila async e escrita de resultado.
+            </div>
+            <div class="card">
+              <strong>Frontend</strong>
+              Aplicacao web para contexto, consultas, metadados e configuracao operacional.
+            </div>
+          </div>
+        </section>
+
+        <section id="sec-2">
+          <h2>2. Objetivo funcional</h2>
+          <p>Permitir consultas estruturadas sem SQL/ABL livre, com validacao, joins, paginacao, execucao sincrona e assincrona e contexto operacional por cliente, ambiente e empresa.</p>
+          <ul>
+            <li>fontes e aliases</li>
+            <li>joins controlados</li>
+            <li>filtros validados</li>
+            <li>fila persistente</li>
+            <li>resultado JSON</li>
+            <li>contexto funcional persistido</li>
+          </ul>
+        </section>
+
+        <section id="sec-3">
+          <h2>3. Mapa de pastas</h2>
+          <h3>Backend</h3>
+          <ul>
+            <li><code>sursum/</code>: classes OOABL</li>
+            <li><code>rest/</code>: handlers e facades REST/WEB</li>
+            <li><code>workers/</code>: workers e rotinas auxiliares</li>
+            <li><code>examples/</code>: curls, payloads e respostas</li>
+            <li><code>docs/</code>: documentacao funcional e tecnica</li>
+          </ul>
+          <h3>Infra local</h3>
+          <ul>
+            <li><code>pasoe/sursum-pasoe-dev/</code>: instancia PASOE local</li>
+            <li><code>db/</code>: bancos e artefatos locais</li>
+            <li><code>conf/</code>: metadata, aliases e relations</li>
+          </ul>
+          <h3>Contexto Codex</h3>
+          <ul>
+            <li><code>.codex/context/</code>: contexto operacional</li>
+            <li><code>.codex/skills/sursum-openedge/</code>: skill local</li>
+          </ul>
+        </section>
+
+        <section id="sec-4">
+          <h2>4. Contextos que devem ser lidos</h2>
+          <ol>
+            <li><code>.codex/context/project-state.md</code></li>
+            <li><code>.codex/context/openedge-pasoe-operations.md</code></li>
+            <li><code>.codex/context/api-contract-notes.md</code></li>
+            <li><code>.codex/context/remote-bootstrap.md</code></li>
+            <li><code>.codex/context/operator-handbook.md</code></li>
+          </ol>
+        </section>
+
+        <section id="sec-5">
+          <h2>5. Entrada principal da aplicacao web</h2>
+          <p>Arquivo principal: <code>web/index.html</code>.</p>
+          <ul>
+            <li>menu lateral central</li>
+            <li>iframe com paginas internas</li>
+            <li>appbar com contexto atual</li>
+            <li>link para alterar contexto</li>
+            <li>abrir pagina atual ou itens em nova aba</li>
+          </ul>
+        </section>
+
+        <section id="sec-6">
+          <h2>6. Modelo funcional de contexto</h2>
+          <p>O contexto atual da UI e centralizado em <code>web/context-manager.js</code>.</p>
+          <p>Ele persiste no <code>localStorage</code>:</p>
+          <ul>
+            <li>cliente atual</li>
+            <li>ambiente atual</li>
+            <li>empresa atual</li>
+            <li>configuracao funcional</li>
+          </ul>
+          <div class="note">
+            Estruturas principais: <code>clients</code>, <code>environments</code>, <code>companies</code> e <code>selected</code>.
+          </div>
+        </section>
+
+        <section id="sec-7">
+          <h2>7. Regra atual da UI</h2>
+          <ul>
+            <li>o menu central mostra <code>cliente / ambiente / empresa</code> no appbar</li>
+            <li>paginas internas nao repetem esse resumo</li>
+            <li>paginas de consulta focam principalmente na selecao de empresa</li>
+            <li>mudanca de cliente/ambiente deve acontecer em <code>context-selector.html</code></li>
+          </ul>
+        </section>
+
+        <section id="sec-8">
+          <h2>8. Paginas web importantes</h2>
+          <h3>Contexto</h3>
+          <ul>
+            <li><code>web/context-selector.html</code></li>
+          </ul>
+          <h3>Configuracao</h3>
+          <ul>
+            <li><code>web/client-config.html</code></li>
+            <li><code>web/endpoint-config.html</code></li>
+            <li><code>web/link-config.html</code></li>
+          </ul>
+          <h3>Consulta</h3>
+          <ul>
+            <li><code>web/query-builder.html</code></li>
+            <li><code>web/query-wizard-3steps.html</code></li>
+            <li><code>web/query-result.html</code></li>
+            <li><code>web/query-list.html</code></li>
+          </ul>
+          <h3>Metadados</h3>
+          <ul>
+            <li><code>web/table-browser.html</code></li>
+            <li><code>web/database-alias-config.html</code></li>
+            <li><code>web/field-metadata-config.html</code></li>
+            <li><code>web/metadata-storage-config.html</code></li>
+          </ul>
+        </section>
+
+        <section id="sec-9">
+          <h2>9. Backend: classes principais</h2>
+          <ul>
+            <li><code>DynamicQueryRequestModel.cls</code></li>
+            <li><code>DynamicQueryRequestSerializer.cls</code></li>
+            <li><code>DynamicQueryValidationService.cls</code></li>
+            <li><code>DynamicQueryPlanBuilder.cls</code></li>
+            <li><code>DynamicMultiTableQueryService.cls</code></li>
+            <li><code>DynamicQueryAsyncService.cls</code></li>
+            <li><code>DynamicQueryJobRepository.cls</code></li>
+            <li><code>DynamicQueryWorkerService.cls</code></li>
+            <li><code>DynamicQueryResultWriter.cls</code></li>
+            <li><code>PasoeExecutionContext.cls</code></li>
+          </ul>
+        </section>
+
+        <section id="sec-10">
+          <h2>10. Contrato atual da API</h2>
+          <p>Base: <code>http://localhost:8890/web/SursumDynamicQuery</code></p>
+          <h3>Endpoints principais</h3>
+          <ul>
+            <li><code>POST /query</code></li>
+            <li><code>POST /jobs/drain</code></li>
+            <li><code>GET /jobs/{jobId}</code></li>
+            <li><code>GET /jobs/{jobId}/result</code></li>
+          </ul>
+          <h3>Formato assumido</h3>
+          <pre>sources[].nome
+sources[].alias
+sources[].campos
+select[].sourceAlias
+select[].field
+select[].outputAlias
+filters[].sourceAlias
+orderBy[].sourceAlias</pre>
+          <p>Restricao conhecida: <code>pageSize &lt;= 500</code>.</p>
+        </section>
+
+        <section id="sec-11">
+          <h2>11. Estado operacional do PASOE</h2>
+          <p>Instancia local padrao: <code>sursumpasoedev</code>.</p>
+          <p>Bancos mais relevantes hoje:</p>
+          <ul>
+            <li><code>sports2000</code></li>
+            <li><code>ems2cad</code></li>
+            <li><code>ems2med</code></li>
+            <li><code>ems5</code></li>
+          </ul>
+          <div class="note">
+            O ambiente local foi operado com bancos em <code>-1</code>. Se o PASOE estiver ativo segurando esses bancos, rotinas client com <code>_progres.exe</code> podem falhar.
+          </div>
+        </section>
+
+        <section id="sec-12">
+          <h2>12. Fluxo de bootstrap em nova maquina</h2>
+          <ol>
+            <li>clonar o repositorio</li>
+            <li>garantir OpenEdge e PASOE instalados</li>
+            <li>ajustar paths locais</li>
+            <li>revisar <code>openedge.properties</code></li>
+            <li>revisar temp/JNA</li>
+            <li>confirmar os bancos disponiveis</li>
+            <li>subir o PASOE</li>
+            <li>abrir <code>web/index.html</code></li>
+            <li>configurar contexto em <code>web/context-selector.html</code></li>
+          </ol>
+        </section>
+
+        <section id="sec-13">
+          <h2>13. O que o Git leva e o que nao leva</h2>
+          <h3>Leva</h3>
+          <ul>
+            <li>fontes ABL</li>
+            <li>fontes web</li>
+            <li>docs</li>
+            <li>skills e contextos Codex</li>
+          </ul>
+          <h3>Nao leva</h3>
+          <ul>
+            <li>bancos locais</li>
+            <li><code>localStorage</code> do navegador</li>
+            <li>instancia concreta do PASOE fora do repositorio</li>
+            <li>permissoes de temp/JNA</li>
+          </ul>
+        </section>
+
+        <section id="sec-14">
+          <h2>14. Fluxo de desenvolvimento web</h2>
+          <ol>
+            <li>tratar <code>web/index.html</code> como shell principal</li>
+            <li>preservar o contexto no appbar</li>
+            <li>evitar duplicar cliente/ambiente nas paginas internas</li>
+            <li>manter selecao de empresa nas paginas de consulta</li>
+            <li>usar <code>context-manager.js</code> para estado funcional</li>
+            <li>usar <code>menu-pages.json</code> para navegacao</li>
+          </ol>
+        </section>
+
+        <section id="sec-15">
+          <h2>15. Fluxo de desenvolvimento ABL</h2>
+          <ol>
+            <li>identificar se a alteracao afeta serializer, validacao, plano, execucao ou fila</li>
+            <li>revisar impacto no contrato JSON</li>
+            <li>lembrar que <code>boConsDin.p</code> e <code>boMetaDados.p</code> sao referencia</li>
+            <li>se houver banco em <code>-1</code>, parar PASOE antes de usar <code>_progres.exe</code></li>
+            <li>reiniciar PASOE apenas quando a mudanca realmente exigir</li>
+          </ol>
+        </section>
+
+        <section id="sec-16">
+          <h2>16. Fluxo de troubleshooting rapido</h2>
+          <h3>Se a UI nao refletir o contexto esperado</h3>
+          <ul>
+            <li>revisar <code>web/context-manager.js</code></li>
+            <li>revisar <code>localStorage</code></li>
+            <li>revisar <code>web/context-selector.html</code></li>
+          </ul>
+          <h3>Se o PASOE nao listar bancos esperados</h3>
+          <ul>
+            <li>revisar <code>openedge.properties</code></li>
+            <li>confirmar stop/start completo</li>
+            <li>esperar o startup terminar antes de testar endpoint</li>
+          </ul>
+          <h3>Se <code>_progres.exe</code> falhar por base em single-user</h3>
+          <ul>
+            <li>garantir que o PASOE foi parado</li>
+            <li>nao rodar stop e abertura de banco em paralelo</li>
+          </ul>
+          <h3>Se o load de <code>.d</code> falhar</h3>
+          <ul>
+            <li>usar o <code>dump-name</code> sem extensao</li>
+            <li>apontar o diretorio correto</li>
+            <li>se surgir <code>_File record not on file. (138)</code>, investigar mecanismo de load e nao apenas schema basico</li>
+          </ul>
+        </section>
+
+        <section id="sec-17">
+          <h2>17. Diagnostico recente de .d</h2>
+          <p>Validacoes ja feitas:</p>
+          <ul>
+            <li><code>ad098</code> resolve para <code>emitente</code></li>
+            <li><code>di154</code> resolve para <code>ped-item</code></li>
+            <li><code>di159</code> resolve para <code>ped-venda</code></li>
+          </ul>
+          <pre>ad098  -> 204 posicoes / 204 valores
+di154  -> 165 posicoes / 165 valores
+di159  -> 214 posicoes / 214 valores</pre>
+          <p>Conclusao atual: o erro de load nao e incompatibilidade basica de schema.</p>
+        </section>
+
+        <section id="sec-18">
+          <h2>18. Estado atual do versionamento</h2>
+          <p>Remoto principal:</p>
+          <pre>https://github.com/sursum-git/motor-progress.git</pre>
+          <p>Branch conhecida: <code>master</code>.</p>
+          <p><code>db/</code> deve ser tratado como local e esta ignorado no <code>.gitignore</code>.</p>
+        </section>
+
+        <section id="sec-19">
+          <h2>19. Regras de continuidade</h2>
+          <ul>
+            <li>comecar sempre pelos arquivos em <code>.codex/context/</code></li>
+            <li>nao assumir que <code>D:\opencode\motor-progress</code> existe na nova maquina</li>
+            <li>adaptar comandos ao path local</li>
+            <li>preservar as decisoes de UX e de contexto centralizado</li>
+          </ul>
+        </section>
+
+        <section id="sec-20">
+          <h2>20. Resumo operacional curto</h2>
+          <ul>
+            <li>abrir <code>web/index.html</code></li>
+            <li>configurar contexto em <code>web/context-selector.html</code></li>
+            <li>usar <code>sursumpasoedev</code></li>
+            <li>respeitar <code>pageSize &lt;= 500</code></li>
+            <li>parar PASOE antes de rotinas <code>_progres.exe</code> em bancos <code>-1</code></li>
+            <li>tratar <code>db/</code> como local</li>
+          </ul>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
