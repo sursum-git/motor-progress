@@ -1,4 +1,4 @@
-# Operacao OpenEdge, banco sports2000 e PASOE
+# Operacao OpenEdge, bancos locais e PASOE
 
 Este arquivo registra comandos e cuidados operacionais para o ambiente local.
 
@@ -16,10 +16,18 @@ OpenEdge:
 C:\Progress\OpenEdge\bin
 ```
 
-Banco:
+Banco base de validacao historica:
 
 ```text
 D:\opencode\motor-progress\db\sports2000
+```
+
+Outros bancos relevantes no ambiente atual:
+
+```text
+D:\opencode\motor-progress\db\ems2cad
+D:\opencode\motor-progress\db\ems2med
+D:\opencode\motor-progress\db\ems5
 ```
 
 PASOE:
@@ -66,14 +74,15 @@ Comando usado anteriormente:
 Configuracao conhecida em `openedge.properties`:
 
 ```text
-agentStartupParam=-T "${catalina.base}/temp" -db D:\opencode\motor-progress\db\sports2000 -1 -ld DICTDB
+agentStartupParam=-T "${catalina.base}/temp" -db D:\opencode\motor-progress\db\sports2000 -ld DICTDB -1 -db D:\opencode\motor-progress\db\ems2cad -ld ems2cad -1 -db D:\opencode\motor-progress\db\ems2med -ld ems2med -1 -db D:\opencode\motor-progress\db\ems5 -ld ems5 -1
 ```
 
 Observacao:
 
 - `-1` conecta single-user.
-- Enquanto o PASOE estiver segurando o banco com `-1`, compilacoes client conectando no mesmo banco podem falhar.
-- Para compilar localmente com `_progres.exe`, pare o PASOE antes.
+- Enquanto o PASOE estiver segurando esses bancos com `-1`, compilacoes e rotinas client conectando no mesmo banco podem falhar.
+- Para compilar ou inspecionar localmente com `_progres.exe`, pare o PASOE antes.
+- Nao misturar `proserve` nesses mesmos bancos enquanto o PASOE estiver configurado com `-1`.
 
 ## PROPATH esperado
 
@@ -183,6 +192,18 @@ Erro ao compilar com banco ocupado:
 - se o PASOE usa `-1`, parar PASOE antes de compilar;
 - se houver `_mprosrv` solto, encerrar via ferramenta administrativa adequada.
 
+Erro ao abrir banco em `-1` logo apos parar o PASOE:
+
+- confirmar que o `pasman stop` terminou antes de abrir `_progres.exe`;
+- nao rodar `stop` e `_progres.exe` em paralelo;
+- repetir a abertura depois do stop concluido.
+
+Erro ao carregar `.d` com `prodict/load_d.p`:
+
+- passar o `dump-name` sem a extensao `.d`;
+- o diretorio deve apontar para a pasta onde o arquivo esta;
+- se a rotina falhar com `_File record not on file. (138)` mesmo com `dump-name` correto e quantidade de colunas batendo, o problema nao e schema basico; investigar mecanismo de load, dicionario e encoding.
+
 Erro `NO_RESPONSE`:
 
 - revisar payload recebido;
@@ -198,4 +219,3 @@ PASOE usando -db D:\opencode\motor-progress\db\sports2000 -1 -ld DICTDB
 ```
 
 Tentativas anteriores de subir `proserve` manualmente em sessao sandbox ficaram instaveis. Para benchmark real shared/TCP, usar AdminServer/dbman ou servico persistente, nao processo solto em shell efemero.
-

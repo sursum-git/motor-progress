@@ -15,18 +15,23 @@ Construir um motor OOABL para consultas dinamicas em Progress/OpenEdge, exposto 
 - workers em modo `PASOE` e `CLIENT`;
 - resultado JSON em arquivo;
 - contexto de execucao com dados de agente, PID, host, banco e modo.
+- UI web Kendo para contexto, consultas, metadados e configuracao operacional.
 
 ## Decisoes tecnicas ja tomadas
 
 - `boConsDin.p` e `boMetaDados.p` nao fazem parte do fluxo novo.
 - Os `.p` antigos sao apenas referencia conceitual.
 - O fluxo novo usa classes OOABL.
-- O banco local de validacao e `sports2000`.
+- Os bancos locais mais relevantes hoje sao `sports2000`, `ems2cad`, `ems2med` e `ems5`.
 - O PASOE local de validacao e `sursumpasoedev`.
 - A API WEB principal fica em `/web/SursumDynamicQuery`.
 - O limite atual de `pageSize` validado pela API e `500`.
 - Para retornar 10.000 registros via curl, o exemplo sequencial faz 20 chamadas de 500 registros.
 - Para volumes maiores, particionamento por chave indexada e preferivel a paginacao profunda.
+- O contexto funcional da UI web foi centralizado em `web/context-manager.js` e persistido em `localStorage`.
+- O menu web central fica em `web/index.html` e `web/menu-pages.json`.
+- A pagina inicial funcional da UI web e `web/context-selector.html`.
+- As paginas de consulta devem expor somente selecao de empresa quando o menu central ja estiver mostrando cliente/ambiente/empresa no appbar.
 
 ## Estrutura principal criada
 
@@ -40,6 +45,7 @@ Construir um motor OOABL para consultas dinamicas em Progress/OpenEdge, exposto 
 - `docs/`: documentacao detalhada de arquitetura, API, fila, PASOE, benchmarks e troubleshooting.
 - `.codex/context/`: contexto operacional para agentes Codex.
 - `.codex/skills/sursum-openedge/`: skill local para operar este projeto.
+- `web/`: aplicacao web Kendo com menu central, configuracao de contexto, configuracao de clientes/ambientes/vinculos e paginas de consulta.
 
 ## Classes principais
 
@@ -72,6 +78,27 @@ GET  /jobs/{jobId}
 GET  /jobs/{jobId}/result
 GET  /benchmarks/customer-count
 ```
+
+## Estado atual da UI web
+
+Paginas principais:
+
+- `web/index.html`: shell principal com menu lateral TreeView, iframe de conteudo e appbar de contexto atual.
+- `web/context-selector.html`: seleciona cliente, ambiente e empresa padrao; grava no `localStorage` via `SursumContext`.
+- `web/client-config.html`: CRUD de clientes.
+- `web/endpoint-config.html`: CRUD de ambientes PASOE e empresas pertencentes a cada ambiente.
+- `web/link-config.html`: vinculo cliente <-> ambiente.
+- `web/query-builder.html`: designer visual de consultas; deve focar em empresa e metadados.
+- `web/query-wizard-3steps.html`: consulta por tabela em 3 etapas.
+- `web/table-browser.html`: navegador de metadados por banco/tabela.
+- `web/query-result.html`: execucao/visualizacao de resultado.
+
+Decisoes recentes relevantes:
+
+- O contexto atual fica visivel no appbar do menu central e nao deve ser repetido em todas as paginas internas.
+- O link `Alterar` do appbar aponta para `context-selector.html`.
+- A selecao de empresa continua local nas paginas de consulta; cliente/ambiente ficam centralizados.
+- O menu inclui icone por item para abrir pagina em nova aba.
 
 ## Jobs async validados anteriormente
 
@@ -216,10 +243,9 @@ https://github.com/sursum-git/motor-progress.git
 branch: master
 ```
 
-Commits conhecidos:
+Observacoes operacionais para retomada:
 
-```text
-30746a3 Initial dynamic query engine
-4b9c3c4 Add project documentation
-```
-
+- O repositório pode ser clonado em outro servidor e continuado com Codex, desde que o novo ambiente tenha OpenEdge/PASOE e paths locais ajustados.
+- O que viaja bem pelo Git: `.codex/context/`, `.codex/skills/`, fontes ABL, web, docs e scripts do repositorio.
+- O que nao viaja automaticamente: instalacao local do OpenEdge, instancia PASOE criada fora do Git, variaveis locais, permissao de temp/JNA e estado de `localStorage` do navegador.
+- O diretorio `db/` agora deve ser tratado como local e esta ignorado no `.gitignore`.
