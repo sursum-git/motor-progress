@@ -5,6 +5,7 @@
 *.lg
 
 # Local database files
+db/
 db/*.db
 db/*.d1
 db/*.d2
