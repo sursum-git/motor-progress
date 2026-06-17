@@ -165,7 +165,14 @@
         { field: "field", title: "Campo", width: 180 },
         { field: "viewAs", title: "View-as" },
         { field: "source", title: "Origem", width: 110 },
-        { field: "updatedAt", title: "Atualizado em", width: 190 },
+        {
+          field: "updatedAt",
+          title: "Atualizado em",
+          width: 190,
+          template: function (item) {
+            return escapeHtml(formatBrazilianDateTime(item && item.updatedAt));
+          }
+        },
         {
           title: "Acoes",
           width: 170,
@@ -1433,5 +1440,17 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  function formatBrazilianDateTime(value) {
+    const text = String(value == null ? "" : value).trim();
+    if (!text) return "";
+
+    const match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if (!match) return text;
+
+    const date = `${match[3]}/${match[2]}/${match[1]}`;
+    if (!match[4]) return date;
+    return `${date} ${match[4]}:${match[5]}:${match[6] || "00"}`;
   }
 })();

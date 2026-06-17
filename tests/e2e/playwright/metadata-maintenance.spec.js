@@ -57,6 +57,7 @@ test('metadata maintenance creates and runs all-table job and saves manual metad
   await page.locator('#saveViewAs').click();
   await expect(page.locator('#viewAsGrid')).toContainText('Name');
   await expect(page.locator('#viewAsGrid')).toContainText('manual');
+  await expect(page.locator('#viewAsGrid')).toContainText('12/06/2026 18:00:00');
 
   await page.locator('#metadataTabs li').filter({ hasText: 'Join manual' }).click();
   await page.locator('#addRelation').click();
