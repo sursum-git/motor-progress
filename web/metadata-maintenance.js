@@ -894,7 +894,16 @@
       if (!response || response.success === false) {
         throw new Error(`Resolver includes de view-as para ${database}.${table}. Detalhe: ${apiError(response)}`);
       }
-      return Array.isArray(response.data) ? response.data : rows;
+      const resolvedRows = Array.isArray(response.data) ? response.data : rows;
+      const resolverErrors = resolvedRows.filter(function (row) {
+        return row && row.resolverError;
+      }).map(function (row) {
+        return `${row.include || row.field || "include"}: ${row.resolverError}`;
+      });
+      if (resolverErrors.length) {
+        throw new Error(`Resolver includes de view-as para ${database}.${table}. Detalhe: ${resolverErrors.slice(0, 3).join("; ")}`);
+      }
+      return resolvedRows;
     }, function (xhr) {
       throw new Error(`Resolver includes de view-as para ${database}.${table}. Detalhe: ${ajaxErrorMessage(xhr)}`);
     });

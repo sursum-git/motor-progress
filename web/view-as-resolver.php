@@ -63,29 +63,25 @@ function resolveIncludesViaCompiler(array $includes, string $environmentId): arr
     file_put_contents($localPs, buildResolverScript($cfg, $remoteIn, $remoteOut));
 
     try {
-        runCommand([
-            'sshpass', '-p', $cfg['password'], 'scp',
+        runCommand(array_merge(scpCommandPrefix($cfg), [
             $localIn,
             $cfg['user'] . '@' . $cfg['host'] . ':' . $remoteIn,
-        ]);
-        runCommand([
-            'sshpass', '-p', $cfg['password'], 'scp',
+        ]), true, 'Enviar lista de includes por SSH');
+        runCommand(array_merge(scpCommandPrefix($cfg), [
             $localPs,
             $cfg['user'] . '@' . $cfg['host'] . ':' . $remotePs,
-        ]);
+        ]), true, 'Enviar script do resolvedor por SSH');
 
-        $compilerOutput = runCommand([
-            'sshpass', '-p', $cfg['password'], 'ssh',
+        $compilerOutput = runCommand(array_merge(sshCommandPrefix($cfg), [
             $cfg['user'] . '@' . $cfg['host'],
             'powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', $remotePs,
-        ]);
+        ]), true, 'Executar resolvedor de includes via SSH');
 
         try {
-            runCommand([
-                'sshpass', '-p', $cfg['password'], 'scp',
+            runCommand(array_merge(scpCommandPrefix($cfg), [
                 $cfg['user'] . '@' . $cfg['host'] . ':' . $remoteOut,
                 $localOut,
-            ]);
+            ]), true, 'Baixar saida do resolvedor por SSH');
         } catch (Throwable $error) {
             $detail = trim(convertText($compilerOutput));
             if ($detail === '') {
@@ -94,7 +90,17 @@ function resolveIncludesViaCompiler(array $includes, string $environmentId): arr
             throw new RuntimeException('Resolvedor de includes nao gerou saida. Detalhe: ' . $detail);
         }
 
-        return parseResolverOutput((string) file_get_contents($localOut));
+        $output = (string) file_get_contents($localOut);
+        $resolved = parseResolverOutput($output);
+        foreach ($includes as $include) {
+            if (!array_key_exists($include, $resolved)) {
+                $resolved[$include] = [
+                    'listExpression' => '',
+                    'error' => missingResolverOutputError($include, $output),
+                ];
+            }
+        }
+        return $resolved;
     } finally {
         @unlink($localIn);
         @unlink($localOut);
@@ -105,11 +111,10 @@ function resolveIncludesViaCompiler(array $includes, string $environmentId): arr
             psQuote($remoteOut),
             psQuote($remotePs)
         );
-        @runCommand([
-            'sshpass', '-p', $cfg['password'], 'ssh',
+        @runCommand(array_merge(sshCommandPrefix($cfg), [
             $cfg['user'] . '@' . $cfg['host'],
             'powershell', '-NoProfile', '-Command', $cleanup,
-        ], false);
+        ]), false, 'Limpar arquivos temporarios do resolvedor');
     }
 }
 
@@ -180,6 +185,9 @@ function parseResolverOutput(string $output): array
         if ($line === '') {
             continue;
         }
+        if (strpos($line, "\x01") === false) {
+            continue;
+        }
         $parts = explode("\x01", $line, 3);
         $include = trim((string) ($parts[0] ?? ''));
         if ($include === '') {
@@ -193,6 +201,27 @@ function parseResolverOutput(string $output): array
         ];
     }
     return $resolved;
+}
+
+function missingResolverOutputError(string $include, string $output): string
+{
+    $detail = compactDetail(convertText($output));
+    if ($detail === '') {
+        return 'Resolvedor nao retornou resultado para ' . $include . '.';
+    }
+    return 'Resolvedor nao retornou resultado para ' . $include . '. Saida: ' . $detail;
+}
+
+function compactDetail(string $value, int $limit = 1800): string
+{
+    $text = trim(str_replace(["\r\n", "\r"], "\n", $value));
+    if ($text === '') {
+        return '';
+    }
+    if (strlen($text) <= $limit) {
+        return $text;
+    }
+    return substr($text, 0, $limit) . '...';
 }
 
 function extractViewAsInclude(string $viewAs): string
@@ -262,7 +291,29 @@ function convertText(string $value): string
     return $converted === false ? $value : $converted;
 }
 
-function runCommand(array $command, bool $throw = true): string
+function sshCommandPrefix(array $cfg): array
+{
+    return [
+        'sshpass', '-p', $cfg['password'],
+        'ssh',
+        '-o', 'StrictHostKeyChecking=no',
+        '-o', 'UserKnownHostsFile=' . sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'sursum_viewas_known_hosts',
+        '-o', 'ConnectTimeout=15',
+    ];
+}
+
+function scpCommandPrefix(array $cfg): array
+{
+    return [
+        'sshpass', '-p', $cfg['password'],
+        'scp',
+        '-o', 'StrictHostKeyChecking=no',
+        '-o', 'UserKnownHostsFile=' . sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'sursum_viewas_known_hosts',
+        '-o', 'ConnectTimeout=15',
+    ];
+}
+
+function runCommand(array $command, bool $throw = true, string $label = 'Executar comando SSH'): string
 {
     $cmd = implode(' ', array_map('escapeshellarg', $command));
     $descriptor = [
@@ -279,7 +330,11 @@ function runCommand(array $command, bool $throw = true): string
     fclose($pipes[2]);
     $code = proc_close($process);
     if ($throw && $code !== 0) {
-        throw new RuntimeException(trim($stderr . "\n" . $stdout) ?: 'Falha ao executar comando SSH.');
+        $detail = trim(convertText($stderr . "\n" . $stdout));
+        if ($detail === '') {
+            $detail = 'sem saida em stdout/stderr';
+        }
+        throw new RuntimeException($label . ' falhou (codigo ' . $code . '): ' . $detail);
     }
     return $stdout;
 }
