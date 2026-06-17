@@ -725,7 +725,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
             joOut:Add("field", cField).
             joOut:Add("viewAs", cViewAs).
             joOut:Add("listExpression", cList).
-            joOut:Add("options", THIS-OBJECT:parseViewAsOptions(cList, cInclude <> "")).
+            joOut:Add("options", THIS-OBJECT:parseViewAsOptions(cList, THIS-OBJECT:isSingleViewAsList(cViewAs, cInclude))).
             joOut:Add("source", "PASOE").
             IF cInclude <> "" THEN DO:
                 joOut:Add("include", cInclude).
@@ -749,6 +749,19 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         IF NOT VALID-OBJECT(joEnvironment) THEN
             ASSIGN joEnvironment = NEW JsonObject().
         RETURN joEnvironment.
+    END METHOD.
+
+    METHOD PRIVATE LOGICAL isSingleViewAsList(INPUT pcViewAs AS CHARACTER, INPUT pcInclude AS CHARACTER):
+        DEFINE VARIABLE cViewAs AS CHARACTER NO-UNDO.
+
+        IF pcInclude <> "" THEN
+            RETURN TRUE.
+        ASSIGN cViewAs = LC(IF pcViewAs = ? THEN "" ELSE pcViewAs).
+        IF INDEX(cViewAs, "list-item-pairs") > 0 THEN
+            RETURN FALSE.
+        IF INDEX(cViewAs, "list-items") > 0 OR INDEX(cViewAs, "list-item") > 0 THEN
+            RETURN TRUE.
+        RETURN FALSE.
     END METHOD.
 
     METHOD PRIVATE CHARACTER extractViewAsInclude(INPUT pcViewAs AS CHARACTER):
