@@ -225,7 +225,11 @@ function normalizeDirectListExpression(string $viewAs): string
 
 function parseOptions(string $list, bool $singleItems = false): array
 {
-    $tokens = array_values(array_filter(array_map('cleanToken', str_getcsv($list)), static function (string $value): bool {
+    if (trim($list) === '') {
+        return [];
+    }
+
+    $tokens = array_values(array_filter(array_map('cleanToken', str_getcsv($list) ?: []), static function (string $value): bool {
         return $value !== '';
     }));
     $count = count($tokens);
@@ -244,9 +248,9 @@ function parseOptions(string $list, bool $singleItems = false): array
     return $options;
 }
 
-function cleanToken(string $value): string
+function cleanToken($value): string
 {
-    return trim(str_replace(['"', "'", '/'], '', $value));
+    return trim(str_replace(['"', "'", '/'], '', (string) ($value ?? '')));
 }
 
 function convertText(string $value): string
