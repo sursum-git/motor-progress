@@ -8,11 +8,22 @@
   width: 100%;
 }
 
+.metadata-maintenance #metadataTabs .k-tabstrip-content {
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
 .metadata-batch-grid {
   display: grid;
   grid-template-columns: minmax(360px, 420px) minmax(0, 1fr);
   gap: 18px;
   align-items: start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.metadata-batch-grid > * {
+  min-width: 0;
 }
 
 .metadata-batch-options {
