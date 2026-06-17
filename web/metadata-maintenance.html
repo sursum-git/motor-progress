@@ -75,7 +75,9 @@
           <div>
             <div class="metadata-grid-toolbar action-row tight">
               <button id="addViewAs">Incluir view-as</button>
+              <button id="importViewAsCsv">Importar CSV</button>
               <button id="loadViewAs">Recarregar</button>
+              <input id="viewAsCsvFile" type="file" accept=".csv,text/csv" style="display:none">
             </div>
             <div id="viewAsGrid"></div>
           </div>
@@ -154,6 +156,6 @@
   <script src="ui-ready.js?v=20260616-grid-loading"></script>
   <script src="auth-guard.js"></script>
   <script src="context-manager.js?v=20260617-context-ready"></script>
-  <script src="metadata-maintenance.js?v=20260617-reprocess-all"></script>
+  <script src="metadata-maintenance.js?v=20260617-viewas-csv"></script>
 </body>
 </html>

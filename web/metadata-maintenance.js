@@ -105,7 +105,7 @@
       ],
       value: "skip"
     });
-    $("#createJob,#runJob,#pauseJob,#cancelJob,#reprocessAllJob,#reloadTables,#openTableBrowser,#addViewAs,#saveViewAs,#cancelViewAs,#loadViewAs,#addRelation,#saveRelation,#cancelRelation,#loadRelations").kendoButton();
+    $("#createJob,#runJob,#pauseJob,#cancelJob,#reprocessAllJob,#reloadTables,#openTableBrowser,#addViewAs,#importViewAsCsv,#saveViewAs,#cancelViewAs,#loadViewAs,#addRelation,#saveRelation,#cancelRelation,#loadRelations").kendoButton();
     $("#jobGrid").kendoGrid({
       dataSource: [],
       height: 390,
@@ -248,6 +248,10 @@
       reprocessJobItem($(this).attr("data-table") || "");
     });
     $("#addViewAs").on("click", openViewAsCreate);
+    $("#importViewAsCsv").on("click", function () {
+      $("#viewAsCsvFile").val("").trigger("click");
+    });
+    $("#viewAsCsvFile").on("change", importViewAsCsvFile);
     $("#saveViewAs").on("click", saveManualViewAs);
     $("#cancelViewAs").on("click", function () {
       if (viewAsWindow) viewAsWindow.close();
@@ -882,6 +886,40 @@
     if (!rows.length) {
       return $.Deferred().resolve([]).promise();
     }
+    return resolveViewAsRowsViaPasoe(table, database, rows)
+      .then(null, function (error) {
+        if (error && error.noFallback) {
+          return $.Deferred().reject(error).promise();
+        }
+        return resolveViewAsRowsViaPhp(table, database, rows);
+      });
+  }
+
+  function resolveViewAsRowsViaPasoe(table, database, rows) {
+    return $.ajax({
+      url: pasoeUrl("/metadata/view-as/resolve"),
+      method: "POST",
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      data: JSON.stringify(Object.assign(scope(table, database), {
+        environment: viewAsResolverEnvironment(),
+        rows
+      }))
+    }).then(function (response) {
+      if (!response || response.success === false) {
+        const code = response && response.error && response.error.code ? response.error.code : "";
+        if (code === "NOT_FOUND") {
+          return $.Deferred().reject(new Error(apiError(response))).promise();
+        }
+        return $.Deferred().reject(noFallbackError(`Resolver includes de view-as no PASOE para ${database}.${table}. Detalhe: ${apiError(response)}`)).promise();
+      }
+      return normalizeResolvedViewAsRows(database, table, Array.isArray(response.data) ? response.data : rows, "PASOE");
+    }, function (xhr) {
+      return $.Deferred().reject(new Error(ajaxErrorMessage(xhr))).promise();
+    });
+  }
+
+  function resolveViewAsRowsViaPhp(table, database, rows) {
     return $.ajax({
       url: "view-as-resolver.php",
       method: "POST",
@@ -894,19 +932,43 @@
       if (!response || response.success === false) {
         throw new Error(`Resolver includes de view-as para ${database}.${table}. Detalhe: ${apiError(response)}`);
       }
-      const resolvedRows = Array.isArray(response.data) ? response.data : rows;
-      const resolverErrors = resolvedRows.filter(function (row) {
-        return row && row.resolverError;
-      }).map(function (row) {
-        return `${row.include || row.field || "include"}: ${row.resolverError}`;
-      });
-      if (resolverErrors.length) {
-        throw new Error(`Resolver includes de view-as para ${database}.${table}. Detalhe: ${resolverErrors.slice(0, 3).join("; ")}`);
-      }
-      return resolvedRows;
+      return normalizeResolvedViewAsRows(database, table, Array.isArray(response.data) ? response.data : rows, "PHP");
     }, function (xhr) {
       throw new Error(`Resolver includes de view-as para ${database}.${table}. Detalhe: ${ajaxErrorMessage(xhr)}`);
     });
+  }
+
+  function normalizeResolvedViewAsRows(database, table, rows, source) {
+    const resolvedRows = rows.map(function (row) {
+      return Object.assign({ source }, row || {});
+    });
+    const resolverErrors = resolvedRows.filter(function (row) {
+      return row && row.resolverError;
+    }).map(function (row) {
+      return `${row.include || row.field || "include"}: ${row.resolverError}`;
+    });
+    if (resolverErrors.length) {
+      throw noFallbackError(`Resolver includes de view-as para ${database}.${table}. Detalhe: ${resolverErrors.slice(0, 3).join("; ")}`);
+    }
+    return resolvedRows;
+  }
+
+  function noFallbackError(message) {
+    const error = new Error(message);
+    error.noFallback = true;
+    return error;
+  }
+
+  function viewAsResolverEnvironment() {
+    const environment = currentEnvironment() || {};
+    return {
+      id: environment.id || "",
+      servidor: environment.servidor || "",
+      usuario: environment.usuario || "",
+      senha: environment.senha || "",
+      arquivoPf: environment.arquivoPf || environment.arquivo_pf || "",
+      arquivoAlias: environment.arquivoAlias || environment.arquivo_alias || ""
+    };
   }
 
   function openViewAsCreate() {
@@ -1033,6 +1095,48 @@
       .fail(function (xhr) {
         setStatus("Falha ao carregar view-as: " + ajaxErrorMessage(xhr), "error");
       });
+  }
+
+  function importViewAsCsvFile() {
+    const file = this.files && this.files.length ? this.files[0] : null;
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function () {
+      importViewAsCsv(String(reader.result || ""));
+    };
+    reader.onerror = function () {
+      setStatus("Falha ao ler arquivo CSV de view-as.", "error");
+    };
+    reader.readAsText(file, "UTF-8");
+  }
+
+  function importViewAsCsv(csvText) {
+    if (!String(csvText || "").trim()) {
+      setStatus("Arquivo CSV de view-as vazio.", "error");
+      return;
+    }
+    withGridLoading("#viewAsGrid", $.ajax({
+      url: "metadata-store.php",
+      method: "POST",
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      data: JSON.stringify(Object.assign(scope(tableValue(), selectedDatabase()), {
+        resource: "view-as",
+        action: "import-csv",
+        csvText
+      }))
+    })).done(function (response) {
+      if (!response || response.success === false) {
+        setStatus("Falha ao importar CSV de view-as: " + apiError(response), "error");
+        return;
+      }
+      const rows = Array.isArray(response.data) ? response.data : [];
+      $("#viewAsGrid").data("kendoGrid").dataSource.data(rows);
+      setStatus(`CSV de view-as importado: ${rows.length} registro(s).`, "ok");
+    }).fail(function (xhr) {
+      setStatus("Falha ao importar CSV de view-as: " + ajaxErrorMessage(xhr), "error");
+    });
   }
 
   function openRelationCreate() {

@@ -68,6 +68,8 @@ function initializeMetadataSchema(PDO $pdo): void
         )'
     );
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_field_view_as_lookup ON field_view_as(environment_id, company_id, database_name, table_name)');
+    $pdo->exec('CREATE INDEX IF NOT EXISTS idx_field_view_as_table_field ON field_view_as(table_name, field_name)');
+    canonicalizeViewAsRows($pdo);
 
     $pdo->exec(
         'CREATE TABLE IF NOT EXISTS metadata_sync_jobs (
@@ -124,8 +126,13 @@ function handleViewAsPost(PDO $pdo, array $payload): array
 {
     $action = text($payload['action'] ?? 'save');
     $scope = requestScope($payload);
-    if ($scope['database'] === '' || $scope['table'] === '') {
-        throw new InvalidArgumentException('Banco e tabela sao obrigatorios.');
+    if ($action === 'import-csv') {
+        importViewAsCsv($pdo, $payload);
+        return ['success' => true, 'data' => loadViewAsRows($pdo, $scope)];
+    }
+
+    if ($scope['table'] === '') {
+        throw new InvalidArgumentException('Tabela obrigatoria.');
     }
 
     $rows = [];
@@ -220,15 +227,8 @@ function requestScope(?array $payload = null): array
 
 function loadViewAsRows(PDO $pdo, array $scope): array
 {
-    if ($scope['database'] === '') {
-        return [];
-    }
-    $sql = 'SELECT * FROM field_view_as WHERE environment_id = :environment_id AND company_id = :company_id AND database_name = :database_name';
-    $params = [
-        ':environment_id' => $scope['environmentId'],
-        ':company_id' => $scope['companyId'],
-        ':database_name' => $scope['database'],
-    ];
+    $sql = 'SELECT * FROM field_view_as WHERE environment_id = "" AND company_id = "" AND database_name = ""';
+    $params = [];
     if ($scope['table'] !== '') {
         $sql .= ' AND lower(table_name) = lower(:table_name)';
         $params[':table_name'] = $scope['table'];
@@ -267,9 +267,9 @@ function saveViewAsRows(PDO $pdo, array $scope, array $rows, string $defaultSour
         }
         $stmt->execute([
             ':id' => viewAsId($scope, $field),
-            ':environment_id' => $scope['environmentId'],
-            ':company_id' => $scope['companyId'],
-            ':database_name' => $scope['database'],
+            ':environment_id' => '',
+            ':company_id' => '',
+            ':database_name' => '',
             ':table_name' => $scope['table'],
             ':field_name' => $field,
             ':view_as' => $viewAs,
@@ -287,17 +287,152 @@ function deleteViewAsRow(PDO $pdo, array $scope, string $field): void
     }
     $stmt = $pdo->prepare(
         'DELETE FROM field_view_as
-         WHERE environment_id = :environment_id AND company_id = :company_id
-           AND database_name = :database_name AND lower(table_name) = lower(:table_name)
+         WHERE lower(table_name) = lower(:table_name)
            AND lower(field_name) = lower(:field_name)'
     );
     $stmt->execute([
-        ':environment_id' => $scope['environmentId'],
-        ':company_id' => $scope['companyId'],
-        ':database_name' => $scope['database'],
         ':table_name' => $scope['table'],
         ':field_name' => $field,
     ]);
+}
+
+function canonicalizeViewAsRows(PDO $pdo): void
+{
+    $count = (int) $pdo->query('SELECT COUNT(*) FROM field_view_as WHERE environment_id <> "" OR company_id <> "" OR database_name <> ""')->fetchColumn();
+    if ($count === 0) {
+        return;
+    }
+
+    $rows = $pdo->query(
+        'SELECT * FROM field_view_as
+         ORDER BY lower(table_name), lower(field_name), updated_at'
+    )->fetchAll(PDO::FETCH_ASSOC);
+
+    $latest = [];
+    foreach ($rows as $row) {
+        $table = text($row['table_name'] ?? '');
+        $field = text($row['field_name'] ?? '');
+        if ($table === '' || $field === '') {
+            continue;
+        }
+        $latest[strtolower($table) . '|' . strtolower($field)] = $row;
+    }
+
+    $pdo->beginTransaction();
+    try {
+        $pdo->exec('DELETE FROM field_view_as');
+        $stmt = $pdo->prepare(
+            'INSERT OR REPLACE INTO field_view_as
+             (id, environment_id, company_id, database_name, table_name, field_name, view_as, source, raw_json, updated_at)
+             VALUES (:id, "", "", "", :table_name, :field_name, :view_as, :source, :raw_json, :updated_at)'
+        );
+        foreach ($latest as $row) {
+            $table = text($row['table_name'] ?? '');
+            $field = text($row['field_name'] ?? '');
+            $stmt->execute([
+                ':id' => viewAsId(['table' => $table], $field),
+                ':table_name' => $table,
+                ':field_name' => $field,
+                ':view_as' => text($row['view_as'] ?? ''),
+                ':source' => text($row['source'] ?? 'manual') ?: 'manual',
+                ':raw_json' => text($row['raw_json'] ?? '{}') ?: '{}',
+                ':updated_at' => text($row['updated_at'] ?? '') ?: date(DATE_ATOM),
+            ]);
+        }
+        $pdo->commit();
+    } catch (Throwable $error) {
+        $pdo->rollBack();
+        throw $error;
+    }
+}
+
+function importViewAsCsv(PDO $pdo, array $payload): void
+{
+    $csv = (string) ($payload['csvText'] ?? $payload['csv'] ?? '');
+    if (trim($csv) === '') {
+        throw new InvalidArgumentException('Arquivo CSV vazio.');
+    }
+
+    $rows = parseViewAsCsv($csv);
+    if (!$rows) {
+        throw new InvalidArgumentException('Nenhum view-as valido encontrado no CSV.');
+    }
+
+    $stmt = $pdo->prepare(
+        'INSERT OR REPLACE INTO field_view_as
+         (id, environment_id, company_id, database_name, table_name, field_name, view_as, source, raw_json, updated_at)
+         VALUES (:id, "", "", "", :table_name, :field_name, :view_as, "CSV", :raw_json, :updated_at)'
+    );
+    foreach ($rows as $row) {
+        $stmt->execute([
+            ':id' => viewAsId(['table' => $row['table']], $row['field']),
+            ':table_name' => $row['table'],
+            ':field_name' => $row['field'],
+            ':view_as' => $row['viewAs'],
+            ':raw_json' => json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            ':updated_at' => date(DATE_ATOM),
+        ]);
+    }
+}
+
+function parseViewAsCsv(string $csv): array
+{
+    $csv = preg_replace('/^\xEF\xBB\xBF/', '', $csv) ?? $csv;
+    $lines = preg_split('/\R/', $csv) ?: [];
+    $lines = array_values(array_filter($lines, static function (string $line): bool {
+        return trim($line) !== '';
+    }));
+    if (!$lines) {
+        return [];
+    }
+
+    $delimiter = csvDelimiter($lines[0]);
+    $header = array_map('normalizeCsvHeader', str_getcsv(array_shift($lines), $delimiter) ?: []);
+    $tableIndex = findCsvColumn($header, ['tabela', 'table']);
+    $fieldIndex = findCsvColumn($header, ['campo', 'field', 'banco']);
+    $viewAsIndex = findCsvColumn($header, ['lista_de_opcoes', 'lista_opcoes', 'lista de opcoes', 'lista de opções', 'opcoes', 'opções', 'view_as', 'viewas', 'view-as']);
+    if ($tableIndex < 0 || $fieldIndex < 0 || $viewAsIndex < 0) {
+        throw new InvalidArgumentException('CSV deve conter as colunas tabela, campo e lista de opcoes.');
+    }
+
+    $rows = [];
+    foreach ($lines as $line) {
+        $cols = str_getcsv($line, $delimiter) ?: [];
+        $table = text($cols[$tableIndex] ?? '');
+        $field = text($cols[$fieldIndex] ?? '');
+        $viewAs = text($cols[$viewAsIndex] ?? '');
+        if ($table === '' || $field === '' || $viewAs === '') {
+            continue;
+        }
+        $rows[] = ['table' => $table, 'field' => $field, 'viewAs' => $viewAs];
+    }
+    return $rows;
+}
+
+function csvDelimiter(string $headerLine): string
+{
+    return substr_count($headerLine, ';') > substr_count($headerLine, ',') ? ';' : ',';
+}
+
+function normalizeCsvHeader(string $value): string
+{
+    $value = strtolower(trim($value));
+    $converted = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $value);
+    if ($converted !== false) {
+        $value = $converted;
+    }
+    $value = str_replace(['-', '/', '.'], '_', $value);
+    return preg_replace('/\s+/', ' ', $value) ?? $value;
+}
+
+function findCsvColumn(array $header, array $names): int
+{
+    foreach ($header as $index => $name) {
+        if (in_array($name, $names, true)) {
+            return (int) $index;
+        }
+    }
+    return -1;
 }
 
 function updateJobItem(PDO $pdo, array $payload): void
@@ -491,9 +626,6 @@ function loadJob(PDO $pdo, string $id): ?array
 function viewAsId(array $scope, string $field): string
 {
     return sha1(implode('|', [
-        $scope['environmentId'],
-        $scope['companyId'],
-        $scope['database'],
         strtolower($scope['table']),
         strtolower($field),
     ]));

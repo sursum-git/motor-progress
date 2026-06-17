@@ -178,6 +178,14 @@ async function handleApi(req, res, pathname) {
       return sendJson(res, 200, { success: true, data: job || null });
     }
     if (body.resource === 'view-as') {
+      if (body.action === 'import-csv') {
+        const imported = parseViewAsCsv(body.csvText || '');
+        for (const row of imported) {
+          viewAsRows = viewAsRows.filter(item => !(item.table.toLowerCase() === row.table.toLowerCase() && item.field.toLowerCase() === row.field.toLowerCase()));
+          viewAsRows.push(Object.assign({ source: 'CSV', updatedAt: '2026-06-12T18:00:00-03:00' }, row));
+        }
+        return sendJson(res, 200, { success: true, data: viewAsRows });
+      }
       const rows = Array.isArray(body.rows) ? body.rows : [{ field: body.field, viewAs: body.viewAs, source: body.source || 'manual' }];
       for (const row of rows) {
         viewAsRows = viewAsRows.filter(item => !(item.table === body.table && item.field === (row.field || row.name)));
@@ -196,6 +204,11 @@ async function handleApi(req, res, pathname) {
     let body;
     try { body = await readBody(req); } catch (err) { return sendJson(res, 200, error('INVALID_JSON', 'JSON invalido', err.message)); }
     return sendJson(res, 200, { success: true, data: Array.isArray(body.rows) ? body.rows : [], resolvedIncludes: {} });
+  }
+  if (pathname.endsWith('/metadata/view-as/resolve') && req.method === 'POST') {
+    let body;
+    try { body = await readBody(req); } catch (err) { return sendJson(res, 200, error('INVALID_JSON', 'JSON invalido', err.message)); }
+    return sendJson(res, 200, { success: true, data: Array.isArray(body.rows) ? body.rows.map(row => Object.assign({ source: 'PASOE' }, row)) : [] });
   }
   if (pathname === '/metadata-pasoe.php') {
     const targetPath = url.searchParams.get('path') || '';
@@ -267,6 +280,45 @@ async function handleApi(req, res, pathname) {
   }
 
   return serveStatic(req, res, pathname);
+}
+
+function parseViewAsCsv(csvText) {
+  const lines = String(csvText || '').split(/\r?\n/).filter(line => line.trim());
+  if (lines.length < 2) return [];
+  const delimiter = (lines[0].match(/;/g) || []).length > (lines[0].match(/,/g) || []).length ? ';' : ',';
+  const header = parseCsvLine(lines.shift(), delimiter).map(name => name.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+  const tableIndex = header.findIndex(name => name === 'tabela' || name === 'table');
+  const fieldIndex = header.findIndex(name => name === 'campo' || name === 'field' || name === 'banco');
+  const listIndex = header.findIndex(name => ['lista de opcoes', 'lista_opcoes', 'view-as', 'view_as', 'viewas'].includes(name));
+  return lines.map(line => parseCsvLine(line, delimiter))
+    .map(cols => ({
+      table: cols[tableIndex] || '',
+      field: cols[fieldIndex] || '',
+      viewAs: cols[listIndex] || ''
+    }))
+    .filter(row => row.table && row.field && row.viewAs);
+}
+
+function parseCsvLine(line, delimiter) {
+  const result = [];
+  let current = '';
+  let quoted = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    if (char === '"' && line[i + 1] === '"') {
+      current += '"';
+      i += 1;
+    } else if (char === '"') {
+      quoted = !quoted;
+    } else if (char === delimiter && !quoted) {
+      result.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current);
+  return result.map(value => value.trim());
 }
 
 const server = http.createServer((req, res) => {

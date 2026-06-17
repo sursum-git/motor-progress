@@ -59,6 +59,15 @@ test('metadata maintenance creates and runs all-table job and saves manual metad
   await expect(page.locator('#viewAsGrid')).toContainText('manual');
   await expect(page.locator('#viewAsGrid')).toContainText('12/06/2026 18:00:00');
 
+  await page.locator('#viewAsCsvFile').setInputFiles({
+    name: 'view-as.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from('tabela,campo,lista de opcoes\nOrder,Status,"Aberto,A,Fechado,F"\n')
+  });
+  await expect(page.locator('#statusBox')).toContainText('CSV de view-as importado');
+  await expect(page.locator('#viewAsGrid')).toContainText('Order');
+  await expect(page.locator('#viewAsGrid')).toContainText('CSV');
+
   await page.locator('#metadataTabs li').filter({ hasText: 'Join manual' }).click();
   await page.locator('#addRelation').click();
   await expect(page.locator('#relationWindow')).toBeVisible();
