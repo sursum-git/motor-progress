@@ -886,13 +886,7 @@
     if (!rows.length) {
       return $.Deferred().resolve([]).promise();
     }
-    return resolveViewAsRowsViaPasoe(table, database, rows)
-      .then(null, function (error) {
-        if (error && error.noFallback) {
-          return $.Deferred().reject(error).promise();
-        }
-        return resolveViewAsRowsViaPhp(table, database, rows);
-      });
+    return resolveViewAsRowsViaPasoe(table, database, rows);
   }
 
   function resolveViewAsRowsViaPasoe(table, database, rows) {
@@ -908,33 +902,17 @@
     }).then(function (response) {
       if (!response || response.success === false) {
         const code = response && response.error && response.error.code ? response.error.code : "";
+        const hint = code === "NOT_FOUND"
+          ? " Reinicie o PASOE para carregar o endpoint novo ou use a importacao CSV."
+          : "";
         if (code === "NOT_FOUND") {
-          return $.Deferred().reject(new Error(apiError(response))).promise();
+          return $.Deferred().reject(noFallbackError(`Resolver includes de view-as no PASOE para ${database}.${table}. Detalhe: ${apiError(response)}.${hint}`)).promise();
         }
         return $.Deferred().reject(noFallbackError(`Resolver includes de view-as no PASOE para ${database}.${table}. Detalhe: ${apiError(response)}`)).promise();
       }
       return normalizeResolvedViewAsRows(database, table, Array.isArray(response.data) ? response.data : rows, "PASOE");
     }, function (xhr) {
-      return $.Deferred().reject(new Error(ajaxErrorMessage(xhr))).promise();
-    });
-  }
-
-  function resolveViewAsRowsViaPhp(table, database, rows) {
-    return $.ajax({
-      url: "view-as-resolver.php",
-      method: "POST",
-      contentType: "application/json; charset=utf-8",
-      dataType: "json",
-      data: JSON.stringify(Object.assign(scope(table, database), {
-        rows
-      }))
-    }).then(function (response) {
-      if (!response || response.success === false) {
-        throw new Error(`Resolver includes de view-as para ${database}.${table}. Detalhe: ${apiError(response)}`);
-      }
-      return normalizeResolvedViewAsRows(database, table, Array.isArray(response.data) ? response.data : rows, "PHP");
-    }, function (xhr) {
-      throw new Error(`Resolver includes de view-as para ${database}.${table}. Detalhe: ${ajaxErrorMessage(xhr)}`);
+      return $.Deferred().reject(noFallbackError(`Resolver includes de view-as no PASOE para ${database}.${table}. Detalhe: ${ajaxErrorMessage(xhr)}. Verifique o PASOE ou use a importacao CSV.`)).promise();
     });
   }
 
