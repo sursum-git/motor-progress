@@ -105,7 +105,7 @@
       ],
       value: "skip"
     });
-    $("#createJob,#runJob,#pauseJob,#cancelJob,#reloadTables,#openTableBrowser,#addViewAs,#saveViewAs,#cancelViewAs,#loadViewAs,#addRelation,#saveRelation,#cancelRelation,#loadRelations").kendoButton();
+    $("#createJob,#runJob,#pauseJob,#cancelJob,#reprocessAllJob,#reloadTables,#openTableBrowser,#addViewAs,#saveViewAs,#cancelViewAs,#loadViewAs,#addRelation,#saveRelation,#cancelRelation,#loadRelations").kendoButton();
     $("#jobGrid").kendoGrid({
       dataSource: [],
       height: 390,
@@ -203,6 +203,14 @@
     if (actionRow.length && !$("#cancelJob").length) {
       actionRow.prepend('<button id="cancelJob">Cancelar pendentes</button>');
     }
+    if (actionRow.length && !$("#reprocessAllJob").length) {
+      const cancelButton = $("#cancelJob");
+      if (cancelButton.length) {
+        cancelButton.after('<button id="reprocessAllJob">Reprocessar tudo</button>');
+      } else {
+        actionRow.prepend('<button id="reprocessAllJob">Reprocessar tudo</button>');
+      }
+    }
     $(".job-control-row").remove();
   }
 
@@ -224,6 +232,7 @@
     $("#runJob").on("click", function () { runJob(); });
     $("#pauseJob").on("click", pauseJob);
     $("#cancelJob").on("click", cancelPendingJobItems);
+    $("#reprocessAllJob").on("click", reprocessAllJobErrors);
     $("#showPendingOnly,#showErrorOnly").on("change", renderJob);
     $("#jobGrid").on("click", ".cancel-job-item", function () {
       cancelJobItem($(this).attr("data-table") || "");
@@ -540,6 +549,47 @@
       .catch(function (error) {
         setStatus("Falha ao reenfileirar item: " + normalizeErrorMessage(error), "error");
       });
+  }
+
+  function reprocessAllJobErrors() {
+    if (!state.currentJob) {
+      setStatus("Crie ou carregue uma fila antes de reprocessar.", "error");
+      return;
+    }
+    const errorCount = (state.currentJob.items || []).filter(function (item) {
+      return item && item.status === "error";
+    }).length;
+    if (!errorCount) {
+      setStatus("Nao ha itens com erro para reprocessar.", "");
+      return;
+    }
+
+    withGridLoading("#jobGrid", $.ajax({
+      url: "metadata-store.php",
+      method: "POST",
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      data: JSON.stringify({
+        resource: "job",
+        action: "reprocess-errors",
+        jobId: state.currentJob.id
+      })
+    })).done(function (response) {
+      if (!response || response.success === false) {
+        setStatus("Falha ao reprocessar itens: " + apiError(response), "error");
+        return;
+      }
+      state.currentJob = response.data;
+      renderJob();
+      setStatus(`${errorCount} item(ns) reenfileirado(s) para reprocessamento.`, "ok");
+      if (state.running) {
+        scheduleJob();
+      } else {
+        runJob();
+      }
+    }).fail(function (xhr) {
+      setStatus("Falha ao reprocessar itens: " + ajaxErrorMessage(xhr), "error");
+    });
   }
 
   function processNext() {

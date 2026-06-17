@@ -49,6 +49,8 @@ test('metadata maintenance creates and runs all-table job and saves manual metad
   await expect(page.locator('#jobSummary')).toContainText('Processadas: 2/2');
 
   await page.locator('#metadataTabs li').filter({ hasText: 'View-as manual' }).click();
+  await page.locator('#addViewAs').click();
+  await expect(page.locator('#viewAsWindow')).toBeVisible();
   await page.locator('#viewAsTable').fill('Customer');
   await page.locator('#viewAsField').fill('Name');
   await page.locator('#viewAsValue').fill('view-as editor size 40 by 2');
@@ -57,6 +59,8 @@ test('metadata maintenance creates and runs all-table job and saves manual metad
   await expect(page.locator('#viewAsGrid')).toContainText('manual');
 
   await page.locator('#metadataTabs li').filter({ hasText: 'Join manual' }).click();
+  await page.locator('#addRelation').click();
+  await expect(page.locator('#relationWindow')).toBeVisible();
   await page.locator('#leftTable').fill('Customer');
   await page.locator('#leftField').fill('CustNum');
   await page.locator('#rightTable').fill('Order');
@@ -64,4 +68,36 @@ test('metadata maintenance creates and runs all-table job and saves manual metad
   await page.locator('#saveRelation').click();
   await expect(page.locator('#relationsGrid')).toContainText('Order');
   await expect(page.locator('#relationsGrid')).toContainText('manual');
+});
+
+test('metadata maintenance reprocesses all error job items', async ({ page, request }) => {
+  await page.goto('/metadata-maintenance.html');
+  await expect(page.locator('#reprocessAllJob')).toBeVisible();
+
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+  });
+  await page.locator('#createJob').click();
+  await expect(page.locator('#jobGrid')).toContainText('Customer');
+
+  await request.post('/metadata-store.php', {
+    data: {
+      resource: 'job',
+      action: 'item',
+      jobId: 'job-1',
+      table: 'Customer',
+      status: 'error',
+      message: 'Falha simulada',
+      relationCount: 0,
+      viewAsCount: 0
+    }
+  });
+
+  await page.reload();
+  await expect(page.locator('#jobGrid')).toContainText('Falha simulada');
+  await page.locator('#reprocessAllJob').click();
+  await expect(page.locator('#statusBox')).toContainText('Fila concluida');
+  await expect(page.locator('#jobSummary')).toContainText('Erros: 0');
 });

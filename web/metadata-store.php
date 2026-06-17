@@ -194,6 +194,11 @@ function handleJobPost(PDO $pdo, array $payload): array
         return ['success' => true, 'data' => loadJob($pdo, text($payload['jobId'] ?? ''))];
     }
 
+    if ($action === 'reprocess-errors') {
+        reprocessJobErrors($pdo, $payload);
+        return ['success' => true, 'data' => loadJob($pdo, text($payload['jobId'] ?? ''))];
+    }
+
     if ($action === 'finish') {
         finishJob($pdo, text($payload['jobId'] ?? ''));
         return ['success' => true, 'data' => loadJob($pdo, text($payload['jobId'] ?? ''))];
@@ -352,6 +357,31 @@ function cancelJobItems(PDO $pdo, array $payload): void
             ':job_id' => $jobId,
         ]);
     }
+
+    refreshJobCounters($pdo, $jobId);
+}
+
+function reprocessJobErrors(PDO $pdo, array $payload): void
+{
+    $jobId = text($payload['jobId'] ?? '');
+    if ($jobId === '') {
+        throw new InvalidArgumentException('Job obrigatorio.');
+    }
+
+    $stmt = $pdo->prepare(
+        'UPDATE metadata_sync_items
+         SET status = "pending",
+             message = :message,
+             relation_count = 0,
+             view_as_count = 0,
+             updated_at = :updated_at
+         WHERE job_id = :job_id AND status = "error"'
+    );
+    $stmt->execute([
+        ':message' => 'Aguardando reprocessamento',
+        ':updated_at' => date(DATE_ATOM),
+        ':job_id' => $jobId,
+    ]);
 
     refreshJobCounters($pdo, $jobId);
 }

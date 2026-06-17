@@ -158,6 +158,20 @@ async function handleApi(req, res, pathname) {
       }
       return sendJson(res, 200, { success: true, data: job || null });
     }
+    if (body.resource === 'job' && body.action === 'reprocess-errors') {
+      const job = metadataJobs.get(body.jobId);
+      if (job) {
+        for (const item of job.items) {
+          if (item.status === 'error') {
+            Object.assign(item, { status: 'pending', message: 'Aguardando reprocessamento', relationCount: 0, viewAsCount: 0 });
+          }
+        }
+        job.processedTables = job.items.filter(row => row.status === 'done' || row.status === 'error').length;
+        job.failedTables = job.items.filter(row => row.status === 'error').length;
+        job.status = job.items.some(row => row.status === 'pending') ? 'pending' : 'done';
+      }
+      return sendJson(res, 200, { success: true, data: job || null });
+    }
     if (body.resource === 'job' && body.action === 'finish') {
       const job = metadataJobs.get(body.jobId);
       if (job) job.status = job.failedTables ? 'done_with_errors' : 'done';
@@ -177,6 +191,11 @@ async function handleApi(req, res, pathname) {
       }
       return sendJson(res, 200, { success: true, data: viewAsRows });
     }
+  }
+  if (pathname === '/view-as-resolver.php' && req.method === 'POST') {
+    let body;
+    try { body = await readBody(req); } catch (err) { return sendJson(res, 200, error('INVALID_JSON', 'JSON invalido', err.message)); }
+    return sendJson(res, 200, { success: true, data: Array.isArray(body.rows) ? body.rows : [], resolvedIncludes: {} });
   }
   if (pathname === '/metadata-pasoe.php') {
     const targetPath = url.searchParams.get('path') || '';
