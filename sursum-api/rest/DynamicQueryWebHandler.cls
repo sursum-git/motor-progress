@@ -908,18 +908,41 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
             RETURN THIS-OBJECT:normalizeViewAsList(cReturn).
         END.
 
-        RUN esp/include_dinamica.i pcInclude NO-ERROR.
+        ASSIGN cReturn = THIS-OBJECT:resolveViewAsIncludeCompiled(pcInclude, OUTPUT pcError).
+        IF pcError <> "" THEN
+            RETURN "".
+
+        RETURN THIS-OBJECT:normalizeViewAsList(cReturn).
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER resolveViewAsIncludeCompiled(INPUT pcInclude AS CHARACTER, OUTPUT pcError AS CHARACTER):
+        DEFINE VARIABLE cProgram AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cReturn AS CHARACTER NO-UNDO.
+
+        ASSIGN pcError = ""
+               cProgram = SEARCH("ViewAsIncludeResolver.r").
+        IF cProgram = ? THEN
+            ASSIGN cProgram = SEARCH("sursum/ViewAsIncludeResolver.r").
+        IF cProgram = ? THEN DO:
+            ASSIGN pcError = "Resolvedor compilado ViewAsIncludeResolver.r nao encontrado. Configure SSH no ambiente ou use a importacao CSV.".
+            RETURN "".
+        END.
+
+        RUN VALUE(cProgram) pcInclude NO-ERROR.
         IF ERROR-STATUS:ERROR THEN DO:
             IF ERROR-STATUS:NUM-MESSAGES > 0 THEN
-                ASSIGN pcError = ERROR-STATUS:GET-MESSAGE(1).
+                ASSIGN pcError = "Falha no resolvedor compilado " + cProgram + ": " + ERROR-STATUS:GET-MESSAGE(1).
             ELSE
-                ASSIGN pcError = "Erro ao resolver include.".
+                ASSIGN pcError = "Falha no resolvedor compilado " + cProgram + ".".
             ERROR-STATUS:ERROR = FALSE.
             RETURN "".
         END.
 
         ASSIGN cReturn = IF RETURN-VALUE = ? THEN "" ELSE RETURN-VALUE.
-        RETURN THIS-OBJECT:normalizeViewAsList(cReturn).
+        IF TRIM(cReturn) = "" THEN
+            ASSIGN pcError = "Include " + pcInclude + " nao foi resolvida pelo ViewAsIncludeResolver.r. Configure SSH no ambiente ou use a importacao CSV.".
+
+        RETURN cReturn.
     END METHOD.
 
     METHOD PRIVATE LOGICAL useViewAsSshResolver(INPUT poEnvironment AS JsonObject):
