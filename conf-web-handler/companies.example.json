@@ -1,0 +1,14 @@
+{
+  "companies": {
+    "01": {
+      "application": "empresa01",
+      "endpointPath": "/empresa01/web/MinhaApi",
+      "serverAlias": "totvs-prd-1"
+    },
+    "05": {
+      "application": "empresa05",
+      "endpointPath": "/empresa05/web/MinhaApi",
+      "serverAlias": "totvs-prd-5"
+    }
+  }
+}

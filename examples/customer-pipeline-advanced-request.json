@@ -1,0 +1,45 @@
+{
+  "execution": "sync",
+  "pipeline": [
+    {
+      "type": "source",
+      "payload": "{\"nome\":\"Customer\",\"alias\":\"customer\",\"campos\":\"CustNum,Name,State,Balance\"}"
+    },
+    {
+      "type": "select",
+      "payload": "{\"fields\":[{\"sourceAlias\":\"customer\",\"field\":\"CustNum\",\"outputAlias\":\"codigo\"},{\"sourceAlias\":\"customer\",\"field\":\"Name\",\"outputAlias\":\"nome\"},{\"sourceAlias\":\"customer\",\"field\":\"State\",\"outputAlias\":\"estado\"},{\"sourceAlias\":\"customer\",\"field\":\"Balance\",\"outputAlias\":\"saldo\"}]}"
+    },
+    {
+      "type": "filter",
+      "payload": "{\"sourceAlias\":\"customer\",\"field\":\"CustNum\",\"operator\":\">=\",\"value\":\"1\"}"
+    },
+    {
+      "type": "sort",
+      "payload": "{\"fields\":[{\"sourceAlias\":\"customer\",\"field\":\"CustNum\",\"direction\":\"ASC\"}]}"
+    },
+    {
+      "type": "limit",
+      "payload": "{\"page\":1,\"pageSize\":500}"
+    },
+    {
+      "type": "map",
+      "payload": "{\"fields\":[{\"from\":\"codigo\",\"to\":\"codigo\"},{\"from\":\"nome\",\"to\":\"cliente\"},{\"from\":\"estado\",\"to\":\"uf\"},{\"from\":\"saldo\",\"to\":\"saldo\"}]}"
+    },
+    {
+      "type": "distinct",
+      "payload": "{\"fields\":[\"codigo\"]}"
+    },
+    {
+      "type": "group",
+      "payload": "{\"fields\":[\"uf\"]}"
+    },
+    {
+      "type": "aggregate",
+      "payload": "{\"op\":\"sum\",\"field\":\"saldo\",\"as\":\"saldoTotal\"}"
+    },
+    {
+      "type": "output",
+      "payload": "{\"format\":\"json\"}"
+    }
+  ]
+}

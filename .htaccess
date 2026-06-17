@@ -1,0 +1,9 @@
+RewriteEngine On
+
+# The active web UI lives in /web. Keep duplicate root HTML pages disabled
+# by routing direct access to the maintained copy.
+RewriteCond %{REQUEST_URI} !/web/
+RewriteRule ^$ /motor-progress/web/index.html [R=302,L,NE]
+
+RewriteCond %{REQUEST_URI} !/web/
+RewriteRule ^(client-config|context-selector|endpoint-config|index|link-config|login|metadata-maintenance|query-builder|query-file-runner|query-list|query-result|query-store-e2e|query-wizard-3steps|table-browser)\.html$ /motor-progress/web/$1.html [R=302,L,NE]

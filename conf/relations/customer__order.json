@@ -1,0 +1,8 @@
+{
+  "leftTable": "Customer",
+  "leftField": "CustNum",
+  "rightTable": "Order",
+  "rightField": "CustNum",
+  "type": "INNER",
+  "fileName": "customer__order.json"
+}

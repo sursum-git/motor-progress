@@ -1,0 +1,919 @@
+CREATE SOAP-HEADER statement
+   Creates an instance of a SOAP-header object dynamically at run time, and assigns its handle to the specified handle
+   variable.
+
+   Syntax
+
+       CREATE SOAP-HEADER handle [ IN WIDGET-POOL widget-pool-name                                   ]
+
+
+   handle
+               A variable of type HANDLE that represents the handle of the SOAP-header object.
+   IN WIDGET-POOL widget-pool-name
+           An expression of type CHARACTER that evaluates to the name of the widget pool in which the
+           dynamic SOAP-header object is created.
+               Note: Widget pool names are not case-sensitive.
+
+   Notes
+   •   The SOAP HEADER object passed to the response callback is implicitly created by the AVM. In order to pass a
+       SOAP HEADER object back from the request callback, the application needs to explicitly create it or use an object
+       that it has previously saved.
+
+   •   The SOAP-header object is either implicitly created by the AVM or explicitly created by the application using the
+       CREATE SOAP-HEADER statement. In either case, the application is responsible for deleting the object.
+       You can delete a SOAP-header object and its underlying XML in one of two ways. You can:
+       •   Use the DELETE OBJECT statement to delete the SOAP-header object directly.
+       •   Set the lDeleteOnDone parameter in the request header callback procedure to TRUE, which directs the AVM
+           to delete the SOAP header object after it copies the object's contents to the outbound SOAP message.
+       For more information about deleting SOAP-header objects, see Develop Web Services for OpenEdge.
+
+
+CREATE SOAP-HEADER-ENTRYREF statement
+   Creates an instance of a SOAP-header-entryref object dynamically at run time, and assigns its handle to the specified
+   handle variable.
+
+   Syntax
+
+       CREATE SOAP-HEADER-ENTRYREF hshEntry [ IN WIDGET-POOL widget-pool-name ]
+
+
+   hshEntry
+               A variable of type HANDLE that represents the handle of the SOAP-header-entryref object.
+   IN WIDGET-POOL widget-pool-name
+           An expression of type CHARACTER that evaluates to the name of the widget pool in which the
+           dynamic SOAP-header-entryref object is created. A SOAP-header-entryref object is created in the
+           closest unnamed widget-pool, by default.
+               Note: Widget pool names are not case-sensitive.
+
+   Notes
+   The SOAP-header-entryref object is explicitly created by the application using the CREATE
+   SOAP-HEADER-ENTRYREF statement. The application is responsible for deleting this object. Use the DELETE
+   OBJECT statement to delete a SOAP-header-entryref object without deleting its underlying XML. Use the
+   DELETE-HEADER-ENTRY() method to delete the XML underlying the SOAP-header-entryref object without deleting
+   the object.
+
+CREATE X-DOCUMENT statement
+   Creates a handle for an XML document object. To use the XML document, you must add new nodes using the
+   CREATE-NODE( ) method, the CREATE-NODE-NAMESPACE( ) method, or populate the document from an existing
+   file using the LOAD( ) method.
+   Note: To ensure consistency across all nodes in an XML document, use either the CREATE-NODE-NAMESPACE( )
+   method or the CREATE-NODE( ) method to build an XML document; do not use both methods within a single document.
+
+   Syntax
+
+     CREATE X-DOCUMENT handle [ IN WIDGET-POOL widget-pool-name ]
+
+
+   handle
+              A variable of type HANDLE into which CREATE X-DOCUMENT stores the new handle.
+   IN WIDGET-POOL widget-pool-name
+           An expression of type CHARACTER that evaluates, at run time, to the name of the widget pool that
+           contains the XML document object.
+              Note: Widget pool names are not case-sensitive.
+
+   Example
+   The following code fragment depicts creating an XML document object:
+
+     DEFINE VARIABLE hXdoc AS HANDLE NO-UNDO.
+     . . .
+     CREATE X-DOCUMENT hXdoc.
+     . . .
+
+
+
+CREATE X-NODEREF statement
+   Creates a handle which can be used as a parameter or return-value for methods which will associate the handle with an
+   XML node. This object is not a node in its own right, but merely a way to provide access to the underlying XML node.
+
+   Syntax
+
+     CREATE X-NODEREF handle [ IN WIDGET-POOL widget-pool-name ]
+
+
+   handle
+              A valid X-noderef object handle to use for the new XML node.
+   IN WIDGET-POOL widget-pool-name
+           An expression of type CHARACTER that evaluates, at run time, to the name of the widget pool that
+           contains the XML node.
+              Note: Widget pool names are not case-sensitive.
+
+
+  An X-noderef object is not in a fully usable state until it has been associated with an X-document. Before this, you can
+  only access its HANDLE, TYPE, PRIVATE-DATE, and UNIQUE-ID attributes without error. To avoid run-time errors,
+  the code below shows one way to test the status of an X-noderef object (X-noderef):
+
+    cType = X-noderef:SUBTYPE NO-ERROR.
+    IF VALID-HANDLE(X-noderef) AND cType = 'ELEMENT' THEN DO:
+       /*** your code ***/
+    END.
+
+
+
+  Example
+  The following code fragment depicts creating an XML document node reference and using it to create a node:
+
+    DEFINE VARIABLE hXdoc AS HANDLE NO-UNDO.
+    . . .
+    CREATE X-DOCUMENT hXdoc.
+    CREATE X-NODEREF hXnode.
+    hXdoc:CREATE-NODE(hXnode,"City","ELEMENT").
+    . . .
+
+
+DDE ADVISE statement
+   (Windows only)
+   Instructs the dynamic data exchange (DDE) server associated with a conversation to either create or remove an advise
+   link to the specified data item.
+   This statement is supported only for backward compatibility. Use the Component Object Model (COM) instead.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+     DDE ADVISE ddeid{ START | STOP } ITEM name
+        [ TIME seconds]
+        [ NO-ERROR ]
+
+
+   ddeid
+                An integer expression equal to the channel number of the conversation opened for the specified data
+                item. It is the value returned by the DDE INITIATE statement that opened the conversation.
+                                                                                                      
+
+START
+           Instructs the server to create a link to a data item, and notify the ABL client when the specified data
+           item changes value.
+STOP
+           Instructs the server to remove the link to the specified data item, and stop monitoring its value.
+ITEM name
+        Specifies the name of the server data item to which the link is created or removed. The data item name
+        is a character expression that identifies the data item according to the conventions of the server
+        application (for example, the row and column coordinates of a worksheet cell, such as R2C1 in Microsoft
+        Excel). After creating a link, when the value of the data item specified by name changes, the AVM
+        triggers a DDE-NOTIFY event for the frame that owns the conversation, allowing the client to retrieve
+        the new value.
+TIME seconds
+           Specifies the maximum number of seconds that the ABL client waits for the DDE ADVISE statement
+           to complete, where seconds is an integer expression. If you do not specify the TIME option or specify
+           a value of 0, the AVM waits indefinitely for the statement to complete.
+NO-ERROR
+           The NO-ERROR option is used to prevent the statement from raising ERROR and displaying
+           error messages.
+           Regardless of whether NO-ERROR is used, the AVM posts the error to the DDE frame DDE-ERROR
+           attribute.
+
+Example
+The following fragment shows how to use the DDE ADVISE to set up a procedure to capture a rate-of-change value as
+it changes in a dynamic model run in a Microsoft Excel worksheet. The example assumes that the Microsoft Excel
+application is running, and has opened the default Excel worksheet, Sheet1, which runs the model.
+After the conversation is opened, the DDE ADVISE statement links to the worksheet cell that maintains the latest
+rate-of-change value (second column of the fourth row, or R4C2). Every time this cell changes value, the AVM posts
+a DDE-NOTIFY event to the frame DDEframe, where the value is retrieved using the DDE GET statement, and stored
+   as a decimal in the ChangeRate variable. Meanwhile, if the REPEAT block detects a ChangeRate value greater than
+   7.5%, the link to cell R4C2 is closed and the procedure continues.
+
+       DEFINE VARIABLE       Sheet1     AS INTEGER.       NO-UNDO. /* DDE-ID to worksheet */
+       DEFINE VARIABLE       ChangeRate AS DECIMAL        NO-UNDO /* Rate of change... */
+         INITIAL 0.0.                                              /* ...starting at zero */
+       DEFINE VARIABLE       CellData        AS CHARACTER NO-UNDO. /* Worksheet cell output */
+       DEFINE VARIABLE       DDEframe        AS HANDLE    NO-UNDO. /* DDE frame handle */
+
+       CREATE FRAME DDEframe
+       TRIGGERS:           /* DDE frame and code to receive */
+         ON DDE-NOTIFY DO: /* Rate of change data from Excel */
+           DDE GET Sheet1 TARGET CellData ITEM "R4C2".
+           ChangeRate = DECIMAL(CellData).
+         END.
+       END TRIGGERS.
+       . . .
+       /* Open conversation with "Sheet1" and link to rate-of-change value. */
+       DDE INITIATE Sheet1 FRAME DDEframe APPLICATION "Excel" TOPIC "Sheet1".
+       DDE ADVISE Sheet1 START ITEM "R4C2".
+
+       /* Do some processing while the rate-of-change is within 7.5% */
+       REPEAT WHILE ChangeRate <= 7.5:
+       . . .
+       END. /* 7.5% processing */
+
+       /* Go on to other things once the rate of change goes above 7.5%. */
+       DDE ADVISE Sheet1 STOP ITEM "R4C2".
+       . . .
+
+
+
+   Notes
+   •   After a DDE-NOTIFY event is triggered for the conversation, the client application must use the DDE GET statement
+       in a trigger block for the event to retrieve the latest value for name.
+   •   For more information on using the DDE protocol to exchange data with non-ABL applications, see OpenEdge
+       Programming Interfaces.
+
+   
+DDE EXECUTE statement
+   (Windows only)
+   Instructs a dynamic data exchange (DDE) server application to execute one or more application commands.
+   This statement is supported only for backward compatibility. Use the Component Object Model (COM) instead.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       DDE EXECUTE ddeid COMMAND string
+           [ TIME seconds]
+           [ NO-ERROR ]
+
+
+ddeid
+            An integer expression equal to the channel number of a conversation opened to execute the specified
+            command string. It is the value returned by the DDE INITIATE statement that opened the conversation.
+            You can usually execute commands using a conversation opened for the System topic of the server
+            application.
+COMMAND string
+      Specifies the command or commands for the server to execute, where string is a character expression
+      containing commands that are defined by the server application (for example, the [select(...)] command
+      in Microsoft Excel).
+TIME seconds
+            Specifies the maximum number of seconds that the ABL client waits for the DDE EXECUTE statement
+            to complete, where seconds is an integer expression. If you do not specify the TIME option or specify
+            a value of 0, the AVM waits indefinitely for the statement to complete.
+NO-ERROR
+            The NO-ERROR option  is used to prevent the statement from raising ERROR and displaying
+            error messages.
+            Regardless of whether NO-ERROR is used, the AVM posts the error to the DDE frame DDE-ERROR
+            attribute.
+
+Example
+The following fragment shows how to use the DDE EXECUTE statement. The procedure executes Microsoft Excel
+internally and opens a conversation for the Excel System topic. The System topic lets you execute Excel functions. This
+example uses the DDE EXECUTE statement to create a new Excel worksheet using the Excel new function:
+
+    DEFINE VARIABLE Sys      AS INTEGER NO-UNDO. /* DDE-ID to System topic */
+    DEFINE VARIABLE DDEframe AS HANDLE NO-UNDO. /* DDE frame handle */
+    CREATE FRAME DDEframe.                       /* Create DDE frame */
+
+    /* DLL routine to execute an MS-Windows application. */
+    PROCEDURE WinExec EXTERNAL "kernel32.dll":
+      DEFINE INPUT PARAMETER ProgramName AS CHARACTER.
+      DEFINE INPUT PARAMETER Presentation AS LONG.
+    END PROCEDURE. /* WinExec */
+    . . .
+    /* Start Excel, open a DDE conversation with the Excel System topic, and
+    create
+       a worksheet. */
+    RUN WinExec (INPUT "Excel /e", INPUT 2). /* 1=normal, 2=minimized */
+    DDE INITIATE Sys FRAME DDEframe APPLICATION "Excel" TOPIC "System".
+    DDE EXECUTE Sys COMMAND "[new(1)]".
+    . . .
+
+
+
+Notes
+•   For more information on commands available in your server application, see the documentation for that application.
+•   For more information on using the DDE protocol to exchange data with non-ABL applications, see OpenEdge
+    Programming Interfaces.
+
+
+
+
+DDE GET statement
+   (Windows only)
+   Retrieves the value of a dynamic data exchange (DDE) server data item that has changed and triggered a DDE-NOTIFY
+   event.
+   This statement is supported only for backward compatibility. Use the Component Object Model (COM) instead.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+     DDE GET ddeid TARGET field ITEM name
+        [ TIME seconds]
+        [ NO-ERROR ]
+
+
+   ddeid
+              An integer expression that specifies the channel number of the conversation that triggered the
+              DDE-NOTIFY event. You can obtain the value of ddeid from the DDE-ID attribute of the frame to
+              which the DDE-NOTIFY event was posted.
+   TARGET field
+           Specifies a character field or variable that receives the value of the server data item as a character
+           string.
+   ITEM name
+              Specifies the server data item that changed and triggered the DDE-NOTIFY event, where name is a
+              character expression that identifies the name of the data item in the server application. You can obtain
+              the value of name from the DDE-ITEM attribute of the frame to which the DDE-NOTIFY event was
+              posted.
+   TIME seconds
+              Specifies the maximum number of seconds that the ABL client waits for the DDE GET statement to
+              complete where seconds is an integer expression. If you do not specify the TIME option or specify a
+              value of 0, the AVM waits indefinitely for the statement to complete.
+   NO-ERROR
+              The NO-ERROR option is used to prevent the statement from raising ERROR and displaying
+              error messages.
+              Regardless of whether NO-ERROR is used, the AVM posts the error to the DDE frame DDE-ERROR
+              attribute.
+
+   Example
+   The following fragment shows how to use the DDE GET statement to set up a procedure to capture a rate-of-change
+   value as it changes in a dynamic model run in a Microsoft Excel worksheet. The example assumes that the Microsoft
+   Excel application is running, and has opened the default Excel worksheet, Sheet1, which runs the model.
+   After the conversation is opened, the DDE ADVISE statement links to the worksheet cell that maintains the latest
+   rate-of-change value (2nd column of the 4th row, or R4C2). Every time this cell changes value, the AVM posts a
+   DDE-NOTIFY event to the frame DDEframe, where the value is retrieved using the DDE GET statement, and stored
+   as a decimal in the ChangeRate variable. Meanwhile, if the REPEAT block detects a ChangeRate value greater
+   than 7.5%, the the link to cell R4C2 is closed and the procedure continues.
+
+       DEFINE VARIABLE       Sheet1     AS INTEGER NO-UNDO.        /*              DDE-ID to worksheet */
+       DEFINE VARIABLE       ChangeRate AS DECIMAL NO-UNDO         /*              Rate of change... */
+         INITIAL 0.0.                                              /*              ...starting at 0 */
+       DEFINE VARIABLE       CellData        AS CHARACTER NO-UNDO. /*              Worksheet cell output */
+       DEFINE VARIABLE       DDEframe        AS HANDLE    NO-UNDO. /*              DDE frame handle */
+
+       CREATE FRAME DDEframe
+       TRIGGERS:           /* DDE frame and code to receive */
+         ON DDE-NOTIFY DO: /* Rate of change data from Excel */
+           DDE GET Sheet1 TARGET CellData ITEM "R4C2".
+           ChangeRate = DECIMAL(CellData).
+         END.
+       END TRIGGERS.
+       . . .
+       /* Open conversation with Sheet1 and link to rate-of-change value. */
+       DDE INITIATE Sheet1 FRAME DDEframe APPLICATION "Excel" TOPIC "Sheet1".
+       DDE ADVISE Sheet1 START ITEM "R4C2".
+
+       /* Do some processing while the rate-of-change is within 7.5% */
+       REPEAT WHILE ChangeRate <= 7.5:
+       . . .
+       END. /* 7.5% processing */
+
+       /* Go on to other things once the rate of change goes above 7.5%. */
+       DDE ADVISE Sheet1 STOP ITEM "R4C2".
+       . . .
+
+
+
+   Notes
+   •   The AVM posts each DDE-NOTIFY event to the frame that owns the conversation opened for the linked data item.
+   •   You can invoke this function in the trigger block for each frame that owns a conversation containing advise links.
+       Only frames that own conversations linked to data items with the DDE ADVISE statement can receive DDE-NOTIFY
+       events.
+   •   For more information on using the DDE protocol to exchange data with non-ABL applications, see OpenEdge
+       Programming Interfaces.
+
+ DDE INITIATE statement
+   (Windows only)
+   Opens a dynamic data exchange (DDE) client conversation for a specified DDE server application and topic, and
+   associates the new conversation with an ABL frame. To identify the conversation, the statement returns an integer as a
+   unique channel number for this conversation.
+   This statement is supported only for backward compatibility. Use the Component Object Model (COM) instead.
+   Note: Does not apply to SpeedScript programming.
+                                                                                                 
+Syntax
+
+  DDE INITIATE ddeid FRAME frame-handle
+    APPLICATION server-name TOPIC topic-name[ NO-ERROR ]
+
+
+ddeid-var
+            An integer variable or field that receives the channel number for the newly opened DDE conversation.
+FRAME frame-handle
+        Specifies the handle of the frame that owns the conversation, where frame-handle is a HANDLE
+        expression. A frame can own more than one conversation. The AVM records the status of the most
+        recent conversation exchange in a set of DDE frame attributes. These attributes record the status of
+        every dynamic data exchange, including advise exchanges (exchanges triggered by DDE-NOTIFY
+        events). The DDE frame attributes include:
+            •   DDE-ERROR — The DDE error code returned by the most recent exchange
+            •   DDE-ID — The channel number of the conversation that had the most recent exchange
+            •   DDE-ITEM — The name of the data item referenced by the most recent exchange
+            •   DDE-NAME — The name of the server application in the most recent exchange
+            •   DDE-TOPIC — The name of the topic of the most recent exchange
+APPLICATION server-name
+        Specifies the name of the server application for the conversation, where server-name is a character
+        expression. The value of server-name must be unique for each DDE server on your system. It is usually
+        the filename of the server executable without the extension (for example, the name EXCEL in Microsoft
+        Excel).
+TOPIC topic-name
+         Specifies the name of the topic of the conversation, where topic-name is a character expression. The
+         value of topic-name identifies a category defined by the server application. This is usually the name
+         of a file or other container that includes one or more data items (for example, the name of a worksheet,
+         such as Sheet1 in Microsoft Excel). An ABL client can only exchange data with server data items
+         included in the topic of an open conversation.
+NO-ERROR
+            The NO-ERROR option is used to prevent the statement from raising ERROR and displaying
+            error messages.
+            Regardless of whether NO-ERROR is used, the AVM posts the error to the DDE frame DDE-ERROR
+            attribute.
+
+Example
+The following fragment shows a typical use of the DDE INITIATE statement. It assumes that the Microsoft Excel
+application is running, and has created the default Excel worksheet, Sheet1. It then uses the DDE INITIATE statement
+   to open a conversation with Sheet1 as the topic. This allows the AVM to exchange data with the cells of the worksheet.
+   In this example, the fragment assigns column headings to the top row of the first three columns in the worksheet:
+
+       DEFINE VARIABLE Sheet1   AS INTEGER NO-UNDO. /* DDE-ID to worksheet topic */
+       DEFINE VARIABLE DDEframe AS HANDLE NO-UNDO. /* DDE frame handle */
+
+       /* Create DDE frame */
+       CREATE FRAME DDEframe
+         ASSIGN visible = TRUE
+                hidden = TRUE.
+       . . .
+       /* Open a DDE conversation with Sheet1 and assign column headings. */
+       DDE INITIATE Sheet1 FRAME DDEframe APPLICATION "Excel" TOPIC "Sheet1".
+       DDE SEND Sheet1 SOURCE "Name"      ITEM "R1C1".
+       DDE SEND Sheet1 SOURCE "YTD Sales" ITEM "R1C2".
+       DDE SEND Sheet1 SOURCE "State"     ITEM "R1C3".
+       . . .
+
+
+
+   Notes
+   •   The specified DDE server application must be running on the Windows desktop before you can invoke the DDE
+       INITIATE statement.
+   •   You can close a DDE conversation in three ways: use the DDE TERMINATE statement, leave the scope of the frame
+       that owns the conversation, or terminate the server application or topic associated with the application.
+   •   For more information on using the DDE protocol (including DDE frame attributes) to exchange data with non-ABL
+       applications, see OpenEdge Programming Interfaces.
+
+ DDE REQUEST statement
+   (Windows only)
+   Retrieves the current value of a dynamic data exchange (DDE) server data item associated with the specified DDE
+   conversation.
+   This statement is supported only for backward compatibility. Use the Component Object Model (COM) instead.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       DDE REQUEST ddeid TARGET field ITEM name
+          [ TIME seconds]
+          [ NO-ERROR ]
+
+
+   ddeid
+              An integer expression that equals the channel number of the conversation opened for the specified
+              data item. It is the value returned by the DDE INITIATE statement that opened the conversation.
+   TARGET field
+           Specifies a character field or variable that receives the value of the data item as a character string.
+   ITEM name
+                                                                                                     
+
+           Specifies the name of the server data item from which to retrieve a value. The data item name is a
+           character expression that identifies the data item according to the conventions of the server application
+           (for example, the row and column coordinates of a worksheet cell, such as R2C1 in Microsoft Excel).
+TIME seconds
+           Specifies the maximum number of seconds that the ABL client waits for the DDE REQUEST statement
+           to complete, where seconds is an integer expression. If you do not specify the TIME option or specify
+           a value of 0, the AVM waits indefinitely for the statement to complete.
+NO-ERROR
+           The NO-ERROR option is used to prevent the statement from raising ERROR and displaying
+           error messages.
+           Regardless of whether NO-ERROR is used, the AVM posts the error to the DDE frame DDE-ERROR
+           attribute.
+
+Example
+The following fragment shows a typical use of the DDE REQUEST statement. It assumes that the Microsoft Excel
+application is running, and has created the default Excel worksheet, Sheet1. It then uses the DDE INITIATE statement
+to open a conversation with Sheet1 as the topic. This allows the AVM to exchange data with the cells of the worksheet.
+In this example, the fragment builds 10 new Customer records from data obtained from the first 4 columns in the
+worksheet using the DDE REQUEST statement. The data includes Customer name, year-to-date sales, state, and zip
+code. (The requests start from row 2, because row 1 contains column headings.)
+
+  DEFINE    VARIABLE      Rowi          AS   INTEGER        NO-UNDO.      /*   Worksheet row counter */
+  DEFINE    VARIABLE      ItemName      AS   CHARACTER      NO-UNDO.      /*   Item Name */
+  DEFINE    VARIABLE      CustName      AS   CHARACTER      NO-UNDO.      /*   Customer name receptor */
+  DEFINE    VARIABLE      YTDsales      AS   CHARACTER      NO-UNDO.      /*   YTD sales receptor */
+  DEFINE    VARIABLE      StateAbr      AS   CHARACTER      NO-UNDO.      /*   State name receptor */
+  DEFINE    VARIABLE      ZipCode       AS   CHARACTER      NO-UNDO.      /*   Zip code receptor */
+  DEFINE    VARIABLE      Sheet1        AS   INTEGER        NO-UNDO.      /*   DDE-ID to worksheet */
+  DEFINE    VARIABLE      DDEframe      AS   HANDLE         NO-UNDO.      /*   DDE frame handle */
+
+  CREATE FRAME DDEframe.                         /* Create DDE frame */
+  . . .
+  /* Open a DDE conversation with Sheet1 and create 10 Customer records from
+     the data in four columns of the worksheet. */
+  DDE INITIATE Sheet1 FRAME DDEframe APPLICATION "Excel" TOPIC "Sheet1".
+
+  REPEAT Rowi = 2 TO 11:
+    CREATE Customer.
+    Customer.CustNum = Rowi - 1.
+    ItemName = "R" + STRING(Rowi) + "C1".
+    DDE REQUEST Sheet1 TARGET CustName ITEM                       ItemName.
+    Customer.Name = CustName.
+    ItemName = "R" + STRING(Rowi) + "C2".
+    DDE REQUEST Sheet1 TARGET YTDsales ITEM                       ItemName.
+    Customer.YtdSls = DECIMAL(YTDsales).
+    ItemName = "R" + STRING(Rowi) + "C3".
+    DDE REQUEST Sheet1 TARGET StateAbr ITEM                       ItemName.
+    Customer.State = StateAbr.
+    ItemName = "R" + STRING(Rowi) + "C4".
+    DDE REQUEST Sheet1 TARGET ZipCode ITEM                        ItemName.
+    Customer.PostalCode = INTEGER(ZipCode).
+    RELEASE Customer.
+  END.
+  . . .
+
+   Note
+   For more information on using the DDE protocol to exchange data with non-ABL applications, see OpenEdge
+   Programming Interfaces.
+
+   
+DDE SEND statement
+   (Windows only)
+   Sends a new value to a dynamic data exchange (DDE) server data item associated with the specified DDE conversation.
+   This statement is supported only for backward compatibility. Use the Component Object Model (COM) instead.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+     DDE SEND ddeid SOURCE data ITEM name
+       [ TIME seconds]
+       [ NO-ERROR ]
+
+
+   ddeid
+              An integer expression that equals the channel number of the conversation opened for the specified
+              data item. It is the value returned by the DDE INITIATE statement that opened the conversation.
+   SOURCE data
+           Specifies the new value for the server data item, where data is a character expression that renders the
+           new value in a format acceptable to the data item.
+   ITEM name
+           Specifies the name of the server data item to receive the new value. The data item name is a character
+           expression that identifies the data item according to the conventions of the server application (for
+           example, the row and column coordinates of a worksheet cell, such as R2C1 in Microsoft Excel).
+   TIME seconds
+              Specifies the maximum number of seconds that the ABL client waits for the DDE SEND statement to
+              complete, where seconds is an integer expression. If you do not specify the TIME option or specify a
+              value of 0, the AVM waits indefinitely for the statement to complete.
+   NO-ERROR
+              The NO-ERROR option is used to prevent the statement from raising ERROR and displaying
+              error messages.
+              Regardless of whether NO-ERROR is used, the AVM posts the error to the DDE frame DDE-ERROR
+              attribute.
+
+   Example
+   The following fragment shows a typical use of the DDE SEND statement. It assumes that the Microsoft Excel application
+   is running, and has created the default Excel worksheet, Sheet1. It then uses the DDE INITIATE statement to open a
+   conversation with Sheet1 as the topic. This allows the AVM to exchange data with the cells of the worksheet. In this
+   example, the fragment assigns column headings to the top row of the first three columns in the worksheet using the DDE
+   SEND statement.
+
+     DEFINE VARIABLE Sheet1   AS INTEGER NO-UNDO. /* DDE-ID to worksheet topic */
+     DEFINE VARIABLE DDEframe AS HANDLE NO-UNDO. /* DDE frame handle */
+
+     CREATE FRAME DDEframe.                       /* Create DDE frame */
+     . . .
+     /* Open a DDE conversation with Sheet1 and assign column headings. */
+     DDE INITIATE Sheet1 FRAME DDEframe APPLICATION "Excel" TOPIC "Sheet1".
+     DDE SEND Sheet1 SOURCE "Name"      ITEM "R1C1".
+     DDE SEND Sheet1 SOURCE "YTD Sales" ITEM "R1C2".
+     DDE SEND Sheet1 SOURCE "State"     ITEM "R1C3".
+     . . .
+
+
+
+  DDE TERMINATE statement
+   (Windows only)
+   Closes the specified dynamic data exchange (DDE) conversation.
+   This statement is supported only for backward compatibility. Use the Component Object Model (COM) instead.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+     DDE TERMINATE ddeid [ NO-ERROR ]
+
+
+   ddeid
+               An integer expression that equals the channel number of an open conversation. It is the value returned
+               by the DDE INITIATE statement that opened the conversation.
+   NO-ERROR
+               The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying
+               error messages.
+               Regardless of whether NO-ERROR is used, the AVM posts the error to the DDE frame DDE-ERROR
+               attribute.
+
+   Example
+   The following fragment shows a typical use of the DDE TERMINATE statement. It assumes that the Microsoft Excel
+   application is running, and has created the default Excel worksheet, Sheet1. It then uses the DDE INITIATE statement
+   to open a conversation with Sheet1 as the topic, returning the channel number of the conversation to the variable, Sheet1.
+   After exchanging data with the worksheet, the example closes the conversation with Sheet1 using the DDE TERMINATE
+   statement.
+
+       DEFINE VARIABLE Sheet1   AS INTEGER NO-UNDO. /* DDE-ID to worksheet topic */
+       DEFINE VARIABLE DDEframe AS HANDLE NO-UNDO. /* DDE frame handle */
+
+       CREATE FRAME DDEframe.                       /* Create DDE frame */
+       . . .
+       /* Open a DDE conversation with "Sheet1" and assign column headings. */
+       DDE INITIATE Sheet1 FRAME DDEframe APPLICATION "Excel" TOPIC "Sheet1".
+       DDE SEND Sheet1 SOURCE "Name"      ITEM "R1C1".
+       DDE SEND Sheet1 SOURCE "YTD Sales" ITEM "R1C2".
+       DDE SEND Sheet1 SOURCE "State"     ITEM "R1C3".
+       . . .
+       DDE TERMINATE Sheet1.
+
+
+
+   Notes
+   •   Before closing a DDE conversation, remove all advise links in the conversation using the DDE ADVISE statement.
+   •   Closing this conversation makes ddeid unavailable for further exchanges, but any other conversations open to the
+       same server are still available.
+   •   For more information on using the DDE protocol to exchange data with non-ABL applications, see OpenEdge
+       Programming Interfaces.
+
+
+DOS statement
+   (Windows only)
+   Runs a program, DOS command, or DOS batch file, or starts the DOS command processor, which allows interactive
+   processing of DOS commands.
+
+   Syntax
+
+       DOS [ SILENT ][command-token| VALUE ( expression ) ]...
+
+
+   SILENT
+               After processing a DOS statement, the AVM shell pauses, and prompts you to press SPACEBAR to
+               continue. When you press SPACEBAR, the AVM clears the window and continues processing. You
+               can use the SILENT option to eliminate this pause. Use this option only if you are sure that the DOS
+               program, command, or batch file will not generate output to the window.
+   command-token | VALUE ( expression )
+               One or more command (command-token) words and symbols that you want to pass to a DOS command
+               processor. The VALUE option generates the command tokens included in expression, a character string
+               expression. The specified combination of command-token and VALUE(expression) options can
+               form any legal combination of commands and command options permitted by the DOS command
+               processor, including programs, DOS commands, and batch files. If you do not use any of these options,
+               the DOS statement invokes the DOS command processor, which remains until you exit it.
+               The commands can contain Unicode characters. See Internationalize ABL Applications for more
+               information about Unicode.
+
+   Example
+   On UNIX, this procedure runs the UNIX ls command. In Windows, this procedure runs the DOS dir command. On
+   other platforms, the AVM displays a message stating that the operating system is unsupported.
+   r-dos.p
+
+       IF OPSYS = "UNIX" THEN UNIX ls.
+       ELSE IF OPSYS = "WIN32" THEN DOS dir.
+       ELSE DISPLAY OPSYS "is an unsupported operating system".
+
+
+
+   Notes
+   •   If you use the DOS statement in a procedure and the procedure compiles on a UNIX system, the procedure runs, as
+       long as flow of control does not pass through the DOS statement while running on UNIX. Use the OPSYS function
+       to return the name of the operating system where a procedure is being run. This function lets you write applications
+       that are portable among OpenEdge-supported operating systems even if they use the DOS, UNIX, etc. statements.
+   •   When running 32-bit OpenEdge on a 64-bit operating system, if you attempt to use the DOS statement to run an
+       executable in the %WINDIR%\System32 directory, execution will fail. To remedy this, you can do one of the
+       following:
+       •   Put the files you want to access in the %WINDIR%\SysWOW64 directory.
+       •   Put the files you want to access in another directory and ensure that directory is listed in %PATH%.
+       •   Change your code to use %WINDIR%\Sysnative, to force the operating system to point to
+           %WINDIR%\System32. Note that this can cause problems if the application also runs under a 32-bit version
+           of Windows.
+
+
+IMPORT statement
+   Reads a line from an input file that might have been created by the EXPORT statement or the BUFFER-EXPORT() or
+   BUFFER-EXPORT-FIELDS() methods.
+
+   Syntax
+
+       IMPORT [ STREAM stream | STREAM-HANDLE handle ]
+         {    [ DELIMITER character ] { field | ^ } ...
+            | [ DELIMITER character ] record [ EXCEPT field ... ]
+            | UNFORMATTED field
+         }
+         [ NO-LOBS ]
+         [ NO-ERROR ]
+
+
+
+       IMPORT [ STREAM stream | STREAM-HANDLE handle ] { memptr | longchar }
+
+
+   STREAM stream
+          Specifies the name of a stream. If you do not name a stream, the AVM uses the unnamed stream.
+   STREAM-HANDLE handle
+          Specifies the handle to a stream. If handle it is not a valid handle to a stream, the AVM generates a
+          run-time error. Note that stream handles are not valid for the unnamed streams. See the topics on
+          alternate I/O sources in OpenEdge Programming Interfaces for more information on streams and
+          stream handles.
+   DELIMITER character
+          The character used as a delimiter between field values in the file. The character parameter must be a
+          quoted single character. The default is a space character.
+
+           If you specify more than one character as a delimiter, ABL uses the first character as the delimiter.
+field
+           The name of a field or variable to which you are importing data. The field or variable must have either
+           the CHARACTER or RAW data type. If the data type is RAW, the IMPORT statement reads enough
+           characters to fill the current length of the variable. If not enough characters are available to fill the
+           current length, the length is reset to the number of characters read.
+^
+           Use a caret (^) to skip a data value in each input line when input is being read from a file.
+record
+           The name of a record buffer. All of the fields in the record are processed exactly as if you had named
+           each of them individually. The record you name must contain at least one field. To use IMPORT with
+           a record in a table defined for multiple databases, qualify the record's table name with the database
+           name. See the record definition in the Record phrase on page 864 reference entry for more information.
+EXCEPT field
+           Tells the AVM to import all the fields except those listed in the EXCEPT phrase.
+           Note: The EXCEPT phrase does not support individual elements of an array. If an array element is
+           specified in the EXCEPT phrase, the entire array is omitted from the import, not just the element
+           specified.
+UNFORMATTED field
+      Treats each line of the input file as a single string value. In this case, the field parameter must be a
+      single CHARACTER or RAW field or variable. You can use this option to read text files one line at
+      a time.
+           Use this option on a RAW variable to import binary data that was not exported to the file as RAW
+           data.
+NO-LOBS
+           Directs the AVM to ignore large object data when importing records that contain BLOB or CLOB
+           fields.
+NO-ERROR
+           The NO-ERROR option is used to prevent the statement from raising ERROR and displaying
+           error messages.
+memptr
+           A variable of data type MEMPTR to which you are importing data.
+longchar
+           A variable of data type LONGCHAR to which you are importing data.
+
+Examples
+This procedure takes the data in file customer.d and enters it into the OpenEdge database table Customer. The
+procedure uses the DISABLE TRIGGERS statement to stop the AVM from executing any triggers for the CREATE,
+WRITE, and ASSIGN events when loading the data.
+Note: The imported files, customer.d and custdump2, in the next two examples are created by running the example
+programs under EXPORT.
+                                                                                              
+r-imprt.p
+
+  INPUT FROM customer.d.
+
+  DISABLE TRIGGERS FOR LOAD OF Customer.
+
+  REPEAT:
+    CREATE Customer.
+    IMPORT Customer.
+  END.
+
+  INPUT CLOSE.
+
+
+If the file uses a delimiter other than a space to separate fields, use the DELIMITER option of the IMPORT statement.
+r-cstin.p
+
+  DEFINE VARIABLE cnum NO-UNDO LIKE Customer.CustNum.
+  DEFINE VARIABLE cname NO-UNDO LIKE Customer.Name.
+  DEFINE VARIABLE cmax NO-UNDO LIKE Customer.CreditLimit.
+
+  INPUT FROM custdump2.
+
+  FOR EACH Customer:
+    IMPORT DELIMITER ";" cnum cname cmax.
+    DISPLAY cnum cname cmax.
+  END.
+
+  INPUT CLOSE.
+
+
+You can use the UNFORMATTED option to read the contents of a standard text file. For example, the following procedure
+reads and displays the contents of the hello file:
+r-hello.p
+
+  DEFINE VARIABLE text-string AS CHARACTER NO-UNDO FORMAT "x(76)".
+
+  INPUT FROM VALUE(SEARCH("hello")).
+  DO WHILE TRUE ON ENDKEY UNDO, LEAVE:
+    IMPORT UNFORMATTED text-string.
+    DISPLAY text-string WITH DOWN FRAME x.
+    DOWN WITH FRAME x NO-LABELS.
+  END.
+  INPUT CLOSE.
+
+
+In the MEMPTR version of the IMPORT statement, the MEMPTR must be pre-allocated to the size needed for reading.
+To get the length to read for an imported file, use the FILE_INFO system handle and the SET-SIZE statement as
+follows:
+
+r-impmem.p
+
+    DEFINE VARIABLE bb AS MEMPTR NO-UNDO.
+
+    ASSIGN
+      FILE-INFO:FILE-NAME = "big.in"
+      SET-SIZE(bb)        = FILE-INFO:FILE-SIZE.
+
+    INPUT FROM "big.in" BINARY NO-CONVERT.
+    IMPORT bb.
+    INPUT CLOSE.
+
+
+
+Notes
+•   The IMPORT statement must follow a statement that redirects the input source (usually an INPUT FROM statement). You cannot use the IMPORT statement to read data from the screen.
+•   If you do not use the UNFORMATTED option, the data in the input stream must be in a standard format to be read
+    back into ABL. You must enclose all character fields in quotes ("") if they contain any delimiter characters. If you
+    want to import any quotes contained in the data, replace them with two quotes ("" ""). You must display the Unknown
+    value (?) as an unquoted question mark.
+•   If an input data line contains an unquoted hyphen in place of a data value, then the corresponding field is skipped,
+    as it is in UPDATE. If you specify a hyphen (-) as the delimiter character, all hyphens are treated as delimiters. If
+    you use the UNFORMATTED option, the hyphen is treated the same as any other character.
+•   A period (.) on a line by itself is treated as an end-of-file indicator. The ENDKEY is applied, but the file or stream
+    remains open for input.
+•   Data read in with IMPORT is not restricted by frame-related format statements, as is data read in by SET or UPDATE.
+    Since IMPORT does not have to validate the input stream, it is faster than SET or UPDATE.
+•   When importing records that contain a BLOB or CLOB field, the AVM uses the value stored in the BLOB or CLOB
+    field of the exported record to determine whether or not the exported record has an associated object data file to
+    import. If the BLOB or CLOB field in the exported record contains the Unknown value (?), the AVM stores the
+    Unknown value (?) in the BLOB or CLOB field of the new or updated record. If the BLOB or CLOB field in the
+    exported record contains a filename, the AVM imports the associated object data. If an updated record already has
+    object data associated with it, the AVM deletes that object data before importing the new object data.
+    The AVM raises the ERROR condition if an object data file cannot be found or read.
+•   Use the NO-LOBS option with the IMPORT statement to ignore large object data when importing records that contain
+    BLOB or CLOB fields. More specifically:
+    •   When you import an exported record into a new record, and the BLOB or CLOB field of the exported record
+        contains either the Unknown value (?) or a filename, the AVM sets the value of the BLOB or CLOB field in the
+        newly imported record to the Unknown value (?); the AVM does not create any object data.
+    •   When you import an exported record as an update to an existing record, and the BLOB or CLOB field of the
+        exported record contains either the Unknown value (?) or a filename, the AVM does not change the value of the
+        BLOB or CLOB field in the existing record and neither creates nor overwrites object data.
+•   The IMPORT statement reads large object data files from the directory specified as the input data source in the
+    INPUT FROM statement, by default. You can use the LOB-DIR option on the INPUT FROM statement to specify
+    the directory from which the IMPORT statement reads BLOB and CLOB data files.
+•   IMPORT is sensitive to the Date Format (-d), Century (-yy), and European Numeric Format (-E) parameters. When
+    loading data with the IMPORT statement, use the same settings that you used with the EXPORT statement.
+•   When importing DATETIME and DATETIME-TZ data, the data format must be fixed and must conform to the ISO
+    8601 standard for date/time representations (YYYY-MM-DDTHH:MM:SS.SSS+HH:MM). For DATETIME, there
+    is no time zone offset.                     
+
+   •   ABL interprets the null character as a data field terminator. This can cause unexpected behavior if a complete record
+       was not read before the null character was encountered, because IMPORT reads the next line to populate any buffer
+       fields that were not read. Progress strongly discourages the importing of data containing null characters.
+   •   IMPORT requires a newline character after the last line in the file for the line to be imported. Otherwise, the line is
+       not imported. Note that data exported via the EXPORT statement does have a new line character at the end of each
+       exported record.
+   •   The UNFORMATTED option forces IMPORT to read one physical line at a time. A physical line ends with a newline
+       or linefeed control character, or the end of the file marker for the last line when it is not terminated with a new line
+       or linefeed character.
+   •   In the MEMPTR version of the IMPORT statement, the MEMPTR must be pre-allocated to the size needed for
+       reading. See the example, r-impmem.p, above.
+   •   When importing a CLOB field, the AVM uses the code page embedded in the filename of the <clobfile>.blb
+       to determine the clob's code page. When importing a LONGCHAR variable, the AVM uses the code page information
+       in the exported file header to determine the variable's code page. The COPY-LOB statement is recommended for
+       Unicode CLOB fields or LONGCHAR variables, or when the code page information is not available in the source.
+   •   When using the IMPORT statement to load data into an indeterminate array, all elements are loaded with the value
+       of the first data value in the input record. To load each input data value into an element of the array, import the entire
+       input file record into a CHARACTER variable and assign the individual values into the array elements in a loop.
+
+RELEASE OBJECT statement
+
+Releases the specified COM object (Automation object or ActiveX control) and removes all internal structures associated
+   with the handle to the object.
+
+   Syntax
+
+     RELEASE OBJECT COM-hdl-var[ NO-ERROR ]
+
+
+   COM-hdl-var
+            A COM-HANDLE variable that references a valid COM object.
+   NO-ERROR
+              The NO-ERROR option is used to prevent the statement from raising ERROR and displaying
+              error messages.
+
+   Example
+   This procedure fragment shows a control named hc_CmdButton being loaded into a control-frame and the handle to the
+   control (controlHdl) being obtained using the control name (hc_CmdButton) property. Later, it releases the control and
+   deletes the parent control-frame widget (CFWidHdl).
+
+       DEFINE VARIABLE CFWidHdl   AS HANDLE     NO-UNDO.
+       DEFINE VARIABLE CFComHdl   AS COM-HANDLE NO-UNDO.
+       DEFINE VARIABLE controlHdl AS COM-HANDLE NO-UNDO.
+
+       /* Create frame foo ... */
+       CREATE CONTROL-FRAME CFWidHdl ASSIGN
+         FRAME = FRAME foo:HANDLE
+         NAME = "ctlFrame1".
+
+       CFComHdl = CFWidHdl:COM-HANDLE.
+       CFComHdl:LoadControls(hc_CmdButton.wrx, "hc_CmdButton").
+
+       controlHdl = CFComHdl:hc_CmdButton.
+       controlHdl:BgColor = RGB-VALUE(0,128,0).
+
+       /* Do some more stuff ... WAIT-FOR ... */
+       RELEASE OBJECT controlHdl. /* NOTE: Not really necessary */
+       DELETE WIDGET CFWidHdl.
+
+
+  
+   Notes
+   •   After this statement completes, any other component handles that reference the object are invalid. If you attempt to
+       reference the object using one of these handles, the AVM returns an invalid handle error. It is also possible for a
+       newly instantiated COM object to get the same handle as one that has been released. The AVM does not detect that
+       this occurs. In this case, the "old" handle is valid, but it references a different control. Thus, it is a good practice to
+       set any COM-HANDLE variables that reference a released COM object to the Unknown value (?).
+   •   The released COM object remains active as long as any other COM object has a valid reference to it. In the case of
+       an ActiveX control, the parent control-frame is a COM object that references the control. All other component handle
+       references you establish in the ABL session represent a second reference to the COM object. Thus, when you release
+       one of these component handles, the released COM object remains active as long as the parent control-frame COM
+       object is still active. To release the parent control-frame COM object and complete the release of the ActiveX control,
+       you must follow any release of the ActiveX control by a delete of the parent control-frame widget.
+   •   When you delete a control-frame widget, the AVM releases all associated ActiveX controls automatically, whether
+       or not you release them individually.
+   •   When the session ends, the AVM automatically releases any active COM objects you have not released individually.
+

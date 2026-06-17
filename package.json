@@ -1,0 +1,27 @@
+{
+  "name": "motor-progress",
+  "version": "1.0.0",
+  "description": "Projeto ABL/OOABL para consulta dinamica segura em banco Progress/OpenEdge, com suporte a:",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "example": "examples",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "mock:e2e": "node tests/e2e/playwright/mock-e2e-server.js",
+    "test:e2e": "playwright test",
+    "test:e2e:backend": "playwright test tests/e2e/playwright/query-store.spec.js --grep backend",
+    "test:e2e:pasoe": "playwright test tests/e2e/playwright/pasoe-query-store-backend.spec.js",
+    "test:contract": "php tests/e2e/sursum_query_store_contract_test.php",
+    "test:all": "npm run test:contract && npm run test:e2e"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}

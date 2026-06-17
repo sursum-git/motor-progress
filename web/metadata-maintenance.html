@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manutencao de metadados</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="ui-ready.css?v=20260616-grid-loading">
+  <link rel="stylesheet" href="query-builder.css">
+  <link rel="stylesheet" href="metadata-maintenance.css?v=20260616-existing-behavior">
+</head>
+<body class="sursum-ui-pending">
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Sursum Dynamic Query - Manutencao de metadados</p>
+      </div>
+      <div class="endpoint-card metadata-context-card">
+        <div class="endpoint-field">
+          <label for="apiCompany">Empresa</label>
+          <input id="apiCompany" placeholder="Selecione a empresa">
+        </div>
+        <input id="apiBaseUrl" type="hidden" value="http://localhost:8890/web/SursumDynamicQuery">
+        <div class="endpoint-field">
+          <label for="dbCombo">Banco de dados</label>
+          <input id="dbCombo">
+        </div>
+        <div class="endpoint-field">
+          <label for="tableName">Tabela</label>
+          <input id="tableName" placeholder="Opcional para manutencao manual">
+        </div>
+        <div class="action-row tight">
+          <button id="reloadTables">Carregar tabelas</button>
+          <button id="openTableBrowser">Navegador</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="wizard-workspace metadata-maintenance">
+      <section class="panel is-active">
+        <div id="metadataTabs">
+          <ul>
+            <li class="k-state-active">Atualizacao em lote</li>
+            <li>View-as manual</li>
+            <li>Join manual</li>
+          </ul>
+
+          <div>
+            <div class="metadata-batch-grid">
+              <div class="metadata-batch-options">
+                <label class="metadata-batch-switch"><span class="switch-label">Atualizar joins OF</span><input id="includeRelations" type="checkbox" checked><span class="switch-control"></span></label>
+                <label class="metadata-batch-switch"><span class="switch-label">Atualizar view-as</span><input id="includeViewAs" type="checkbox" checked><span class="switch-control"></span></label>
+                <label class="metadata-batch-switch"><span class="switch-label">Apenas tabela informada</span><input id="onlyCurrentTable" type="checkbox"><span class="switch-control"></span></label>
+                <div class="endpoint-field batch-parallel-field">
+                  <label for="parallelExecutions">Execucoes simultaneas</label>
+                  <input id="parallelExecutions" type="number" min="1" value="1">
+                </div>
+                <div class="endpoint-field batch-existing-field">
+                  <label for="existingMetadataBehavior">Metadado existente</label>
+                  <input id="existingMetadataBehavior">
+                </div>
+                <div class="action-row tight">
+                  <button id="cancelJob">Cancelar pendentes</button>
+                  <button id="createJob">Criar fila</button>
+                  <button id="runJob">Executar</button>
+                  <button id="pauseJob">Pausar</button>
+                </div>
+                <div id="jobSummary" class="job-summary">Nenhuma fila criada.</div>
+              </div>
+              <div id="jobGrid"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="metadata-grid-toolbar action-row tight">
+              <button id="addViewAs">Incluir view-as</button>
+              <button id="loadViewAs">Recarregar</button>
+            </div>
+            <div id="viewAsGrid"></div>
+          </div>
+
+          <div>
+            <div class="metadata-grid-toolbar action-row tight">
+              <button id="addRelation">Incluir join</button>
+              <button id="loadRelations">Recarregar</button>
+            </div>
+            <div id="relationsGrid"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="wizard-footer">
+      <div></div>
+      <div id="statusBox" class="status-box">Pronto.</div>
+      <div></div>
+    </footer>
+  </div>
+
+  <div id="viewAsWindow" class="metadata-editor-window" style="display:none">
+    <div class="metadata-window-form">
+      <div class="endpoint-field">
+        <label for="viewAsTable">Tabela</label>
+        <input id="viewAsTable" placeholder="Ex.: emitente">
+      </div>
+      <div class="endpoint-field">
+        <label for="viewAsField">Campo</label>
+        <input id="viewAsField" placeholder="Ex.: cod-emitente">
+      </div>
+      <div class="endpoint-field metadata-wide-field">
+        <label for="viewAsValue">View-as</label>
+        <textarea id="viewAsValue" rows="5" placeholder="Ex.: view-as fill-in"></textarea>
+      </div>
+      <div class="action-row tight metadata-window-actions">
+        <button id="saveViewAs">Salvar</button>
+        <button id="cancelViewAs">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="relationWindow" class="metadata-editor-window" style="display:none">
+    <div class="metadata-window-form relation-window-form">
+      <div class="endpoint-field">
+        <label for="leftTable">Tabela esquerda</label>
+        <input id="leftTable">
+      </div>
+      <div class="endpoint-field">
+        <label for="leftField">Campo esquerdo</label>
+        <input id="leftField">
+      </div>
+      <div class="endpoint-field">
+        <label for="rightTable">Tabela direita</label>
+        <input id="rightTable">
+      </div>
+      <div class="endpoint-field">
+        <label for="rightField">Campo direito</label>
+        <input id="rightField">
+      </div>
+      <div class="endpoint-field">
+        <label for="relationType">Tipo</label>
+        <input id="relationType">
+      </div>
+      <div class="action-row tight metadata-window-actions">
+        <button id="saveRelation">Salvar</button>
+        <button id="cancelRelation">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="ui-ready.js?v=20260616-grid-loading"></script>
+  <script src="auth-guard.js"></script>
+  <script src="context-manager.js?v=20260613-environment-ssh-props"></script>
+  <script src="metadata-maintenance.js?v=20260616-context-wait"></script>
+</body>
+</html>

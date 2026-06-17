@@ -1,0 +1,185 @@
+INTEGER function
+   Converts an expression of any data type, with the exception of BLOB, CLOB, and RAW, to a 32-bit integer value of
+   data type INTEGER, rounding that value if necessary.
+
+   Syntax
+
+     INTEGER ( expression )
+
+
+   expression
+                A constant, field name, variable name, or expression. The function behaves as described for the
+                following data types:
+                •   If the value of expression is a CHARACTER, it must be valid for conversion into a number (for
+                    example, "1.67" is valid, "1.x3" is not).
+                •   If expression is an object reference (CLASS), the result is the ABL-generated ID for the class
+                    instance.
+                •   If expression is a reference to an instance of an enum, the result is the underlying numeric value
+                    of that instance. Because the underlying numeric values of enum members are of type INT64, the
+                    function may raise an error if the value cannot be represented as an INTEGER.
+                •   If expression is a LOGICAL, the result is 0 if expression is FALSE and the result is 1 if expression
+                    is TRUE.
+                •   If expression is a DATE, the result is the number of days from 1/1/4713 B.C. to that day. If
+                    expression is the Unknown value (?), the result is the Unknown value (?).
+
+   Example
+   This procedure takes the first word (that is, the substring that precedes the first space character) from the Customer
+   Address and tries to convert it to an integer (street-number). If the conversion fails (for example, the first word contains
+   non-numeric characters) the procedure displays an error message. Otherwise the CustNum, Address, and converted
+   street number are displayed.
+   r-intgr.p
+
+     DEFINE VARIABLE street-number AS INTEGER NO-UNDO LABEL "Street Number".
+
+     FOR EACH Customer NO-LOCK:
+       ASSIGN street-number = INTEGER(ENTRY(1, Customer.Address, " ")) NO-ERROR.
+
+       IF ERROR-STATUS:ERROR THEN
+          MESSAGE "Could not get street number of" Customer.Address.
+       ELSE
+          DISPLAY Customer.CustNum Customer.Address street-number.
+     END.
+
+
+LOGICAL function
+   Converts any data type into the LOGICAL data type.
+
+   Syntax
+
+       LOGICAL ( expression [ , char-expression-format ] )
+
+
+   expression
+                An expression in the data type that you want to convert to logical.
+   char-expression-format
+                A character expression that evaluates to a valid logical format, such as "si/no", or "da/nyet". This
+                argument is ignored unless expression is of CHARACTER type. Also, this argument is only needed
+                if expression evaluates to something other than the usual TRUE or FALSE, or YES or NO values.
+
+   Example
+   The following code fragment illustrates the Logical function:
+
+       DEFINE VARIABLE mychar AS CHARACTER NO-UNDO.
+       DEFINE VARIABLE v-log AS LOGICAL    NO-UNDO.
+
+       mychar = "si".
+
+       v-log = LOGICAL(mychar, "si/no")
+       /* v-log is TRUE */
+
+
+
+   Notes
+   •   If the value of expression is the Unknown value (?), the LOGICAL function returns the Unknown value (?).
+   •   If expression is of type DECIMAL, INTEGER, INT64, DATE, DATETIME, DATTIME-TZ, or HANDLE, the
+       function returns TRUE if the value of expression is nonzero. If the value of expression is 0, it returns FALSE. The
+       second argument is ignored if present.
+   •   If expression is of type LONGCHAR or CHARACTER, it returns TRUE or FALSE depending on the value in the
+       expression and the format used. Whether or not char-expression-format is given, the case-insensitive values TRUE,
+       FALSE, YES, NO, abbreviated to 1 character, are always accepted. For example, a "Y" is interpreted as TRUE.
+   •   If char-expression-format is given, it is validated. If it is not valid, an error message appears and the Unknown value
+       (?) is returned. Otherwise, the format is used to interpret the character string if it is not one of the following: TRUE,
+       FALSE, YES, or NO. For example, LOGICAL ("si", "si/no" ) returns TRUE.
+   •   Data types such as RAW, MEMPTR, LVARBINARY, and so on return the Unknown value (?), but this is not
+       considered an error.
+
+
+Logical values
+   Represent values of logical expressions.
+
+   Syntax
+
+     { [ YES | TRUE ] | [ NO | FALSE ] }
+
+
+   YES | TRUE
+            A value that signifies a valid result for a logical expression.
+   NO | FALSE
+            A value that signifies an invalid result for a logical expression.
+
+   Note
+   You must use these values in a procedure even if alternate values are given in the FORMAT specification for a field or
+   variable.
+
+
+TO-ROWID function
+   Converts a string representation of a ROWID to a valid ROWID value.
+
+   Syntax
+
+     TO-ROWID ( rowid-string )
+
+
+   rowid-string
+               A string representation of a ROWID. Since ROWID values are a variable sequence of hexadecimal
+               digits, rowid-string must be in the form "0xhex-digits", where hex-digits is any string of characters
+               from 0 through 9 and A through F.
+
+   Example
+   The following procedure (r-torwid.p) selects Customer Balance and credit information and displays it in a browse.
+   You can select any number of rows to store and display more information on the selected Customers.
+    r-torwid.p
+
+  DEFINE VARIABLE hcustb AS HANDLE NO-UNDO.
+  DEFINE VARIABLE irow   AS INTEGER NO-UNDO.
+
+  DEFINE QUERY custq FOR Customer.
+  DEFINE BUFFER cust2 FOR Customer.
+
+  DEFINE TEMP-TABLE rowtab FIELD rowchar AS CHARACTER
+    INDEX rowi IS UNIQUE PRIMARY rowchar ASCENDING.
+
+  DEFINE BROWSE custb QUERY custq
+    DISPLAY Customer.CustNum Customer.Name Customer.Balance
+      Customer.CreditLimit WITH 10 DOWN MULTIPLE.
+
+  DEFINE BUTTON bstore   LABEL "Store Selections".
+  DEFINE BUTTON bdisplay LABEL "Display Call Selections".
+  DEFINE BUTTON bclear   LABEL "Clear Storage".
+
+  DEFINE FRAME brs-frame custb SKIP bstore bdisplay bclear.
+  DEFINE FRAME dsp-frame cust2.CustNum cust2.Name cust2.Phone
+    WITH 5 DOWN SCROLL 1.
+
+  ON CHOOSE OF bstore DO:
+    DO irow = 1 TO custb:NUM-SELECTED-ROWS:
+       IF custb:FETCH-SELECTED-ROW(irow) AND
+         NOT CAN-FIND(rowtab WHERE STRING(ROWID(Customer)) = rowchar) THEN DO:
+         CREATE rowtab NO-ERROR.
+         ASSIGN rowchar = STRING(ROWID(Customer)) NO-ERROR.
+       END.
+    END.
+  END.
+
+  ON CHOOSE OF bdisplay DO:
+    CLEAR FRAME dsp-frame ALL.
+    FOR EACH rowtab WITH FRAME dsp-frame:
+       FIND cust2 WHERE ROWID(cust2) = TO-ROWID(rowchar).
+       DISPLAY cust2.CustNum cust2.Name cust2.Phone.
+       DOWN WITH FRAME dsp-frame.
+    END.
+  END.
+
+  ON CHOOSE OF bclear DO:
+    IF custb:DESELECT-ROWS() THEN
+    FOR EACH rowtab:
+       DELETE rowtab.
+    END.
+    FRAME dsp-frame:VISIBLE = FALSE.
+  END.
+
+  OPEN QUERY custq PRESELECT EACH Customer.
+  ENABLE ALL WITH FRAME brs-frame.
+
+  WAIT-FOR WINDOW-CLOSE OF CURRENT-WINDOW.
+
+
+Thus, when you choose the bstore button, r-torwid.p stores the ROWID string values of all selected Customer
+records in a temp-table. When you choose the bdisplay button, it displays the selected Customer Phone information in
+a DOWN frame by converting each stored ROWID string to a ROWID value and finding the corresponding Customer
+record. (The example also allows you to add selections and restart by deleting the existing selections.)
+                                                                                                           
+   Note
+   Although TO-ROWID converts a properly formatted string to a ROWID value, there is no guarantee that this value
+   corresponds to an existing record in your database.
+

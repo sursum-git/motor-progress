@@ -1,0 +1,13 @@
+/*****************************************************************************
+** ped-venda
+** Arquivo: ped-venda ( componente do produto Magnus utilizado pelo EMS)
+*****************************************************************************/
+
+not (can-find (first ped-item use-index ch-item-ped where
+                     ped-item.nome-abrev = ped-venda.nome-abrev and
+                     ped-item.nr-pedcli = ped-venda.nr-pedcli)
+     or
+     can-find (first nota-fiscal use-index ch-pedido where
+                     nota-fiscal.nome-ab-cli = ped-venda.nome-abrev and
+                     nota-fiscal.nr-pedcli = ped-venda.nr-pedcli))
+/* fim */

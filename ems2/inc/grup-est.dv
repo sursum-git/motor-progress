@@ -1,0 +1,14 @@
+/*****************************************************************************
+** grup-estoq.dv
+** Arquivo: grup-estoq  ( componente do produto Magnus utilizado pelo EMS) 
+*****************************************************************************/
+
+not (can-find (first item
+                where item.ge-codigo = grup-estoque.ge-codigo))        and
+not (can-find (first contabiliza
+                where contabiliza.ge-codigo = grup-estoque.ge-codigo)) and
+not (can-find (first contab-est
+                where contab-est.ge-codigo = grup-estoque.ge-codigo)) 
+
+/* fim */
+

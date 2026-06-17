@@ -1,0 +1,29 @@
+{
+  "execution": "sync",
+  "pipeline": [
+    {
+      "type": "source",
+      "payload": "{\"nome\":\"Customer\",\"alias\":\"customer\",\"campos\":\"CustNum,Name,City,State\"}"
+    },
+    {
+      "type": "select",
+      "payload": "{\"fields\":[{\"sourceAlias\":\"customer\",\"field\":\"CustNum\",\"outputAlias\":\"codigo\"},{\"sourceAlias\":\"customer\",\"field\":\"Name\",\"outputAlias\":\"nome\"},{\"sourceAlias\":\"customer\",\"field\":\"City\",\"outputAlias\":\"cidade\"},{\"sourceAlias\":\"customer\",\"field\":\"State\",\"outputAlias\":\"estado\"}]}"
+    },
+    {
+      "type": "filter",
+      "payload": "{\"sourceAlias\":\"customer\",\"field\":\"CustNum\",\"operator\":\">=\",\"value\":\"1\"}"
+    },
+    {
+      "type": "sort",
+      "payload": "{\"fields\":[{\"sourceAlias\":\"customer\",\"field\":\"CustNum\",\"direction\":\"ASC\"}]}"
+    },
+    {
+      "type": "limit",
+      "payload": "{\"page\":1,\"pageSize\":500}"
+    },
+    {
+      "type": "output",
+      "payload": "{\"format\":\"json\"}"
+    }
+  ]
+}

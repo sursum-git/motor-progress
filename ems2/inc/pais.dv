@@ -1,0 +1,19 @@
+/*******************************************************************************
+**   pais.dv  (Magnus I.00)
+**   Arquivo: paises
+*******************************************************************************/
+ 
+not (can-find (first emb-des use-index ch-pais where
+                     emb-des.nome-pais    = pais.nome-pais)
+     or
+     can-find (first reg-ext-pa use-index ch-pais where
+                     reg-ext-pa.nome-pais = pais.nome-pais)
+     or
+     can-find (first decl-pa use-index ch-pais where
+                     decl-pa.nome-pais    = pais.nome-pais)
+     or
+     can-find (first tx-de-pa use-index ch-pais where
+                     tx-de-pa.nome-pais   = pais.nome-pais)
+     or
+     can-find (first navio use-index ch-pais where
+                     navio.nome-pais      = pais.nome-pais))

@@ -1,0 +1,1857 @@
+EXPORT statement
+   Converts data to a standard character format and displays it to the current output destination (except when the current
+   output destination is the screen) or to a named output stream. You can use data exported to a file in standard format as
+   input to other ABL procedures.
+
+   Syntax
+
+       EXPORT [ STREAM stream | STREAM-HANDLE handle ] [ DELIMITER character ]
+          {expression...
+             | record [ EXCEPT field... ]
+           }
+         [ NO-LOBS ]
+
+
+
+       EXPORT [ STREAM stream | STREAM-HANDLE handle ] { memptr | longchar }
+
+
+   STREAM stream
+          The name of a stream. If you do not name a stream, the AVM uses the unnamed stream. See the
+          DEFINE STREAM statement on page 395 reference entry and the topics on alternate I/O sources in
+          OpenEdge Programming Interfaces for more information on streams.
+   STREAM-HANDLE handle
+          Specifies the handle to a stream. If handle it is not a valid handle to a stream, the AVM generates a
+          run-time error. Note that stream handles are not valid for the unnamed streams. See the topics on
+          alternate I/O sources in OpenEdge Programming Interfaces for more information on streams and
+          stream handles.
+   DELIMITER character
+             The character to use as a delimiter between field values. The character parameter must be a quoted
+             single character. The default is a space character.
+             If you specify more than one character as a delimiter, ABL uses the first character as the delimiter.
+expression . . .
+           One or more expressions that you want to convert into standard character format for display to an
+           output destination.
+record
+             The name of the record buffer with fields that you want to convert into the standard character format
+             to display to an output destination.
+             To use EXPORT with a record in a table name used in multiple databases, you must qualify the record's
+             table name with the database name. See the record definition in the Record phrase on page 864 reference
+             entry for more information.
+EXCEPT field . . .
+             The AVM exports all fields except those fields listed in the EXCEPT phrase.
+             Note: The EXCEPT phrase does not support individual elements of an array. If an array element is
+             specified in the EXCEPT phrase, the entire array is omitted from the export, not just the element
+             specified.
+memptr
+             A variable of data type MEMPTR that contains the data to export.
+longchar
+             A variable of data type LONGCHAR that contains the data to export.
+NO-LOBS
+             Directs the AVM to ignore large object data when exporting records that contain BLOB or CLOB
+             fields.
+
+Examples
+This procedure converts the data in the Customer table into standard character format and sends that data to the customer.d
+file:
+r-exprt.p
+
+  OUTPUT TO customer.d.
+  FOR EACH Customer NO-LOCK:
+    EXPORT Customer.
+  END.
+  OUTPUT CLOSE.
+
+
+The next procedure shows how each EXPORT statement creates one line of data (that is, fields are not wrapped onto
+several lines):
+r-exprt2.p
+
+  OUTPUT TO custdump.
+  FOR EACH Customer NO-LOCK:
+    EXPORT Customer.CustNum Customer.Name Customer.CreditLimit.
+  END.
+  OUTPUT CLOSE.
+
+That procedure creates a text file, custdump, with one line for each Customer. This is a typical line of output:
+
+  1 "Lift Line Skiing" 58400
+
+
+Use the DELIMITER option to specify a character other than a space to separate fields in the output file. For example,
+the following procedure uses a semicolon:
+r-cstout.p
+
+  OUTPUT TO custdump2.
+  FOR EACH Customer NO-LOCK:
+    EXPORT DELIMITER ";" Customer.CustNum Customer.Name Customer.CreditLimit.
+  END.
+  OUTPUT CLOSE.
+
+
+This is a typical line of output from this code:
+
+  1;"Lift Line Skiing";58400
+
+
+The following example uses the EXCEPT phrase to exclude a field from the export:
+
+  DEFINE TEMP-TABLE tt1
+    FIELD f1 AS INTEGER              INITIAL       1
+    FIELD f2 AS INTEGER              INITIAL       2
+    FIELD f3 AS INTEGER              INITIAL       3
+    FIELD f4 AS INTEGER              INITIAL       4.
+  CREATE tt1.
+
+  OUTPUT TO "tt1.txt".
+
+  EXPORT tt1 EXCEPT f2. //exports 1 3 4
+
+  OUTPUT CLOSE.
+
+
+The following example displays using a MEMPTR to EXPORT mixed character and binary data:
+r-expmem.p
+
+  /* Character and binary data mixed */
+  DEFINE VARIABLE z AS MEMPTR NO-UNDO.
+
+  ASSIGN
+    SET-SIZE(z)                 =   100
+    PUT-STRING(z,1)             =   "hi there"
+    PUT-LONG(z,10)              =   235
+    PUT-STRING(z,14)            =   "afterint"
+    PUT-LONG(z,22)              =   76.
+
+  OUTPUT TO abc BINARY NO-CONVERT.
+  EXPORT z.
+  OUTPUT CLOSE.
+
+Notes
+•   The EXPORT statement must follow an OUTPUT TO statement on page 767, which redirects the output destination.
+•   Other procedures can use the data exported with the EXPORT statement as input by reading the file with the INSERT,
+    PROMPT-FOR, SET, UPDATE or IMPORT statements, or BUFFER-IMPORT() or BUFFER-IMPORT-FIELDS()
+    methods, naming one field or variable to correspond to each data element.
+•   The data is in a standard format to be read back into ABL. All character fields are enclosed in quotes ("") and
+    quotes contained in the data you are exporting are replaced by two quotes (""). A single space separates one field
+    from the next. An Unknown value (?) is displayed as an unquoted question mark (?).
+•   There are no trailing blanks, leading zeros, or formatting characters (for example, dollar signs) in the data.
+•   ABL exports logical fields as the value YES or NO.
+•   A Format phrase with an EXPORT statement is ignored.
+•   If you use a single qualified identifier with the EXPORT statement, the Compiler first interprets the reference as
+    dbname.tablename. If the Compiler cannot resolve the reference as dbname.tablename, it tries to resolve it as
+    tablename.fieldname.
+•   When exporting fields, you must use table names that are different from field names to avoid ambiguous references.
+    See the Record phrase on page 864 reference entry for more information.
+•   When exporting RECID fields, you must explicitly state the RECID field name in the EXPORT statement.
+•   When exporting ROWID variables or fields in a work table, you must convert the ROWID variable or field to a
+    character string using the STRING function.
+•   When exporting a LONGCHAR variable, the code page name is written to the header of the export file.
+•   Never use APPEND while exporting a LONGCHAR variable.
+•   When exporting records that contain a BLOB or CLOB field, the AVM creates a separate object data file with the
+    code page embedded in the filename and with a file extension of .blb. The filename is stored in the BLOB or
+    CLOB field of the exported record. (When importing records that contain a BLOB or CLOB field, the AVM uses
+    this filename to locate the object data file associated with each record.) If the BLOB or CLOB field contains the
+    Unknown value (?), the AVM stores the Unknown value (?) in the BLOB or CLOB field of the exported record,
+    and does not create an object data file. If the BLOB or CLOB field contains a zero-length object, the AVM creates
+    a zero-length object data file.
+    The AVM raises the ERROR condition if an object data file cannot be created.
+•   When dealing with Unicode CLOB and LONGCHAR variables, avoid using the EXPORT statement. The AVM uses
+    the UTF-8 codepage for all Unicode EXPORTs. Use the COPY-LOB statement to avoid this conversion.
+•   The EXPORT statement creates large object data files in the directory specified as the output destination in the
+    OUTPUT TO statement, by default. You can use the LOB-DIR option on the OUTPUT TO statement to specify the
+    directory in which the EXPORT statement creates the BLOB and CLOB data files.
+•   Use the NO-LOBS option with the EXPORT statement to ignore large object data when exporting records that contain
+    BLOB or CLOB fields. When you specify the NO-LOBS option, the AVM stores the Unknown value (?) in the
+    BLOB or CLOB field of the exported records and does not create the associated object data files.
+•   When exporting DATETIME and DATETIME-TZ data, the data format is fixed and conforms to the ISO 8601
+    standard for date/time representations (YYYY-MM-DDTHH:MM:SS.SSS+HH:MM). For DATETIME, there is no
+    time zone offset.
+•   If you use the DELIMITER option of the EXPORT statement to specify a delimiter other than a space character, you
+    must specify the same delimiter character in a subsequent IMPORT statement that loads the data.
+•   EXPORT is sensitive to the Date format (-d), Century (-yy), and European numeric (-E) startup parameters. When
+    loading data with the IMPORT statement, use the same settings that you used with the EXPORT statement.
+•   In the MEMPTR version of the EXPORT statement, the MEMPTR's size will determine how much is written to the
+    file. If the size of a MEMPTR is 100, and it only contains a string of length 10, the entire 100 bytes will still be
+    written to the file. The PUT-BYTES statement and GET-BYTES function may be used to move portions of MEMPTRs
+    to areas with varying sizes.You can read and write parts of a file by using MEMPTRs of varying sizes, and multiple
+    EXPORT/IMPORT statements on the same file.
+
+
+
+INPUT CLEAR statement
+   Clears any keystrokes buffered from the keyboard, discarding any type-ahead characters. The INPUT CLEAR statement
+   is useful when you want to make sure the AVM clears out extra characters in the input statement that could follow a
+   field entry that is too long.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       INPUT CLEAR
+
+
+
+   Example
+   This menu procedure tests each key the user presses. If the user presses a key other than 1, 2, or 3, the AVM clears the
+   keyboard buffer and displays a message.
+                                                                                                    
+   r-inclr.p
+
+       DISPLAY
+         "      Please choose     "           SKIP
+         " 1 Run order entry      "           SKIP
+         " 2 Run receivables      "           SKIP
+         " 3 Exit                 "           WITH CENTERED FRAME menu.
+       REPEAT:
+         READKEY.
+         IF LASTKEY = KEYCODE("1")            THEN RUN ordentry.
+         ELSE
+         IF LASTKEY = KEYCODE("2")            THEN RUN receive.
+         ELSE
+         IF LASTKEY = KEYCODE("3")            THEN QUIT.
+         ELSE DO:
+            MESSAGE "Sorry, that is           not a valid choice".
+            INPUT CLEAR.
+         END.
+       END.
+
+
+
+   Notes
+   •   In Windows, the keyboard type-ahead buffer can contain a maximum of 16 characters.
+   •   If the current input source is not the keyboard, the INPUT CLEAR statement has no effect.
+   •   INPUT CLEAR is available in Windows character and non-Windows GUI or character platforms.
+
+   
+
+
+INPUT CLOSE statement
+   Closes the default input source or the stream you name.
+
+   Syntax
+
+       INPUT [ STREAM stream | STREAM-HANDLE handle ] CLOSE
+
+
+   STREAM stream
+          Specifies the name of a stream. If you do not name a stream, the AVM uses the unnamed stream. See
+          the DEFINE STREAM statement on page 395 reference entry and OpenEdge Programming Interfaces
+          for more information on streams.
+   STREAM-HANDLE handle
+          Specifies the handle to a stream. If handle it is not a valid handle to a stream, the AVM generates a
+          run-time error. Note that stream handles are not valid for the unnamed streams. See the topics on
+          alternate I/O sources in OpenEdge Programming Interfaces for more information on streams and
+          stream handles.
+
+   Example
+   Instead of getting input from the terminal, the following procedure gets input from a file named r-in.dat. The
+   SEARCH function determines the full pathname of this file.
+                                                                                                        
+
+   r-in.p
+
+       INPUT FROM VALUE(SEARCH("r-in.dat")).
+
+       REPEAT:
+         PROMPT-FOR Customer.CustNum Customer.CreditLimit.
+         FIND Customer USING INPUT Customer.CustNum.
+         ASSIGN Customer.CreditLimit.
+       END.
+
+       INPUT CLOSE.
+
+
+   Here is what the contents of the r-in.dat file looks like:
+
+       1 55800
+       2 41300
+       5 88000
+
+
+   The PROMPT-FOR statement uses the first data item (1) as the CustNum and the second data item (55800) as the
+   CreditLimit. The FIND statement finds the Customer whose CustNum is 1 and assigns the value of 55800 as that
+   Customer's credit limit. On the next iteration of the REPEAT block, the PROMPT-FOR statement uses the value of 2
+   as the CustNum the value of 41300 as the CreditLimit, etc.
+   The INPUT CLOSE statement closes the input source, resetting it to the terminal. When you run this procedure, the
+   data in the window is simply an echo of the data as the procedure is reading it in from the taxno.dat file. If you do
+   not want to display the data, add the word NO-ECHO to the end of the INPUT FROM statement.
+
+   Notes
+   •   The default input source is the terminal unless the procedure was called by another procedure. In that case, the default
+       input source is the one that was active in the calling procedure when the second procedure was called.
+   •   When a procedure ends, the AVM closes all input sources established in that procedure.
+   •   For more information on input sources, see OpenEdge Programming Interfaces.
+
+  
+
+
+INPUT FROM statement
+   Specifies the new input source for a stream.
+Syntax
+
+  INPUT [ STREAM stream | STREAM-HANDLE handle ] FROM
+    {    opsys-file
+       | opsys-device
+       | TERMINAL
+       | VALUE ( expression )
+       | OS-DIR ( directory ) [ NO-ATTR-LIST ]
+    }
+    [ LOB-DIR { constant | VALUE ( expression ) } ]
+    [ BINARY ]
+    [ ECHO | NO-ECHO ]
+    [ MAP protermcap-entry | NO-MAP ]
+    [ UNBUFFERED ]
+    [     NO-CONVERT
+       | { CONVERT
+               [ TARGET target-codepage ]
+               [ SOURCE source-codepage ]
+            }
+    ]
+
+
+STREAM stream
+       Specifies the name of a stream. If you do not name a stream, the AVM uses the unnamed stream. See
+       the DEFINE STREAM statement on page 395 reference entry and OpenEdge Programming Interfaces
+       for more information on streams.
+STREAM-HANDLE handle
+       Specifies the handle to a stream. If handle it is not a valid handle to a stream, the AVM generates a
+       run-time error. Note that stream handles are not valid for the unnamed streams. See the topics on
+       alternate I/O sources in OpenEdge Programming Interfaces for more information on streams and
+       stream handles.
+opsys-file
+             The absolute or relative pathname of a file that contains the data you want to input. Any relative
+             pathname is relative to the current working directory. Remember that UNIX file names are case
+             sensitive. The pathname can contain Unicode characters. See Internationalize ABL Applications for
+             more information about Unicode.
+opsys-device
+           The name of a UNIX or Windows device.
+TERMINAL
+       Indicates that you want to get input from your terminal. The terminal is the default input source. You
+       cannot use TERMINAL with STREAM.
+VALUE ( expression )
+         An expression whose value is the source where you want to input data. The value can contain Unicode
+         characters.
+OS-DIR (directory)
+         Indicates that you want your input to be the filenames found in directory. The value of directory is a
+         character expression specifying an operating system directory. This value can contain Unicode
+         characters. If directory is not a directory or you do not have permission to read it, then the INPUT
+         statement raises ERROR. Otherwise, the AVM generates the directory list and feeds it back to the
+         calling program through the INPUT stream. An INPUT CLOSE statement discards any unread
+         filenames from the list.
+             Each line read from the input stream is a string composed of three tokens: the file's base name, the
+             file's absolute path name, and an attribute list indicating the file type, which consists of one or more
+             of the characters listed below.
+           You will get one of the following characters:
+           •   F — Regular file or FIFO pipe
+           •   D — Directory
+           •   S — Special device
+           •   X — Unknown file type
+           You might also get one or more of the following characters:
+           •   H — Hidden file
+           •   L — Symbolic link
+           •   P — Pipe file
+           If you specify the NO-ATTR-LIST option, you will not get the attribute list for any line read from
+           the input stream.
+           The two filenames in each input line are in EXPORT format; that is, they are enclosed in quotes and
+           any embedded quotes are doubled. This means that INPUT FROM can process any filename, containing
+           any characters, as long as IMPORT is used to read the input. The two filenames can use Unicode
+           characters.
+NO-ATTR-LIST
+           Omits the attribute list indicating the file type. This can speed up program execution. The following
+           example illustrates this form of the statement:
+
+               INPUT FROM OS-DIR("c:\mydir") NO-ATTR-LIST.
+
+
+LOB-DIR {constant| VALUE ( expression ) }
+        Specifies the directory from which you want the IMPORT statement on page 617 or BUFFER-IMPORT(
+        ) method to read large object data files (such as BLOB and CLOB data files). The constant and
+        expression arguments are character expressions that evaluate to an absolute pathname or a relative
+        pathname (relative to the directory specified for opsys-file).
+           If the specified character expression evaluates to either the Unknown value (?) or a directory that does
+           not exist, or you do not have permission to read the specified directory, the AVM raises the ERROR
+           condition.
+           The LOB-DIR option is valid only when you specify an operating system file as the input data source.
+BINARY
+           Allows all input to be read directly without any conversion or interpretation. By default, NUL (\0)
+           terminates character strings, and other control characters are interpreted as expected for the operating
+           system.
+ECHO
+           Displays all input data on the current output device. Data is echoed by default.
+NO-ECHO
+       Accepts input data without displaying it on the current output device. If you do not use this option,
+       INPUT FROM automatically displays input data on the current output device.
+MAP protermcap-entry | NO-MAP
+           The protermcap-entry value is an entry from the PROTERMCAP file. Use MAP to read from an input
+           stream that uses a different character translation from the current stream. Typically, protermcap-entry
+           is a slash-separated combination of a standard device entry and one or more language-specific add-on
+           entries (MAP laserwriter/french or MAP hp2/spanish/italian, for example). The
+           AVM uses the PROTERMCAP entries to build a translation table for the stream. Use NO-MAP to
+           make the AVM bypass character translation altogether. See Internationalize ABL Applications for
+           more information on PROTERMCAP and national language support.
+UNBUFFERED
+       Reads one character at a time from a normally buffered data source, such as a file. Use the
+       UNBUFFERED option only when you can intermingle the input operations of a UNIX process, invoked
+       with the ABL UNIX statement, with the input that follows the ABL INPUT FROM statement.
+CONVERT
+       Allows you to modify the character conversions occurring between the external file and ABL. By
+       default, the INPUT FROM statement converts characters from the code page specified with the Stream
+       Code Page (-cpstream) parameter to the code page specified with the Internal Code Page
+       (-cpinternal) parameter. If you specify SOURCE source-codepage alone, the conversion accepts
+       source-codepage as the code page name of the external file (instead of -cpstream). If you specify
+       TARGET target-codepage, the conversion accepts target-codepage as the internal code page (instead
+       of -cpinternal). If you specify both SOURCE source-codepage and TARGET target-codepage, it converts
+       characters from the source-codepage to target-codepage (instead of -cpstream to -cpinternal).
+TARGET target-codepage
+           Specifies the target code page of the character conversion (replacing -cpinternal). The name that
+           you specify must be a valid code page name available in the DLC/convmap.cp file (a binary file
+           that contains all of the tables that ABL uses for character management).
+SOURCE target-codepage
+           Specifies the source code page of the character conversion (replacing -cpstream). The name that
+           you specify must be a valid code page name available in the DLC/convmap.cp file (a binary file
+           that contains all of the tables that ABL uses for character management).
+NO-CONVERT
+       Specifies that no character conversions occur between the external file and memory. By default, the
+       INPUT FROM statement converts characters from the -cpstream code page to the -cpinternal code
+       page.
+
+
+Example
+Instead of getting input from the terminal, this procedure gets input from a file named r-in.dat. The SEARCH function
+determines the full pathname of this file.
+r-in.p
+
+  INPUT FROM VALUE(SEARCH("r-in.dat")).
+
+  REPEAT:
+    PROMPT-FOR Customer.CustNum Customer.CreditLimit.
+    FIND Customer USING INPUT Customer.CustNum.
+    ASSIGN Customer.CreditLimit.
+  END.
+
+  INPUT CLOSE.
+
+
+This is what the contents of the r-in.dat file look like:
+
+  1 55800
+  2 41300
+  5 88000
+                                                                                               
+The PROMPT-FOR statement uses the first data item (1) as the CustNum and the second data item (55800) as the
+CreditLimit. The FIND statement finds the customer whose CustNum is 1 and assigns the value of 55800 as that
+Customer's credit limit. On the next iteration of the REPEAT block, the PROMPT-FOR statement uses the value of 2 as
+the CustNum, the value of 41300 as the CreditLimit, etc.
+The INPUT CLOSE statement closes the input source, resetting it to the terminal. When you run this procedure, the
+data in the window is simply an echo of the data that the procedure is reading from the taxno.dat file. If you do not
+want to display the data, add the word NO-ECHO to the end of the INPUT FROM statement.
+
+Notes
+•   To close the current input to a procedure, use the INPUT CLOSE statement. (The input source is automatically
+    closed at the end of the procedure or when another default input source is opened.)
+•   The BINARY option allows you to use the READKEY statement to read control characters from the input source
+    without interpretation. For example, NUL (\0) does not terminate strings, CTRL+Z does not signal EOF, and
+    CTRL+J is not converted to CTRL+M, but their binary values are provided directly.
+•   If the input source and output destination are both the TERMINAL, then ECHO is always in effect.
+•   Use the IMPORT, INSERT, PROMPT-FOR, SET, or UPDATE statements, or the BUFFER-IMPORT() or
+    BUFFER-IMPORT-FIELDS() methods to read data into an ABL procedure. The data is placed into the frame
+    fields referenced in these statements, and, if you use ECHO, then the frame is output to the current output destination.
+    If you use the NO-ECHO option, then the frame is not output. If a subsequent DISPLAY statement causes the frame
+    to appear, then the input data also appears if the frame is not yet in view.
+•   SEEK is not supported in conjunction with the OS-DIR option.
+•   When using the OS-DIR option, the UNBUFFERED option is ignored. OS-DIR always buffers exactly one filename
+    at a time.
+•   If you use the PROMPT-FOR, SET, or UPDATE statement to read data from a file, the FORMAT for the data is ignored.
+    Therefore, if you rely on FORMAT to validate input, you might read invalid characters.
+•   If you use the PROMPT-FOR, SET, or UPDATE statement to read data from a file, and there is a piece of data in
+    each line of the file that you want to disregard, use a caret (^) in the PROMPT-FOR, SET, or UPDATE statement.
+    For more information on this symbol, see the reference entry for any of those statements.
+•   If end of file is reached, the AVM responds as if you pressed ENDKEY.
+•   If a line consisting of a single period is read, that is treated as if you pressed END-ERROR. If the period is in quotes
+    (".") it is treated as an ordinary character.
+•   When you use the INPUT FROM statement to read data from a file, there are two special characters you can use in
+    that data file: tilde (~) and (slash (\) on UNIX, and hyphen (-).
+    If characters in an input file take up more than one physical line, you can use tilde (~) to indicate a line continuation.
+    This is an input file that uses a tilde:
+
+      92 "Match Point Tennis" "66 Homer Ave" "Como" ~
+      "TX" 75431
+      93 "Off the Wall" "20 Leedsville Ave" "Export" "PA" 15632
+
+
+    Do not include a space after the tilde. 
+
+•   You can see that the record containing the tilde was treated as a single input line.
+                                                                                                       
+   •   A hyphen in an input file indicates that you do not want to change the corresponding field in the INSERT,
+       PROMPT-FOR, SET or UPDATE statement. This is the same input file as shown above, including the hyphen:
+
+           92 "Match Point Tennis" - "Como" "TX" 75431
+           93 "Off the Wall" "20 Leedsville Ave" "Export" "PA" 15632
+
+
+       The procedure in the following example uses this file to set records in the customer file. When those records are
+       displayed, the Match Point Tennis address does not change.
+       To enter a literal hyphen from a file, enclose it in quotes ("-").
+   •   In Windows, the data in the input file must have the following characteristics:
+       •   The lines of data in the file are separated by CR-LF pairs.
+       •   There is no CTRL+Z (EOF) embedded in the file.
+   •   For any character conversions to occur, all of the necessary conversion tables must appear in convmap.cp (a binary
+       file that contains all of the tables that ABL uses for character management).
+   •   If you specify a value of "undefined" for either source-codepage or target-codepage, no character conversion is
+       performed.
+   •   If the field being input is MEMPTR, you must use the BINARY and NO-CONVERT mode of operation to prevent
+       your data from becoming corrupted if it contains binary data.
+   •   With the BINARY and NO-CONVERT options, you will not get a translation of new-lines to the appropriate characters
+       for your operating system and there will be no code page conversion between -cpinternal and -cpstream.
+   •   If the field being input is MEMPTR and your MEMPTR contains ASCII data you may want code page conversion.
+       However, you cannot get conversion by using the CONVERT parameter on the MEMPTR. You can get code page
+       conversion by using the MEMPTR with the GET-STRING and CODEPAGE-CONVERT functions and the
+       PUT-STRING statement.
+
+   
+
+
+
+INPUT THROUGH statement
+   Uses the output from a program as the input to an ABL procedure.
+      
+Syntax
+
+  INPUT [ STREAM stream | STREAM-HANDLE handle] THROUGH
+    { program-name | VALUE ( expression ) }
+    [argument | VALUE ( expression ) ] ...
+    [ ECHO | NO-ECHO ]
+    [ MAP protermcap-entry | NO-MAP ]
+    [ UNBUFFERED ]
+    [     NO-CONVERT
+        | { CONVERT
+             [ TARGET target-codepage]
+             [ SOURCE source-codepage]
+          }
+    ]
+
+
+STREAM stream
+       Specifies the name of a stream. If you do not name a stream, the unnamed stream is used. See the
+       DEFINE STREAM statement on page 395 reference entry and OpenEdge Programming Interfaces for
+       more information on streams.
+STREAM-HANDLE handle
+       Specifies the handle to a stream. If handle it is not a valid handle to a stream, the AVM generates a
+       run-time error. Note that stream handles are not valid for the unnamed streams. See the topics on
+       alternate I/O sources in OpenEdge Programming Interfaces for more information on streams and
+       stream handles.
+program-name
+          Represents the name of the program where you are supplying data to an ABL procedure. This can be
+          a standard UNIX command or your own program. The name can contain Unicode characters. See
+          Internationalize ABL Applications for more information about Unicode.
+VALUE ( expression)
+           Specifies an expression whose value is the name of a program where you are supplying data to an
+           ABL procedure. The name of the program can contain Unicode characters.
+           Or, it is an expression whose value is an argument you want to pass to the program. INPUT THROUGH
+           passes the value of expression as a character string.
+argument
+           Represents an argument you want to pass to the program. INPUT THROUGH passes this argument as
+           a character string.
+           If the argument is the literal value echo, no-echo, or unbuffered, enclose it in quotes to prevent the
+           AVM from interpreting that argument as one of the ECHO, NO-ECHO, or UNBUFFERED options for
+           the INPUT THROUGH statement.
+ECHO
+           Displays all input data on the current output destination. Data is echoed by default.
+NO-ECHO
+       Accepts input data without displaying it on the current output device.
+MAP protermcap-entry| NO-MAP
+           The protermcap-entry value is an entry from the PROTERMCAP file. Use MAP to read an input stream
+           that uses a different character translation from the current stream. Typically, protermcap-entry is a
+           slash-separated combination of a standard device entry and one or more language-specific add-on
+           entries (MAP laserwriter/french or MAP hp2/spanish/italian, for example). The
+           AVM uses the PROTERMCAP entries to build a translation table for the stream. Use NO-MAP to
+           make the AVM bypass character translation altogether. 
+UNBUFFERED
+       Reads one character at a time from a normally buffered data source, such as a file. Use the
+       UNBUFFERED option only when the input operations of a UNIX process invoked by the ABL UNIX
+       statement might be intermingled with the input from the ABL statements that follow the INPUT
+       THROUGH statement.
+CONVERT
+       Allows you to modify the character conversions occurring between the UNIX program and ABL. By
+       default, the INPUT THROUGH statement converts characters from the code page specified with the
+       Stream Code Page (-cpstream) parameter to the code page specified with the Internal Code Page
+       (-cpinternal) parameter. If you specify SOURCE source-codepage alone, the conversion accepts
+       source-codepage as the code page name of the UNIX program (instead of -cpstream). If you specify
+       TARGET target-codepage, the conversion accepts target-codepage as the internal code page (instead
+       of -cpinternal). If you specify both SOURCE source-codepage and TARGET target-codepage, it
+       converts characters from the source-codepage to target-codepage (instead of -cpstream to
+       -cpinternal).
+TARGET target-codepage
+            Specifies the target code page of the character conversion (replacing -cpinternal). The name that
+            you specify must be a valid code page name available in the DLC/convmap.cp file (a binary file
+            that contains all of the tables that ABL uses for character management).
+SOURCE target-codepage
+            Specifies the source code page of the character conversion (replacing -cpstream). The name that
+            you specify must be a valid code page name available in the DLC/convmap.cp file (a binary file
+            that contains all of the tables that ABL uses for character management).
+NO-CONVERT
+            Specifies that no character conversions occur between the program and ABL. By default, the INPUT
+            THROUGH statement converts characters from the -cpstream code page to the -cpinternal
+            code page.
+
+Examples
+This procedure uses as its input source the output of the UNIX echo command. Before the command runs, the UNIX
+shell substitutes the process-id number for $$ and the current directory search path for $PATH. The results are then
+echoed and become available as a line of input to ABL. When the IMPORT statement is executed, the line of input from
+echo is read and the values are assigned to the two variables. Those variables can then be used for any purpose. In this
+example, the word echo must be lowercase and the word $PATH must be uppercase, since they both pass to UNIX:
+r-ithru.p
+
+  DEFINE VARIABLE process-id AS CHARACTER NO-UNDO.
+  DEFINE VARIABLE dir-path   AS CHARACTER NO-UNDO
+    VIEW-AS EDITOR SIZE 60 BY 10.
+
+  INPUT THROUGH echo $$ $PATH NO-ECHO.
+
+  SET process-id dir-path WITH FRAME indata NO-BOX NO-LABELS.
+  DISPLAY process-id dir-path FORMAT "x(70)".
+
+  INPUT CLOSE.
+
+When you use INPUT THROUGH, the UNIX program you name is executed as a separate process under its own shell.
+Therefore, the values of shell variables (such as $$) are values from that shell rather than the shell from which the AVM
+executes.
+The following procedure uses INPUT THROUGH twice to get input from the UNIX pwd and ls commands. The pwd
+command supplies the name of the current directory and the ls command supplies the name of each UNIX file in your
+current directory. After the variable fn is set, it displays on the screen.
+r-ithru2.p
+
+    DEFINE VARIABLE dir-name AS CHARACTER NO-UNDO FORMAT "x(64)".
+    DEFINE VARIABLE fn       AS CHARACTER NO-UNDO FORMAT "x(32)".
+
+    FORM fn
+      WITH DOWN FRAME dir-list.
+
+    /* Get the name of the current directory. */
+    INPUT THROUGH pwd NO-ECHO.
+    SET dir-name.
+    INPUT CLOSE.
+
+    /* Use the directory name as a label for fn. */
+    fn:LABEL IN FRAME dir-list = dir-name.
+
+    /* List the directory. */
+    INPUT THROUGH ls NO-ECHO.
+
+    /* For each entry in the directory, read the entry into fn and display it.
+    */
+    REPEAT:
+       SET fn WITH NO-BOX NO-LABELS FRAME indata.
+       DISPLAY fn VIEW-AS TEXT WITH FRAME dir-list.
+       DOWN WITH FRAME dir-list.
+    END.
+
+    INPUT CLOSE.
+
+
+
+Notes
+•   INPUT THROUGH specifies the source for subsequent statements that process input. It does not read any data from
+    the source.
+•   To use the IMPORT, INSERT, PROMPT-FOR, SET, or UPDATE statement, the AVM puts the data in the frame
+    fields referenced in these statements, and if ECHO is in effect, the frame is output to the current output destination.
+    If you use the NO-ECHO option, then the frame is not output. If a subsequent DISPLAY statement causes the frame
+    to display, the input data also displays.
+•   When INPUT THROUGH is closed, the pipe to the UNIX process is also closed.
+•   For any character conversions to occur, all of the necessary conversion tables must appear in convmap.cp (a binary
+    file that contains all of the tables that ABL uses for character management).
+•   If you specify a value of "undefined" for either source-codepage or target-codepage, no character conversion is
+    performed.
+•   For client processes running on UNIX, INPUT THROUGH starts a separate process for the external program from
+    which it takes input. The client keeps track of subprocesses spawned using an in-memory table with a limit of 20
+    entries. Therefore, only 20 subprocesses can be open concurrently. If this limit is exceeded, you will see an error:
+
+      SYSTEM ERROR: MAXSUBP: too many subprocesses. (357)
+
+      To avoid this error, use INPUT CLOSE to remove the subprocess from the in-memory table.
+
+   
+
+INPUT-OUTPUT CLOSE statement
+   Closes a specified or default stream opened by an INPUT-OUTPUT THROUGH statement.
+
+   Syntax
+
+     INPUT-OUTPUT [ STREAM stream | STREAM-HANDLE handle ] CLOSE
+
+
+   STREAM stream
+          The name of the stream you want to close. If you do not name a stream, the AVM closes the default
+          stream used by an INPUT-OUTPUT THROUGH statement.
+   STREAM-HANDLE handle
+          The handle to the stream you want to close. If you do not specify the handle, the AVM closes the
+          default stream used by an INPUT-OUTPUT THROUGH statement.
+
+   Example
+   This procedure uses a C program to recalculate the price of each item in inventory. Specifically, the C program increases
+   the price of each item by 3% or by 50 cents, whichever is greater. The INPUT-OUTPUT THROUGH statement tells
+   the procedure to get its input from, and send its output to, the r-iothru.p procedure. The INPUT-OUTPUT CLOSE
+   statement resets the input source to the terminal and the output destination to the terminal.
+   r-iothru.p
+
+     FOR EACH Item NO-LOCK WHERE Item.ItemNum < 10:
+       DISPLAY Item.ItemNum Item.Price LABEL "Price before recalculation".
+     END.
+
+     INPUT-OUTPUT THROUGH r-iothru UNBUFFERED.
+
+     FOR EACH Item WHERE Item.ItemNum < 10:
+       EXPORT Item.Price.
+       SET Item.Price.
+     END.
+
+     INPUT-OUTPUT CLOSE.
+
+     FOR EACH Item WHERE Item.ItemNum < 10 WITH COLUMN 40:
+       DISPLAY Item.ItemNum Item.Price LABEL "Price after recalculation".
+     END.
+
+
+
+   
+INPUT-OUTPUT THROUGH statement
+   Names a program (process) for the AVM to start. This process is the input source as well as the output destination for
+   the procedure.
+
+   Syntax
+
+     INPUT-OUTPUT [ STREAM stream | STREAM-HANDLE handle ]
+       THROUGH { program-name | VALUE ( expression ) }
+       [ argument | VALUE ( expression ) ] ...
+       [ ECHO | NO-ECHO ]
+       [ MAP protermcap-entry | NO-MAP ]
+       [ UNBUFFERED ]
+       [     NO-CONVERT
+           | { CONVERT
+                 [ TARGET target-codepage ]
+                 [ SOURCE source-codepage]
+             }
+       ]
+
+
+   STREAM stream
+          Specifies the name of a stream. If you do not name a stream, the unnamed stream is used. See the
+          DEFINE STREAM statement on page 395 reference entry and OpenEdge Programming Interfaces for
+          more information on streams.
+   STREAM-HANDLE handle
+          Specifies the handle to a stream. If handle it is not a valid handle to a stream, the AVM generates a
+          run-time error. Note that stream handles are not valid for the unnamed streams. See the topics on
+          alternate I/O sources in OpenEdge Programming Interfaces for more information on streams and
+          stream handles.
+   program-name
+             Identifies the name of the UNIX program where the procedure is getting data and where the procedure
+             is sending data.
+   VALUE ( expression )
+              Represents an expression whose value is the name of a UNIX program where the procedure is getting
+              data and where the procedure is sending data.
+              Or, it is an expression whose value is an argument you want to pass to the UNIX program.
+              INPUT-OUTPUT THROUGH passes the value of expression as a character string.
+   argument
+              Specifies an argument you want to pass to the UNIX program. INPUT-OUTPUT THROUGH passes
+              this argument as a character string.
+              If the argument is the literal value echo, no-echo, or unbuffered, you must enclose it in quotes to
+              prevent the AVM from interpreting that argument as one of the ECHO, NO-ECHO, or UNBUFFERED
+              options for the INPUT-OUTPUT THROUGH statement.
+   ECHO
+              Displays all input data to the unnamed stream. Data is not echoed by default.
+   NO-ECHO                                                                                                  
+            Accepts input data without displaying it on the current unnamed stream. Data is not echoed by default.
+MAP protermcap-entry| NO-MAP
+         The protermcap-entry value is an entry from the PROTERMCAP file. MAP allows you to send output
+         to and receive input from an I/O stream that uses different character translation than the current stream.
+         Typically, protermcap-entry is a slash-separated combination of a standard device entry and one or
+         more language-specific add-on entries (MAP laserwriter/french or MAP hp2/spanish/italian, for
+         example). The AVM uses the PROTERMCAP entries to build a translation table for the stream. Use
+         NO-MAP to make the AVM bypass character translation altogether. See Manage ABL Applications
+         for more information on PROTERMCAP. See Internationalize ABL Applications for more information
+         on national language support.
+UNBUFFERED
+       Reads and writes one character at a time from a normally buffered data source, such as a file. Use the
+       UNBUFFERED option only when the input-output operations of a process invoked by ABL's UNIX
+       statement can be intermingled with the input-output from the ABL statements that follow the
+       INPUT-OUTPUT THROUGH statement. INPUT-OUTPUT THROUGH handles the buffering of data
+       between the ABL procedure and the UNIX program that it invokes. Use the UNBUFFERED option
+       if your procedure invokes any other programs with the UNIX statement.
+CONVERT
+       Allows you to modify the character conversions occurring between the UNIX program and ABL. By
+       default, the INPUT-OUTPUT THROUGH statement converts characters from the Stream Code Page
+       (-cpstream) parameter to the code page specified with the Internal Code Page (-cpinternal) parameter
+       as data received from program-name. As data is passed to program-name, then INPUT-OUTPUT
+       THROUGH converts from the -cpinternal to -cpstream. If you specify SOURCE source-codepage
+       alone, the conversion accepts source-codepage as the code page name of the UNIX program (instead
+       of -cpstream). If you specify TARGET target-codepage, the conversion accepts target-codepage as
+       the internal code page (instead of -cpinternal). If you specify both SOURCE source-codepage and
+       TARGET target-codepage, it converts characters from the source-codepage to target-codepage (instead
+       of -cpstream to -cpinternal).
+TARGET target-codepage
+        Specifies the target code page of the character conversion (replacing -cpinternal). The name that you
+        specify must be a valid code page name available in the DLC/convmap.cp file (a binary file that
+        contains all of the tables that ABL uses for character management).
+SOURCE target-codepage
+        Specifies the source code page of the character conversion (replacing -cpstream). The name that you
+        specify must be a valid code page name available in the DLC/convmap.cp file (a binary file that
+        contains all of the tables that ABL uses for character management).
+NO-CONVERT
+       Specifies that no character conversions occur between the UNIX program and ABL. By default, the
+       INPUT-OUTPUT THROUGH statement converts characters from the -cpstream code page to the
+       -cpinternal code page as data is received from program-name. As data is passed to program-name,
+       then INPUT-OUTPUT THROUGH converts from the -cpinternal to -cpstream.
+
+Examples
+This procedure uses a C program to recalculate the price of each item in inventory. Specifically, the C program increases
+the price of each item by 3% or by 50 cents, whichever is greater. The INPUT-OUTPUT THROUGH statement tells
+the procedure to get its input from, and send its output to, the r-iothru.p procedure. The INPUT-OUTPUT CLOSE
+statement resets the input source to the terminal and the output destination to the terminal.
+                                                                                                        
+r-iothru.p
+
+    FOR EACH Item WHERE Item.ItemNum < 10:
+      DISPLAY Item.ItemNum Item.Price LABEL "Price before recalculation".
+    END.
+
+    INPUT-OUTPUT THROUGH r-iothru UNBUFFERED.
+
+    FOR EACH Item WHERE Item.ItemNum < 10:
+      EXPORT Item.Price.
+      SET Item.Price.
+    END.
+
+    INPUT-OUTPUT CLOSE.
+
+    FOR EACH Item WHERE Item.ItemNum < 10 WITH COLUMN 40:
+      DISPLAY Item.ItemNum Item.Price LABEL "Price after recalculation".
+    END.
+
+
+You can perform this calculation within a single ABL procedure. The C program is used for illustration purposes only.
+Use a UNIX program outside ABL to execute specialized calculations or processing.
+You must unpack the C program from the proguide subdirectory and compile it before you can use it with the
+r-iothru.p procedure. If you do not have a C compiler, do not try this example.
+Following is the C program used by the r-iothru.p procedure:
+r-iothru.c
+
+    #include <stdio.h>
+    #define MAX(a,b)              ( (a < b) ? b : a )
+
+    main( )
+     {
+       float cost;
+
+        /* This is important so that buffering does not   */
+        /* defeat attempts to actually write on the pipe. */
+        setbuf(stdout, (char *) NULL);
+
+
+        while (scanf("%f", &cost) == 1) {
+          /* Here the item cost is manipulated. We are                          */
+          /* increasing the cost by a fixed percentage                          */
+          /* (with a minimum increase), to provide                              */
+          /* an example.                                                        */
+          cost = cost + MAX( 0.03 * cost, .50);
+          printf("%10.2f\n", cost);
+        }
+    }
+
+
+
+Notes
+•   Use EXPORT or PUT, not DISPLAY, to write data to the program.
+•   Use SET to read data from the program.
+•   If you read data from a C program, put an upper limit on how many errors can occur before the program ends. Also
+    remember that if the program prints an error message, that message is sent to ABL as data. You can use fprintf(stderr,...)
+    to display debugging messages to the window, even in the middle of an INPUT-OUTPUT THROUGH operation.
+
+   •   With INPUT-OUTPUT THROUGH in non-interactive mode, an ABL procedure can send information to a UNIX
+       program, and the program can process that information and send the results back to the AVM. Some UNIX utilities
+       you can use in batch mode are wc (word count) and sort.
+       Here are some pointers for using INPUT-OUTPUT THROUGH in this way:
+       •   When the procedure finishes sending data to the program, use the OUTPUT CLOSE statement to reset the standard
+           output stream to the screen. Doing this signals an EOF on the pipe, indicating that the program has received all
+           input. When the procedure has received all data from the program, use the INPUT CLOSE statement to reset the
+           standard input stream. Do not use the INPUT-OUTPUT CLOSE statement, because that closes both pipes at
+           once.
+       •   If you want to use the INPUT-OUTPUT THROUGH statement with a UNIX utility that buffers its output, use
+           the non-interactive approach.
+       •   To signal an EOF, use OUTPUT CLOSE (rather than attempting to send a CTRL+D).
+       When you use INPUT-OUTPUT THROUGH in interactive mode the AVM sends data to the program, and the
+       program sends data back to the AVM, etc.
+       Here are some pointers for using INPUT-OUTPUT THROUGH in this way:
+       •   At the end of the interaction between the procedure and the program, use the INPUT-OUTPUT CLOSE statement
+           to shut down both pipes.
+       •   Be sure that the program you are using does not buffer its output. If the program is a C program, the first line of
+           the program should be "setbuf(stdout, (char *) NULL):". The program should also include "#include <stdio.h>".
+           These tell UNIX that the standard output of the program is unbuffered. If the program does buffer its output, use
+           the batch approach to INPUT-OUTPUT THROUGH as explained in the previous note.
+       •   If the program ends on some condition other than detecting an EOF, make sure that it tells the ABL procedure
+           that it is about to end.
+   •   For any character conversions to occur, all of the necessary conversion tables must appear in convmap.cp (a binary
+       file that contains all of the tables that ABL uses for character management).
+   •   If you specify a value of "undefined" for either source-codepage or target-codepage, no character conversion is
+       performed.
+
+
+LINE-COUNTER function
+   Returns the current line number of paged output as an INTEGER value.
+   The initial value of LINE-COUNTER is 1. At the completion of each DISPLAY statement, the AVM increments
+   LINE-COUNTER by the number of lines that were output in that DISPLAY statement. LINE-COUNTER continues to
+   increase until after at least one line has been printed on a new page.
+   LINE-COUNTER returns a 0 if the output is not paged.
+
+   Syntax
+
+     LINE-COUNTER [ ( stream | STREAM-HANDLE handle ) ]
+
+
+   stream
+               Specifies the name of a stream. If you do not name a stream, the AVM uses the unnamed stream. For
+               more information on streams, see this book's DEFINE STREAM statement on page 395 reference entry
+               and OpenEdge Programming Interfaces.
+   STREAM-HANDLE handle
+          Specifies the handle to a stream. If handle it is not a valid handle to a stream, the AVM generates a
+          run-time error. Note that stream handles are not valid for the unnamed streams. See the topics on
+          alternate I/O sources in OpenEdge Programming Interfaces for more information on streams and
+          stream handles.
+
+   Example
+   This procedure prints a Customer report, categorized by State. At the end of each State category, it tests to see if
+   there are at least four lines left on the page. The LINE-COUNTER function returns the current line number of output.
+   If that number plus four is greater than the total number of lines on the page (returned by the PAGE-SIZE function),
+   then the procedure starts the new page. If there are four or more lines left, the procedure skips a line before printing the
+   next customer record.
+   r-linec.p
+
+     OUTPUT TO PRINTER.
+     FOR EACH Customer BREAK BY Customer.State:
+       DISPLAY Customer.CustNum Customer.Name Customer.Address Customer.City
+          Customer.State.
+       IF LAST-OF(Customer.State) THEN DO:
+          IF LINE-COUNTER + 4 > PAGE-SIZE THEN PAGE.
+          ELSE DOWN 1.
+       END.
+     END.
+
+
+   Notes
+   •   When output is sent to a device other than the terminal screen, the AVM defers displaying a frame until another
+       frame is displayed. That way, if you display the same frame several times consecutively, the AVM performs all those
+       displays at once. Because of this optimization, if the last display fills the page, the value returned by the
+       LINE-COUNTER function can be larger than the page size, even though the next frame is displayed at the start of
+       the new page.
+   •   Use a procedure like this one to verify that output is positioned on the first non-header line of a new page:
+
+         DEFINE VARIABLE newpage AS LOGICAL NO-UNDO INITIAL TRUE.
+
+         DEFINE STREAM output1.
+
+         FOR EACH Customer NO-LOCK:
+           FORM HEADER "Page Header" PAGE-NUMBER(output1) "Line"
+             LINE-COUNTER(output1)
+             WITH FRAME one PAGE-TOP NO-LABELS NO-BOX.
+
+            VIEW STREAM output1 FRAME one.
+            DISPLAY STREAM output1 name PAGE-NUMBER(output1) LINE-NUMBER(output1)
+              WITH NO-LABELS NO-BOX.
+
+           IF new-page THEN
+              DISPLAY STREAM output1 "First Line".
+           newpage = IF LINE-COUNTER(output1) > PAGE-SIZE(output1) THEN
+              TRUE ELSE FALSE.
+         END.
+
+
+OUTPUT CLOSE statement
+   Closes the default output destination or the output stream you name with the STREAM keyword in a prior OUTPUT
+   TO statement on page 767.
+
+   Syntax
+
+       OUTPUT [ STREAM stream | STREAM-HANDLE handle ] CLOSE
+
+
+   STREAM stream
+          Specifies the name of a stream. If you do not name a stream, the AVM uses the unnamed stream. See
+          the DEFINE STREAM statement on page 395 reference entry and the topics on alternate I/O sources
+          in OpenEdge Programming Interfaces for more information on streams.
+   STREAM-HANDLE handle
+          Specifies the handle to a stream. If handle it is not a valid handle to a stream, the AVM generates a
+          run-time error. Note that stream handles are not valid for the unnamed streams. See the topics on
+          alternate I/O sources in OpenEdge Programming Interfaces for more information on streams and
+          stream handles.
+                                                                                                        
+  Example
+  This procedure sends Customer data to a file by using the OUTPUT TO statement. All statements that normally send
+  output to the terminal send output to the file named cust.dat. After all Customer data is written to the file, the
+  OUTPUT CLOSE statement resets the output destination, usually the terminal. The final DISPLAY statement displays
+  "Finished" on the terminal.
+  r-out.p
+
+      OUTPUT TO cust.dat.
+
+      FOR EACH Customer NO-LOCK:
+        DISPLAY Customer.CustNum Customer.Name Customer.Address Customer.Address2
+           Customer.City Customer.State Customer.Country SKIP(2)
+           WITH 1 COLUMN SIDE-LABELS.
+      END.
+
+      OUTPUT CLOSE.
+
+      DISPLAY "Finished".
+
+
+
+  Notes
+  •   The default output destination is the destination that was active when the procedure began. The output destination
+      is usually the terminal unless the current procedure was called by another procedure while a different destination
+      was active.
+  •   A form feed (new page) is automatically output when a PAGED output stream is closed.
+  •   If the output destination is the Windows clipboard, this statement writes all buffered output data to the clipboard in
+      CF-TEXT format and clears the buffer.
+  •   For more information on directing output, see OpenEdge Programming Interfaces.
+
+  
+
+OUTPUT THROUGH statement
+  Identifies a new output destination as the input to a process that the AVM starts.
+
+  Syntax
+
+      OUTPUT [ STREAM stream| STREAM-HANDLE handle ] THROUGH
+        { program-name | VALUE ( expression ) }
+        [ argument | VALUE ( expression ) ] ...
+        [ ECHO | NO-ECHO ]
+        [ MAP protermcap-entry | NO-MAP ]
+        [ PAGED ]
+        [ PAGE-SIZE {constant | VALUE ( expression ) } ]
+        [ UNBUFFERED ]
+        [     NO-CONVERT
+           | { CONVERT
+                  [ TARGET target-codepage ]
+                  [ SOURCE source-codepage ]
+               }
+        ]
+                                                                                                     
+
+STREAM stream
+       The name of a stream. If you do not name a stream, the AVM uses the unnamed stream. See the
+       DEFINE STREAM statement on page 395 reference entry and topics on alternate I/O sources in
+       OpenEdge Programming Interfaces for more information on streams.
+STREAM-HANDLE handle
+       Specifies the handle to a stream. If handle it is not a valid handle to a stream, the AVM generates a
+       run-time error. Note that stream handles are not valid for the unnamed streams. See the topics on
+       alternate I/O sources in OpenEdge Programming Interfaces for more information on streams and
+       stream handles.
+program-name
+          The name of the program to which you are supplying data from a procedure. This can be a standard
+          command or your own program. The name can contain Unicode characters. See Internationalize ABL
+          Applications for more information about Unicode.
+VALUE ( expression )
+         An expression whose value is the name of a UNIX program to which you are supplying data from a
+         procedure. The program name can contain Unicode characters. An expression is also the argument
+         that you want to pass to the UNIX program. OUTPUT THROUGH passes the value of expression as
+         a character string.
+argument
+           An argument you want to pass to the UNIX program. The OUTPUT THROUGH statement passes
+           this argument as a character string.
+           If the argument is the literal value paged, page-size, echo, no-echo, or unbuffered, you must enclose
+           it in quotes to prevent the AVM from using that argument as one of the PAGED, PAGE-SIZE, ECHO,
+           NO-ECHO, or UNBUFFERED options for the OUTPUT THROUGH statement.
+ECHO
+           Sends all input data read from a file to the UNIX program. The AVM echoes data by default.
+NO-ECHO
+       Suppresses the echoing of input data to the UNIX program.
+MAP protermcap-entry | NO-MAP
+         The protermcap-entry is an entry from the PROTERMCAP file. Use MAP to send output to a device
+         that requires different character mappings than those in effect for the current output stream. Typically,
+         protermcap-entry is a slash-separated combination of a standard device entry and one or more
+         language-specific add-on entries (MAP laserwriter/french or MAP hp2/spanish/italian, for example).
+         The AVM uses the PROTERMCAP entries to build a translation table for the stream. Use NO-MAP
+         to make the AVM bypass character translation altogether. See Manage ABL Applications for more
+         information on PROTERMCAP. See Internationalize ABL Applications for more information on
+         national language support.
+PAGED
+           Formats the output into pages.
+PAGE-SIZE {constant | VALUE ( expression ) }
+        Specifies the number of lines per page. The expression is a constant, field name, variable name, or
+        expression whose value is an integer. The default number of lines per page is 56. If you use the
+        TERMINAL option to direct output to the terminal, the default number of lines per page is the number
+        of lines of TEXT widgets that fit on the screen. If you specify a non-zero value for PAGE-SIZE, then
+        the PAGED option is assumed. If you specify PAGE-SIZE 0, the output is not paged.
+UNBUFFERED
+       Writes one character at a time to a normally buffered data source, such as a file. Use the UNBUFFERED
+       option only when you can intermingle your UNIX output (with the ABL UNIX statement) and your
+       ABL output (with the OUTPUT THROUGH statement). That is, the OUTPUT THROUGH statement
+ manages the buffering of output between the ABL procedure the UNIX program that it invokes, but
+            it does not handle the buffering of output to any other programs that the ABL procedure might also
+            invoke.
+CONVERT
+       Allows you to modify the character conversions occurring between the UNIX program and ABL. By
+       default, the OUTPUT TO statement converts characters from the code page specified with the Internal
+       Code Page (-cpinternal) parameter to the code page specified with the Stream Code Page (-cpstream)
+       parameter.
+            If you specify SOURCE source-codepage alone, the conversion accepts source-codepage as the code
+            page name used in the AVM memory (instead of -cpinternal).
+            If you specify TARGET target-codepage, the conversion accepts target-codepage as the code page
+            of the UNIX program (instead of -cpstream).
+            If you specify both SOURCE source-codepage and TARGET target-codepage, it converts characters
+            from the source-codepage to target-codepage (instead of -cpinternal to -cpstream).
+TARGET target-codepage
+        Specifies the target code page of the character conversion (replacing -cpstream). The name that you
+        specify must be a valid code page name available in the DLC/convmap.cp file (a binary file that
+        contains all of the tables that ABL uses for character management).
+SOURCE target-codepage
+        Specifies the source code page of the character conversion (replacing -cpinternal). The name that you
+        specify must be a valid code page name available in the DLC/convmap.cp file (a binary file that
+        contains all of the tables that ABL uses for character management).
+NO-CONVERT
+       Specifies that no character conversions occur between the external file and ABL. By default, the
+       OUTPUT THROUGH statement converts characters from the -cpinternal code page to the -cpstream
+       code page.
+
+Examples
+In this example, the Customer names are displayed. This output is sent as input to the UNIX wc (word count) command.
+The output of wc is directed to the file wcdata using the standard UNIX redirection symbol (>). Finally, the results are
+displayed as three integers that represent the number of lines, words, and characters that were in the data sent to wc.
+r-othru.p
+
+  OUTPUT THROUGH wc > wcdata.
+  /* Word count UNIX utility */
+
+  FOR EACH Customer NO-LOCK:
+    DISPLAY Customer.Name WITH NO-LABELS NO-BOX.
+  END.
+
+  OUTPUT CLOSE.
+  PAUSE 1 NO-MESSAGE.
+  UNIX cat wcdata.
+  UNIX SILENT rm wcdata.
+
+
+The r-othru2.p procedure uses the UNIX crypt program, which accepts lines of data, applies an algorithm based
+on an encryption key and writes the result to the UNIX standard output stream, that can be directed to a file. The output
+from the procedure is directed to crypt, which encrypts the customer names based on the password, mypass. The
+results of the encryption are stored in the ecust file. Then, the AVM decrypts and displays this file.
+
+   r-othru2.p
+
+       OUTPUT THROUGH crypt mypass > ecust.
+
+       FOR EACH Customer NO-LOCK WHERE Customer.CustNum < 10:
+         DISPLAY Customer.Name WITH NO-LABELS NO-BOX.
+       END.
+
+       OUTPUT CLOSE.
+
+       UNIX crypt mypass <ecust.
+
+
+
+   Notes
+   •   When you use the OUTPUT CLOSE statement to close an output destination used by an OUTPUT THROUGH
+       statement, the AVM closes the pipe, waits one second, and then continues.
+   •   For any character conversions to occur, all of the necessary conversion tables must appear in convmap.cp (a binary
+       file that contains all of the tables that ABL uses for character management).
+   •   If you specify a value of "undefined" for either source-codepage or target-codepage, no character conversion is
+       performed.
+   •   For more information on output destinations, see OpenEdge Programming Interfaces.
+
+  
+
+OUTPUT TO statement
+   Specifies the new output destination for a stream.
+                                                                                                      
+Syntax
+
+  OUTPUT [ STREAM stream | STREAM-HANDLE handle ] TO
+    {     PRINTER [ printer-name ]
+       | opsys-file
+       | opsys-device
+       | TERMINAL
+       | VALUE ( expression )
+       | "CLIPBOARD"
+    }
+    [ LOB-DIR { constant | VALUE ( expression ) } ]
+    [ NUM-COPIES { constant | VALUE ( expression ) } ]
+    [ COLLATE ]
+    [ LANDSCAPE | PORTRAIT ]
+    [ APPEND ]
+    [ BINARY ]
+    [ ECHO | NO-ECHO ]
+    [ KEEP-MESSAGES ]
+    [ NO-MAP | MAP protermcap-entry ]
+    [ PAGED ]
+    [ PAGE-SIZE { constant | VALUE ( expression ) } ]
+    [ UNBUFFERED ]
+    [     NO-CONVERT
+       | { CONVERT
+               [ TARGET target-codepage ]
+               [ SOURCE source-codepage ]
+           }
+    ]
+
+
+STREAM stream
+       Specifies the name of a stream. If you do not name a stream, the AVM uses the unnamed stream. See
+       the DEFINE STREAM statement on page 395 reference entry and the topics on alternate I/O sources
+       in OpenEdge Programming Interfaces for more information on streams.
+STREAM-HANDLE handle
+       Specifies the handle to a stream. If handle it is not a valid handle to a stream, the AVM generates a
+       run-time error. Note that stream handles are not valid for the unnamed streams. See the chapter on
+       alternate I/O sources in OpenEdge Programming Interfaces for more information on streams and
+       stream handles.
+PRINTER [ printer-name ]
+        By default, this option sends output to the printer defined in the default print context. Specify a printer
+        name to send output to a specific printer. Specifying a printer name overrides, but does not change,
+        the printer defined in the default print context.
+             When you use this option, it implies that the device you are sending output to is paged, unless you
+             also specify PAGE-SIZE 0.
+             In Windows, you must specify network printers in Universal Naming Convention format. For example:
+
+               \\fs_dev\hplas4
+
+
+             On UNIX, the printer spooling facilities (lp or lpr) are used automatically.
+opsys-file
+             The absolute or relative pathname of a file to which you want to direct output. If you specify a relative
+             pathname, the AVM locates the pathname relative to the current working directory. The pathname can
+             contain up to 255 characters. If a file with the specified pathname already exists, the AVM overwrites
+           it. The pathname can contain Unicode characters. See Internationalize ABL Applications for more
+           information about Unicode.
+opsys-device
+           Represents the name of an operating system device.
+TERMINAL
+       Indicates that you want to direct output to the terminal. The terminal is the default output destination.
+VALUE ( expression )
+         Represents an expression whose value is the destination to which you want to send data. The value
+         can contain Unicode characters.
+"CLIPBOARD"(graphical interfaces only)
+       Specifies the system clipboard as the output destination. The quotes are required.
+LOB-DIR { constant | VALUE ( expression ) }
+        Specifies the directory in which you want the EXPORT statement on page 506 or BUFFER-EXPORT(
+        ) method to write large object data files (such as BLOB and CLOB data files). The constant and
+        expression arguments are character expressions that evaluate to an absolute pathname or a relative
+        pathname (relative to the directory specified in opsys-file).
+           If the specified character expression evaluates to either the Unknown value (?) or a directory that does
+           not exist, or you do not have permission to write to the specified directory, the AVM raises the ERROR
+           condition.
+           The LOB-DIR option is valid only when you specify an operating system file as the output destination.
+NUM-COPIES { constant | VALUE ( expression ) }
+       Specifies the number of copies to print. The constant or expression parameters must evaluate to a
+       positive integer. This option is supported in Windows only, and only with printer drivers that support
+       multi-copy printing. Specifying the number of copies to print overrides, but does not change, the
+       number of copies defined in the default print context.
+           The following statement prints three copies of each output page on the selected printer:
+
+             OUTPUT TO PRINTER NUM-COPIES 3.
+
+
+COLLATE
+       Specifies whether multiple copies of output pages print in collated order. This option is supported in
+       Windows only, and only with printer drivers that support collation.
+LANDSCAPE
+       Specifies a landscape page orientation. This option is supported in Windows only, and only with printer
+       drivers that support landscape page orientation. Specifying a page orientation overrides, but does not
+       change, the page orientation defined in the default print context.
+           The following statement prints three copies of each output page with a landscape orientation on the
+           selected printer:
+
+             OUTPUT TO PRINTER LANDSCAPE NUM-COPIES 3.
+
+
+PORTRAIT
+       Specifies a portrait page orientation. This option is supported in Windows only, and only with printer
+       drivers that support portrait page orientation. Specifying a page orientation overrides, but does not
+       change, the page orientation defined in the default print context.
+APPEND
+           Appends the output to the end of a file.
+BINARY
+           Allows output to be written directly without any conversion or interpretation.
+ECHO
+           Sends all input data read from a file to the output destination. Data is echoed by default.
+NO-ECHO
+       Suppresses the echoing of input data to the output destination.
+KEEP-MESSAGES
+       Causes the following messages not to echo to the default window: ABL error and warning messages,
+       and messages from the MESSAGE statement. If you specify KEEP-MESSAGES, these messages are
+       sent only to the output stream you specify.
+           MESSAGE statements using the VIEW AS ALERT BOX option are an exception. The
+           KEEP-MESSAGES option does not suppress the message box if there is a way available to display it.
+MAP protermcap-entry | NO-MAP
+           The protermcap-entry value is an entry from the PROTERMCAP file. Use MAP to send output to a
+           device that requires different character mappings than those in effect for the current output stream.
+           Typically, protermcap-entry is a slash-separated combination of a standard device entry and one or
+           more language-specific add-on entries (MAP laserwriter/french or MAP
+           hp2/spanish/italian, for example). The AVM uses the PROTERMCAP entries to build a
+           translation table for the stream. Use NO-MAP to make the AVM bypass character translation altogether.
+           See Manage ABL Applications for more information on PROTERMCAP. See Internationalize ABL
+           Applications for more information on national language support.
+PAGED
+           Formats the output into pages. Form feeds are represented by ^L (CTRL+L). When output is PAGED,
+           a page break occurs every 56 lines. PAGED is automatic for output to a printer.
+PAGE-SIZE { constant | VALUE ( expression ) }
+        Specifies the number of lines per page. The expression is a constant, field name, variable name, or
+        expression whose value is an integer. The default number of lines per page is 56. If you are using the
+        TERMINAL option to direct output to the terminal, the default number of lines per page is the number
+        of lines of TEXT widgets that fit in the window. If you specify a non-zero value for n, then the PAGED
+        option is assumed. If you specify PAGE-SIZE 0, the output is not paged in character mode; in a
+        graphical interface, the default page size is used.
+UNBUFFERED
+           Writes one character at a time to a normally buffered data source, such as a file. Use the UNBUFFERED
+           option only when you can intermingle your UNIX output (with the ABL UNIX statement) and your
+           ABL output (with the OUTPUT TO statement). That is, the OUTPUT TO statement manages the
+           buffering of output between the ABL procedure the UNIX program that it invokes, but it does not
+           handle the buffering of output to any other programs that the ABL procedure might also invoke.
+CONVERT
+       Allows you to modify the character conversions occurring between the external file and memory. By
+       default, the OUTPUT TO statement converts characters from the code page specified with the Internal
+       Code Page (-cpinternal) parameter to the code page specified with the Stream Code Page
+       (-cpstream) parameter . If you specify SOURCE source-codepage alone, the conversion accepts
+       source-codepage as the code page name used in memory (instead of -cpinternal). If you specify
+       TARGET target-codepage, the conversion accepts target-codepage as the code page of the external
+       file (instead of -cpstream). If you specify both SOURCE source-codepage and TARGET
+       target-codepage, it converts characters from the source-codepage to target-codepage (instead of
+       -cpinternal to -cpstream).
+TARGET target-codepage
+            Specifies the target code page of the character conversion (replacing -cpstream). The name that
+            you specify must be a valid code page name available in the DLC/convmap.cp file (a binary file
+            that contains all of the tables that ABL uses for character management).
+SOURCE target-codepage
+            Specifies the source code page of the character conversion (replacing -cpinternal). The name
+            that you specify must be a valid code page name available in the DLC/convmap.cp file (a binary
+            file that contains all of the tables that ABL uses for character management).
+NO-CONVERT
+       Specifies that no character conversions occur between the external file and memory. By default, the
+       OUTPUT statement converts characters from the -cpinternal code page to the -cpstream code
+       page.
+
+Examples
+The r-out.p procedure sends Customer data to a file. The OUTPUT TO statement directs subsequent output to a file,
+so all statements that normally send output to the terminal send output to that file. After all the Customer data has been
+displayed to the file, the OUTPUT CLOSE statement resets the output destination to its previous state, usually the
+terminal. The final DISPLAY statement displays Finished on the terminal because that is the new output destination.
+r-out.p
+
+  OUTPUT TO cust.dat.
+
+  FOR EACH Customer NO-LOCK:
+    DISPLAY Customer.CustNum Customer.Name Customer.Address Customer.Address2
+       Customer.City Customer.State Customer.Country SKIP(2)
+       WITH 1 COLUMN SIDE-LABELS.
+  END.
+
+  OUTPUT CLOSE.
+  DISPLAY "Finished".
+
+
+The r-termpg.p procedure sends Customer data to the terminal. The OUTPUT TO TERMINAL PAGED statement
+directs output to the terminal in a paged format; all statements send output to the terminal one page at a time.
+     r-termpg.p
+
+    DEFINE VARIABLE ix AS INTEGER NO-UNDO.
+
+    OUTPUT TO TERMINAL PAGED.
+
+    FOR EACH Customer NO-LOCK BREAK BY Customer.SalesRep:
+      FIND SalesRep OF Customer NO-LOCK.
+      FORM HEADER TODAY
+        "Customer Listing For " TO 43
+        "Page " TO 55 PAGE-NUMBER - ix TO 58 FORMAT "99"
+        (SalesRep.RepName) FORMAT "x(30)" AT 25
+        WITH FRAME hdr PAGE-TOP CENTERED.
+      VIEW FRAME hdr.
+      DISPLAY Customer.CustNum COLUMN-LABEL "Customer!Number"
+        Customer.Name LABEL "Name"
+        Customer.Phone COLUMN-LABEL "Phone!Number" WITH CENTERED.
+      IF LAST-OF(Customer.SalesRep) THEN DO:
+        ix = PAGE-NUMBER.
+        PAGE.
+      END.
+    END. /* FOR EACH Customer */
+
+    OUTPUT CLOSE.
+
+
+
+Notes
+•   Any ABL statement or construct with the option to output data to a stream can write to the stream specified by this
+    statement.
+•   The OUTPUT TO TERMINAL statement is the default unless the procedure was called by another procedure while
+    a different output destination was active. The output destination at the beginning of the procedure is the current
+    output destination of the calling procedure.
+•   The OUTPUT TO TERMINAL PAGED statement clears the screen and displays output on scrolling pages the length
+    of the screen. The AVM pauses before each page header. You can alter the pause using the PAUSE statement.
+•   ABL can display paged output to the terminal for frames that are wider than the width of the screen. The output is
+    wrapped.
+•   To send output to a file correctly, you must specify the STREAM-IO option of the Frame phrase for any frame you
+    use to write the file.
+•   If you send data to a file and you plan to use that data file later as input to a procedure, consider using the EXPORT
+    statement on page 506, or the BUFFER-EXPORT() or BUFFER-EXPORT-FIELDS() methods. See the INPUT
+    FROM statement on page 626 reference entry for more information.
+•   If you send output to a device other than the terminal, ROW options in Frame phrases have no effect. ROW options
+    also have no effect when you send output to a PAGED terminal. If you do not use the NO-BOX option with a Frame
+    phrase, the AVM omits the bottom line of the box, converts the top line to blanks, and ignores the sides of the box.
+•   All messages, including compiler error messages and messages produced by the MESSAGE statement, are sent to
+    the current output destination.
+•   If the field being output is MEMPTR, you must use the BINARY and NO-CONVERT mode of operation to prevent
+    your data from becoming corrupted if it contains binary data.
+•   With the BINARY and NO-CONVERT options, you will not get a translation of new-lines to the appropriate characters
+    for your operating system and there will be no code page conversion between -cpinternal and -cpstream.
+•   If the field being output is MEMPTR and your MEMPTR contains ASCII data you may want code page conversion.
+    However, you cannot get conversion by using the CONVERT parameter on the MEMPTR. You can get code page
+    conversion by using the MEMPTR with the GET-STRING and CODEPAGE-CONVERT functions and the
+    PUT-STRING statement.
+•   On UNIX, if you want to use a print spooler with spooler options, you can use the Printer (-o) startup parameter to
+    specify the options. See Startup Command and Parameter Reference for more information on the Printer startup
+    parameter.
+•   You must use a printer control sequence to change the number of lines per page produced by your printer.
+•   Unless otherwise specified, the OUTPUT TO PRINTER statement uses the default print context to determine the
+    printer name, number of copies, and page orientation for a print job. If there is no default print context, the AVM
+    uses the printer control settings from the current environment.
+•   Use the SYSTEM-DIALOG PRINTER-SETUP statement to let users change the default print context through the
+    Windows Print dialog box.
+•   Use the PRINTER-NAME attribute of the SESSION system handle to set the printer name in the default print context
+    without user intervention.
+•   In Windows, the OUTPUT TO statement uses the PrinterFont settings in the current environment (either the
+    Registry, or the [Startup] section of the initialization file) to define a font for a print job. The PrintFont settings
+    are similar to the Font settings in the environment and take the following form:
+
+        PrinterFont [ n ] = facename
+           [ , size = screen-point-size ]
+
+
+    OUTPUT TO PRINTER uses the PrinterFont setting. OUTPUT TO LPT n uses the corresponding PrinterFontn
+    entry. The facename parameter in a PrinterFont setting represents any valid Windows font supported on your system.
+    If you specify a font that your printer does not support, printing might take a long time and yield unexpected results.
+    The screen-point-size setting represents the point size, in screen units, for the font. The AVM converts the point size
+    to logical printer units.
+•   OUTPUT TO PRINTER in Windows performs the following processing:
+    •   Checks the default print context. If there is no default print context, the AVM checks the Windows printer control
+        settings from the current environment. If no printer controls are set, the AVM displays an error message and
+        terminates the print operation.
+    •   Checks the current environment (either the Registry, or the [Startup] section of the initialization file) for a
+        PrinterFont setting. If there is a valid PrinterFont setting, the AVM uses the font specified for the print
+        job. If there is no PrinterFont setting or the setting specifies a non-existent font, the AVM uses the default
+        printer font for the job. If there is no point size specified for the font in the PrinterFont setting, the AVM
+        uses the default size for the printer.
+•   OUTPUT TO LPT n in Windows performs the following processing:
+    •   Checks the ports settings in Windows for a definition of the specified LPT port. If there is no definition of the
+        specified port, the AVM displays an error message and terminates the print operation. If multiple definitions
+        exist for a port, the AVM uses the first definition that it finds.
+    •   Checks the current environment (either the Registry, or the [Startup] section in the initialization file) for a
+        corresponding PrinterFontn setting (PrinterFont1 is for LPT1, etc.). If there is a valid corresponding
+        PrinterFontn setting, the AVM uses the font specified for the print job. If there is no corresponding PrinterFontn
+        setting or the setting specifies a non-existent font, the AVM uses the "courier new" font for the job and calculates
+        the font height to fit 60 lines on a page. If there is no point size specified for the font in the PrinterFontn setting,
+        the AVM uses the default size for the printer.
+    •   Defines a header at the top of each page in the output. The size of the header is based upon the following
+        calculation: 1.5 * font-height.
+•   In Windows only, OUTPUT TO "CLIPBOARD" buffers all output to the specified stream until the next OUTPUT
+    CLOSE for that stream. The OUTPUT CLOSE statement then writes the output to the Windows clipboard in CF-TEXT
+    format. You can buffer only up to 64K of data between any stream-related pair of OUTPUT TO "CLIPBOARD"
+    and OUTPUT CLOSE statements. Any additional buffered data is lost.
+    For information on providing additional clipboard reading and writing capabilities to your application, see OpenEdge
+    Programming Interfaces and the CLIPBOARD system handle reference entry.
+
+   •   For any character conversions to occur, all of the necessary conversion tables must appear in convmap.cp (a binary
+       file that contains all of the tables that ABL uses for character management).
+   •   If you specify a value of "undefined" for either source-codepage or target-codepage, no character conversion is
+       performed.
+   •   The OpenEdge ADE toolset provides a portable solution for printing text files. The solution is a procedure called
+       _osprint.p and it is located in the adecomm directory in the OpenEdge product directory (DLC). The
+       _osprint.p procedure sends a specified text file to the default printer as paged output. For more information on
+       the _osprint.p procedure, see OpenEdge Programming Interfaces.
+
+
+PAGE statement
+   Starts a new output page for PAGED output. No action is taken if output is already positioned at the beginning of a
+   page.
+
+   Syntax
+
+       PAGE [ STREAM stream | STREAM-HANDLE handle ]
+
+
+   STREAM stream
+          Specifies the name of a stream where output is paged. If you do not name a stream, the AVM uses the
+          unnamed stream.
+   STREAM-HANDLE handle
+          Specifies the handle to a stream where output is paged. If handle it is not a valid handle to a stream,
+          the AVM generates a run-time error. Note that stream handles are not valid for the unnamed stream.
+
+   Example
+   This procedure prints a customer report, categorized by state, and starts a new page for each state:
+   r-page.p
+
+       DEFINE VARIABLE laststate AS CHARACTER NO-UNDO.
+
+       OUTPUT TO PRINTER.
+       FOR EACH Customer NO-LOCK BY Customer.State:
+         IF Customer.State <> laststate THEN DO:
+            IF laststate <> "" THEN PAGE.   laststate = Customer.State.
+         END.
+         DISPLAY Customer.CustNum Customer.Name Customer.Address Customer.City
+       Customer.State.
+       END.
+
+
+
+   Notes
+   •   If the current output destination is not a paged device (you did not use the PAGED option in the OUTPUT TO
+       statement), the PAGE statement has no effect.
+   •   PAGE has no effect if you are already at the top of a new page.
+   •   If any PAGE-TOP or PAGE-BOTTOM frames are active, they are output prior to the next display.
+   •   For more information on streams and stream handles, see the topics on alternate I/O sources in OpenEdge Programming
+       Interfaces.
+
+   
+
+
+PAGE-NUMBER function
+   Returns the page number of the output destination as an INTEGER value. If the output stream is not paged,
+   PAGE-NUMBER returns a value of 0.
+
+   Syntax
+
+     PAGE-NUMBER [ ( stream | STREAM-HANDLE handle ) ]
+
+
+   stream
+               The name of an output stream. If you do not name a stream, PAGE-NUMBER returns the page number
+               of the default unnamed output stream.
+   STREAM-HANDLE handle
+          The handle to an output stream. If handle it is not a valid handle to a stream, the AVM generates a
+          run-time error.
+
+   Example
+   This procedure creates a customer report with a page number on each page:
+   r-pgnbr.p
+
+     OUTPUT TO pagenum.txt PAGED.
+
+     FOR EACH Customer NO-LOCK:
+       FORM HEADER "Customer report" AT 30
+          "Page:" AT 60 PAGE-NUMBER FORMAT ">>9" SKIP(1).
+       DISPLAY Customer.CustNum Customer.Name Customer.Address Customer.City
+          Customer.State Customer.Country.
+     END.
+
+
+
+   
+
+PAGE-SIZE function
+   Returns the page size (lines per page) of an output destination as an INTEGER value. If the output stream is not paged,
+   PAGE-SIZE returns a value of 0.
+
+   Syntax
+
+     PAGE-SIZE [ ( stream | STREAM-HANDLE handle ) ]
+
+
+   stream
+               The name of an output stream. If you do not name a stream, PAGE-SIZE returns the page size of the
+               default unnamed output stream.
+   STREAM-HANDLE handle                                                                                        
+
+                The handle to an output stream. If handle it is not a valid handle to a stream, the AVM generates a
+                run-time error.
+
+   Example
+   This procedure prints a customer report categorized by state. At the end of each state category, it tests to see if there are
+   at least four lines left on the page. The LINE-COUNTER function returns the current line number of output. If that
+   number plus four is greater than the total number of lines on the page (returned by the PAGE-SIZE function), then the
+   procedure skips to a new page. If there are four or more lines left, the procedure skips a line before printing the next
+   customer record.
+   r-pgsize.p
+
+     OUTPUT TO PRINTER.
+
+     FOR EACH Customer NO-LOCK BREAK BY Customer.State:
+       DISPLAY Customer.CustNum Customer.Name Customer.Address Customer.City
+          Customer.State.
+       IF LAST-OF(Customer.State) THEN DO:
+          IF LINE-COUNTER + 4 > PAGE-SIZE THEN PAGE.
+          ELSE DOWN 1.
+       END.
+     END.
+
+
+
+PUT statement
+   Sends the value of one or more expressions to an output destination other than the terminal.
+                                                                                                 
+Syntax
+
+  PUT
+    [ STREAM stream | STREAM-HANDLE handle ]
+    [ UNFORMATTED ]
+    [{expression
+           [ FORMAT string ]
+           [{ AT | TO }expression ]
+         }
+      | SKIP [ ( expression ) ]
+      | SPACE [ ( expression ) ]
+    ]...
+
+
+
+  PUT [ STREAM stream | STREAM-HANDLE handle ] CONTROL expression...
+
+
+STREAM name
+       Specifies the name of a stream. If you do not name a stream, the AVM uses the unnamed stream. See
+       the DEFINE STREAM statement on page 395 reference entry and topics on alternate I/O sources in
+       OpenEdge Programming Interfaces for more information on streams.
+STREAM-HANDLE handle
+       Specifies the handle to a stream. If handle it is not a valid handle to a stream, the AVM generates a
+       run-time error. Note that stream handles are not valid for the unnamed streams. See the topics on
+       alternate I/O sources in OpenEdge Programming Interfaces for more information on streams and
+       stream handles.
+UNFORMATTED
+      Tells the AVM to display each expression in the same format produced by the EXPORT statement,
+      but without quotes.
+expression
+             Specifies a constant, field name, variable name, or expression.
+FORMAT string
+       The format in which you want to display the expression. If you do not use the FORMAT option, the
+       AVM uses the defaults shown in the following table.
+       Table 57: Default display formats
+
+             Type of expression         Default format
+             Field                      Format from Dictionary
+             Variable                   Format from variable definition
+             Constant character         Length of character string
+             Other                      Default format for the data type of the expression
+
+
+             The following table shows the default formats for other expressions.
+             Table 58: Default data type display formats
+
+             Data type                             Default display format
+             CHARACTER                             x(8)
+             CLASS and ENUM                        >>>>>>9
+                  DATETIME                               99/99/9999 HH:MM:SS.SSS
+                  DATETIME-TZ                            99/99/9999 HH:MM:SS.SSS+HH:MM
+                  DECIMAL                                ->>,>>9.99
+                  HANDLE                                 >>>>>>9
+                  INT64                                  ->,>>>,>>9
+                  INTEGER                                ->,>>>,>>9
+                  LOGICAL                                yes/no
+                                     
+                  LONGCHAR                               See footnote.
+                                
+                  MEMPTR                                 See footnote.
+                  RAW58                                  See footnote.
+                  RECID                                  >>>>>>9
+                           
+                  ROWID                                  See footnote.
+
+
+     AT expression
+               Specifies the column position where you want to place the output value. If that position has already
+               been used on the current line, PUT skips to the next line and puts the expression in the specified
+               column.
+     TO expression
+               Specifies the column position where you want to end the output value being output. If that position
+               has already been used on the current line, PUT skips to the next line and puts the expression in the
+               specified column.
+     SKIP [ ( expression ) ]
+                Specifies the number of new lines you want to output. If you do not use the SKIP option, PUT will
+                not start a new line to the output stream. If you use the SKIP parameter, but do not specify expression
+                (or if expression is 0), the AVM starts a new line only if output is not already positioned at the beginning
+                of a new line.
+     SPACE [ ( expression ) ]
+               Specifies the number of spaces you want to output. Spaces are not placed between items being PUT
+               unless you use the SPACE option.
+     CONTROL expression
+            The expression specifies a control sequence that you want to send without affecting the current line,
+            page counters, and positions maintained within ABL. Following CONTROL, expression can be a
+            character-string expression or a RAW variable. It can include null character constants of the form
+            NULL or NULL( expression ), where expression specifies the number of NULLs to send. See the
+            Notes section in this reference entry for details.
+
+
+
+
+
+Example
+This procedure creates a text file that contains the names of each customer. The names are separated from each other
+by a slash (/). The entire file consists of one long line.
+r-put.p
+
+    DEFINE STREAM s1.
+
+    OUTPUT STREAM s1 TO cus.dat.
+
+    FOR EACH Customer NO-LOCK:
+      PUT STREAM s1 name "/".
+    END.
+
+    OUTPUT STREAM s1 CLOSE.
+
+
+
+Notes
+•   In the AT, TO, SKIP, and SPACE options, if expression is less than or equal to 0, the AVM disregards the option.
+•   The PUT statement never automatically starts a new line. You must use SKIP to explicitly start a new line.
+•   The PUT statement uses the default display format for the data type of the field or variable you name in the PUT
+    statement. The PUT statement does not overwrite an area that is already used by a previous format when it displays
+    data. For example:
+
+      DEFINE VARIABLE myname AS CHARACTER NO-UNDO FORMAT "x(8)".
+      DEFINE VARIABLE mynum AS CHARACTER NO-UNDO FORMAT "x(8)".
+
+      ASSIGN
+        myname = "abc"
+        mynum = "123".
+
+      OUTPUT TO myfile.
+      PUT myname AT 8 mynum AT 12.
+      OUTPUT CLOSE.
+
+
+
+      abc
+      123
+
+
+    Use the UNFORMATTED option with the PUT statement to override the format-sensitive display.
+•   You can use the NULL keyword to output null characters (\0) in a control sequence. For example, the following
+    statements write the control sequence ESC A \0 and 20 NULLs to output stream A:
+
+      PUT STREAM A CONTROL "~033A" NULL.
+      PUT STREAM A CONTROL NULL(20).
+
+
+•   You can use the PUT statement with an object reference for a class or enum instance. The PUT statement implicitly
+    calls the ToString( ) method of the class to convert the specified object reference to a character value before it sends
+    the value to the output destination. In the case of an enum instance, the character value will be the appropriate
+    enumeration member or a comma-delimited list of members in the case of a flag enum with multiple flags set.
+
+SEEK function
+   Returns the offset of the file pointer in a text file as an INT64 value. You define a procedure variable to hold the offset
+   value and later position the file to that offset.
+
+   Syntax
+
+     SEEK ( { INPUT | OUTPUT | name | STREAM-HANDLE handle} )
+
+
+   INPUT
+               If you specify INPUT, the SEEK function returns the current position of the file pointer in the unnamed
+               input stream.
+   OUTPUT
+               If you specify OUTPUT, the SEEK function returns the current position of the file pointer in the
+               unnamed output stream.
+   name
+               If you specify SEEK (name), the SEEK function returns the current position of the file pointer in the
+               named input or output stream. The stream must be associated with an open file, or SEEK returns the
+               Unknown value (?).
+   STREAM-HANDLE handle
+          If you specify the handle to a stream, the SEEK function returns the current position of the file pointer
+          in the stream. If handle it is not a valid handle to a stream, the AVM generates a run-time error.
+
+   Example
+   This procedure shows how you can use the SEEK function to access data in an text file. Using SEEK this way allows
+   you to index into a non-indexed file.
+   r-seek1.p
+
+     DEFINE VARIABLE itemno NO-UNDO LIKE Item.ItemNum.
+     DEFINE VARIABLE itdesc NO-UNDO LIKE Item.ItemName.
+     DEFINE VARIABLE m-pos AS INT64 NO-UNDO.
+
+     SET itemno LABEL
+       "Select a record number to position the output file" WITH SIDE-LABELS.
+     OUTPUT TO test.fil.
+     FIND Item NO-LOCK WHERE Item.ItemNum = itemno.
+     IF Item.ItemNum = itemno THEN
+       m-pos = SEEK(OUTPUT).
+     EXPORT Item.ItemNum Item.ItemName.
+     OUTPUT CLOSE.
+
+     INPUT FROM test.fil.
+     SEEK INPUT TO m-pos.
+     SET itemno itdesc WITH FRAME d2.
+     INPUT CLOSE.
+
+   In the example, you are prompted to select an Item number to position the output file. When a record is found with that
+   Item number, the SEEK function returns the offset into the variable m-pos. The value for m-pos is the current value
+   of the file pointer. The SEEK statement uses the value in m-pos to position the file pointer in the unnamed input stream.
+
+   Notes
+   •   The first byte in a file is byte 0.
+   •   You cannot use the SEEK function with the INPUT THROUGH statement, the INPUT-OUTPUT THROUGH
+       statement, or the OUTPUT THROUGH statement. When used with one of these statements, the SEEK function
+       returns the Unknown value (?).
+   •   After you assign the value of the SEEK function to a procedure variable, you can use that value to reposition the file
+       in the event of an error.
+   •   For more information on streams, see the topics on alternate I/O sources in OpenEdge Programming Interfaces.
+
+   
+
+
+SEEK statement
+   Positions the file pointer to a user-defined offset in a text file. This statement does not require you to close and reopen
+   the file.
+
+   Syntax
+
+       SEEK
+         { INPUT | OUTPUT | STREAM stream | STREAM-HANDLE handle}
+         TO {expression| END }
+
+
+   INPUT
+               If you specify INPUT, the SEEK statement positions the file pointer in the unnamed input stream.
+   OUTPUT
+               If you specify OUTPUT, the SEEK statement positions the file pointer in the unnamed output stream.
+   STREAM stream
+          If you specify STREAM stream, the SEEK statement positions the file pointer in the named input or
+          output stream. If you do not name a stream, the AVM uses the unnamed stream.
+   STREAM-HANDLE handle
+          If you specify the handle to a stream, the SEEK statement returns the current position of the file pointer
+          in the stream. If handle it is not a valid handle to a stream, the AVM generates a run-time error.
+   TO expression
+             An expression whose value is INT64 that indicates the byte location to position the file pointer. If
+             expression equals 0, the file pointer is positioned to the first byte in the file. If you want to position
+             the pointer to the last byte in the file, but you do not know the offset, use END.
+   END
+               Positions the pointer to the last byte in the file.
+
+   Example
+   Since text file formats differ on each machine, the SEEK function does not necessarily return a number that is meaningful
+   to anyone, but it is meaningful to the SEEK statement. With the exception of SEEK to 0 or SEEK TO END, any address
+  used in the SEEK statement is only guaranteed to behave consistently if the address was previously derived from the
+   SEEK function. Therefore, an expression such as SEEK TO SEEK (INPUT) -n might work differently on different
+   operating systems. Record delimiters must be new-lines on UNIX, and carriage-return/linefeed pairs on all others.
+   r-seek.p
+
+       /* This procedure seeks to the end-of-file, collects the seek address, and
+          writes a record. The record is subsequently retrieved using the SEEK
+          statement on the stashed seek address. */
+
+       DEFINE VARIABLE savepos AS INT64     NO-UNDO.
+       DEFINE VARIABLE c       AS CHARACTER NO-UNDO FORMAT "x(20)".
+
+       OUTPUT TO seek.out APPEND NO-ECHO.
+       savepos = SEEK(OUTPUT).
+       PUT UNFORMATTED "abcdefg" SKIP.
+       OUTPUT CLOSE.
+
+       INPUT FROM seek.out NO-ECHO.
+       SEEK INPUT TO savepos.
+       SET c.
+       DISPLAY c.
+       INPUT CLOSE.
+
+
+
+   Notes
+   •   The SEEK statement does not work with named streams identified in the INPUT-THROUGH, OUTPUT-THROUGH,
+       or INPUT-OUTPUT-THROUGH statements.
+   •   An expression such as SEEK TO SEEK (INPUT) -n might work differently on different operating systems.

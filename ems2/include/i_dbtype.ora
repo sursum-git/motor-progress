@@ -1,0 +1,46 @@
+/***************************************************
+** i_dbtype.i - Tipo de Gerenciadores utilizados
+***************************************************/
+
+&IF DEFINED(EMS_DBTYPE) = 0 &THEN
+    &GLOBAL-DEFINE ems_dbtype oracle
+    
+    /* Preprocessadores que identificam os bancos do Produto EMS 5 */
+    &GLOBAL-DEFINE emsbas_dbtype oracle
+    &GLOBAL-DEFINE emsedi_dbtype oracle
+    &GLOBAL-DEFINE emsfin_dbtype oracle
+    &GLOBAL-DEFINE emsuni_dbtype oracle
+    
+    /* Preprocessadores que identificam os bancos do Produto EMS 2 */
+    &GLOBAL-DEFINE mgadm_dbtype oracle
+    &GLOBAL-DEFINE mgdis_dbtype oracle
+    &GLOBAL-DEFINE mgind_dbtype oracle
+    &GLOBAL-DEFINE mguni_dbtype oracle
+    &GLOBAL-DEFINE mgcld_dbtype oracle
+    &GLOBAL-DEFINE mginv_dbtype oracle
+    &GLOBAL-DEFINE mgsws_dbtype oracle
+    &GLOBAL-DEFINE mgmrp_dbtype oracle
+    &GLOBAL-DEFINE mgven_dbtype oracle
+    &GLOBAL-DEFINE mgcex_dbtype oracle
+    &GLOBAL-DEFINE lcarg_dbtype oracle
+    &GLOBAL-DEFINE mgmp_dbtype oracle
+    &GLOBAL-DEFINE movadm_dbtype oracle
+    &GLOBAL-DEFINE movdis_dbtype oracle
+    &GLOBAL-DEFINE movind_dbtype oracle
+    &GLOBAL-DEFINE mgmnt_dbtype oracle
+    &GLOBAL-DEFINE movmnt_dbtype oracle
+    &GLOBAL-DEFINE mgmfg_dbtype oracle
+    &GLOBAL-DEFINE movmfg_dbtype oracle
+    &GLOBAL-DEFINE mgadt_dbtype oracle
+    &GLOBAL-DEFINE mgfrt_dbtype oracle
+    &GLOBAL-DEFINE mgtmp_dbtype oracle
+    &GLOBAL-DEFINE wmovdis_dbtype oracle
+            
+    /* Preprocessadores que identificam os bancos do Produto HR 2 */
+    &GLOBAL-DEFINE dthrpyc_dbtype oracle
+    &GLOBAL-DEFINE dthrpmg_dbtype oracle
+    &GLOBAL-DEFINE dthrtma_dbtype oracle
+&ENDIF
+
+/* Fim */
+

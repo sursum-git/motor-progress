@@ -1,0 +1,1173 @@
+CURRENT-LANGUAGE function
+  Returns the current value of the CURRENT-LANGUAGE variable.
+ Note: Does not apply to SpeedScript programming.
+
+  Syntax
+
+      CURRENT-LANGUAGE
+
+
+
+  Example
+  The following example displays a message indicating the setting of your CURRENT-LANGUAGE:
+  r-curlng.p
+
+      DEFINE VARIABLE cur-lang AS CHARACTER NO-UNDO.
+
+      cur-lang = CURRENT-LANGUAGE.
+
+      IF cur-lang = "?" THEN
+        MESSAGE "Your current language is not set.".
+      ELSE
+        MESSAGE "Your current language is" cur-lang.
+
+
+
+  Notes
+  •   An r-code file may contain several text segments each associated with a different language. The setting of the
+      CURRENT-LANGUAGE variable determines from which r-code text segment the AVM reads character-string
+      constants.
+  •   If the value of CURRENT-LANGUAGE is a quoted question mark ("?"), the AVM reads character-strings from
+      the default text segment.
+  •   The value of CURRENT-LANGUAGE might be a comma-separated list of language names. If so, the AVM searches
+      r-code for a text segment that matches the first language in the list. If that segment is not found, then it searches for
+      a text segment for the next entry in the list until a segment is found.
+  •   You can initialize the CURRENT-LANGUAGE variable with the Language (-lng) parameter.
+  •   The behavior of CURRENT-LANGUAGE when one procedure calls another is as follows:
+      •   If a procedure changes the value of CURRENT-LANGUAGE, calls from the procedure to the
+          CURRENT-LANGUAGE function return the name of the new language, but the procedure continues to use the
+          character strings of the original language.
+      •   If the procedure then runs another procedure, when the called procedure gets control, calls from the called
+          procedure to the CURRENT-LANGUAGE function return the name of the new language, and the called procedure
+          uses the character strings of the new language.
+      •   When the called procedure finishes and control returns to the original procedure, calls from the original procedure
+          to the CURRENT-LANGUAGE function return the name of the new language, but the original procedure continues
+          to use the character strings of the original language.
+
+
+  
+CURRENT-LANGUAGE statement
+  Sets the CURRENT-LANGUAGE variable for the current ABL session.
+  Note: Does not apply to SpeedScript programming.
+ Syntax
+
+    CURRENT-LANGUAGE = string-expression
+
+
+string-expression
+           A character-string expression that specifies a language name or a comma-separated list of language
+           names.
+
+Example
+This example procedure uses the CURRENT-LANGUAGE function to find the current language, prompts the user to
+choose a new language, and then uses the CURRENT-LANGUAGE statement to reset and display the name of the new
+current language:
+r-chglng.p
+
+    DEFINE VARIABLE cur-lang AS CHARACTER FORMAT "x(10)" VIEW-AS RADIO-SET
+        RADIO-BUTTONS czech,   "Czech",
+                      danish, "Danish",
+                      dutch,   "Dutch",
+                      english, "English",
+                      french, "French",
+                      german, "German",
+                      hungar, "Hungarian",
+                      italian, "Italian",
+                      norweg, "Norwegian",
+                      polish, "Polish",
+                      portug, "Portuguese",
+                      swedish, "Swedish".
+
+    cur-lang = IF CURRENT-LANGUAGE = "?" THEN "English" ELSE CURRENT-LANGUAGE.
+
+    UPDATE cur-lang NO-LABELS.
+
+    CURRENT-LANGUAGE = cur-lang.
+    MESSAGE "New language is" CURRENT-LANGUAGE.
+
+
+
+Notes
+•   The value of CURRENT-LANGUAGE might be a comma-separated list of language names. If so, the AVM searches
+    r-code for a text segment that matches the first language in the list. If that segment is not found, then it searches for
+    a text segment for the next entry in the list until a segment is found.
+•   You can initialize the CURRENT-LANGUAGE variable with the Language (-lng) parameter.
+•   The behavior of CURRENT-LANGUAGE when one procedure calls another is as follows:
+    •   If a procedure changes the value of CURRENT-LANGUAGE, calls from the procedure to the CURRENT-LANGUAGE
+        function return the name of the new language, but the procedure continues to use the character strings of the
+        original language.
+    •   If the procedure then runs another procedure, when the called procedure gets control, calls from the called
+        procedure to the CURRENT-LANGUAGE function return the name of the new language, and the called procedure
+        uses the character strings of the new language.
+    •   When the called procedure finishes and control returns to the original procedure, calls from the original procedure
+        to the CURRENT-LANGUAGE function return the name of the new language, but the original procedure continues
+        to use the character strings of the original language.
+
+
+GET-KEY-VALUE statement
+   (Windows only)
+   Searches the current environment for a particular key and places its value into a particular data item.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+     GET-KEY-VALUE SECTION section-name
+       KEY { key-name | DEFAULT }
+       VALUE key-value
+
+
+   SECTION section-name
+            A CHARACTER expression that specifies the name of the section that contains the key of interest.
+            In initialization files, section names appear in square brackets([]). When you specify a section name
+            in the GET-KEY-VALUE statement, omit the square brackets.
+KEY key-name
+            A CHARACTER expression that specifies the name of the key of interest.
+            If you specify the Unknown value (?) or the empty string (""), GET-KEY-VALUE returns a
+            comma-separated list of all keys in the section you specified.
+DEFAULT
+            Tells GET-KEY-VALUE to use the default key of section section-name.
+            Some applications store data in the registry under the default key of a section. This option lets you
+            retrieve this data. For an example, see the EXAMPLES section of this entry.
+            This option applies only to the registry and not to initialization files.
+VALUE key-value
+        The name of a CHARACTER variable to hold the value of the key of interest.
+
+Examples
+If the current environment resides in the registry, the GET-KEY-VALUE statement:
+1. Searches the current environment for the subkey MYSECTION
+2. Searches MYSECTION for the value name MYKEY
+3. Assigns the value of MYKEY to the variable MYVARIABLE
+If the current environment resides in an initialization file, the GET-KEY-VALUE statement:
+1. Searches the section MYSECTION for the key MYKEY
+2. Assigns the value of MYKEY to the variable MYVARIABLE as shown in the following example:
+
+     GET-KEY-VALUE SECTION "MYSECTION" KEY "MYKEY" VALUE MYVARIABLE
+
+
+If the current environment is the registry, the GET-KEY-VALUE statement:
+1. Searches the current environment for the key MYKEY
+2. Assigns the value of MYKEY to the variable MYVARIABLE
+If the current environment resides in an initialization file, the following example returns a comma-separated list of all
+section names in the initialization file:
+
+  GET-KEY-VALUE SECTION "" KEY "MYKEY" VALUE MYVARIABLE
+
+
+If the current environment resides in the registry, the GET-KEY-VALUE statement:
+1. Searches the current environment for the subkey MYSECTION
+2. Returns a comma-separated list of all value names in MYSECTION
+If the current environment resides in an initialization file, the GET-KEY-VALUE statement:
+1. Searches the current environment for the section MYSECTION
+2. Returns a comma-separated list of all key names in MYSECTION; for example:
+
+      GET-KEY-VALUE SECTION "MYSECTION" KEY "" VALUE MYVARIABLE
+
+
+
+      GET-KEY-VALUE SECTION "MYSECTION" KEY "?" VALUE MYVARIABLE
+
+
+If the current environment resides in the registry, the following examples return a comma-separated list of subkeys under
+the current environment location and all value names directly under the current environment location. The delimiter
+@value@ separates the subkey names from the value names.
+If the current environment resides in an initialization file, the following examples return a comma-separated list of all
+section names in the initialization file:
+
+    GET-KEY-VALUE SECTION "" KEY "" VALUE MYVARIABLE
+
+
+
+    GET-KEY-VALUE SECTION "" KEY "?" VALUE MYVARIABLE
+
+
+
+    GET-KEY-VALUE SECTION "?" KEY "" VALUE MYVARIABLE
+
+
+
+    GET-KEY-VALUE SECTION "?" KEY "?" VALUE MYVARIABLE
+
+
+If the current environment resides in the registry, the GET-KEY-VALUE statement:
+1. Searches the current environment for the subkey MYAPP
+2. Assigns the value of the default key under MYAPP to the variable MYVARIABLE
+If the current environment resides in an initialization file, the following example returns an error:
+
+    GET-KEY-VALUE SECTION "MYAPP" KEY DEFAULT VALUE MYVARIABLE
+
+
+
+Notes
+•   Environments typically consist of sections, each of which can contain keys, each of which consists of a name and a
+    value. A typical section name is COLORS. A typical key within this section consists of the name "COLOR16" and
+    the value 255,255,0. This key attaches this particular name to this particular color. (The value represents a color
+    specification using the red-green-blue color-naming scheme.)
+    The current environment might be the registry or an initialization file. The registry consists of sections called keys
+    and subkeys arranged in a hierarchy. Keys and subkeys contain value entries, each of which consists of a value name
+    and value data. Initialization files, by contrast, consist of a single level of sections. Sections contain entries, each of
+    which consists of a name, an equals sign (=), and a value.
+    For more information on environments, see the topics on colors and fonts in OpenEdge Programming Interfaces.
+•   The current environment is either the default environment, the startup environment (an environment that a startup
+    parameter specified), or an application environment that the LOAD statement loaded and that the USE statement
+    made current.
+   •   If you unload the current environment (using the UNLOAD statement) and then use the GET-KEY-VALUE statement,
+       you access the startup environment.
+
+
+LIBRARY function
+   Parses a character string in the form path-name<<member-name>>, where path-name is the pathname of an ABL
+   r-code library and member-name is the name of a file within the library, and returns the pathname of the library. The
+   double angle brackets indicate that member-name is a file in a library. If the string is not in this form, the LIBRARY
+   function returns the Unknown value (?).
+   Typically, you use the LIBRARY function with the SEARCH function to retrieve the name of a library. The SEARCH
+   function returns character strings of the form path-name<<member-name>> if it finds a file in a library.
+
+   Syntax
+
+       LIBRARY ( string )
+
+
+   string
+               A character expression whose value is the pathname of a file in a library. In Windows, the pahtname
+               cannot contain characters outside of the non-Unicode code page. See Internationalize ABL Applications
+               for more information about Unicode and code pages.
+
+   Example
+   This procedure searches for a file that you specify. It displays a message indicating whether the file is not found in your
+   path, is found in a library within your path, or is found in your path but not in a library.
+   r-rlib.p
+
+       DEFINE VARIABLE        what-lib AS CHARACTER NO-UNDO.
+       DEFINE VARIABLE        location AS CHARACTER NO-UNDO.
+       DEFINE VARIABLE        myfile   AS CHARACTER NO-UNDO FORMAT "x(16)"
+         LABEL "R-code        File".
+
+       SET myfile.
+       location = SEARCH(myfile).
+
+       IF location = ?THEN DO:
+         MESSAGE "Can't find" myfile.
+         LEAVE.
+       END.
+
+       what-lib = LIBRARY(location).
+       IF what-lib <> ? THEN
+         MESSAGE myfile "can be found in library" what-lib.
+       ELSE
+         MESSAGE myfile "is not in a library but is in" location.
+
+
+
+   Note
+   You can improve the performance of an application by using the SEARCH and LIBRARY functions for any files you
+   want to execute that you specify with a relative pathname. For example, if you want to execute a procedure file several
+   times that you specify with a relative pathname, you can return the absolute pathname for the file using the SEARCH                                                                                                       
+   and LIBRARY functions, then execute the RUN statement with that absolute pathname, which avoids any need for the
+   RUN statement to search PROPATH each time.
+
+
+
+LOAD statement
+   (Windows only)
+   Creates application defaults, involving colors, fonts, environment variables, etc., or loads existing defaults, to a graphical
+   or character application.
+   Specifically, the LOAD statement:
+   •   Creates registry keys and initialization file entries
+   •   Creates new initialization files
+   •   Loads entries from the registry or from an existing initialization file
+   For more information on application defaults, see the topics on colors and fonts in OpenEdge Programming Interfaces.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       LOAD environment
+         [ DIR directory ]
+         [ APPLICATION ]
+         [ NEW ]
+         [ BASE-KEY { key-name | "INI" } ]
+         [ NO-ERROR ]
+
+
+   environment
+               A CHARACTER expression that evaluates to one of the following:
+               •   The name of a registry key to create
+               •   The name of an initialization file to create
+               •   The name of an existing registry key
+               •   The name of an existing initialization file
+   DIR directory
+               A CHARACTER expression that evaluates to the directory path of one of the following:
+               •   An existing initialization file
+               •   An initialization file to create
+               If you omit this option, LOAD looks for an existing initialization file, or creates a new initialization
+               file, in the working directory. The pathname can contain Unicode characters. See Internationalize ABL
+               Applications for more information about Unicode.
+   APPLICATION
+           Has no effect; supported only for backward compatibility.
+   NEW
+               Creates a new registry key or a new initialization file. If the key or file already exists, LOAD overwrites
+               its data.
+   BASE-KEY key-name| "INI"
+               Bypasses the standard search rules.
+             If you specify BASE-KEY key-name, LOAD looks for or creates the environment in the registry only
+             under base key key-name.
+             If you specify BASE-KEY "INI" (the quotes are required), LOAD looks for or creates only the
+             initialization file environment.
+NO-ERROR
+             The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying
+             error messages.
+
+
+Notes
+•   If you specify LOAD environment, LOAD searches for a registry key and for an existing initialization file, and tries
+    to load one or the other. The search logic, which assumes that environment has the format path\rootname.extension
+    (where path and extension are optional) and that version is the current OpenEdge version, is as follows:
+    •   Search the registry under HKEY_CURRENT_USER for path\rootname.extension.
+        If found, load it.
+    •   Else search the registry under HKEY_CURRENT_USER for
+        SOFTWARE\PSC\PROGRESS\version\path\rootname.extension.
+        If found, load it.
+    •   Else search the registry under HKEY_CURRENT_USER for SOFTWARE\path\rootname.extension.
+        If found, load it.
+    •   Else search the registry under HKEY_CURRENT_USER for rootname.
+        If found, load it.
+    •   Else search the registry under HKEY_CURRENT_USER for SOFTWARE\PSC\PROGRESS\version\rootname.
+        If found, load it.
+    •   Else search the registry under HKEY_CURRENT_USER for SOFTWARE\rootname.
+        If found, load it.
+    •   Else search the registry under HKEY_LOCAL_MACHINE for path\rootname.extension.
+        If found, load it.
+    •   Else search the registry under HKEY_LOCAL_MACHINE for
+        SOFTWARE\PSC\PROGRESS\version\path\rootname.extension.
+        If found, load it.
+    •   Else search the registry under HKEY_LOCAL_MACHINE for SOFTWARE\path\rootname.extension.
+        If found, load it.
+    •   Else search the registry under HKEY_LOCAL_MACHINE for rootname.
+        If found, load it.
+    •   Else search the registry under HKEY_LOCAL_MACHINE for SOFTWARE\PSC\PROGRESS\version\rootname.
+        If found, load it.
+    •   Else search the registry under HKEY_LOCAL_MACHINE for SOFTWARE\rootname.
+
+           If found, load it.
+       •   Else search for the initialization file path\rootname.extension.
+           If found, load it.
+       •   Else, error.
+   •   If you specify LOAD environment BASE-KEY key-name, where key-name is the name of a registry base key, LOAD
+       loads the registry key key-name\environment.
+       Registry base keys are as follows:
+       •   HKEY_CLASSES_ROOT
+       •   HKEY_CURRENT_CONFIG (Win95 and NT 4.0)
+       •   HKEY_CURRENT_USER
+       •   HKEY_DYN_DATA (Win95 and NT 4.0)
+       •   HKEY_LOCAL_MACHINE
+       •   HKEY_USERS
+   •   If you specify LOAD environment BASE-KEY "INI", LOAD loads the initialization file environment.
+   •   If you specify LOAD environment NEW, LOAD creates a new key in the registry under HKEY_CURRENT_USER
+       and names the new key environment.
+   •   If you specify LOAD environment NEW BASE-KEY key-name, LOAD creates a new key in the registry under key-name
+       and names the new key environment.
+   •   If you specify LOAD environment NEW BASE-KEY "INI", LOAD creates a new initialization file and names it
+       environment.ini.
+   •   To change the application environment, load defaults using the LOAD statement, make them current using the USE
+       statement, then access them using the GET-KEY-VALUE and PUT-KEY-VALUE statements.
+
+
+MEMBER function
+   Parses a reference to a member of an ABL r-code library and returns the simple member name.
+
+   Syntax
+
+     MEMBER ( string )
+
+
+   string
+                A character expression (a constant, field name, variable or expression that results in a character value)
+                whose value is the pathname of a file in an r-code library.
+   The MEMBER function parses a character string in the form path-name<<member-name>>, where path-name is the
+   pathname of a library and member-name is the name of a file within the library, and returns member-name. The double
+   angle brackets indicate that member-name is a file in a library. If the string is not in this form, the MEMBER function
+   returns the Unknown value (?).
+   Use the MEMBER function with the SEARCH function to determine whether a file is in a library. If a data file is in a
+   library, you must first extract the file from the library in order to read it. (See Manage ABL Applications for more
+   information on extracting a file from a library.) The SEARCH function returns a character string in the form
+   path-name<<member-name>> if it finds a file in a library.
+
+   Example
+   This procedure prompts for the name of a file. Using this value, the procedure searches for the file. If it does not find
+   the file, it displays a message and ceases operation. If it does find the file, it tests to see if the file is in a library. If so,
+   the procedure displays the filename and the name of the library. Otherwise, the procedure displays the pathname of the
+   file returned by SEARCH.
+
+   r-memb.p
+
+     DEFINE VARIABLE        what-lib AS CHARACTER NO-UNDO.
+     DEFINE VARIABLE        location AS CHARACTER NO-UNDO.
+     DEFINE VARIABLE        myfile   AS CHARACTER NO-UNDO FORMAT "x(16)"
+       LABEL "R-code        File".
+
+     SET myfile.
+     location = SEARCH(myfile).
+
+     IF location = ? THEN DO:
+       MESSAGE "Can't find" myfile.
+       LEAVE.
+     END.
+
+     what-lib = LIBRARY(location).
+     IF what-lib <> ? THEN
+       MESSAGE MEMBER(location) "can be found in library" what-lib.
+     ELSE
+       MESSAGE myfile "is not in a library but is in" location.
+
+
+OPSYS function
+   Identifies the operating system being used, so that a single version of a procedure can work differently under different
+   operating systems. Returns the value of that operating system. Valid values are "UNIX" and "WIN32".
+   Note: For both 32-bit and 64-bit Windows operating systems, OPSYS returns the value "WIN32".
+  Syntax
+
+     OPSYS
+
+   Example
+   This procedure produces a listing of the files in your current directory. The OPSYS function determines which operating
+   system you are running, and uses the appropriate operating system command to produce the directory listing. The
+   example shows the possible return values.
+   r-opsys.p
+
+     IF OPSYS = "UNIX" THEN UNIX ls.
+     ELSE IF OPSYS = "WIN32" THEN DOS dir.
+     ELSE MESSAGE OPSYS "is an unsupported operating system".
+
+
+
+   Note
+   ABL supports an override option that enables applications that need to return the value of MS-DOS for all Microsoft
+   operating systems to do so. For example, if you do not want the value WIN32 returned when the Windows operating
+   system is recognized, you can override this return value by defining the Opsys key in the Startup section of the current
+   environment, which may be in the registry or in an initialization file. If the Opsys key is located, the OPSYS function
+   returns the value associated with the Opsys key on all platforms.
+
+
+
+PROCESS-ARCHITECTURE function
+  Identifies the bit value of the AVM process you are using at run time and returns this value as an INTEGER. Valid
+  values are 32 for a 32-bit AVM and 64 for 64-bit AVM. For example, an application that uses a 32-bit Windows API
+  through the DLL external procedure interface may need to pass different parameters to a function when running a 64-bit
+  GUI client than when running a 32-bit GUI client. Using PROCESS-ARCHITECTURE, you can decide the parameters
+  to pass.
+
+  Syntax
+
+      PROCESS-ARCHITECTURE
+
+
+  Example
+  This procedure displays a message indicating whether the AVM is a 32-bit or 64-bit process, whether the process is
+  running on a 32-bit or 64-bit Windows machine:
+
+   r-prbits.p
+
+     DEFINE VARIABLE hProcess AS INTEGER NO-UNDO.
+     DEFINE VARIABLE Wow64Process AS INTEGER NO-UNDO.
+     DEFINE VARIABLE resultValue AS INTEGER NO-UNDO.
+
+     IF PROCESS-ARCHITECTURE = 64 THEN
+       /* 64-bit processes always run on 64-bit Windows */
+       MESSAGE "64-bit process running on 64-bit Windows".
+     ELSE DO:
+       /* If a 32-bit process is running under WOW64 it must be
+       ** running on 64-bit Windows. Otherwise, it is running on
+       ** 32-bit Windows.
+       */
+       RUN GetCurrentProcess(OUTPUT hProcess).
+       RUN IsWow64Process(hProcess, INPUT-OUTPUT Wow64Process, OUTPUT resultValue).
+
+       MESSAGE "32-bit process running on " + (IF Wow64Process > 0 THEN "64" ELSE
+      "32") + "-bit Windows".
+     END.
+
+     PROCEDURE GetCurrentProcess EXTERNAL "kernel32.dll":
+       DEFINE RETURN PARAMETER hProcess AS LONG.
+     END.
+
+     PROCEDURE IsWow64Process EXTERNAL "kernel32.dll":
+       DEFINE INPUT PARAMETER hProcess AS LONG.
+       DEFINE INPUT-OUTPUT PARAMETER Wow64Process AS HANDLE TO LONG.
+       DEFINE RETURN PARAMETER resultValue AS LONG.
+     END.
+
+
+
+   Notes
+   This function has a corresponding preprocessor. {&PROCESS-ARCHITECTURE} expands to either "32" or "64".
+
+
+PROGRAM-NAME function
+  Returns the name of the calling program.
+
+  Syntax
+
+      PROGRAM-NAME( n )
+n
+            The numeric argument. If n is 1, the name of the current program is returned. If n is 2, the name of
+            the calling program is returned. If there is no calling program then you have reached the top of the
+            call stack and the AVM returns the Unknown value (?).
+
+Example
+This procedure returns the names of any procedure(s) that called it and displays the number of levels that the procedure
+was nested:
+r-prgnm.p
+
+    /* Note this program should be run as a subroutine. */
+    /* The deeper the nesting, the better the illustration. */
+
+    DEFINE VARIABLE level AS INTEGER NO-UNDO INITIAL 1.
+
+    REPEAT WHILE PROGRAM-NAME(level) <> ?:
+      DISPLAY LEVEL PROGRAM-NAME(level) FORMAT "x(30)".
+      level = level + 1.
+    END.
+
+
+
+Notes
+•   If you execute a procedure directly from the Procedure Editor or the AppBuilder, then PROGRAM-NAME(1) returns
+    the name of a temporary file rather than the name of the actual procedure file.
+•   The PROGRAM-NAME function is useful when developing on-line help. For example, you can use the following
+    code in your help routine to produce a program trace:
+    r-trace.p
+
+      DEFINE VARIABLE ix    AS INTEGER   NO-UNDO INITIAL 2.
+      DEFINE VARIABLE plist AS CHARACTER NO-UNDO FORMAT "x(70)".
+
+      FORM plist
+        WITH FRAME what-prog OVERLAY ROW 10 CENTERED 5 DOWN NO-LABELS
+        TITLE " Program Trace ".
+
+      /* ix = 2, so skip the current routine: PROGRAM-NAME(1) */
+      DO WHILE PROGRAM-NAME(ix) <> ?:
+        IF ix = 2 THEN
+          plist = "Currently in       : " + PROGRAM-NAME(ix).
+        ELSE
+          plist = "Which was called by: " + PROGRAM-NAME(ix).
+
+        ix = ix + 1.
+        DISPLAY plist WITH FRAME what-prog.
+        DOWN WITH FRAME what-prog.
+      END.
+
+      PAUSE.
+      HIDE FRAME what-prog.
+
+
+•   If the procedure you reference is an internal procedure, then PROGRAM-NAME returns a string with the following
+    form:
+
+      "internal-procedure-name source-file-name"
+
+   •   If the procedure you reference is a user interface trigger associated with a widget, then PROGRAM-NAME returns
+       a string with the following form:
+
+         "USER-INTERFACE-TRIGGER source-file-name"
+
+
+   •   If the procedure you reference is a user interface trigger that uses the ANYWHERE keyword, then PROGRAM-NAME
+       returns a string with the following form:
+
+         "SYSTEM-TRIGGER source-file-name"
+
+
+   •   If the procedure you reference is a session database trigger, then PROGRAM-NAME returns a string with the
+       following form:
+
+         "type-TRIGGER source-file-name"
+
+
+       Where type is either ASSIGN, CREATE, DELETE, FIND, or WRITE.
+   •   If the call stack contains a method reference, then PROGRAM-NAME returns a string with the following form:
+
+         "method-name class-file-name"
+
+
+       Where class-file-name is the name of the class definition (.cls) file in which method-name is implemented.
+
+
+
+PROGRESS function
+   Returns one of the following character values which identifies the ABL product that is running: Full, Query or Run-time.
+   Can also return COMPILE if you use the Developer's Toolkit, or COMPILE-ENCRYPT if you use the run-time Compiler.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       PROGRESS
+
+
+
+   Examples
+   The following procedure uses the PROGRESS phrase function to determine which exit prompt is displayed on a menu:
+ r-progfn.p
+
+       /* Depending on the version of PROGRESS you are running, the main menu reflects
+          available features for end-user */
+
+       DEFINE VARIABLE menu        AS CHARACTER NO-UNDO EXTENT 3.
+       DEFINE VARIABLE exit-prompt AS CHARACTER NO-UNDO.
+
+       IF PROGRESS EQ "FULL" THEN
+         exit-prompt = " 3. Return to Full Editor ".
+       ELSE IF PROGRESS EQ "QUERY" THEN
+         exit-prompt = " 3. Return to Query Editor".
+       ELSE IF PROGRESS EQ "RUN-TIME" THEN
+         exit-prompt = "3. Exit Program".
+
+       DO WHILE TRUE:
+         DISPLAY
+           " 1. Display Customer Data" @ menu[1] SKIP
+           " 2. Display Order Data"    @ menu[2] SKIP
+           exit-prompt                 @ menu[3]
+           FORMAT "x(26)" SKIP
+         WITH FRAME choices NO-LABELS.
+
+         CHOOSE FIELD menu AUTO-RETURN WITH FRAME choices
+           TITLE "Demonstration menu" CENTERED ROW 10.
+         HIDE FRAME choices.
+
+         IF FRAME-INDEX EQ 1 THEN MESSAGE
+            "You picked option 1.".
+         ELSE IF FRAME-INDEX EQ 2 THEN MESSAGE
+            "You picked option 2.".
+         ELSE IF FRAME-INDEX EQ 3 THEN RETURN.
+       END.
+
+
+   This procedure displays a message that tells you the type of ABL product you are using:
+
+       MESSAGE "You are currently running this PROGRESS product:" PROGRESS
+         VIEW-AS ALERT-BOX INFORMATION BUTTONS OK.
+
+
+
+
+PROMSGS function
+   Returns the current value of the ABL PROMSGS variable.
+
+   Syntax
+
+     PROMSGS
+
+
+
+   Example
+   This example uses the PROMSGS function to determine whether the default message file (promsgs) is in use. If not, it
+   uses the PROMSGS function again to display the name of the current message file.
+   r-promsg.p
+
+     IF PROMSGS = "promsgs" THEN
+       MESSAGE "Using default promsgs file.".
+     ELSE
+       MESSAGE "Using" PROMSGS.
+
+
+
+PROMSGS statement
+   Sets the ABL PROMSGS variable for the current ABL session. The PROMSGS variable holds the name of the current
+   ABL message file. ABL supplies different versions of this file to support various languages.
+
+   Syntax
+
+     PROMSGS = string-expression
+
+
+   string-expression
+              A character-string expression that resolves to the name of an ABL message file. You can specify a
+              full or relative pathname for the messages file. Any relative pathname is relative to your current working
+              directory. In Windows, the pathname cannot contain characters outside of the non-Unicode code page.
+              See Internationalize ABL Applications for more information about Unicode and code pages.
+
+   Example
+   This example prompts the user for a language name and then tries to find a message file for that language. If the message
+   file is found, then the PROMSGS statement is used to make that the current message file. Subsequently, all ABL system
+   messages are read from the new promsgs file. The PROMSGS function is used in an informative message.
+                                                                                                    
+
+   r-swmsgs.p
+
+       DEFINE VARIABLE newlang AS CHARACTER NO-UNDO FORMAT "x(16)"
+         LABEL "Language".
+       DEFINE VARIABLE msgfile AS CHARACTER NO-UNDO.
+
+       SET newlang HELP "Enter the new language for messages.".
+       IF newlang = "English" THEN msgfile = "promsgs".
+       ELSE msgfile = "prolang/promsgs." + LC(SUBSTRING(newlang, 1, 3)).
+
+       IF SEARCH(msgfile) <> ? THEN DO:
+         PROMSGS = msgfile.
+         MESSAGE "Messages will now be taken from" PROMSGS.
+       END.
+       ELSE DO:
+         MESSAGE "Cannot find" msgfile.
+         UNDO, RETRY.
+       END.
+
+
+
+ 
+PROPATH function
+   Returns the current value of the PROPATH environment variable.
+
+   Syntax
+
+       PROPATH
+
+
+
+   Example
+   This procedure first displays a comma-separated list of the directories in the current PROPATH. It then displays each
+   directory in the current PROPATH, one per line.
+   r-ppath1.p
+
+       DEFINE VARIABLE ix AS INTEGER NO-UNDO.
+
+       DISPLAY PROPATH.
+
+       REPEAT ix = 1 TO NUM-ENTRIES(PROPATH):
+         DISPLAY ENTRY(ix , PROPATH) FORMAT "x(30)".
+       END.
+
+
+
+   Notes
+   •   ABL stores the PROPATH as a comma-separated list of directories. (ABL strips the operating-specific separation
+       characters (a colon ( : ) on UNIX; a semicolon ( ; ) in Windows) and replaces them with commas.
+   •   The default format for PROPATH is x(70).
+   
+
+
+PROPATH statement
+   Sets the PROPATH environment variable for the current ABL session.
+   When you start ABL, it automatically adds the $DLC directory and some subdirectories to your PROPATH. ABL always
+   preserves these directories in your PROPATH, even if you change or clear your PROPATH. Thus, ABL can always find
+   its executables and r-code.
+
+   Syntax
+
+     PROPATH = string-expression
+
+
+   string-expression
+              A field, variable, string constant, or combination of these that evaluates to a character string. The
+              character string should be a list of directory paths. The directory names in the path can be separated
+              by commas or by the appropriate separation character for your operating system. The directory
+              pathnames can use the UNIX format for pathnames (/dir1/dir2/dir3, for example) or the
+              standard pathname format for your operating system. Use the slash-separated directory name format
+              if you are concerned about portability across multiple operating systems. In Windows, the pathnames
+              cannot contain characters outside of the non-Unicode code page. See Internationalize ABL Applications
+              for more information about Unicode and code pages.
+   Note: The += Addition assignment operator on page 46 can be used with the PROPATH statement.
+
+   Examples
+   The r-ppath.p procedure displays a strip menu with four choices. The procedure defines three arrays: menu holds
+   the items for selection on the menu, proglist holds the names of the programs associated with the menu selections, and
+   ppath holds the appropriate PROPATHs for each program. The CHOOSE statement allows the user to choose an item
+   from the strip menu.
+   r-ppath.p
+
+     DEFINE VARIABLE menu     AS CHARACTER NO-UNDO EXTENT 4 FORMAT "X(20)"
+       INITIAL ["1. Sales","2. Acctg","3. Personnel","4. Exit"].
+     DEFINE VARIABLE proglist AS CHARACTER NO-UNDO EXTENT 4 FORMAT "X(8)"
+       INITIAL ["sales.p","acctg.p","per.p","exit.p"].
+     DEFINE VARIABLE ppath    AS CHARACTER NO-UNDO EXTENT 4
+       INITIAL ["sales/s-procs","acctg/a-procs","per/p-procs",","].
+
+     REPEAT:
+       DISPLAY menu WITH TITLE " M A I N                      M E N U " CENTERED
+          1 COLUMN 1 DOWN NO-LABELS ROW 8.
+       CHOOSE FIELD menu AUTO-RETURN.
+       HIDE.
+       PROPATH = ppath[FRAME-INDEX].
+       RUN VALUE(proglist[FRAME-INDEX]).
+     END.
+
+
+   The AVM uses the menu selection number as an index into the ppath and proglist arrays. The AVM sets the PROPATH
+   and runs the program.
+   This simple example changes and displays the PROPATH:
+                                                                                                     
+   r-prpath.p
+
+       PROPATH = ENTRY(1,PROPATH) + ",/dlc,/dlc/proguide,/dlc/appl1/procs".
+       DISPLAY PROPATH.
+
+
+   The following example code uses the += assignment operator to add to the PROPATH.
+
+       PROPATH += ",/myNewAppDir1,/myNewAppDir2".
+
+
+
+   Notes
+   •   Changes to PROPATH last only for the current session. Any subprocesses inherit the PROPATH in effect when the
+       ABL session started.
+   •   When you start ABL, it automatically adds the top directory of the ABL hierarchy and some subdirectories to your
+       PROPATH. If you use the PROPATH statement to make a change, ABL adds the directories you specify to your
+       existing PROPATH.
+   •   ABL replaces separation characters in expression (a colon ( : ) on UNIX; a semicolon ( ; ) in Windows) with commas,
+       so the resulting PROPATH string can be accessed with the ENTRY function. Therefore, file pathnames passed in
+       expression must not include embedded commas.
+   •   If you change your PROPATH, and your old PROPATH included r-code libraries that are not in your new PROPATH,
+       those libraries are automatically closed. If you run a procedure from a closed library, the AVM displays an error
+       message.
+   
+
+  
+PROVERSION function
+   Returns the version of ABL, or release of OpenEdge, you are running. You can also optionally retrieve additional release
+   information, such as the service pack version number and the hot fix version number.
+
+   Syntax
+
+       PROVERSION [(mode)]
+
+
+   mode
+                An optional integer expression that identifies how much version information is returned, as follows:
+                •   If the value of mode is either 0 or not specified, PROVERSION returns limited version
+                    information—the major version number, the minor version number, and, if applicable, the version
+                    tag.
+                •   If the value of mode is 1, PROVERSION returns full version information—the major version
+                    number, the minor version number, the service pack number, the hot fix version number, the build
+                    number, and, if applicable, the version tag.
+                •   If the value of mode is other than 1 or 0, a run-time error message is returned.
+                                                                                                  
+   Examples
+   Following is an example of the information PROVERSION returns when you use 1 as the mode value for an FCS
+   OpenEdge release, which has no version tag:
+
+       11.2.0.0.1234
+
+
+   in which:
+   •   11 is the major version number.
+   •   2 is the minor version number.
+   •   0 is the service pack number.
+   •   0 is the hot fix version number.
+   •   1234 is the build number.
+   If you specify 0 as the mode value (or specify no mode value at all) for an OpenEdge BETA release, you see the major
+   version number, the minor version number, and the version tag. For example:
+
+       11.2BETA
+
+
+   If you specify 1 as the mode value for an OpenEdge BETA release, for example, the following details appear:
+
+       11.2.0.0.1234.BETA
+
+
+SAVE CACHE statement
+   Saves the schema cache of a database to an operating system file. Subsequent sessions can then share the same cache
+   by using the Schema Cache File (-cache) parameter.
+
+   Syntax
+
+       SAVE CACHE
+            { CURRENT | COMPLETE }
+            {database-name| VALUE ( char-expr ) }
+         TO
+            {pathname| VALUE ( char-expr ) }
+       [ NO-ERROR ]
+
+
+   CURRENT
+          Specifies that only the portion of the schema cache that applies to referenced tables is saved to the
+          file. By using this option you can tailor a small schema cache file for an application that does not use
+          all the tables in the database.
+   COMPLETE
+         Specifies that the complete schema cache for the database is saved to the file. If you use this option,
+         the client process builds a complete schema cache in memory including template records and all trigger
+         information for every table in the database.
+   database-name
+             Specifies the literal logical name of a currently connected OpenEdge database.
+   pathname
+              Specifies the literal pathname of an operating system file to hold the schema cache. In Windows, the
+              pathname cannot contain characters outside of the non-Unicode code page. See Internationalize ABL
+              Applications for more information about Unicode and code pages.
+   VALUE (char-expr)
+            Returns the corresponding literal database name or pathname specified by the character expression in
+            char-expr.
+   NO-ERROR
+              The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying
+              error messages.
+                                                                                                        
+
+Example
+This procedure saves the complete schema cache for each database that you specify in the current working directory,
+and displays any error messages associated with connecting or saving the cache:
+r-schcsh.p
+
+    DEFINE VARIABLE db-name AS CHARACTER NO-UNDO FORMAT "x(12)" INITIAL ?.
+    DEFINE VARIABLE icnt    AS INTEGER   NO-UNDO.
+
+    DO WHILE db-name <> "":
+     SET db-name LABEL "Database Name"
+       WITH FRAME A SIDE-LABELS TITLE "Save Cache" VIEW-AS DIALOG-BOX.
+     IF db-name <> "" THEN
+       CONNECT VALUE(db-name) -1 NO-ERROR.
+     ELSE LEAVE.
+
+     IF NOT ERROR-STATUS:ERROR THEN DO:
+       SAVE CACHE COMPLETE VALUE(db-name) TO VALUE(db-name + ".csh") NO-ERROR.
+       IF NOT ERROR-STATUS:ERROR THEN
+          MESSAGE "Saved schema cache for" db-name "in" db-name + ".csh.".
+       ELSE DO:
+          BELL.
+          DO icnt = 1 TO ERROR-STATUS:NUM-MESSAGES:
+            MESSAGE ERROR-STATUS:GET-MESSAGE(icnt) VIEW-AS ALERT-BOX.
+          END.
+       END.
+     END.
+     ELSE DO:
+       BELL.
+       DO icnt = 1 TO ERROR-STATUS:NUM-MESSAGES:
+          MESSAGE ERROR-STATUS:GET-MESSAGE(icnt) VIEW-AS ALERT-BOX.
+       END.
+     END.
+     DISCONNECT VALUE(db-name) NO-ERROR.
+    END.
+
+
+
+Notes
+•   The schema cache is saved to the file in a binary format that is portable across machines.
+•   For information on using an existing schema cache file, see Manage the OpenEdge Database. For information on
+    the Schema Cache File (-cache) startup parameter, see Startup Command and Parameter Reference.
+•   Any schema changes to the database make the saved cache invalid. If the schema cache file is invalid when the AVM
+    tries to access it, the AVM displays a warning message, ignores the file, and reads the required schema cache from
+    the database.
+•   To set up your database environment to use the CURRENT option, you only have to connect to the database and read
+    from the tables that compose the schema you want to save. This is sufficient for the SAVE CACHE statement to save
+    all parts of each table in the schema, including template records and trigger information. If you want to save a different
+    subschema of the database, you must disconnect and then reconnect to the database before reading the tables for that
+    subschema.
+•   For a DataServer, the AVM saves the schema cache for the entire schema holder database. You cannot save the
+    schema cache for a non-OpenEdge database separately. For more information on schema cache files for DataServers,
+    see the OpenEdge DataServer Guides (Use the Microsoft SQL Data Server and Use the Oracle Data Server).
+
+
+
+SET-BYTE-ORDER statement
+   Sets an internal indicator designating the byte-order of the data pointed to by the MEMPTR variable.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       SET-BYTE-ORDER( memptr ) = integer-expression
+
+
+   memptr
+               An expression that returns a MEMPTR.
+   integer-expression
+               An expression that returns an integer value that will be used to indicate the byte-ordering of the data
+               in the memory to which the MEMPTR points. integer-expression must be one of the reserved keywords
+               defined in the following table or its corresponding value. If integer-expression is not valid, ABL
+               generates an error.
+
+               Table 61: Byte order options
+
+                Keyword                         Value       Description
+                HOST-BYTE-ORDER                 1           Same format as the machine where the process that
+                                                            calls SET-BYTE-ORDER is running.
+                BIG-ENDIAN                      2           A multiple-byte data type is stored with the
+                                                            high-order byte in the lowest address reserved for
+                                                            the data; successively lower-order bytes are stored
+                                                            at successively higher addresses. Note that Internet
+                                                            protocols use BIG-ENDIAN byte-ordering.
+                LITTLE-ENDIAN                   3           A multiple-byte data type is stored with the low-order
+                                                            byte in the lowest address reserved for the data;
+                                                            successively higher-order bytes are stored at
+                                                            successively higher addresses.
+
+
+
+   Notes
+   •   The byte order for a MEMPTR is HOST-BYTE-ORDER by default, that is, if SET-BYTE-ORDER has not been
+       called for a given MEMPTR, its byte order is HOST-BYTE-ORDER.
+   •   SET-BYTE-ORDER by itself never affects data currently in the MEMPTR, that is, it does not actually re-order the
+       data. It only affects how subsequent calls to the PUT- statements and GET- functions work with that MEMPTR
+       variable.
+
+
+SHOW-STATS statement
+   Writes procedure call statistics to the proc.mon output file if you specify the Statistics with Cross-Reference (-yx)
+   parameter. It also writes procedure access and usage statistics to the client.mon output file if you specify the Statistics
+   (-y) parameter, Statistics with CTRL+C (-yc) parameter, Segment Statistics (-yd) parameter, or Statistics with
+   Cross-Reference (-yx) parameter. If you specify Segment Statistics (-yd), it also displays statistics for each code
+   segment.
+   Ordinarily, when you specify these startup parameters, the AVM writes the statistics to the output files at the end of
+   your ABL session. This might not be what you want. For example, if you start ABL using the -y or -yc parameters,
+   you might want to view the execution buffer statistics as they occur during your ABL session. With SHOW-STATS,
+   you can force the AVM to write the statistics at a specific time, instead of at session end. For more information on these
+   startup parameters, see Startup Command and Parameter Reference.
+   The SHOW-STATS statement also writes the value of the STARTUP-PARAMETERS attribute to the client.mon
+   output file.
+
+   Syntax
+
+       SHOW-STATS [ CLEAR ]
+
+
+   CLEAR
+               Resets all counters and timers that the AVM uses to monitor the procedure call, procedure access, and
+               usage statistics.
+
+   Example
+   This procedure runs the Data Dictionary and writes the procedure call, procedure access, and usage statistics to the
+   proc.mon and client.mon output files:
+   r-stats.p
+
+       RUN dict.p.
+       SHOW-STATS.
+
+
+
+   Notes
+   •   If you use the SHOW-STATS statement without specifying the Statistics (y) parameter, the AVM opens the
+       client.mon file as if you were dynamically specifying -y. However, the first SHOW-STATS statement that you
+       use does not send any statistics to the client.mon file; it only opens the file. All subsequent SHOW-STATS
+       statements, however, send procedure access and usage statistics to the file. But since you did not specify -y at startup,
+       the AVM does not write any startup parameter statistics to the client.mon file.
+   •   You must specify the Statistics with Cross-Reference (-yx) parameter, if you want the SHOW-STATS statement to
+       write procedure call statistics to the proc.mon file.
+
+
+
+SSL-SERVER-NAME function
+   Returns the digital certificate subject name for an OpenEdge database connected via TLS. If a database connection does
+   not exist or the connection is not using TLS (including a shared-memory connection), this function returns the Unknown
+   value (?).
+
+   Syntax
+
+       SSL-SERVER-NAME ( logical-database-name )
+
+
+   logical-database-name
+               A quoted character string or character expression that specifies the database by its logical name.
+
+   Example
+   The following example returns the digital certificate subject name of the database with the logical name mydb:
+
+       SSL-SERVER-NAME("mydb").
+
+
+UNLOAD statement
+   (Windows only)
+   Unloads a set of environment specifications from the current environment, which might be the registry or an initialization
+   file.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       UNLOAD environment [ NO-ERROR ]
+
+
+   environment
+              A character expression that evaluates to the name of an environment that a prior LOAD statement
+              specified.
+   NO-ERROR
+              The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying
+              error messages.
+
+   Notes
+   •   An application cannot UNLOAD a set of environment specifications until it terminates all windows that use those
+       specifications.
+   •   If you UNLOAD the current environment, the default environment becomes the current environment. To define a new
+       current environment, use the USE statement.
+   •   Use the UNLOAD statement to clean up memory in applications, such as the AppBuilder, that build and run other
+       applications.
+
+
+USE statement
+   (Windows only)
+   Specifies environment defaults that apply to subsequent windows that the application creates. The defaults might reside
+   in the registry or in an initialization file. The defaults can involve colors, fonts, environment variables, etc. You must
+   specify a default in a LOAD statement before you specify it in a USE statement.
+Note: Does not apply to SpeedScript programming.
+
+Syntax
+
+    USE environment [ NO-ERROR ]
+
+
+environment
+            A CHARACTER expression that evaluates to the name of a current environment. If environment is
+            non-null, it must have appeared in a prior LOAD statement. If environment is the null string (""), the
+            default environment becomes the current environment.
+NO-ERROR
+            The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying
+            error messages.
+
+Example
+This procedure loads two files, env1.ini and env2.ini, each of which contains a font definition for font0. The program
+displays a character string in the ABL default window using the definition for font0 from env1.ini. It then creates a new
+window and displays the same character string using the definition for font0 from env2.ini. Note that the procedure
+creates the window after the USE statement.
+r-use.p
+
+    DEFINE VARIABLE w1      AS CHARACTER NO-UNDO VIEW-AS TEXT FONT 0
+      FORMAT "x(34)" INITIAL "This is font 0 in the first window".
+    DEFINE VARIABLE w2      AS CHARACTER NO-UNDO VIEW-AS TEXT FONT 0
+      FORMAT "x(35)" INITIAL "This is font 0 in the second window".
+    DEFINE VARIABLE new_win AS HANDLE    NO-UNDO.
+
+    LOAD "env1".
+    LOAD "env2".
+
+    USE "env1".
+    DISPLAY w1 WITH NO-LABELS WITH FRAME a.
+    PAUSE.
+
+    USE "env2".
+    CREATE WINDOW new_win.
+    CURRENT-WINDOW = new_win.
+    DISPLAY w2 in WINDOW new_win WITH NO-LABELS WITH FRAME b.
+    PAUSE.
+
+    DELETE WIDGET new_win.
+
+
+This procedure depends on the existence of files named env1.ini and env2.ini, each of which contains a font definition
+for font0. If you run this procedure in your environment, you must create these files.
+
+Notes
+•   The USE statement does not change the DefaultFont or the DefaultFixedFont settings. It uses only the information
+    in the [fonts] and [colors] sections of the new current environment's initialization file.
+•   Use this statement with applications (such as the AppBuilder) that build and run other applications using a unique
+    set of environment specifications.
+•   An application must use this statement after the LOAD statement and before a new window is created to make the
+    loaded set of environment specifications apply to the new window.
+•   Subsequent PUT-KEY-VALUE and GET-KEY-VALUE statements apply to the environment made available by the
+       USE statement.
+
+
+Working directory
+   A working directory is the default operating system directory where an ABL session reads or writes most data files (such
+   as text and XML files) that are specified with a relative pathname. An ABL session can have one active working directory
+   at a time that is the current working directory. In OpenEdge, the current working directory can be one of the following:
+   •   When you run an ABL session that is started directly from a shortcut in the OpenEdge program group in Windows,
+       such as the OpenEdge Desktop, the current working directory is the working directory that you specified during
+       OpenEdge installation (C:\OpenEdge\WRK by default).
+   •   When you run an ABL session (OpenEdge AVM) from within Progress Developer Studio for OpenEdge, the current
+       working directory is the working directory you specified for the project you are currently working in.
+   •   When you start an ABL client directly from the command line, for example, by running the OpenEdge pro or mpro
+       command in the OpenEdge Proenv command window, the current working directory is the active working directory
+       at the point you run the command.
+
+   Notes
+   •   The current working directory is distinct and different from PROPATH. PROPATH is an environment variable that
+       specifies one or more directories that an ABL session searches in order to locate and execute ABL code in any
+       procedure file, include file, class definition file, or r-code file that you specify with a relative pathname.
+   •   The ABL session does not search the current working directory for data files that you access in order to load the
+       contents of an editor widget. Instead, if you pass a relative pathname to the INSERT-FILE( ) method or the
+       READ-FILE( ) method, the ABL session searches PROPATH to locate and read the file into the associated editor
+       widget. This is an exception to how ABL generally handles access to data files specified with a relative pathname.
+

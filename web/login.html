@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login - Sursum</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="ui-ready.css?v=20260616-grid-loading">
+  <link rel="stylesheet" href="query-builder.css">
+  <style>
+    body {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #f4f6f8;
+    }
+    .login-panel {
+      width: min(420px, calc(100vw - 32px));
+      padding: 24px;
+      border: 1px solid #d9e0e7;
+      background: #fff;
+      box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+    }
+    .login-panel h1 {
+      margin: 0 0 6px;
+      font-size: 22px;
+    }
+    .login-panel p {
+      margin: 0 0 20px;
+      color: #5f6b7a;
+      font-size: 13px;
+    }
+    .login-form {
+      display: grid;
+      gap: 12px;
+    }
+    .login-form input,
+    .login-form button {
+      width: 100%;
+    }
+    #loginStatus {
+      min-height: 20px;
+      color: #b42318;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body class="sursum-ui-pending">
+  <main class="login-panel">
+    <h1>Sursum Dynamic Query</h1>
+    <p>Entre com seu usuario LDAP.</p>
+    <form id="loginForm" class="login-form">
+      <label>Usuario
+        <input id="username" autocomplete="username" required>
+      </label>
+      <label>Senha
+        <input id="password" type="password" autocomplete="current-password" required>
+      </label>
+      <button id="loginButton" type="submit">Entrar</button>
+      <div id="loginStatus"></div>
+    </form>
+  </main>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="ui-ready.js?v=20260616-grid-loading"></script>
+  <script>
+    (function () {
+      $("button").kendoButton();
+      $("#username, #password").kendoTextBox();
+      if (window.SursumUiReady) window.SursumUiReady();
+
+      $("#loginForm").on("submit", function (event) {
+        event.preventDefault();
+        $("#loginStatus").text("");
+        $("#loginButton").data("kendoButton").enable(false);
+        fetch("auth.php?action=login", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            username: $("#username").val(),
+            password: $("#password").val()
+          })
+        })
+          .then((response) => response.json())
+          .then((payload) => {
+            if (!payload || !payload.success) {
+              throw new Error((payload && payload.error) || "Login invalido.");
+            }
+            const params = new URLSearchParams(location.search);
+            location.href = params.get("next") || "index.html";
+          })
+          .catch((error) => {
+            $("#loginStatus").text(error.message);
+            $("#loginButton").data("kendoButton").enable(true);
+          });
+      });
+    })();
+  </script>
+</body>
+</html>

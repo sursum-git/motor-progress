@@ -1,0 +1,19 @@
+
+DEFINE TEMP-TABLE tt{1} LIKE {1} .
+DEFINE VARIABLE cCampos{1} AS CHARACTER   NO-UNDO.
+DEFINE VARIABLE carq{1}    AS CHARACTER   NO-UNDO.
+DEFINE VARIABLE iRandom{1} AS INTEGER     NO-UNDO.
+DEFINE BUFFER bf{1} FOR {1}.
+ASSIGN iRandom{1} = RANDOM(1,9999999).
+ASSIGN cArq{1} = 'c:\temp\{1}{3}' + string(iRandom{1}) + '.csv'. 
+
+   
+OUTPUT TO value(cArq{1}) .
+
+RUN getCpsTT(TEMP-TABLE tt{1}:HANDLE,";", OUTPUT cCampos{1}).
+PUT UNFORM cCampos{1} SKIP.
+FOR EACH bf{1} WHERE ROWID(bf{1}) = {2} NO-LOCK:
+    EXPORT DELIMITER ";" bf{1}.
+END.
+
+OUTPUT CLOSE.

@@ -1,0 +1,595 @@
+OS-APPEND statement
+   Executes an operating system file append command from within ABL.
+
+   Syntax
+
+     OS-APPEND
+       { source-filename | VALUE ( expression ) }
+       { target-filename | VALUE ( expression ) }
+
+
+   source-filename
+               The name of the source file. (If you append file A to file B, file A is the source file.) If you specify a
+               directory, OS-APPEND generates an error. The filename can contain Unicode characters. See
+               Internationalize ABL Applications for more information about Unicode.
+   VALUE ( expression )
+            An expression that returns the name of the source file. (If you append file A to file B, file A is the
+            source file.) expression can contain constants, field names, and variable names. The filename can
+            contain Unicode characters.
+   target-filename
+               The name of the target file. (If you append file A to file B, file B is the target file.) The filename can
+               contain Unicode characters.
+   VALUE ( expression )
+            An expression that returns the name of the target file. (If you append file A to file B, file B is the target
+            file.) expression can contain constants, field names, and variable names. The filename can contain
+            Unicode characters.
+
+   Example
+   This procedure opens a dialog box that prompts the user to choose a source file for the append. It then prompts for a
+   name for the target file. Finally, the procedure uses the OS-APPEND statement to append the source file to the target
+   file.
+   r-os-app.p
+
+     DEFINE VARIABLE sourcefile AS CHARACTER NO-UNDO.
+     DEFINE VARIABLE targetfile AS CHARACTER NO-UNDO FORMAT "x(20)"
+       VIEW-AS FILL-IN.
+     DEFINE VARIABLE OKpressed AS LOGICAL    NO-UNDO INITIAL TRUE.
+
+     Main:
+     REPEAT:
+       SYSTEM-DIALOG GET-FILE sourcefile
+         TITLE "Choose Source File For Append"
+         MUST-EXIST
+         USE-FILENAME
+         UPDATE OKpressed.
+
+       IF OKpressed = FALSE THEN
+          LEAVE Main.
+       UPDATE targetfile WITH FRAME appendframe.
+       OS-APPEND VALUE(sourcefile) VALUE(targetfile).
+     END.
+
+
+  Notes
+  •   The filenames must conform to the naming conventions of the underlying operating system.
+  •   If target-file names a file that does not exist or a directory, OS-APPEND becomes an OS-COPY and a copy is created
+      in the current or specified directory. If an error occurs during the copy, the AVM deletes the partial target-file.
+  •   Although an error can occur during execution of this statement, the statement does not generate an error message,
+      raise an error condition, or affect the program's flow in any way. Check for an execution error by using the OS-ERROR
+      function and evaluating the return.
+  •   If you specify the same file for the source and the target, the append fails but OS-ERROR is not set.
+
+  
+OS-COMMAND statement
+  Escapes to the current operating system and executes an operating system command.
+
+  Syntax
+
+      OS-COMMAND
+        [ SILENT | NO-WAIT | NO-CONSOLE ]
+        [ command-token | VALUE ( expression ) ]...
+
+
+  SILENT
+              After processing an operating system command, the AVM shell pauses. To exit the window in Windows
+              GUI platforms, you must type exit. To exit the window in Windows character platforms, you must
+              type exit and press RETURN or SPACEBAR. You can use the SILENT option to eliminate this
+              pause. Use this option only if you are sure that the program, command, or batch file does not generate
+              any output to the screen. Cannot be used with NO-WAIT.
+  NO-WAIT
+              In a multi-tasking environment, causes the AVM to immediately pass control back to next statement
+              after the OS-COMMAND without waiting for the operating system command to terminate. Cannot be
+              used with SILENT. This option is supported in Windows only.
+  NO-CONSOLE
+         While processing an operating system command, the AVM creates a console window. The console
+         window may not be cleaned up after the command is executed. You can use the NO-CONSOLE option
+         to prevent this window from being created in the first place.
+  command-token | VALUE ( expression )
+           One or more command words and symbols that you want to pass the operating system to execute. The
+           VALUE option generates the command tokens included in expression, a character string expression.
+           The specified combination of command-token and VALUE(expression) options can form any legal
+           combination of commands and command options permitted by the operating system. These can contain
+           Unicode characters. See Internationalize ABL Applications for more information about Unicode.
+
+  Example
+  There are two principal uses for the OS-COMMAND statement: to execute a utility that has the same syntax on two or
+  more different operating systems, and to execute an operating system statement input by a user.
+  In both instances, the OS-COMMAND statement eliminates the need to use the OPSYS statement to determine the operating
+  system and then use conditional logic to execute the appropriate code. The OS-COMMAND statement, therefore, makes
+  an application more portable.
+
+   This procedure prompts the user for an operating system command and then uses the OS-COMMAND statement to execute
+   the command:
+   r-os-com.p
+
+       DEFINE VARIABLE comm-line AS CHARACTER NO-UNDO FORMAT "x(70)".
+
+       REPEAT:
+         UPDATE comm-line.
+         OS-COMMAND VALUE(comm-line).
+       END.
+
+
+
+   Notes
+   •   If you want to run an operating system internal command, such as Windows dir, do not use the NO-WAIT keyword.
+       The results are unpredictable.
+   •   If you want to run an application that requires Windows, you must use the NO-WAIT option.
+   •   The NO-WAIT option is unavailable in environments that are not multi-tasking.
+   •   The OS-COMMAND statement always sets the value for the OS-ERROR function to 0, whether or not an error occurs.
+       Thus, an operating system error is never returned for the OS-COMMAND statement.
+   •   For client processes running on UNIX, OS-COMMAND starts a separate process. The client keeps track of subprocesses
+       spawned using an in-memory table with a limit of 20 entries. Therefore, only 20 subprocesses can be open concurrently.
+       If this limit is exceeded, you will see an error:
+
+           SYSTEM ERROR: MAXSUBP: too many subprocesses. (357)
+
+
+       To avoid this error, limit the number of subprocesses running.
+       Note: INPUT THROUGH also starts a subprocess. For INPUT THROUGH, you can use INPUT CLOSE to remove
+       the subprocess from the in-memory table.
+   •   On Windows only, when running 32-bit OpenEdge on a 64-bit operating system, if you attempt to use the
+       OS-COMMAND statement to run an executable in the %WINDIR%\System32 directory, execution will fail. To
+       remedy this, you can do one of the following:
+       •   Put the files you want to access in the %WINDIR%\SysWOW64 directory.
+       •   Put the files you want to access in another directory and ensure that directory is listed in %PATH%.
+       •   Change your code to use %WINDIR%\Sysnative, to force the operating system to point to
+           %WINDIR%\System32. Note that this can cause problems if the application also runs under a 32-bit version
+           of Windows.
+
+
+   
+
+OS-COPY statement
+   Executes an operating system file copy command from within ABL.
+
+
+Syntax
+
+    OS-COPY
+      { source-filename | VALUE ( expression ) }
+      { target-filename | VALUE ( expression ) }
+
+
+source-filename
+            The name of the original file. If you specify a directory, OS-COPY generates an error. The filename
+            can contain Unicode characters. See Internationalize ABL Applications for more information about
+            Unicode.
+VALUE ( expression )
+         An expression that returns the name of the original file. Expression can contain constants, field names,
+         and variable names. The filename can contain Unicode characters.
+target-filename
+            The name of the new file or directory. If you specify a directory, OS-COPY gives the target file the
+            same name as the source file. The filename can contain Unicode characters.
+VALUE ( expression )
+         An expression that returns the name of the new file or directory. expression can contain constants,
+         field names, and variable names. The filename can contain Unicode characters.
+
+Example
+This procedure opens a dialog box that prompts the user to choose a file to copy. It then prompts for a name for the
+copy. Finally, the procedure uses the OS-COPY statement to copy the file.
+r-os-cop.p
+
+    DEFINE VARIABLE sourcefilename AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE copyfilename   AS CHARACTER NO-UNDO FORMAT "x(20)"
+      VIEW-AS FILL-IN.
+    DEFINE VARIABLE OKpressed      AS LOGICAL   NO-UNDO INITIAL TRUE.
+
+    Main:
+    REPEAT:
+      SYSTEM-DIALOG GET-FILE sourcefilename
+        TITLE "Choose File to Copy"
+        MUST-EXIST
+        USE-FILENAME
+        UPDATE OKpressed.
+
+      IF OKpressed = FALSE THEN
+         LEAVE Main.
+      UPDATE copyfilename WITH FRAME copyframe.
+      OS-COPY VALUE(sourcefilename) VALUE(copyfilename).
+    END.
+
+
+
+Notes
+•   The filenames must conform to the naming conventions of the underlying operating system.
+•   If target-file specifies an existing file, OS-COPY overwrites the existing file.
+•   If target-file has the same name as source-file, the copy fails, but OS-ERROR is not set.
+•   If the copy terminates abnormally, the AVM deletes the partial target-file.
+•   Enclose filenames that refer to physical devices in double quotes (" ").
+                                                                                                            
+   •   Although an error can occur during execution of this statement, the statement does not generate an error message,
+       raise an error condition, or affect the program's flow in any way. Check for an execution error by using the OS-ERROR
+       function and evaluating the return.
+
+   
+
+OS-CREATE-DIR statement
+   Executes an operating system command from within ABL that creates one or more new directories.
+
+   Syntax
+
+       OS-CREATE-DIR { dirname | VALUE ( expression ) }...
+
+
+   dirname
+                A CHARACTER or LONGCHAR expression containing the name of a directory to create. If the
+                directory already exists, no error is generated. If a file with this name exists, an error is generated. The
+                name can be a pathname or a simple name. The directory name can contain Unicode characters. See
+                Internationalize ABL Applications for more information about Unicode.
+   If dirname is not a fully qualified directory name, ABL prepends the current working directory to dirname.
+   VALUE ( expression )
+            A CHARACTER or LONGCHAR expression that returns the name of a directory to create. Expression
+            can contain constants, field names, and variable names. The directory name can contain Unicode
+            characters.
+
+   Example
+   The following procedure prompts the user for the name of a directory, then creates it. If the name you give is not fully
+   qualified, the directory is created in your current directory.
+   r-os-dir.p
+
+       DEFINE VARIABLE stat     AS INTEGER   NO-UNDO.
+       DEFINE VARIABLE dir_name AS CHARACTER NO-UNDO FORMAT "x(64)"
+         LABEL "Enter the name of the directory you want to create.".
+
+       UPDATE dir_name.
+       OS-CREATE-DIR VALUE(dir_name).
+       stat = OS-ERROR.
+       IF stat NE 0 THEN
+         MESSAGE "Directory not created. System Error #" stat.
+
+
+
+   Notes
+   •   The directory name must conform to the naming conventions of the underlying operating system.
+   •   If a specified directory cannot be created, ABL returns an error code.
+   •   Although an error can occur during execution of this statement, the statement does not generate an error message,
+       raise an error condition, or affect the program's flow in any way. Check for an execution error by using the OS-ERROR
+       function and evaluating the return.
+
+
+
+OS-DELETE statement
+   Executes an operating system file or directory delete from within ABL. Can delete one or more files, a directory, or an
+   entire directory branch.
+
+   Syntax
+
+       OS-DELETE
+         { filename | VALUE ( expression ) }...
+         [ RECURSIVE ]
+
+
+   filename
+                The name of the files or directories to delete. If you specify a directory that is not empty, you must
+                also specify the RECURSIVE option to delete both the files contained within the directory and the
+                directory itself. The file or directory name can contain Unicode characters. See Internationalize ABL
+                Applications for more information about Unicode.
+   VALUE ( expression )
+            An expression that returns the name of the files or directories to delete. expression can contain constants,
+            field names, and variable names. The file or directory name can contain Unicode characters.
+   RECURSIVE
+          Instructs OS-DELETE to delete all subdirectories of the directory named in filename, as well as the
+          directory itself. Before a directory or subdirectory is deleted, its files are deleted.
+
+   Example
+   This procedure opens a dialog box that prompts the user to choose a file to delete, then uses the OS-DELETE statement
+   to delete the file:
+   r-os-del.p
+
+       DEFINE VARIABLE filename AS CHARACTER NO-UNDO.
+       DEFINE VARIABLE OKpressed AS LOGICAL  NO-UNDO INITIAL TRUE.
+
+       Main:
+       REPEAT:
+         SYSTEM-DIALOG GET-FILE filename
+           TITLE "Choose File to Delete"
+           MUST-EXIST
+           USE-FILENAME
+           UPDATE OKpressed.
+
+         IF OKpressed = FALSE THEN LEAVE Main.
+         ELSE OS-DELETE VALUE(filename).
+       END.
+
+
+
+   Notes
+   •   The filenames and directory names must conform to the naming conventions of the underlying operating system.
+   •   If OS-DELETE encounters files or directories that are protected against deletes, it skips over them, generates an
+       error code, but continues to delete any unprotected files and subdirectories that are specified. If several such files or
+       directories are encountered, OS-ERROR returns information on the last error only. If a subdirectory cannot be deleted,
+       then the named directory is not deleted.
+   •   You cannot use wildcard characters to specify files or directories.
+   •   Although an error can occur during execution of this statement, the statement does not generate an error message,
+       raise an error condition, or affect the program's flow in any way. Check for an execution error by using the OS-ERROR
+       function and evaluating the return.
+
+   
+OS-DRIVES function
+   (Windows only)
+   Returns a comma-separated list of available drives.
+
+   Syntax
+
+       OS-DRIVES
+
+
+
+   Example
+   The following procedure populates a selection list with the output of the OS-DRIVES function, and then displays the
+   list and prompts the user to select a drive. The procedure then informs the user that subsequent writes will be to the
+   selected drive.
+   r-os-drv.p
+
+       DEFINE VARIABLE drives AS CHARACTER NO-UNDO LABEL "Select a Drive"
+         VIEW-AS SELECTION-LIST INNER-CHARS 3 INNER-LINES 5.
+
+       DEFINE FRAME f
+         drives.
+
+       drives:LIST-ITEMS = OS-DRIVES.
+       UPDATE drives WITH FRAME f.
+       MESSAGE "Files will be written to drive" INPUT drives:SCREEN-VALUE.
+
+
+
+   Note
+   On platforms other than Windows, OS-DRIVES compiles and executes, but returns the empty string ("").
+
+
+OS-ERROR function
+   Returns, as an INTEGER value, an ABL error code that indicates whether an execution error occurred during the last
+   OS-APPEND, OS-COPY, OS-CREATE-DIR, OS-DELETE, OS-RENAME or SAVE CACHE statement.
+
+   Syntax
+
+       OS-ERROR
+
+
+Example
+The following procedure prompts the user to enter a file to delete, attempts to delete the file, and then calls the OS-ERROR
+function to check for an execution error. If an error occurs, the procedure branches based on the error number and
+responds accordingly.
+r-os-err.p
+
+    DEFINE VARIABLE err-status AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE filename   AS CHARACTER NO-UNDO FORMAT "x(40)"
+      LABEL "Enter a file to delete".
+
+    UPDATE filename.
+    OS-DELETE VALUE(filename).
+    err-status = OS-ERROR.
+
+    IF err-status <> 0 THEN
+    CASE err-status:
+      WHEN 1 THEN
+        MESSAGE "You are not the owner of this file or directory.".
+      WHEN 2 THEN
+        MESSAGE "The file or directory you want to delete does not exist.".
+      OTHERWISE
+        DISPLAY "OS Error #" + STRING(OS-ERROR,"99") FORMAT "x(13)"
+          WITH FRAME b.
+    END CASE.
+
+
+
+Notes
+•   This function returns 0 if no error occurred.
+•   Use this function immediately following an OS-APPEND, OS-COPY, OS-CREATE-DIR, OS-DELETE,
+    OS-RENAME, or SAVE CACHE statement to determine whether an error occurred during the statement's execution.
+    If you do not, the next use of one of these statements overwrites the previous error code.
+•   The following table lists the ABL error codes that the OS-ERROR function can return.
+    Table 49: ABL OS-ERROR codes
+
+     Error number                                               Description
+     0                                                          No error
+     1                                                          Not owner
+     2                                                          No such file or directory
+     3                                                          Interrupted system call
+     4                                                          I/O error
+     5                                                          Bad file number
+     6                                                          No more processes
+     7                                                          Not enough core memory
+     8                                                          Permission denied
+     9                                                          Bad address
+     10                                                         File exists
+     11                                                         No such device
+
+        12                                                       Not a directory
+        13                                                       Is a directory
+        14                                                       File table overflow
+        15                                                       Too many open files
+        16                                                       File too large
+        17                                                       No space left on device
+        18                                                       Directory not empty
+        999                                                      Unmapped error (ABL default)
+
+
+
+   See also
+   OS-APPEND statement on page 753, OS-COMMAND statement on page 754, OS-COPY statement on page 755,
+   OS-CREATE-DIR statement on page 757, OS-DELETE statement on page 758, OS-RENAME statement on page 762,
+   SAVE CACHE statement on page 923
+
+
+OS-GETENV function
+   Returns a string that contains the value of the desired environment variable in the environment in which the ABL session
+   is running.
+
+   Syntax
+
+       OS-GETENV ( environment-variable )
+
+
+   environment-variable
+             The name of the environment variable whose value you want to find.
+
+   Example
+   This procedure prompts a user for a report name. It then builds the full pathname where the report will be stored, using
+   OS-GETENV to find the DLC directory. Finally, the procedure displays the full pathname.
+   r-os-env.p
+
+       DEFINE VARIABLE pathname    AS CHARACTER NO-UNDO FORMAT "x(32)"
+         LABEL "The report will be stored in ".
+       DEFINE VARIABLE report_name AS CHARACTER NO-UNDO FORMAT "x(32)"
+         LABEL "Please enter report name." .
+
+       UPDATE report_name.
+       pathname = OS-GETENV("DLC") + "/" + report_name.
+       DISPLAY pathname WITH FRAME b SIDE-LABELS.
+
+
+
+   Notes
+   •   If the environment variable is not defined, this statement returns the Unknown value (?).
+   •   This function returns the value of an environment variable defined before the ABL session started, not a variable
+       defined during the session.
+   •   Since environment variables are case sensitive in some environments, make sure that the name you supply is the
+       correct case.
+   •   For security reasons some operating systems may not return certain system environment variable values. In these
+       cases the Unknown value (?) is returned.
+   •   When the AVM retrieves an environment variable from the operating system, it assumes that the value is encoded
+       using the same encoding as the internal code page setting (-cpinternal). No conversion is done when reading
+       the value into the AVM's memory. The application may need to use the CODEPAGE-CONVERT function to convert
+       the value from the operating system encoding to the session encoding if it is not already in a compatible format.
+       The Wide Character Convert (-widecharconv) startup parameter can be used to modify the behavior of OS-GETENV
+       on Windows. Use -widecharconv when there are extended characters in environment variables that need to be
+       accessed by an application. Do not use, however, if the application uses CODEPAGE-CONVERT to convert environment
+       variable; doing so will cause an extra conversion that may produce incorrect output.
+
+
+
+OS-RENAME statement
+   Executes an operating system file rename or directory rename command from within ABL.
+
+   Syntax
+
+       OS-RENAME
+         { source-filename | VALUE ( expression ) }
+         { target-filename | VALUE ( expression ) }
+
+
+   source-filename
+               The name of the file or directory to rename. The file or directory name can contain Unicode characters.
+               See Internationalize ABL Applications for more information about Unicode.
+   VALUE ( expression )
+            An expression that returns the name of the file or directory to rename. expression can contain constants,
+            field names, and variable names. The file or directory name can contain Unicode characters.
+   target-filename
+               The new name of the file or directory. The file or directory name can contain Unicode characters.
+   VALUE ( expression )
+            An expression that returns the new name of the file or directory. expression can contain constants,
+            field names, and variable names. The file or directory name can contain Unicode characters.
+
+   Example
+   This procedure opens a dialog box that prompts the user to choose a file to rename. It then prompts for a new name.
+   Finally, the procedure uses the OS-RENAME statement to rename the file.
+
+   r-os-nam.p
+
+       DEFINE VARIABLE sourcefile AS CHARACTER NO-UNDO.
+       DEFINE VARIABLE targetfile AS CHARACTER NO-UNDO FORMAT "x(20)"
+         VIEW-AS FILL-IN.
+       DEFINE VARIABLE OKpressed AS LOGICAL    NO-UNDO INITIAL TRUE.
+
+       Main:
+       REPEAT:
+         SYSTEM-DIALOG GET-FILE sourcefile
+            TITLE "Choose a File or Directory to Rename"
+            MUST-EXIST
+            USE-FILENAME
+            UPDATE OKpressed.
+         IF OKpressed = FALSE THEN
+            LEAVE Main.
+         UPDATE targetfile WITH FRAME newnameframe.
+         OS-RENAME VALUE(sourcefile) VALUE(targetfile).
+       END.
+
+
+
+   Notes
+   •   The filenames or directory names must conform to the naming conventions of the underlying operating system.
+   •   If source-filename and target-filename specify different directories, this statement both renames the file and moves
+       it to the new directory.
+   •   Although an error can occur during execution of this statement, the statement does not generate an error message,
+       raise an error condition, or affect the program's flow in any way. Check for an execution error by using the OS-ERROR
+       function and evaluating the return.
+
+
+UNIX statement
+   (UNIX only)
+   Runs a program, UNIX command, or UNIX script, or starts a UNIX interactive shell to allow interactive processing of
+   UNIX commands.
+
+   Syntax
+
+       UNIX
+         [ SILENT ]
+         [ command-token | VALUE ( expression ) ] ...
+
+
+   SILENT
+               After processing a UNIX statement, the AVM shell pauses and prompts you to press SPACEBAR to
+               continue. You can use the SILENT option to eliminate this pause. Use this option only if you are sure
+               that the UNIX program, command, or batch file does not generate any output to the screen.
+   command-token | VALUE ( expression )
+               One or more command (command-token) words and symbols that you want to pass the UNIX operating
+               system to execute. The VALUE option generates the command tokens included in expression, a
+               character string expression. The specified combination of command-token and VALUE ( expression )
+               options can form any legal combination of commands and command options permitted by UNIX,
+               including programs, built-in commands, and scripts. If you do not use any of these options, the UNIX
+               statement invokes the UNIX shell and remains there until you press CTRL+D or the EOF character
+               set by the UNIX stty command.
+
+   Examples
+   On UNIX, procedure r-unix.p starts a shell and in it runs the UNIX "ls" command. In Windows, this procedure starts
+   a command processor and runs the DOS "dir" command in it:
+   r-unix.p
+
+       IF OPSYS = "UNIX" THEN UNIX ls.
+       ELSE IF OPSYS = "WIN32" THEN DOS dir.
+       ELSE DISPLAY OPSYS "is an unsupported operating system".
+                                                                                                        
+
+   In r-unx.p, if you type an L, the AVM runs the DOS dir command or the UNIX ls command. If you enter a
+   procedure name that is stored in the proc variable, the RUN statement then runs the procedure.
+   r-unx.p
+
+       DEFINE VARIABLE proc AS CHARACTER NO-UNDO FORMAT "x(40)".
+
+       REPEAT:
+         DISPLAY "Enter L to list your files"
+            WITH ROW 5 CENTERED FRAME a.
+         SET proc LABEL "Enter a valid Procedure Name to run"
+            WITH ROW 9 CENTERED FRAME b.
+         IF proc = "L" THEN
+            IF OPSYS = "UNIX" THEN UNIX ls.
+            ELSE IF OPSYS = "WIN32" then DOS dir.
+            ELSE display "Operating system" OPSYS "is not supported".
+         ELSE DO:
+            HIDE FRAME a.
+            HIDE FRAME b.
+            RUN VALUE(proc).
+         END.
+       END.
+
+
+
+   Notes
+   •   If you are using Windows and you use the UNIX statement in a procedure, that procedure will compile. The procedure
+       will run as long as flow of control does not pass through the UNIX statement.
+   •   This command does not exit to UNIX and return. It creates a shell within ABL to execute the command. Thus, you
+       cannot use the UNIX statement as a substitute for the QUIT statement.
+   •   When you use the UNIX cp command as an ABL statement, ABL assumes that a period (.) indicates the end of the
+       statement. This causes the cp command to display a message stating that it requires two arguments. For example,
+       ABL uses the period as the end of the statement indicator:
+
+         UNIX cp usr/myfile.
+
+
+       To use the period as part of a UNIX command, enclose the command in quotation marks. For example:
+
+         UNIX "cp usr/myfile."
+
+

@@ -1,0 +1,12 @@
+/*****************************************************************************
+** tab-unid.dv
+** Arquivo: tab-unidade
+*****************************************************************************/
+
+not(can-find(first item of tab-unidade) or
+    can-find(first tab-conv-un use-index un-item where
+             tab-conv-un.un = tab-unidade.un) or
+    can-find(first trad-un     use-index ch-un   where
+             trad-un.un = tab-unidade.un))
+
+/* fim */

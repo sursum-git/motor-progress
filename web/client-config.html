@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configuracao de clientes</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="ui-ready.css?v=20260616-grid-loading">
+  <link rel="stylesheet" href="query-builder.css">
+</head>
+<body class="sursum-ui-pending">
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Sursum Dynamic Query</p>
+        <h1>Clientes e ambientes</h1>
+        <p class="lead">Cadastre clientes e mantenha os ambientes PASOE vinculados ao cliente selecionado.</p>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-title">
+        <h2>Clientes</h2>
+        <span>Cadastro base de clientes</span>
+      </div>
+
+      <div class="grid three">
+        <label>Cliente atual
+          <input id="clientCombo" placeholder="Selecione o cliente">
+        </label>
+        <label>Novo cliente
+          <input id="clientName" placeholder="Cliente ABC">
+        </label>
+        <label>&nbsp;
+          <button id="addClient">Adicionar cliente</button>
+          <button id="removeClient">Remover cliente</button>
+        </label>
+      </div>
+
+      <div id="clientsGrid"></div>
+
+      <div id="environmentEditorPanel" style="display:none">
+        <div class="panel-title slim">
+          <h2>Ambientes do cliente</h2>
+        <span id="environmentPanelSummary">Selecione um cliente para manter os ambientes.</span>
+        </div>
+
+        <div class="action-row tight" style="margin: 8px 0 16px;">
+          <button id="newEnvironment">Novo ambiente</button>
+        </div>
+        <div id="environmentsGrid"></div>
+      </div>
+
+      <div id="environmentFormPanel" style="display:none">
+        <div class="panel-title slim">
+          <h2 id="environmentFormTitle">Ambiente</h2>
+          <span id="environmentFormSummary">Informe os dados do ambiente PASOE.</span>
+        </div>
+        <div class="grid two">
+          <label>Ambiente/PASOE
+            <input id="environmentFormName" placeholder="Local PASOE">
+          </label>
+          <label>URL base
+            <input id="environmentFormUrl" placeholder="https://host/{empresa}/web/SursumDynamicQuery">
+          </label>
+          <label>Servidor SSH
+            <input id="environmentFormServidor" placeholder="192.168.0.42">
+          </label>
+          <label>Usuario SSH
+            <input id="environmentFormUsuario" placeholder="usuario">
+          </label>
+          <label>Senha SSH
+            <input id="environmentFormSenha" type="password" placeholder="senha">
+          </label>
+          <label>Arquivo PF
+            <input id="environmentFormArquivoPf" placeholder="C:\caminho\datasul.pf">
+          </label>
+          <label>Arquivo alias
+            <input id="environmentFormArquivoAlias" placeholder="C:\caminho\aliases.p">
+          </label>
+        </div>
+        <div class="action-row tight" style="margin: 16px 0 0;">
+          <button id="saveEnvironment">Salvar</button>
+          <button id="cancelEnvironmentForm">Cancelar</button>
+        </div>
+      </div>
+
+      <div id="companyEditorPanel" style="display:none">
+        <div class="panel-title slim">
+          <h2>Empresas do ambiente</h2>
+          <span id="companyPanelSummary">Selecione um ambiente para manter as empresas.</span>
+        </div>
+        <div class="grid three">
+          <label>Empresa
+            <input id="companyName" placeholder="Empresa padrao">
+          </label>
+          <label>Codigo da empresa
+            <input id="companyCode" placeholder="1">
+          </label>
+          <label>Path param
+            <input id="companyPathParam" placeholder="med">
+          </label>
+        </div>
+        <div class="action-row tight" style="margin: 8px 0 16px;">
+          <button id="addCompany">Adicionar empresa</button>
+        </div>
+        <div id="companiesGrid"></div>
+      </div>
+
+      <div id="statusBox" class="status-box">Pronto.</div>
+    </section>
+  </div>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="ui-ready.js?v=20260616-grid-loading"></script>
+  <script src="auth-guard.js"></script>
+
+  <script src="context-manager.js?v=20260613-environment-ssh-props"></script>
+  <script src="client-config.js?v=20260612-environment-ssh-props"></script>
+</body>
+</html>

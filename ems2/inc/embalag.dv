@@ -1,0 +1,15 @@
+/*****************************************************************************
+** embalag.dv
+** Arquivo: embalag
+*****************************************************************************/
+ 
+not (can-find (first item-embal use-index ch-embal-it
+                     where item-embal.sigla-emb = embalag.sigla-emb)
+     or
+     can-find (first nota-embal use-index ch-emb-nota
+                     where nota-embal.sigla-emb = embalag.sigla-emb)
+     or
+     can-find (first trad-emb   use-index ch-sigla
+                     where trad-emb.sigla-emb   = embalag.sigla-emb))
+ 
+/* fim */

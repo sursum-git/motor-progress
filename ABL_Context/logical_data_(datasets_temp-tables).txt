@@ -1,0 +1,1284 @@
+CREATE DATASET statement
+
+Creates a ProDataSet object dynamically at run time. The ProDataSet object that is created is empty.
+
+Note: You can use the ADD-BUFFER( ) method and SET-BUFFERS( ) method to add buffers to a dynamic ProDataSet object.
+
+   Syntax
+
+       CREATE DATASET dataset-handle [ IN WIDGET-POOL widget-pool-name ]
+
+
+   dataset-handle
+              A variable of type HANDLE that represents the handle of the dynamic ProDataSet object.
+   IN WIDGET-POOL widget-pool-name
+           An expression of type CHARACTER that evaluates, at run time, to the name of the widget pool in which the dynamic ProDataSet object is created.
+           Note: Widget pool names are not case-sensitive.
+
+   Notes
+   •   If you do not specify a widget pool name, the object is created in the Session unnamed widget pool (not in the closest unnamed widget pool). The object goes away when its widget pool goes away or when you delete it using the DELETE OBJECT statement on page 433.
+   •   If the ProDataSet object serves as an OUTPUT parameter and you specify a widget pool, the widget pool must outlive the called procedure.
+
+   Example
+   Following is an example of how to create a dynamic ProDataSet object for Orders and their Orderlines:
+
+       DEFINE VARIABLE hDset AS HANDLE NO-UNDO.
+       DEFINE VARIABLE hRel AS HANDLE NO-UNDO.
+
+       CREATE DATASET hDset.
+
+       hDset:SET-BUFFERS(BUFFER ttOrder:HANDLE, BUFFER ttOrderLine:HANDLE).
+
+       hRel = hDset:ADD-RELATION(BUFFER ttOrder:HANDLE, BUFFER ttOrderLine:HANDLE,
+         "OrderNum,OrderNum").
+
+
+
+
+
+CREATE DATA-SOURCE statement
+Creates a data-source object dynamically at run time.
+
+
+
+   Syntax
+
+     CREATE DATA-SOURCE data-source-handle [ IN WIDGET-POOL widget-pool-name ]
+
+
+   data-source-handle
+              A variable of type HANDLE that represents the handle of the dynamic data-source object.
+   IN WIDGET-POOL widget-pool-name
+           An expression of type CHARACTER that evaluates, at run time, to the name of the widget pool in which the dynamic data-source object is created.
+              Note: Widget pool names are not case-sensitive.
+
+Notes
+If you do not specify a widget pool name, the dynamic data-source object is created in the closest unnamed widget-pool, by default. The object goes away when its widget pool goes away or when you delete it using the DELETE OBJECT statement.
+
+
+
+
+CREATE TEMP-TABLE statement
+
+Creates a TEMP-TABLE dynamically at run time. The TEMP-TABLE that is created is empty and must be defined using ADD/CREATE methods.
+
+   Syntax
+
+     CREATE TEMP-TABLE handle
+       [ IN WIDGET-POOL widget-pool-name ]
+
+
+   handle
+              A variable of type HANDLE that represents the handle of the TEMP-TABLE object.
+   IN WIDGET-POOL widget-pool-name
+           An expression of type CHARACTER that evaluates, at run time, to the name of the widget pool that contains the dynamic TEMP-TABLE.
+              Note: Widget pool names are not case-sensitive.
+
+   Note
+   You can collect run-time statistics about usage of temp-tables in an ABL session. For more information on collecting statistics for temp-table usage, see Troubleshoot ABL Applications.
+
+   Example
+   The following example creates a TEMP-TABLE like the Order table and populates it from the Order table. In addition, the corresponding SalesRep name is added from the SalesRep table, as shown:
+
+r-cretmpt.p
+
+  DEFINE      VARIABLE   tth            AS   HANDLE   NO-UNDO.
+  DEFINE      VARIABLE   bh             AS   HANDLE   NO-UNDO.
+  DEFINE      VARIABLE   qh             AS   HANDLE   NO-UNDO.
+  DEFINE      VARIABLE   buf-ord-hndl   AS   HANDLE   NO-UNDO.
+  DEFINE      VARIABLE   buf-rep-hndl   AS   HANDLE   NO-UNDO.
+  DEFINE      VARIABLE   fld1           AS   HANDLE   NO-UNDO.
+  DEFINE      VARIABLE   fld2           AS   HANDLE   NO-UNDO.
+
+  /* Get database table handles */
+  buf-ord-hndl = BUFFER Order:HANDLE.
+  buf-rep-hndl = BUFFER SalesRep:HANDLE.
+
+  /* Create an empty, undefined TEMP-TABLE */
+  CREATE TEMP-TABLE tth.
+  /* Give it Order table's fields & indexes */
+  tth:CREATE-LIKE(buf-ord-hndl).
+  /* Add field like SalesRep.RepName */
+  tth:ADD-LIKE-FIELD("RepName","SalesRep.RepName").
+  /* No more fields will be added */
+  tth:TEMP-TABLE-PREPARE("ordx").
+
+  /* Get the buffer handle for the temp-table */
+  bh = tth:DEFAULT-BUFFER-HANDLE.
+
+  /* Populate the temp-table from order */
+  FOR EACH Order NO-LOCK:
+    bh:BUFFER-CREATE.
+    bh:BUFFER-COPY(buf-ord-hndl).
+    /* Add the corresponding salesrep name */
+    FIND SalesRep NO-LOCK WHERE SalesRep.SalesRep = Order.SalesRep NO-ERROR.
+    IF AVAILABLE SalesRep THEN
+       bh:BUFFER-COPY(buf-rep-hndl,?,"RepName,repname").
+  END.
+
+  /* Run a query to access the TEMP-TABLE */
+  CREATE QUERY qh.
+  qh:SET-BUFFERS(bh).
+  qh:QUERY-PREPARE("FOR EACH ordx WHERE ordx.OrderNum < 50 BY ordx.RepName").
+  qh:QUERY-OPEN().
+
+  fld1 = bh:BUFFER-FIELD("OrderNum").
+  fld2 = bh:BUFFER-FIELD("RepName").
+
+  /* Display the order number and the salesrep name */
+  REPEAT:
+    qh:GET-NEXT().
+    IF qh:QUERY-OFF-END THEN LEAVE.
+    DISPLAY fld1:BUFFER-VALUE() FORMAT "X(10)".
+    DISPLAY fld2:BUFFER-VALUE() FORMAT "X(20)".
+  END.
+
+  qh:QUERY-CLOSE().
+  bh:BUFFER-RELEASE().
+  DELETE OBJECT tth.
+  DELETE OBJECT qh.
+
+   Notes
+   •   Once the TEMP-TABLE fields and indexes are defined using the ADD/CREATE methods, the definition must be terminated by using the TEMP-TABLE-PREPARE method before the TEMP-TABLE can be used.
+   •   You can set the before-table-exp parameter to TRUE in the TEMP-TABLE-PREPARE method to explicitly create a before-table for a dynamic temp-table. See the TEMP-TABLE-PREPARE method entry for more information.
+   •   Once the TEMP-TABLE is prepared, it can be manipulated by using its buffer object handle which is retrieved using the DEFAULT-BUFFER-HANDLE attribute. All the BUFFER methods are available to the dynamic TEMP-TABLE.
+   •   The dynamic temp-table object is scoped like the buffer object. It is created in a widget pool and ends when the widget pool ends or when it is deleted with the DELETE OBJECT statement. You may not delete the default buffer object belonging to a dynamic temp-table.
+   •   Errors for dynamic temp-tables do not automatically raise the ERROR condition since they occur inside a widget expression. All the methods that can have errors return FALSE if an error occurs, so they must be tested. If NO-ERROR is in effect in the statement containing the widget reference, no messages display, but they can be retrieved from the ERROR-STATUS system handle.
+
+
+
+
+
+DATA-SOURCE-MODIFIED function
+
+Returns TRUE if data in the data source associated with the specified ProDataSet temp-table buffer has been modified.
+
+   Syntax
+
+       DATA-SOURCE-MODIFIED( buffer-name )
+
+
+   buffer-name
+             The name of a ProDataSet temp-table buffer.
+
+   Notes
+   •   The AVM sets the value of this function from the SAVE-ROW-CHANGES( ) method.
+   •   The DATA-SOURCE-MODIFIED function corresponds to the DATA-SOURCE-MODIFIED attribute.
+   •   You can invoke the DATA-SOURCE-MODIFIED function from within a WHERE clause (unlike the corresponding attribute).
+
+
+
+
+
+DEFINE DATASET statement
+
+Defines a ProDataSet object that is created at compile time, and allows you to identify the temp-table buffers it incorporates and define the data relations between those buffers. This statement defines the ProDataSet for use in one or more external procedures, or within a single class or class hierarchy.
+
+   Syntax
+
+       DEFINE {[[ NEW ] SHARED ]|[ PRIVATE | PROTECTED ][ STATIC ]
+          [ SERIALIZABLE | NON-SERIALIZABLE ]} DATASET dataset-name
+         [ NAMESPACE-URI namespace][ NAMESPACE-PREFIX prefix]
+         [ XML-NODE-NAME node-name][ SERIALIZE-NAME serialize-name ]
+         [ XML-NODE-TYPE node-type ][ SERIALIZE-HIDDEN ]
+         [ REFERENCE-ONLY ] FOR buffer-name [ , buffer-name]...
+         [ DATA-RELATION [data-rel-name ] FOR data-rel-spec ]...
+         [ PARENT-ID-RELATION [data-rel-name] FOR parent-id-rel-spec]...
+
+
+   NEW SHARED DATASET dataset-name
+               Defines and identifies a ProDataSet object that can be shared by one or more procedures called directly or indirectly by the current procedure. The ProDataSet object remains available to other procedures until the procedure that defined it ends. The called procedures must define the same ProDataSet object name as SHARED. For shared ProDataSet objects, each buffer-name must be the name of a shared buffer.
+               Note: Because a static SHARED TEMP-TABLE cannot have a BEFORE-TABLE, you cannot track changes on a static SHARED DATASET.
+   SHARED DATASET dataset-name
+         Defines and identifies a ProDataSet object that was initially defined by another procedure as NEW SHARED. For shared ProDataSet objects, each buffer-name must be the name of a shared buffer. The procedure that initially defines the object determines the name. The procedures that share the object must define the object with the same name.
+[ PRIVATE | PROTECTED ][ STATIC ][ SERIALIZABLE | NON-SERIALIZABLE ] DATASET
+dataset-name
+         Defines and identifies a ProDataSet object as a data member of a class, and optionally specifies an access mode (PRIVATE or PROTECTED) and scope (instance or STATIC) for that data member, as well as whether or not the ProDataSet object will participate in serialization (SERIALIZABLE or NON-SERIALIZABLE). You cannot specify any of these options for a ProDataSet defined in an interface type definition (INTERFACE statement on page 644 block) or when defining a ProDataSet as a data element of a procedure. For a data member ProDataSet, each buffer-name must be the name of a compatible data member buffer (see the FOR option).
+         Note: The specified options are applicable only when defining a data member for a class in a class definition (.cls) file. The PRIVATE/PROTECTED modifier and the STATIC modifier can appear in either order, e.g., DEFINE STATIC PRIVATE DATASET myDataSet... is valid syntax. You cannot shadow (override) the definition of a given ProDataSet data member in a class hierarchy. A ProDataSet defined with the STATIC option is a static data member of the class type for which it is defined, and it is scoped to the ABL session where it is referenced. ABL creates one copy of the specified class static ProDataSet on first reference to the class type, and ABL creates only one such copy for any number of instances of the class that you create. You cannot specify STATIC if you specify the REFERENCE-ONLY option. You can directly reference an accessible static ProDataSet data member from any other static or instance class member defined in the same class or class hierarchy. Without the STATIC option, ABL creates an instance ProDataSet data member that is scoped to a single instance of the class where it is defined. ABL creates one copy of the specified instance ProDataSet for each such class instance that you create. You cannot directly reference an instance ProDataSet data member from a STATIC class member definition defined within the same class or class hierarchy.
+
+For more information on accessing ProDataSets of different access modes and scopes, see the reference entry for Class-based data member access on page 122. Class-based objects that are defined as serializable (using the SERIALIZABLE option in the CLASS statement on page 132) can be passed as parameters in remote calls between the application server and ABL clients and can be serialized to binary or JSON format. By default, serializing an object to binary via the Progress.IO.BinarySerializer class includes all data members regardless of access mode. However, for JSON serialization via Progress.IO.JsonSerializer, only public data members are serialized. To include a protected or private ProDataSet object during JSON serialization, SERIALIZABLE must be added to the definition. 
+
+Use the NON-SERIALIZABLE option to exclude a given ProDataSet from parameter passing between an application server and ABL client and the serialization process via the Progress.IO.BinarySerializer class. (ProDataSets are NON-SERIALIZABLE by default via the Progress.IO.JsonSerializer class because they cannot be defined as public.)
+
+Note: Members of a class are grouped into six namespaces, including buffers/temp-tables, methods, variables/properties/events, ProDataSets, queries, and data-sources. ProDataSets defined as members of a class share the same namespace. There can be only one class member in this namespace with a given name.
+
+DATASET dataset-name
+           Defines and identifies a ProDataSet object in an interface, or for access only within the current external procedure or as a data member of the current class.
+NAMESPACE-URI namespace
+       An optional CHARACTER constant that specifies the URI for the namespace of the ProDataSet object.
+NAMESPACE-PREFIX prefix
+       An optional CHARACTER constant that specifies the namespace prefix associated with the NAMESPACE-URI.
+XML-NODE-NAME node-name
+           An optional CHARACTER constant that specifies the name of the XML element representing the ProDataSet in an XML Document. The default is dataset-name. This option is useful when:
+           •   reading a ProDataSet from XML with a name that contains invalid characters for an ABL name or is an ABL keyword, or
+           •   writing a ProDataSet to XML with a name that is an invalid XML tag name.
+           Note: If you set SERIALIZE-NAME but do not set XML-NODE-NAME, the AVM sets XML-NODE-NAME equal to SERIALIZE-NAME.
+XML-NODE-TYPE node-type
+       An optional CHARACTER constant that specifies the XML node type of the ProDataSet element represented in XML. The valid option values are "ELEMENT" and "HIDDEN". The default value is "ELEMENT".
+SERIALIZE-HIDDEN
+        Indicates that the ProDataSet name is not written when the ProDataSet data or schema is serialized to JSON or XML. (This option is ignored for serialization via Progress.IO.JsonSerializer.)
+           This will support the WRITE-JSON()and WRITE-XML() methods in case the root of the JSON string or XML document maps to a temp-table. For XML, the XML-NODE-TYPE attribute takes precedence over SERIALIZE-HIDDEN attribute.
+SERIALIZE-NAME serialize-name
+        An optional CHARACTER constant that specifies the name of the element representing the ProDataSet in an XML Document or JSON string. The default is dataset-name. This option is useful when:
+           •   reading a ProDataSet from XML or JSON with a name that contains invalid characters for an ABL name or is an ABL keyword, or
+           •   writing a ProDataSet to XML or JSON with a name that is an invalid XML tag name or an invalid JSON property name.
+           Note: If you set both XML-NODE-NAME and SERIALIZE-NAME, the READ-XML() and WRITE-XML() methods will use XML-NODE-NAME.
+REFERENCE-ONLY
+           Specifies that the procedure or class defining this ProDataSet object is using the object definition only as a reference to a ProDataSet object that is defined and instantiated in another procedure or class, and specified as a parameter in the invocation of a RUN statement, a method in a class, or a user-defined function, using either the BY-REFERENCE or BIND option. The AVM does not instantiate the reference-only object. You cannot specify REFERENCE-ONLY if you specify the STATIC option.
+           Passing a reference-only ProDataSet object parameter to a local routine, using either the BY-REFERENCE or BIND option allows the calling routine and the called routine to access the same object instance (instead of deep-copying the parameter).
+           Note: If you pass the parameter to a remote procedure, the AVM deep-copies the parameter on OUTPUT and the reference-only parameter is bound to that copy.
+
+           When you pass a ProDataSet parameter to a local routine using the BY-REFERENCE option, both the calling and called routines access the calling routine's object instance (and ignore the called routine's object instance). Since the called routine's object instance is ignored, you should define the object as a reference-only object. When you define a reference-only ProDataSet object in the called routine and receive it from the calling routine using the BY-REFERENCE option, the AVM binds the definition of the object in the called routine to the object instance in the calling routine for the duration of the called routine. You cannot define a reference-only ProDataSet object in the calling routine and pass it to the called routine using the BY-REFERENCE option.
+           When you pass a ProDataSet parameter to a local routine using the BIND option, you can define a reference-only ProDataSet object in either the calling routine or the called routine as follows:
+           •   When you define a reference-only ProDataSet object in the calling routine and pass it to the called routine using the BIND option, the AVM binds the calling routine to the object instance in the called routine. The reference-only object definition remains bound to the object instance until the routine containing the reference-only object definition is deleted or terminates. The parameter must be an OUTPUT parameter.
+               Note: If you also define the ProDataSet object instance in the called routine as a reference-only object, you must bind the object in the called routine before returning to the calling routine.
+           •   When you define a reference-only ProDataSet object in the called routine and receive it from the calling routine using the BIND option, the AVM binds the called routine to the object instance in the calling routine. The reference-only object definition remains bound to the object instance until the routine containing the reference-only object definition is deleted or terminates. The parameter must be an INPUT or INPUT-OUTPUT parameter.
+           In either case, you must specify the BIND option for the parameter in both the invocation of a RUN statement, a method in a class, or a user-defined function, and in the DEFINE PARAMETER statement.
+                   CAUTION: Do not delete the object or routine to which a reference-only ProDataSet object is bound, or you might be left with references to an object that no longer exists.
+
+           When you define a ProDataSet object as reference-only, you must also define all member temp-tables as such. A temp-table object defined as reference-only can be a member of a reference-only ProDataSet object or a standard ProDataSet object. However, if you define a reference-only temp-table in a standard ProDataSet object, you cannot use the ProDataSet object until you bind the reference-only temp-table.
+FOR buffer-name [ , buffer-name]...
+          Specifies the name of compile-time defined temp-table buffer that is scoped to the procedure or class in which the ProDataSet object is defined. For a shared ProDataSet, each buffer-name must be a shared buffer. If the ProDataSet is a data member of a class, you must specify the name of a compatible buffer data member. Thus, if the ProDataSet is a static data member, the buffer must also be a static data member; if the ProDataSet is PROTECTED, the buffer must also be defined as PROTECTED or inherited from a super class; and if the ProDataSet is PRIVATE, the buffer can be defined as either PRIVATE or PROTECTED. If the ProDataSet is a PRIVATE instance data member, you can also specify a default database table buffer; you cannot specify a default database buffer for a ProDataSet data member defined with any other combination of access mode and scope.
+           Note: ABL defines the default buffer for every database table that you access in a class as a PRIVATE instance buffer data member.
+DATA-RELATION [data-rel-name ] FOR data-rel-spec
+        Specifies an optional data-relation object.
+           The data-rel-name argument lets you name the data-relation object. You can use this name to obtain the object's handle at run time. This argument is optional. The default name is Relationn (where n starts at 1 for each ProDataSet object).
+
+The data-rel-spec argument specifies a pair of parent and child buffers for the data-relation object using the following syntax:
+
+  parent-buffer-name, child-buffer-name field-mapping-phrase
+  [ REPOSITION ][ NESTED [ FOREIGN-KEY-HIDDEN ]][ NOT-ACTIVE ]
+
+  [ RECURSIVE ]
+
+
+parent-buffer-name
+The parent buffer in the data-relation object. This must be one of the buffers identified by buffer-name.
+child-buffer-name
+The child buffer in the data-relation object. This must be one of the buffers identified by buffer-name.
+field-mapping-phrase
+Specifies the fields in the relation using the following syntax:
+
+  RELATION-FIELDS ( parent-field1 , child-field1
+    [ , parent-fieldn , child-fieldn]... )
+
+
+The first field in the pair is from the parent buffer, the second field is from the child buffer. When filling the ProDataSet object, the AVM retrieves data for the child buffer based on an equality match between all pairs of fields unless the Data-Relation is deactivated or there is an explicit query definition for the data source of the child buffer.
+You can define a query for the data source of the child buffer, or supply custom logic in response to FILL events that take over complete responsibility for filling one level of the ProDataSet object. In these cases, the field-mapping-phrase is not used.
+When navigating the ProDataSet object, the AVM filters the data in the child buffer to include only children of the current parent.
+REPOSITION
+Specifies the relation mode as REPOSITION. The relation mode is SELECTION, by default.
+When the relation mode is SELECTION, the ProDataSet object fills the child temp-table of the relation with all records related to the current parent. When the relation mode is REPOSITION, the relation is effectively ignored during a FILL, and the child of the relation is treated as if it were a top-level buffer.
+When navigating a filled ProDataSet object with a SELECTION relation, related data is filtered as it is browsed. This means the child query of the relation is filtered to make available only children of the current parent, and the query is re-opened each time the parent table is repositioned. When navigating a filled ProDataSet object with a REPOSITION relation, the child table query is always set to match all the rows in the child table, and is not re-opened when the parent changes. Only the buffer for the child is repositioned to the matching child for the current parent.
+A data-relation defined with REPOSITION or SELECTION is overridden if a query is defined for a child relation data-source. Normally, if REPOSITION is not specified, the child query selects the children of the parent. Coding a query for the child data-source overrides whether or not a SELECTION or REPOSITION relation mode was defined. By removing the query of the child data-source, the default child table load occurs.
+NESTED
+         Specifies that child rows of a ProDataSet buffer are nested within their parent rows when writing a
+         JSON representation of data or an XML representation of data or schema. This also causes the XML
+         Schema definitions for the related temp-tables to be nested.
+         Note: If you do not nest child tables, the JSON string loses the data relation information. The
+         serialization process also loses any information about key columns.
+         FOREIGN-KEY-HIDDEN
+         Specifies that foreign key fields in nested data relations are omitted when writing JSON or XML data,
+         and that foreign key fields are optional in the XML Schema representation of the child table definition.
+         This option can only be specified if the NESTED option is also specified.
+         When working with large ProDataSets, omitting foreign keys in nested child records can yield smaller
+         JSON strings and XML documents, more efficient network transfers, and performance gains with the
+         READ-*() and WRITE-*() methods.
+         Think carefully before deciding to use this feature. The READ-*() methods automatically populate
+         foreign keys in nested child records with the value in the outer parent record when the foreign key is
+         omitted from the serialized data. Unless you are sure that the data's receiver will do the same, you
+         should not specify FOREIGN-KEY-HIDDEN in your nested data-relations.
+         For example, while .NET can read this XML document and populate an ADO .NET Dataset, it will
+         create rows in the child DataTable with a null value for the foreign key field. This is because it does
+         not recognize the data-relation definition in the XML Schema as NESTED. ABL uses the
+         prodata:nested attribute in the XML Schema. .NET only recognizes its own msdata:IsNested
+         attribute.
+         NOT-ACTIVE
+         Specifies that the data-relation is inactive. For example, this allows you to have two relations between
+         the same two ProDataSet temp-table buffers, but only have one relation active at a time.
+         RECURSIVE
+         Instructs the ProDataSet FILL to load self-referencing elements, such as bill-of-materials parent/child
+         tables or organization chart manager/employee tables. Support is provided for a recursive data-relation
+         during a FILL for a ProDataSet or temp-table buffer. Navigation is not supported, but can be done
+         normally through .NET, Java, or a recursive ABL procedure.
+PARENT-ID-RELATION [ data-rel-name ] FOR parent-id-rel-spec
+        Specifies that:
+         •   The relationship between the parent and child buffer is based on the RECID of the parent record
+             when reading from or writing to an XML document or JSON string.
+         •   The child rows of a ProDataSet buffer are nested within their parent rows when the ProDataSet
+             data or schema is rendered to an XML document or JSON string.
+         •   The child RECID field is not serialized.
+         data-rel-name
+         An optional argument that lets you name the data-relation. You can use this name to obtain the
+         PARENT-ID-RELATION's handle at run time. The default value is Relationn (where n starts at
+         1 for each ProDataSet).
+         parent-id-rel-spec
+           Specifies a pair of parent and child buffers for the PARENT-ID-RELATION, the RECID field in the
+           child buffer, and the XML and JSON serialization order for parent record fields using the following
+           syntax:
+
+             parent-buffer-name, child-buffer-name PARENT-ID-FIELD id-field
+             [ PARENT-FIELDS-BEFORE ( parent-field1
+               [ , parent-field2]... )]
+             [ PARENT-FIELDS-AFTER ( parent-field1
+               [ , parent-field2]... )]
+
+
+           parent-buffer-name
+           Specifies the name of the parent buffer in PARENT-ID-RELATION. This is one of the buffers
+           identified by buffer-name.
+           child-buffer-name
+           Specifies the child buffer in PARENT-ID-RELATION. This is one of the buffers identified by
+           buffer-name.
+           PARENT-ID-FIELD id-field
+           Specifies the RECID field in child-buffer-name. When writing records from the parent-buffer-name
+           temp-table to XML or JSON, child-buffer-name records whose id-field's value is equal to the RECID
+           of the parent record will be nested within the parent record's XML node or JSON string.
+           PARENT-FIELDS-BEFORE ( parent-field1[ , parent-field2]... )
+           An optional phrase that specifies the fields from the parent-buffer-name temp-table record that are to
+           be written to XML or JSON before any child-buffer-name temp-table records.
+           PARENT-FIELDS-AFTER ( parent-field1[ , parent-field2]... )
+           An optional phrase that specifies the fields from the parent-buffer-name temp-table record that are to
+           be written to XML or JSON after all child-buffer-name temp-table records.
+           When neither PARENT-FIELDS-BEFORE or PARENT-FIELDS-AFTER are specified, the default
+           behavior is to write all the fields from the parent record to XML or JSON before any nested child
+           records.
+           For XML, if a PARENT-ID-RELATION contains PARENT-FIELDS-BEFORE or
+           PARENT-FIELDS-AFTER, then all the fields from the parent buffer that have XML-NODE-TYPE
+           as ELEMENT must be listed among the PARENT-ID-RELATIONs containing the buffer as
+           parent-buffer-name. Else, the AVM raises a compiler error. The compiler also checks for duplicate
+           entries.
+
+Notes
+•   PARENT-FIELDS-BEFORE is only allowed on the first PARENT-ID-RELATION for parent-buffer-name. If
+    PARENT-FIELDS-BEFORE appears in a subsequent PARENT-ID-RELATION for parent-buffer-name, the AVM
+    raises a compiler error.
+•   A ProDataSet defined with the PARENT-ID-RELATION option cannot be passed as a parameter to a procedure or
+    user-defined function that defines an OpenEdge Web service. If you do, ProxyGen fails.
+
+Example
+For examples of ProDataSet definitions and usage, see Use ProDataSets.
+For examples of instance and static ProDataSet data member definitions, see the descriptions of r-CustObj.cls,
+r-CustObjStatic.cls, and r-CustObjAbstract.cls in the CLASS statement on page 132 reference entry.
+
+Notes
+   •   You cannot define a SHARED or NEW SHARED ProDataSet object in a class definition (.cls) file. If you do, ABL
+       generates a compilation error.
+   •   You cannot define a ProDataSet object within an internal procedure, a user-defined function, or a method of a class
+       (including constructors, destructors, and property accessors).
+   •   A ProDataSet can be compile-time defined (often referred to as a static ProDataSet object), where the ProDataSet
+       is defined and created at compile time using this statement; or it can be run-time defined (often referred to as a
+       dynamic ProDataSet object), where the ProDataSet is defined and created at run time using the CREATE DATASET
+       statement on page 233 and ProDataSet object handle operations. A compile-time defined ProDataSet can also be
+       defined as a static data member of a class. In this case, it is a static ProDataSet object that is also a class static data
+       member.
+   •   A ProDataSet can have no more than one recursive data-relation.
+
+   See also
+   Buffer object handle, Class-based data member access on page 122, CREATE DATASET statement on page 233,
+   Data-relation object handle, DEFINE QUERY statement on page 386, DEFINE TEMP-TABLE statement on page 402,
+   GET-TOP-BUFFER( ) method, NUM-REFERENCES attribute, OPEN QUERY statement on page 746, ProDataSet
+   object handle, RECURSIVE attribute
+
+
+DEFINE DATA-SOURCE statement
+   Defines a data-source object that is created at compile time for use in an external procedure or within a single class or
+   class hierarchy.
+
+   Syntax
+
+       DEFINE [ PRIVATE | PROTECTED ] [ STATIC ] DATA-SOURCE data-source-name
+         FOR [ QUERY query-name]
+             [source-buffer-phrase[ , source-buffer-phrase]...]
+
+
+   [ PRIVATE|PROTECTED ][ STATIC ] DATA-SOURCE data-source-name FOR
+               Defines and identifies a data-source object as a data member of a class, and optionally specifies an
+               access mode (PRIVATE or PROTECTED) and scope (instance or STATIC) for that data member. You
+               cannot specify these options when defining a data-source as a data element of a method (including
+               constructors, destructors, and property accessors) or a procedure.
+               Note: The specified options are applicable only when defining a data member for a class in a class
+               definition (.cls) file. The PRIVATE/PROTECTED modifier and the STATIC modifier can appear
+               in either order, e.g., DEFINE STATIC PRIVATE DATA-SOURCE myDataSource... is valid
+               syntax. Note also that you cannot shadow (override) the definition of a given data-source data member
+               in a class hierarchy.
+               PRIVATE data-source data members can be accessed by the defining class. An instance can access a
+               private data-source data member of another instance if both instances are of the same class. PROTECTED
+               data-source data members can be accessed by the defining class and any of its derived classes. An
+               instance can access the protected data-source data member of a second instance of a class that is at
+               the same level or higher in the class hierarchy. The default access mode is PRIVATE.
+               A data-source defined with the STATIC option is a static data member of the class type for which it
+               is defined and is scoped to the ABL session where it is referenced. ABL creates one copy of the
+               specified class static data-source on first reference to the class type, and ABL creates only one such
+               copy for any number of instances of the class that you create. You can directly reference an accessible
+               static data-source data member from any other static or instance class member defined in the same
+               class or class hierarchy.
+           Without the STATIC option, ABL creates an instance data-source data member that is scoped to a
+           single instance of the class where it is defined. ABL creates one copy of the specified instance
+           data-source for each such class instance that you create. You cannot directly reference an instance
+           data-source data member from a STATIC class member definition defined within the same class or
+           class hierarchy.
+           For more information on accessing data-sources of different access modes and scopes, see the reference
+           entry for Class-based data member access on page 122.
+           Note: Members of a class are grouped into six namespaces, including buffers/temp-tables, methods,
+           variables/properties/events, ProDataSets, queries, and data-sources. Data-sources defined as members
+           of a class share the same namespace. There can be only one class member in this namespace with a
+           given name.
+           For more information on where and how to define data members in a class, see the CLASS statement
+           on page 132 reference entry.
+DATA-SOURCE data-source-name FOR
+        Defines and identifies a data-source object for access only within the current procedure, method of a
+        class (including constructors, destructors, and property accessors), or as a PRIVATE data member of
+        a class.
+[ QUERY query-name]
+           Specifies a query that defines the buffers for the data-source object. Use this option to override the
+           default query for the data-source object.
+           You can also use the QUERY attribute to override the default query, or the FILL-WHERE-STRING
+           attribute to override the WHERE clause in the query.
+           Note: The FILL-WHERE-STRING attribute of the data source object only applies to the default data
+           source query. It does not apply when a named query is specified for the data source using the FOR
+           QUERY syntax of the DEFINE DATA-SOURCE statement.
+           If the data-source is a data member of a class, you must specify the name of a compatible query. Thus,
+           if the data-source is a static data member, the query must also be a static data member; if the data-source
+           is PROTECTED, the query must also be defined as PROTECTED or inherited from a super class; and
+           if the data-source is PRIVATE, the query can be defined as either PRIVATE or PROTECTED.
+source-buffer-phrase [ , source-buffer-phrase]...
+           Specifies one or more database or temp-table buffers for the data-source object using the following
+           syntax:
+
+             buffer-name [ KEYS ( {field1[ , fieldn]...| ROWID } ) ]
+
+
+           buffer-name
+           The name of the database or temp-table buffer. If the data-source is a data member of a class, you
+           must define and specify the name of a compatible buffer data member for the table. Thus, if the
+           data-source is a static data member, the buffer must also be a static data member; if the data-source is
+           PROTECTED, the buffer must also be defined as PROTECTED or inherited from a super class; and if
+           the data-source is PRIVATE, the buffer can be defined as either PRIVATE or PROTECTED. If the
+           data-source is a PRIVATE instance data member, you can also specify a default database table buffer;
+           you cannot specify a default database buffer for a data-source data member defined with any other
+           combination of access mode and scope.
+           Note: ABL defines the default buffer for every database table that you access in a class as a PRIVATE
+           instance buffer data member.
+           KEYS ( {field1[ , fieldn]...| ROWID } )
+               Specifies one or more database table fields that constitute a unique key that can be used by the AVM
+               to find a record in the table given a record in the temp-table that uses it as a data source.
+               The ROWID keyword can occur exactly once in place of a field list to use the ROWID as the key.
+
+   
+   Note
+   A data-source can be compile-time defined (often referred to as a static data-source object), where the data-source is
+   defined and created at compile time using this statement, or it can be run-time defined (often referred to as a dynamic
+   data-source object), where the data-source is defined and created at run time using the CREATE DATA-SOURCE
+   statement on page 233 and data-source object handle operations. A compile-time defined data-source can also be defined
+   as a static data member of a class. In this case, it is a static data-source object that is also a class static data member.
+
+
+
+
+DEFINE TEMP-TABLE statement
+
+Defines a temp-table that is created at compile time. The AVM stores temp-tables in memory (with potential overflow to disk). Among procedures, a temp-table can be either global (lasting for the entire ABL session) or local (lasting only as long as the procedure that creates it), and either shared (visible to other procedures that want to access it) or non-shared(visible just to the procedure that created it). In a class, a temp-table can be defined for use within a single class or class hierarchy.
+
+   Syntax
+
+       DEFINE {[[ NEW [ GLOBAL ]] SHARED ]|
+                    [ PRIVATE | PROTECTED ][ STATIC ]
+                    [ SERIALIZABLE | NON-SERIALIZABLE ]}
+         TEMP-TABLE temp-table-name[ NO-UNDO ]
+         [ NAMESPACE-URI namespace][ NAMESPACE-PREFIX prefix]
+         [ XML-NODE-NAME node-name][ SERIALIZE-NAME serialize-name ]
+         [ REFERENCE-ONLY ]
+         [ LIKE table-name
+              [ VALIDATE ]
+              [ USE-INDEX index-name[ AS PRIMARY ]]...]
+         [ LIKE-SEQUENTIAL table-name
+              [ VALIDATE ]
+              [ USE-INDEX index-name[ AS PRIMARY ]]...]
+         [ RCODE-INFORMATION ]
+         [ BEFORE-TABLE before-table-name]
+         [ FIELD field-name
+              { AS data-type| LIKE field[ VALIDATE ]}
+         [field-options]
+         ]...
+         [ INDEX index-name
+              [[ AS | IS ][ UNIQUE ][ PRIMARY ][ WORD-INDEX ]]
+              {index-field[ ASCENDING | DESCENDING ]}...
+         ]...
+
+
+   NEW SHARED TEMP-TABLE temp-table-name
+          Defines and identifies a temp-table object that can be shared by one or more procedures called directly
+          or indirectly by the current procedure. The temp-table remains available to other procedures until the
+           procedure that defined it ends. The called procedures must define the same temp-table name using a
+           DEFINE SHARED TEMP-TABLE statement.
+           Note: A SHARED temp-table cannot have a BEFORE-TABLE.
+NEW GLOBAL SHARED TEMP-TABLE temp-table-name
+       Defines and identifies a global shared temp-table object. The scope of a global shared temp-table is
+       the ABL session. The first procedure to define a temp-table NEW GLOBAL SHARED establishes it.
+       Subsequent procedures access it using a DEFINE SHARED TEMP-TABLE statement.
+           Note: ABL does not establish multiple global shared temp-tables with the same name in the same
+           ABL session.
+           Note: A SHARED temp-table cannot have a BEFORE-TABLE.
+SHARED TEMP-TABLE temp-table-name
+       Defines and identifies a temp-table object that was initially defined by another procedure using a
+       DEFINE NEW SHARED TEMP-TABLE or DEFINE NEW GLOBAL SHARED TEMP-TABLE
+       statement.
+           The procedure that establishes the temp-table determines the name. The procedures that share the
+           temp-table use that name to identify it.
+[ PRIVATE | PROTECTED ][ STATIC ][ SERIALIZABLE | NON-SERIALIZABLE ] TEMP-TABLE
+temp-table-name
+           Defines and identifies a temp-table object as a data member of a class, and optionally specifies an
+           access mode (PRIVATE or PROTECTED) and scope (instance or STATIC) for that data member, as
+           well as whether or not the temp-table will participate in serialization (SERIALIZABLE or
+           NON-SERIALIZABLE). You cannot specify any of these options for a temp-table in an interface
+           definition (INTERFACE statement on page 644 block) or when defining a temp-table as a data element
+           of a procedure.
+           Note: The specified options are applicable only when defining a data member for a class in a class
+           definition (.cls) file. The PRIVATE/PROTECTED modifier and the STATIC modifier can appear
+           in either order, e.g., DEFINE STATIC PRIVATE TEMP-TABLE myTempTable... is valid
+           syntax. Note also that you cannot shadow (override) the definition of a given temp-table data member
+           in a class hierarchy.
+           The default access mode is PRIVATE.
+           A temp-table defined with the STATIC option is a static data member of the class type for which it is
+           defined, and it is scoped to the ABL session where it is referenced. ABL creates one copy of the
+           specified class static temp-table at the first reference to the class type, and creates only one such copy
+           for any number of instances of the class that you create. You cannot specify STATIC if you specify
+           the REFERENCE-ONLY option. You can directly reference an accessible static temp-table data
+           member from any other static or instance class member defined in the same class or class hierarchy.
+           Without the STATIC option, ABL creates an instance temp-table data member that is scoped to a
+           single instance of the class where it is defined. ABL creates one copy of the specified instance temp-table
+           for each such class instance that you create. You cannot directly reference an instance temp-table data
+           member from a STATIC class member definition defined within the same class or class hierarchy.
+           For more information on accessing temp-tables of different access modes and scopes, see the reference
+           entry for Class-based data member access on page 122.
+           Class-based objects that are defined as serializable (using the SERIALIZABLE option in the CLASS
+           statement on page 132) can be passed as parameters in remotes call between the application server and
+           ABL clients and can be serialized to binary or JSON format. By default, both passing a class as a
+           parameter and serializing an object to binary via the Progress.IO.BinarySerializer class
+           include all data members regardless of access mode. However, for JSON serialization via
+           Progress.IO.JsonSerializer, only public data members are serialized. To include a protected
+           or private property during JSON serialization, SERIALIZABLE must be added to the definition. See
+           Serialize( ) method (JsonSerializer) for more information.
+           Use the NON-SERIALIZABLE option to exclude a given temp-table from parameter passing between
+           an application server and ABL client and from the serialization process via the
+           Progress.IO.BinarySerializer class. (Temp-tables are NON-SERIALIZABLE by default
+           via the Progress.IO.JsonSerializer class because they cannot be defined as public.) Fields
+           of a temp-table marked as NON-SERIALIZABLE revert to their initial values when the class is
+           deserialized.
+           Note: Members of a class are grouped into six namespaces, including buffers/temp-tables, methods,
+           variables/properties/events, ProDataSets, queries, and data-sources. Buffers and temp-tables defined
+           as members of a class share the same namespace. There can be only one class member in this namespace
+           with a given name.
+           For more information on where and how to define data members in a class, see the CLASS statement
+           on page 132 reference entry.
+TEMP-TABLE temp-table-name
+       Defines and identifies a temp-table object in an interface, or for access only within the current external
+       procedure or as a data member of the current class.
+NO-UNDO
+       Specifies that when a transaction is undone, changes to the temp-table records need not be undone. If
+       you do not specify this option, all records in the temp-table are restored to their prior condition when
+       a transaction is undone. The NO-UNDO option can significantly increase the performance for temp-table
+       updates; use it whenever possible.
+NAMESPACE-URI namespace
+       An optional CHARACTER constant that specifies the URI for the namespace of the temp-table.
+NAMESPACE-PREFIX prefix
+       An optional CHARACTER constant that specifies the namespace prefix associated with the
+       NAMESPACE-URI.
+XML-NODE-NAME node-name
+       An optional CHARACTER constant that specifies the name of the XML element representing the
+       temp-table in an XML Document. The default is temp-table-name. This option is useful when:
+           •   reading a temp-table from XML with a name that contains invalid characters for an ABL name or
+               is an ABL keyword, or
+           •   writing a temp-table to XML with a name that is an invalid XML tag name.
+           Note: If you set SERIALIZE-NAME but do not set XML-NODE-NAME, the AVM sets
+           XML-NODE-NAME equal to SERIALIZE-NAME.
+           Note: When serializing a temp-table to XML:
+           •   It is not possible to change the element names to something different for each individual record
+               output.
+           •   The first element output for a record contains the node name with "Row" appended to it.
+           For more information, see Write temp-table data to XML in Use XML with ABL Applications.
+SERIALIZE-NAME serialize-name
+        An optional CHARACTER constant that specifies the name of the element representing the temp-table
+        in an XML Document or JSON string. The default is temp-table-name. This option is useful when:
+           •   reading a temp-table from XML or JSON with a name that contains invalid characters for an ABL
+               name or is an ABL keyword, or
+           •   writing a temp-table to XML or JSON with a name that is an invalid XML tag name or an invalid
+               JSON property name.
+           Note: If you set both XML-NODE-NAME and SERIALIZE-NAME, the READ-XML() and
+           WRITE-XML() methods will use XML-NODE-NAME.
+REFERENCE-ONLY
+       Specifies that the procedure defining this temp-table object is using the object definition only as a
+       reference to a temp-table object that is defined and instantiated in another procedure or class, and
+       specified as a parameter in the invocation of a RUN statement, a method in a class, or a user-defined
+       function, using either the BY-REFERENCE or BIND option. The AVM does not instantiate the
+       reference-only object. You cannot specify REFERENCE-ONLY if you specify the STATIC option.
+           Passing a reference-only temp-table object parameter to a local routine using either the
+           BY-REFERENCE or BIND option allows the calling routine and the called routine to access the same
+           object instance (instead of deep-copying the parameter).
+           Note: If you pass the parameter to a remote procedure, the AVM deep-copies the parameter on
+           OUTPUT and the reference-only parameter is bound to that copy.
+           When you pass a temp-table parameter to a local routine using the BY-REFERENCE option, both the
+           calling and called routines access the calling routine's object instance (and ignore the called routine's
+           object instance). Since the called routine's object instance is ignored, you should define the object as
+           a reference-only object. When you define a reference-only temp-table object in the called routine and
+           receive it from the calling routine using the BY-REFERENCE option, the AVM binds the definition
+           of the object in the called routine to the object instance in the calling routine for the duration of the
+           called routine. You cannot define a reference-only temp-table object in the calling routine and pass it
+           to the called routine using the BY-REFERENCE option.
+           When you pass a temp-table parameter to a local routine using the BIND option, you can define a
+           reference-only temp-table object in either the calling routine or the called routine as follows:
+           •   When you define a reference-only temp-table object in the calling routine and pass it to the called
+               routine using the BIND option, the AVM binds the calling routine to the object instance in the
+               called routine. The reference-only object definition remains bound to the object instance until the
+               routine containing the reference-only object definition is deleted or terminates. The parameter must
+               be an OUTPUT parameter.
+               Note: If you also define the temp-table object instance in the called routine as a reference-only
+               object, you must bind the object in the called routine before returning to the calling routine.
+           •   When you define a reference-only temp-table object in the called routine and receive it from the
+               calling routine using the BIND option, the AVM binds the called routine to the object instance in
+               the calling routine. The reference-only object definition remains bound to the object instance until
+               the routine containing the reference-only object definition is deleted or terminates. The parameter
+               must be an INPUT or INPUT-OUTPUT parameter.
+           In either case, you must specify the BIND option for the parameter in both the invocation of a RUN
+           statement, a method in a class, or a user-defined function, and in the DEFINE PARAMETER statement.
+                    CAUTION: Do not delete the object or routine to which a reference-only temp-table
+                    object is bound, or you might be left with references to an object that no longer exists.
+
+           A reference-only temp-table object can be a member of a reference-only ProDataSet object or a standard
+           ProDataSet object. However, if you define a reference-only temp-table in a standard ProDataSet object,
+           you cannot use the ProDataSet object until you bind the reference-only temp-table.
+LIKE table-name[ USE-INDEX index-name [ AS PRIMARY ]]...
+          Specifies the name of a table whose characteristics the temp-table inherits. All field definitions of
+          table-name are added to the temp-table. table-name can represent a database table or another temp-table.
+           Note: The source (temp-table or database table) for table-name can have any access mode or scope
+           as long as its definition is accessible to the current temp-table definition.
+           If you reference a database field, the database containing that field must be connected at compile time.
+           If the database field has a validation expression defined in the dictionary that contains a database
+           reference, and the VALIDATE option is specified, the database must also be connected at run-time.
+           HELP options are inherited from the table-name. Validate options are inherited only if the VALIDATE
+           keyword is used.
+           Some index definitions from the specified table might also be added to the temp-table:
+           •   If you use the USE-INDEX option, only the definitions of indexes you specify with that option
+               are copied to the temp-table. If one of these indexes is the primary index of the LIKE table, it
+               becomes the default primary index of the temp-table. You can, however, use the AS PRIMARY
+               option to override this default primary index.
+               For example, to make the index country-post the primary index (thereby, overriding the default
+               primary index CustNum in the table Customer), you specify it as follows:
+
+                 DEFINE TEMP-TABLE mycust LIKE Customer
+                   USE-INDEX CustNum USE-INDEX country-post AS PRIMARY.
+
+
+           •   If you do not specify the USE-INDEX option and do not use the INDEX option of the DEFINE
+               TEMP-TABLE statement, then all index definitions are copied from the specified table to the
+               temp-table. In this case, the primary index of the specified table becomes the primary index of the
+               temp-table.
+           •   If you do not specify the USE-INDEX option but do use the INDEX option of the DEFINE
+               TEMP-TABLE statement, then no indexes are copied from the specified table unless the specified
+               table is another temp-table.
+           •   The AVM does not copy inactive indexes to the temp-table.
+           •   If the source database table contains inactive indexes, then you must specify one or both of the
+               USE-INDEX and INDEX options. If you do not, a compile time error is generated.
+LIKE-SEQUENTIAL table-name
+[ USE-INDEX index-name [ AS PRIMARY ]]...
+         Specifies the name of a table whose characteristics the temp-table inherits. All field definitions of
+         table-name are added to the temp-table. table-name can represent a database table or another temp-table.
+           LIKE-SEQUENTIAL is similar to LIKE in all ways except one. Unlike LIKE, which creates temp-table
+           fields in _field._field-rpos order (POSITION order in the .df schema definition file) of the source
+           table's fields, LIKE-SEQUENTIAL creates fields in _field._order sequence.
+           You can guarantee agreement of temp-table field order between any client and any application server
+           using LIKE-SEQUENTIAL, as long as the _field._order values are the same. LIKE-SEQUENTIAL
+           uses the field order as defined in the Data Dictionary when the source is a database table.
+           Note: The original behavior of LIKE was used to support RAW-TRANSFER with temp-tables. If
+           you are using RAW-TRANSFER between a database table and a temp-table defined LIKE the database
+           table, then you should not use LIKE-SEQUENTIAL.
+VALIDATE
+        The temp-table fields inherit, from the dictionary, validation expressions and validation messages from
+        the database table, table-name.
+RCODE-INFORMATION
+        This option is supported only for backward compatibility.
+BEFORE-TABLE before-table-name
+       Specifies the name of the before-image table associated with a compile-time defined temp-table in a
+       ProDataSet object. You must specify a before-image table name for any compile-time defined
+       ProDataSet temp-table for which you want to track changes. If you try to modify the records in this before-image table, the AVM generates a run-time error. You cannot use this option on a SHARED temp-table.
+FIELD field-name
+          Defines a field in the temp-table. You can use FIELD clauses with the LIKE option to define additional
+          fields for the temp-table, or you can define all your fields with FIELD clauses.
+AS data-type
+           Specifies the data type of the field. The valid data types are BLOB, CHARACTER, CLASS, CLOB,
+           COM-HANDLE, DATE, DATETIME, DATETIME-TZ, DECIMAL, HANDLE, INT64, INTEGER,
+           LOGICAL, RAW, RECID, and ROWID.
+             For more information on these data types, see the Data types on page 258 reference entry.
+             For the CLASS data type, you define a field in a temp-table as a class by specifying the built-in
+             Progress.Lang.Object class name. For example:
+
+                DEFINE TEMP-TABLE ttObjHolder FIELD MyObj AS CLASS
+                Progress.Lang.Object.
+
+
+             When you assign a class instance to a field, ABL implicitly casts the instance to its root super class,
+             which is the Progress.Lang.Object class. After the assignment, the field contains an object reference
+             to the class instance, not the object itself.
+             You cannot define a field in a database table as a class.
+LIKE field
+             Specifies a database field or a variable whose characteristics the temp-table field inherits. If you name
+             a variable with this option, that variable must have been defined earlier in the procedure. The temp-table
+             field inherits the data type, extents, format, initial value, label, and column label.
+             If the database field is a COLUMN-CODEPAGE CLOB, the temp-table field is in the database field's
+             code page. If the database field is a DBCODEPAGE CLOB, the temp-table field's code page is
+             -cpinternal.
+             You can override selected characteristics of the field or variable with the field-options parameter.
+             If you reference a database field in the LIKE option, the database containing that field must be connected
+             at both compile time and run time. Therefore, use the LIKE option with caution.
+field-options
+           Specifies options for the temp-table field. Any options you specify override any options inherited
+           through the LIKE option. This is the syntax for field-options:
+
+               {
+                   [   BGCOLOR expression]
+                   [   COLUMN-LABEL label]
+                   [   DCOLOR expression]
+                   [   DECIMALS n]
+                   [   EXTENT n]
+                   [   FONT expression]
+                   [   FGCOLOR expression]
+                   [   FORMAT string]
+                   [   HELP help-text]
+                   [   INITIAL
+                         {constant|{ [ constant[ , constant]... ] }}
+                   ]
+                   [ LABEL label[ , label]...]
+                   [ MOUSE-POINTER expression]
+                   [[ NOT ] CASE-SENSITIVE ]
+                   [ PFCOLOR expression]
+                   [ SERIALIZE-HIDDEN ]
+                   [ SERIALIZE-NAME serialize-name ]
+                   [ TTCODEPAGE | COLUMN-CODEPAGE codepage]
+                   [ XML-DATA-TYPE string]
+                   [ XML-NODE-TYPE string]
+                   [ XML-NODE-NAME node-name]
+                   {[view-as-phrase]}
+               }
+
+
+HELP help-text
+         A quoted CHARACTER string that represents the help text.
+SERIALIZE-HIDDEN
+        Indicates that this field is not written when the temp-table is serialized, for example into JSON or
+        XML. This option also applies for serialization via the Progress.IO.JsonSerializer class.
+           Note: If you also specify XML-NODE-TYPE, the WRITE-XML( ) method uses the value of
+           XML-NODE-TYPE and ignores this option.
+SERIALIZE-NAME serialize-name
+        An optional CHARACTER constant that specifies the name of the temp-table field as it should appear
+        when serialized, for example into JSON or XML. The default is temp-table field-name. This option
+        is useful when:
+           •   reading a temp-table field from XML or JSON with a name that contains invalid characters for an
+               ABL name or is an ABL keyword, or
+           •   writing a temp-table field to XML or JSON with a name that is an invalid XML tag name or an
+               invalid JSON property name.
+           Note: If you set both XML-NODE-NAME and SERIALIZE-NAME, the READ-XML() and
+           WRITE-XML() methods will use XML-NODE-NAME.
+TTCODEPAGE | COLUMN-CODEPAGE codepage
+           Specifies the code page for a CLOB field in the temp-table. If you specify TTCODEPAGE, the code
+           page is -cpinternal. If you specify COLUMN-CODEPAGE, codepage must be a valid code page
+           name available in the DLC/convmap.cp file. You cannot specify the "undefined" code page for a
+           CLOB. The code page you specify overrides any code page inherited through the LIKE option.
+           If you do not specify a code page for a CLOB field in the temp-table, the default code page is
+           -cpinternal.
+XML-DATA-TYPE string
+       An optional CHARACTER constant that specifies the XML Schema data type for the field in the
+       temp-table. The XML Schema data type must be compatible with the ABL data type for the field.
+           For more information about the ABL XML data type mapping rules, see Use XML with ABL
+           Applications.
+XML-NODE-TYPE string
+       An optional CHARACTER constant that specifies the XML node type of the temp-table field, which
+       lets you specify how the field is represented in XML. Valid option values are: "ATTRIBUTE",
+       "ELEMENT", "HIDDEN", and "TEXT". The default value is "ELEMENT".
+           The following table lists the valid XML node types.
+           Table 34: XML node types
+
+            When the XML node The buffer field is . . .
+            type is . . .
+            ATTRIBUTE               Represented as an attribute of the temp-table element in both the XML
+                                    Schema and data.
+            ELEMENT                 Represented as a child element of the temp-table element in both the
+                                    XML schema and data.
+            HIDDEN                  Omitted from both the XML Schema and data.
+            TEXT                    Represented as a text element in both the XML Schema and data.
+                                    Note: Each table can contain only one TEXT field. When a table
+                                    contains a TEXT field, it cannot contain ELEMENT fields; it can
+                                    contain only ATTRIBUTE fields. A table that contains a TEXT field
+                                    cannot be part of a nested data-relation.
+
+
+           The XML node type of a temp-table field that represents an array must be either "ELEMENT" or
+           "HIDDEN".
+           Note: If you specify SERIALIZE-HIDDEN but do not set XML-NODE-TYPE, the AVM sets
+           XML-NODE-TYPE to "HIDDEN".
+XML-NODE-NAME node-name
+       An optional CHARACTER constant that specifies the name of the XML element or XML attribute
+       representing the temp-table field in an XML Document. The default is the temp-table field-name. This
+       option is useful when:
+           •   reading a temp-table field from XML with a name that contains invalid characters for an ABL
+               name or is an ABL keyword, or
+           •   writing a temp-table field to XML with a name that is an invalid XML tag name.
+           Note: If you set SERIALIZE-NAME but do not set XML-NODE-NAME, the AVM sets
+           XML-NODE-NAME equal to SERIALIZE-NAME.
+           Note: You cannot specify an indeterminate array field in a temp-table using the EXTENT field option.
+           
+INDEX index-name
+[[ AS | IS ][ UNIQUE ][ PRIMARY ][ WORD-INDEX ]]
+             Defines an index on the temp-table. To define a unique index, specify the UNIQUE option. To define
+             the primary index, specify the PRIMARY option. To define a word-index, specify the WORD-INDEX
+             option.
+           If you define more than one index on the temp-table, you can specify PRIMARY for none or one of
+           the indexes. If you specify PRIMARY for none of the indexes, the AVM makes the first index you
+           specify the primary index.
+           If you define no indexes on the temp-table, and the temp-table does not inherit the indexes of another
+           table through the LIKE option of the DEFINE TEMP-TABLE statement, the AVM creates a default
+           index, makes it the primary index, and sorts the records in entry order. If you do not specify the
+           USE-INDEX option under LIKE but do use the INDEX option, then no indexes are copied from the
+           specified table unless the specified table is another temp-table.
+index-field [ ASCENDING | DESCENDING ]
+            Specifies a temp-table field to use as a component of the index. You can use the ASCENDING or
+            DESCENDING option to specify that the component has ascending or descending order.
+           If you do not specify a sort orientation (ASCENDING or DESCENDING), the index component gets
+           the sort orientation of the previous index component, or, if there is no previous index component,
+           ASCENDING. This rule applies only to index components of temp-tables.
+           Note: You cannot use a BLOB or CLOB field as a component of an index.
+           For example, the following two temp-table definitions are equivalent:
+
+              DEFINE TEMP-TABLE foo NO-UNDO
+                FIELD a AS CHARACTER
+                FIELD b AS CHARACTER
+                FIELD c AS CHARACTER
+                INDEX x a DESC b DESC c DESC.
+
+
+
+              DEFINE TEMP-TABLE foo NO-UNDO
+                FIELD a AS CHARACTER
+                FIELD b AS CHARACTER
+                FIELD c AS CHARACTER
+                INDEX x a DESC b c.
+
+
+           The following two temp-table definitions are also equivalent:
+
+              DEFINE TEMP-TABLE foo NO-UNDO
+                FIELD a AS CHARACTER
+                FIELD b AS CHARACTER
+                FIELD c AS CHARACTER
+                INDEX x a ASC b DESC c DESC.
+
+
+
+              DEFINE TEMP-TABLE foo NO-UNDO
+                FIELD a AS CHARACTER
+                FIELD b AS CHARACTER
+                FIELD c AS CHARACTER
+                INDEX x a ASC b DESC c.
+
+
+
+Example
+The following procedure creates a temp-table (temp-item) that stores the total inventory value (Item.Price *
+Item.OnHand) for each catalog page (Item.CatPage) in the Sports2020 database. It builds temp-item with
+two indexes-one that sorts the table in ascending order by catalog page and a second that sorts the table in descending
+order by inventory value.
+After building temp-item, the procedure displays a dialog box that prompts for report parameters. These parameters
+include the cutoff value of catalog page inventory to report, and whether to display the report by catalog page (ascending)
+or inventory value (descending). After displaying the report, the procedure displays another dialog box to repeat the
+process. The process is repeated until you press the CANCEL button. This procedure shows how you can use a temp-table
+to store a calculated result from the database, and efficiently report the same result according to different sorting and
+selection criteria:
+r-tmptb1.p
+
+  DEFINE TEMP-TABLE temp-item
+    FIELD cat-page LIKE Item.CatPage
+    FIELD inventory LIKE Item.Price LABEL "Inventory Value"
+    INDEX cat-page IS PRIMARY cat-page ASCENDING
+    INDEX inventory-value inventory DESCENDING.
+  DEFINE VARIABLE cutoff      NO-UNDO LIKE item.price.
+  DEFINE VARIABLE inv-value   NO-UNDO LIKE item.price.
+  DEFINE VARIABLE report-type AS INTEGER NO-UNDO INITIAL 1.
+
+  DEFINE BUTTON ok-butt      LABEL "OK" AUTO-GO.
+  DEFINE BUTTON cancel-butt LABEL "CANCEL" AUTO-ENDKEY.
+  FORM
+    cutoff LABEL "Inventory Lower Cutoff for each Catalog Page"
+       AT ROW 1.25 COLUMN 2
+    report-type LABEL "Report Sorted ..." AT ROW 2.25 COLUMN 2
+       VIEW-AS RADIO-SET RADIO-BUTTONS
+         "By Catalog Page",   1,
+         "By Inventory Value", 2 SKIP
+    ok-butt cancel-butt
+    WITH FRAME select-frame SIDE-LABELS WIDTH 70
+    TITLE "Specify Report ..." VIEW-AS DIALOG-BOX.
+
+  FOR EACH Item BREAK BY Item.CatPage:
+    ACCUMULATE Item.Price * Item.OnHand (SUB-TOTAL BY Item.CatPage).
+    IF LAST-OF(Item.CatPage) THEN DO:
+       inv-value = ACCUM SUB-TOTAL BY Item.CatPage (Item.Price * Item.OnHand).
+       CREATE temp-item.
+       temp-item.cat-page = Item.CatPage.
+       inventory = inv-value.
+    END.
+  END. /* FOR EACH item */
+  ON CHOOSE OF ok-butt DO:
+    HIDE FRAME select-frame.
+    IF report-type = 1 THEN
+       FOR EACH temp-item USE-INDEX cat-page WITH FRAME rpt1-frame:
+         IF inventory >= cutoff THEN
+            DISPLAY temp-item.cat-page inventory.
+       END.
+    ELSE
+       FOR EACH temp-item USE-INDEX inventory-value WITH FRAME rpt2-frame:
+         IF inventory >= cutoff THEN
+            DISPLAY temp-item.cat-page inventory.
+       END.
+       VIEW FRAME select-frame.
+  END.
+
+  ENABLE ALL WITH FRAME select-frame.
+  WAIT-FOR CHOOSE OF cancel-butt OR WINDOW-CLOSE OF CURRENT-WINDOW.
+
+   Notes
+   •   If you define a temp-table LIKE a database table, the temp-table does not inherit the database table's database triggers.
+   •   You cannot define a temp-table field of type MEMPTR or LONGCHAR.
+   •   You cannot define shared objects, work tables, or temp-tables within an internal procedure, a method in a class, or
+       a user-defined function.
+   •   A temp-table can be compile-time defined (often referred to as a static temp-table object), where the temp-table is
+       defined and created at compile time using this statement, or it can be run-time defined (often referred to as a dynamic
+       temp-table object), where the temp-table is defined and created at run time using the CREATE TEMP-TABLE
+       statement on page 242 and temp-table object handle operations. A compile-time defined temp-table can also be defined
+       as a static data member of a class. In this case, it is a static temp-table object that is also a class static data member.
+   •   ABL disregards the following options when used in conjunction with a temp-table:
+       •   The VALIDATE option on a DELETE statement.
+       •   The SHARE-LOCK, EXCLUSIVE-LOCK, and NO-LOCK options used with the FIND or FOR statements.
+       •   The NO-WAIT option on the FIND statement.
+   •   Data handling statements that cause the AVM to automatically start a transaction for a regular table will not cause
+       the AVM to automatically start a transaction for a temp-table. If you want to start a transaction for operations involving
+       a temp-table, you must explicitly start a transaction by using the TRANSACTION keyword.
+   •   Use the CASE-SENSITIVE option only when it is important to distinguish between uppercase and lowercase values
+       entered for a character field. For example, use CASE SENSITIVE to define a field for a part number that contains
+       mixed upper-case and lowercase characters.
+   •   You cannot define a SHARED or NEW SHARED temp-table in a class definition (.cls) file. If you do, ABL
+       generates a compilation error.
+   •   A SHARED temp-table remains in scope for an instance of a persistent procedure until the instance is deleted. This
+       is true even if the original procedure that defined the temp-table as NEW SHARED goes out of scope while the
+       procedure instance remains persistent.
+       If a trigger or internal procedure of a persistent procedure executes an external subprocedure that defines a SHARED
+       temp-table, ABL includes the persistent procedure in the resolution of the corresponding NEW SHARED temp-table
+       as though the procedure were on the procedure call stack.
+   •   You can specify a join between a temp-table or work table and any appropriate table using the OF keyword. The
+       two tables must contain a commonly named field that participates in a unique index for at least one of the tables.
+       For more information on table joins see the Record phrase on page 864 reference entry.
+   •   If you define a temp-table with the same name as a database table and then you define a buffer for that name, the
+       buffer will be associated with the database table, not with the temp-table.
+   •   The point at which the AVM stores temp-table overflow from memory to disk is based on the setting of the Number
+       of Buffers for Temp-tables (-Bt) startup parameter, which specifies the number of buffers in the temp-table database
+       pool. For more information, see Startup Command and Parameter Reference.
+   •   See Develop ABL Applications for information on temp-tables and work tables.
+
+
+
+
+DEFINE WORK-TABLE statement
+
+Defines a work table (a temp-table stored in memory) for use in one or more procedures, or within a single class.
+This statement is supported only for backward compatibility. 
+Syntax
+
+  DEFINE {[[ NEW ] SHARED ]|[ PRIVATE ]}
+    { WORK-TABLE | WORKFILE }work-table-name[ NO-UNDO ]
+    [ LIKE tablename[ VALIDATE ]]
+    [ FIELD field-name { AS data-type | LIKE field}
+      [field-options]]...
+
+
+NEW SHARED { WORK-TABLE | WORKFILE }work-table-name
+       Defines and identifies a work table to be shared by a procedure called directly or indirectly by the
+       current procedure. The called procedure must name the same work table in a DEFINE SHARED
+       WORK-TABLE statement. The WORKFILE keyword is allowed only for backward compatibility;
+       using WORK-TABLE or WORKFILE has the same effect.
+SHARED { WORK-TABLE | WORKFILE }work-table-name
+        Defines and identifies a work table that was defined by another procedure that used the DEFINE NEW
+        SHARED WORK-TABLE statement. The WORKFILE keyword is allowed only for backward
+        compatibility; using WORK-TABLE or WORKFILE has the same effect.
+[ PRIVATE ]{ WORK-TABLE | WORKFILE }work-table-name
+         Defines and identifies a work-table as a class-scoped object. A class-scoped handle-based object is
+         not a member of a class, but provides a resource that is privately available to the class definition similar
+         to a non-shared data element in a procedure definition. The option to specify the PRIVATE access
+         mode is provided for readability. You cannot specify PRIVATE when defining a work-table as a data
+         element in a method or procedure. The WORKFILE keyword is allowed only for backward
+         compatibility; using WORK-TABLE or WORKFILE has the same effect.
+            Note: This option is applicable only when defining a class-scoped work-table in a class definition (.cls) file.
+{ WORK-TABLE | WORKFILE }work-table-name
+        Defines and identifies a work table whose records you can access only within the current procedure,
+        class, or method of a class.
+            The WORKFILE keyword is allowed only for backward compatibility; using WORK-TABLE or
+            WORKFILE has the same effect.
+NO-UNDO
+       Specifies that the AVM should not restore the record to its prior condition when a work table record
+       is changed during a transaction and the transaction is undone. If you do not want the work table record
+       undone even if it has changed during a transaction, use the NO-UNDO option with the DEFINE
+       WORK-TABLE statement. NO-UNDO work tables are more efficient; use them whenever possible.
+LIKE table-name
+          Indicates the name of a table whose characteristics you want to use for the work table you are defining.
+          All of the fields in this base table are also in the work table. If you reference a database table with the
+          LIKE option, the database containing that table must be connected at compile time. It need not be
+          connected at run time.
+            If more than one connected database contains a table named table-name, you must qualify the table
+            name with the database name. See the Record phrase on page 864 description for more information.
+            HELP options are inherited from the table-name. Validate options are inherited only if the VALIDATE
+            keyword is used.
+VALIDATE
+             The work table fields inherit, from the dictionary, validation expressions and validation messages from
+             the database table, table-name.
+FIELD field-name
+          Identifies the name of a field in the work table.
+AS data-type
+           Indicates the data type of the field or variable you are defining. The data types are CHARACTER,
+           COM-HANDLE, DATE, DATETIME, DATETIME-TZ, DECIMAL, HANDLE, INT64, INTEGER,
+           LOGICAL, RAW, RECID, and ROWID.
+             For more information on these data types, see the Data types on page 258 reference entry.
+LIKE field
+             Indicates the name of the variable, database field, temp-table field, or work table field whose
+             characteristics you want to use for the work table field you are defining. If you name a variable with
+             this option, you must have defined that variable earlier in the procedure. The work table field inherits
+             the data type, extents, format, initial value, label, and column label of the field. You can override
+             specific values by using the FORMAT, LABEL, INITIAL, DECIMALS, and EXTENT options. If
+             you do not use these options, the field or variable takes on the characteristics of the variable or database
+             field you name.
+             If you reference a database field in the LIKE option, the database containing that field must be connected
+             at both compile time and run time. Therefore, use the LIKE option with caution.
+field-options
+            Specifies options for the temp-table field. Any options you specify override any options inherited
+            through the LIKE option. This is the syntax for field-options:
+
+               {    [ BGCOLOR expression]
+                    [ COLUMN-LABEL label]
+                    [ DCOLOR expression]
+                    [ DECIMALS n]
+                    [ EXTENT n]
+                    [ FONT expression]
+                    [ FGCOLOR expression]
+                    [ FORMAT string]
+                    [ INITIAL
+                        {constant|{ [ constant[ , constant]... ] }}]
+                    [ LABEL label[ , label]...]
+                    [ MOUSE-POINTER expression]
+                    [[ NOT ] CASE-SENSITIVE ]
+                    [ PFCOLOR expression]
+                    {[view-as-phrase]}}
+
+
+             Note: You cannot specify a BLOB field, a CLOB field, or an indeterminate array field in a work-table.
+             For a description of each option, see the DEFINE VARIABLE statement on page 412.
+
+Example
+The r-wrkfil.p procedure accumulates all balances by state and stores that information for display later. The
+procedure uses a work table to accomplish this task.
+The r-wrkfil.p procedure defines the work table showsales. The work table contains the three fields named region,
+state, and tot-sales. These fields have all the same characteristics (except labels) as the Customer.SalesRegion,
+Customer.State, and Customer.Balance fields, respectively.
+The first FOR EACH loop in the r-wrkfil.p procedure sorts Customers by state. Then it accumulates the balances for each Customer by state. When the procedure finds the last Customer in a state, it creates a showsales record for that state. The procedure assigns information to the fields in the showsales record. After looking at each Customer, the procedure continues to the next FOR EACH statement.
+The second FOR EACH statement in the r-wrkfil.p procedure uses the information stored in the showsales table.
+Because you treat a work table within a procedure the same way you treat a database table, you can perform the same work with the showsales table that you can with a database table.
+r-wrkfil.p
+
+    DEFINE WORK-TABLE         showsales
+      FIELD region            LIKE SaleRrep.Region LABEL "Region"
+      FIELD state             LIKE Customer.State LABEL "St"
+      FIELD tot-sales         LIKE Customer.Balance COLUMN-LABEL "Total!Sales".
+
+    FOR EACH Customer, SalesRep OF Customer BREAK BY Customer.State:
+      ACCUMULATE Customer.Balance (TOTAL BY Customer.State).
+      IF LAST-OF(Customer.State) THEN DO:
+         CREATE showsales.
+         showsales.state = Customer.State.
+         showsales.tot-sales = ACCUM TOTAL BY Customer.State Customer.Balance.
+         showsales.region = SalesRep.Region.
+      END.
+    END.
+
+    FOR EACH showsales BREAK BY showsales.region BY showsales.state:
+      IF FIRST-OF(showsales.region) THEN
+         DISPLAY showsales.region.
+      DISPLAY showsales.state tot-sales (TOTAL BY showsales.region).
+    END.
+
+
+
+Notes
+•   You cannot perform a unique find on a work table. When finding records in a work table, you must use FIRST,
+    LAST, NEXT, or PREV with the FIND statement, unless you are finding a record using its ROWID.
+•   You cannot define a field in a work table with the MEMPTR data type, but you can define a work table field as
+    ROWID or RAW.
+•   You cannot define shared objects, work tables, or temp-tables within an internal procedure, a method in a class, or
+    a user-defined function.
+•   ABL disregards the following options when used in conjunction with a work table:
+    •   The VALIDATE option on a DELETE statement
+    •   The SHARE-LOCK, EXCLUSIVE-LOCK, and NO-LOCK options used with the FIND or FOR statements
+    •   The NO-WAIT option on the FIND statement
+•   When you use the AMBIGUOUS function in conjunction with a work table, the function always returns a value of
+    FALSE.
+•   Complete work table definitions must be included in a DEFINE SHARED WORK-TABLE statement and shared
+    work tables must be defined identically.
+•   These are the differences between work tables and regular database tables:
+    •   The AVM does not use the OpenEdge database manager (and server for multi-user systems) when working with
+        work tables.
+    •   If you do not explicitly delete the records in a work table, the AVM discards those records, and the work table,
+        at the end of the procedure that initially defined the work table.
+    •   Users do not have access to each other's work tables.
+•   Because you cannot index a work table, the AVM uses the following rules for storing records in a work table:
+    •   If you create a series of work table records without doing any other record operations, the AVM orders the newly
+        created records in the order they were entered.
+    •   If you use the FIND PREV statement at the beginning of a work table and then create a work table record, the
+        AVM stores that record at the beginning of the work table.
+    •   When you use the FIND statement to find a work table record and then use the CREATE statement to create a
+        new work table record, the AVM stores that new record after the record you just found.
+•   Data handling statements that cause the AVM to automatically start a transaction for a regular table will not cause
+    the AVM to automatically start a transaction for a work table. To start a transaction for operations involving a work
+    table, Use the TRANSACTION keyword.
+•   Work tables are private:
+    •   Even if two users define work tables with the same name, the work tables are private; one user cannot see records
+        the other user has created.
+    •   If two procedures run by the same user define work tables with the same name, the AVM treats those work tables
+        as two separate tables unless the SHARED option is included in both procedures.
+•   DEFINE SHARED WORK-TABLE does not automatically provide a shared buffer. If you want to use a shared
+    buffer with a shared work table, you must define that buffer.
+•   Work table records are built in 64-byte sections. Approximately the first 60 bytes of each record are taken up by
+    record specification information (or a record header). That is, if a record is 14 bytes long, it will be stored in two
+    64-byte sections, using the first 60 bytes as a record header. If the record is 80 bytes long, it will fit into three 64-byte
+    sections. The first part contains 60 bytes of header information plus the first 4 bytes of the record. The second section
+    contains 64 bytes of the record. And the last section contains the remaining record bytes.
+•   The NO-UNDO option in a work table definition overrides a transaction UNDO for CREATE, UPDATE, DELETE,
+    and RELEASE statements accessing the work table, regardless of whether these statements are executed before or
+    during the transaction block that is undone.
+•   A transaction UNDO overrides a FIND statement accessing a work table defined with the NO-UNDO option,
+    regardless of whether the find is executed before or during the transaction that is undone.
+    You should use the CASE-SENSITIVE option only when it is important to distinguish between uppercase and
+    lowercase values entered for a character field. For example, use CASE SENSITIVE to define a field for a part number
+    that contains mixed upper case and lowercase characters.
+•   A SHARED work table remains in scope for an instance of a persistent procedure until the instance is deleted. This
+    is true even if the original procedure that defined the work table as NEW SHARED goes out of scope while the
+    procedure instance remains persistent.
+    If a trigger or internal procedure of a persistent procedure executes an external subprocedure that defines a SHARED
+    work table, ABL includes the persistent procedure in the resolution of the corresponding NEW SHARED work table
+    as though the procedure were on the procedure call stack.
+•   You cannot define a SHARED or NEW SHARED work table in a class definition (.cls) file. If you do, ABL
+    generates a compilation error.
+•   You can specify a join between a temp-table or work table and any appropriate table using the OF keyword. The
+    two tables must contain a commonly named field that participates in a unique index for at least one of the tables.
+    For more information on table joins see the Record phrase on page 864 reference entry.
+•   See Develop ABL Applications for information on work tables and temp-tables.
+
+
+
+
+
+DEFINE WORKFILE statement
+
+This statement is supported only for backward compatibility. Use the DEFINE TEMP-TABLE statement, instead.
+
+Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+     DEFINE {[[ NEW ] SHARED ]|[ PRIVATE ]}
+       { WORK-TABLE | WORKFILE }work-table-name
+       [ NO-UNDO ]
+       [ LIKE tablename]
+       [ FIELD field-name
+            {     AS data-type
+               | LIKE field
+            }
+            [field-options]
+       ]...
+
+
+
+
+EMPTY TEMP-TABLE statement
+
+Empties a temp-table. When you empty a temp-table that is defined as UNDO within a transaction, the AVM deletes the records individually. This is less efficient than emptying the temp-table outside the transaction, where the AVM deletes all records in the temp-table as a unit.
+
+Note: This statement corresponds to the EMPTY-TEMP-TABLE( ) method.
+
+   Syntax
+
+       EMPTY TEMP-TABLE temp-table-name [ NO-ERROR ]
+
+
+   temp-table-name
+              The name of the temp-table.
+   NO-ERROR
+               The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying
+               error messages.
+
+
+
+
+REJECTED function
+
+Returns the current REJECTED attribute setting for a ProDataSet temp-table buffer.
+
+   Syntax
+
+       REJECTED( buffer-name )
+
+
+   buffer-name
+             The name of a ProDataSet temp-table buffer.
+
+   Notes
+   •   This function is typically used with the SAVE-ROW-CHANGES( ) method.
+   •   The REJECTED function corresponds to the REJECTED attribute.
+   •   You can invoke the REJECTED function from within a WHERE clause (unlike the corresponding attribute).
+
+
+
+
+ROW-STATE function
+
+Returns an INTEGER value that represents the current change state of a static ProDataSet temp-table buffer.
+
+   Syntax
+
+       ROW-STATE( buffer-name )
+
+
+   buffer-name
+             The name of a ProDataSet temp-table buffer (preferably a before-image temp-table buffer).
+
+   Notes
+   •   The ROW-STATE function corresponds to the ROW-STATE attribute.
+   •   When the TRACKING-CHANGES attribute is set to TRUE for a ProDataSet temp-table, the AVM tracks changes
+       to the data in that temp-table using a before-image temp-table that contains the original version of each modified
+       row. You can think of the temp-table itself as the after-image because it contains the latest version of each row.
+       Every row in the after-image table that has been modified or created corresponds to a row in the before-image table.
+       Deleted rows do not appear in the after-image table, because it reflects the current state of the data. Every row in the
+       before-image table has a non-zero ROW-STATE, because every row is the before-image of a deleted, created, or
+       modified row in the after-image table. Unchanged rows do not appear in the before-image table.
+       You can use the ROW-STATE function on each row in either the after-image table or the before-image table to
+       determine whether a row has changed and how it has changed.
+   •   The possible return values can be expressed as compiler constants. The following table lists these values.
+       Table 59: Row state values
+
+        Compiler constant                      Value          Description
+        ROW-UNMODIFIED                         0              The row was not modified.
+        ROW-DELETED                            1              The row was deleted.
+        ROW-MODIFIED                           2              The row was modified.
+        ROW-CREATED                            3              The row was created.
+
+   •   The ROW-STATE function returns the Unknown value (?) when the specified temp-table buffer:
+       •   Does not contain a record
+       •   Is an after-image table with no associated before-image table
+   •   You can invoke the ROW-STATE function from within a WHERE clause (unlike the corresponding attribute). For
+       example:
+
+           WHERE ROW-STATE(ttOrder) = ROW-MODIFIED.
+

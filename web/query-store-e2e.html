@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sursum Query Store E2E Manual</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="ui-ready.css?v=20260616-grid-loading">
+  <link rel="stylesheet" href="query-builder.css">
+</head>
+<body class="sursum-ui-pending">
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Sursum Dynamic Query</p>
+        <div class="title-row"><h1>Teste manual do query-store</h1></div>
+      </div>
+    </header>
+
+    <main class="panel">
+      <div class="panel-title">
+        <h2>Execucao manual</h2>
+        <span>Use mock local ou PASOE real</span>
+      </div>
+      <div class="grid three">
+        <label>Endpoint PASOE/mock
+          <input id="apiBase" value="http://127.0.0.1:18180/web/SursumDynamicQuery">
+        </label>
+        <label>Codigo
+          <input id="queryCode" value="pedidos-em-aberto">
+        </label>
+        <label>Status
+          <select id="queryStatus"><option value="draft">draft</option><option value="ready">ready</option></select>
+        </label>
+      </div>
+      <div class="action-row">
+        <button id="runAll" type="button">Rodar fluxo completo</button>
+        <button id="clearLog" type="button">Limpar log</button>
+      </div>
+      <textarea id="log" spellcheck="false" style="min-height:420px;font-family:Consolas,'Courier New',monospace"></textarea>
+    </main>
+  </div>
+
+  <script src="ui-ready.js?v=20260616-grid-loading"></script>
+  <script>
+    const sampleQuery = {
+      execution: 'sync',
+      page: 1,
+      pageSize: 25,
+      sources: [{ nome: 'Customer', alias: 'customer', banco: 'DICTDB' }],
+      select: [{ sourceAlias: 'customer', field: 'CustNum', outputAlias: 'codigo' }],
+      filters: [],
+      orderBy: [],
+      externalFilters: [
+        { name: 'pedido', source: 'querystring', sourceAlias: 'customer', field: 'CustNum', operator: '=', required: false },
+        { name: 'estabelecimento', source: 'header', sourceAlias: 'customer', field: 'State', operator: '=', required: true }
+      ]
+    };
+
+    function append(label, value) {
+      const log = document.getElementById('log');
+      log.value += '\n## ' + label + '\n' + (typeof value === 'string' ? value : JSON.stringify(value, null, 2)) + '\n';
+      log.scrollTop = log.scrollHeight;
+    }
+
+    async function postJson(url, payload) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await response.json();
+      return { status: response.status, json };
+    }
+
+    async function runAll() {
+      const apiBase = document.getElementById('apiBase').value.replace(/\/+$/, '');
+      const code = document.getElementById('queryCode').value.trim();
+      const status = document.getElementById('queryStatus').value;
+      append('Inicio', { apiBase, code, status });
+
+      const save = await postJson(apiBase + '/query-store', { code, status, query: sampleQuery });
+      append('Salvar query-store', save);
+      if (!save.json || !save.json.success) return;
+
+      const allowed = await postJson(apiBase + '/query', {
+        code,
+        parameters: { querystring: { pedido: '123' }, headers: { estabelecimento: 'SP' } }
+      });
+      append('Executar com filtros permitidos', allowed);
+
+      const undeclared = await postJson(apiBase + '/query', {
+        code,
+        parameters: { querystring: { invasor: '1' }, headers: { estabelecimento: 'SP' } }
+      });
+      append('Rejeitar parametro nao declarado', undeclared);
+
+      const missing = await postJson(apiBase + '/query', {
+        code,
+        parameters: { querystring: { pedido: '123' } }
+      });
+      append('Rejeitar obrigatorio ausente', missing);
+    }
+
+    document.getElementById('runAll').addEventListener('click', () => runAll().catch((error) => append('Erro', error.message || String(error))));
+    document.getElementById('clearLog').addEventListener('click', () => { document.getElementById('log').value = ''; });
+    if (window.SursumUiReady) window.SursumUiReady();
+  </script>
+</body>
+</html>

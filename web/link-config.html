@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Vinculos cliente e ambiente</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="ui-ready.css?v=20260616-grid-loading">
+  <link rel="stylesheet" href="query-builder.css">
+</head>
+<body class="sursum-ui-pending">
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Sursum Dynamic Query</p>
+        <h1>Vinculos cliente e ambiente</h1>
+        <p class="lead">Associe um cliente a um ambiente. O cadastro das empresas do ambiente fica na tela de ambientes.</p>
+      </div>
+      <div class="endpoint-card">
+        <div class="action-row tight">
+          <button id="openClientConfig">Abrir clientes</button>
+          <button id="openEnvironmentConfig">Abrir ambientes</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="panel">
+      <div class="panel-title">
+        <h2>Vinculos</h2>
+        <span>Cliente + ambiente</span>
+      </div>
+
+      <div class="grid two">
+        <label>Cliente
+          <input id="clientCombo" placeholder="Selecione o cliente">
+        </label>
+        <label>Ambiente
+          <input id="environmentCombo" placeholder="Selecione o ambiente">
+        </label>
+      </div>
+
+      <div class="action-row tight" style="margin: 8px 0 16px;">
+        <button id="saveLink">Salvar vinculo</button>
+        <button id="removeLink">Remover vinculo</button>
+      </div>
+
+      <div id="linksGrid"></div>
+      <div id="statusBox" class="status-box">Pronto.</div>
+    </section>
+  </div>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="ui-ready.js?v=20260616-grid-loading"></script>
+  <script src="auth-guard.js"></script>
+
+  <script src="context-manager.js"></script>
+  <script src="link-config.js"></script>
+</body>
+</html>

@@ -1,0 +1,711 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sursum Dynamic Query</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="ui-ready.css?v=20260616-grid-loading">
+  <style>
+    :root {
+      --app-bg: #f4f6f8;
+      --app-panel: #ffffff;
+      --app-border: #d9e0e7;
+      --app-text: #17202a;
+      --app-muted: #5f6b7a;
+      --app-accent: #0f766e;
+      --app-accent-weak: #e1f3f0;
+      --sidebar-width: 312px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--app-text);
+      background: linear-gradient(180deg, #f8fafc 0%, var(--app-bg) 100%);
+      font-family: "Segoe UI", Tahoma, sans-serif;
+    }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar-width) 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 0;
+      padding: 18px 16px;
+      border-right: 1px solid var(--app-border);
+      background: var(--app-panel);
+    }
+
+    .brand {
+      padding: 4px 4px 12px;
+      border-bottom: 1px solid var(--app-border);
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .brand-subtitle {
+      margin: 6px 0 0;
+      color: var(--app-muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .menu-filter input {
+      width: 100%;
+    }
+
+    #menuTree {
+      min-height: 0;
+      overflow: auto;
+      padding: 2px 0 10px;
+    }
+
+    #menuTree .k-treeview-leaf {
+      border-radius: 6px;
+    }
+
+    #menuTree .k-selected {
+      color: #063a34;
+      background: var(--app-accent-weak);
+    }
+
+    .menu-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .menu-item-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .menu-item-open {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      color: var(--app-muted);
+      text-decoration: none;
+      font-size: 13px;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
+    .menu-item-open:hover {
+      color: #063a34;
+      background: var(--app-accent-weak);
+    }
+
+    .content {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-width: 0;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(220px, auto) auto;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--app-border);
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(8px);
+    }
+
+    .page-title {
+      min-width: 0;
+    }
+
+    .page-title h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+      font-weight: 700;
+    }
+
+    .page-title p {
+      margin: 4px 0 0;
+      color: var(--app-muted);
+      font-size: 12px;
+      line-height: 1.35;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .context-strip {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      min-width: 0;
+      color: var(--app-muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .context-chip {
+      min-width: 0;
+      max-width: 180px;
+      padding: 5px 8px;
+      border: 1px solid var(--app-border);
+      border-radius: 6px;
+      background: #ffffff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .context-chip strong {
+      color: var(--app-text);
+      font-weight: 600;
+    }
+
+    .context-change {
+      flex: 0 0 auto;
+      color: var(--app-accent);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .context-change:hover {
+      color: #063a34;
+      text-decoration: underline;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .toolbar .k-button {
+      min-width: 38px;
+    }
+
+    .frame-wrap {
+      min-width: 0;
+      min-height: 0;
+      padding: 12px;
+    }
+
+    #contentFrame {
+      display: block;
+      width: 100%;
+      height: 100%;
+      min-height: calc(100vh - 119px);
+      border: 1px solid var(--app-border);
+      background: #ffffff;
+    }
+
+    .statusbar {
+      min-height: 34px;
+      padding: 8px 18px;
+      border-top: 1px solid var(--app-border);
+      color: var(--app-muted);
+      background: #ffffff;
+      font-size: 12px;
+    }
+
+    @media (max-width: 860px) {
+      .app-shell {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--app-border);
+      }
+
+      #menuTree {
+        max-height: 230px;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      .context-strip {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      .toolbar {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+      }
+
+      #contentFrame {
+        min-height: 68vh;
+      }
+    }
+
+    #menuJsonObject {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body class="sursum-ui-pending">
+  <object id="menuJsonObject" data="menu-pages.json" type="application/json" aria-hidden="true"></object>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1 class="brand-title">Sursum Dynamic Query</h1>
+        <p class="brand-subtitle">Menu central das paginas web do projeto.</p>
+      </div>
+
+      <div class="menu-filter">
+        <input id="menuSearch" placeholder="Filtrar paginas">
+      </div>
+
+      <nav id="menuTree" aria-label="Menu de paginas"></nav>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div class="page-title">
+          <h1 id="currentTitle">Carregando menu</h1>
+          <p id="currentDescription">Aguarde enquanto a fonte JSON e lida.</p>
+        </div>
+        <div id="contextStrip" class="context-strip" aria-live="polite">
+          <span class="context-chip"><strong>Cliente:</strong> <span id="contextClient">-</span></span>
+          <span class="context-chip"><strong>Ambiente:</strong> <span id="contextEnvironment">-</span></span>
+          <a id="changeContextLink" class="context-change" href="context-selector.html">Alterar</a>
+        </div>
+        <div class="toolbar">
+          <button id="reloadPage" type="button" class="k-button k-button-md k-rounded-md k-button-solid k-button-solid-base" title="Recarregar pagina">Recarregar</button>
+          <button id="openPage" type="button" class="k-button k-button-md k-rounded-md k-button-solid k-button-solid-primary" title="Abrir em nova aba">Abrir</button>
+          <button id="logoutButton" type="button" class="k-button k-button-md k-rounded-md k-button-solid k-button-solid-base" title="Sair">Sair</button>
+        </div>
+      </header>
+
+      <section class="frame-wrap">
+        <iframe id="contentFrame" title="Pagina selecionada"></iframe>
+      </section>
+
+      <footer id="statusBar" class="statusbar">Pronto.</footer>
+    </main>
+  </div>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="ui-ready.js?v=20260616-grid-loading"></script>
+  <script src="auth-guard.js"></script>
+
+  <script src="context-manager.js"></script>
+  <script>
+    (function () {
+      const menuUrl = "menu-pages.json";
+      const fallbackMenu = [
+        { text: "Inicio", expanded: true, items: [
+          { text: "Selecao de contexto", url: "context-selector.html", description: "Define cliente e ambiente base para todas as demais paginas." }
+        ] },
+        { text: "Consultas", expanded: true, items: [
+          { text: "Construtor de query", url: "query-builder.html", description: "Montagem visual de consultas dinamicas." },
+          { text: "Consulta por Tabela", url: "query-wizard-3steps.html", description: "Fluxo guiado para montar e executar consultas." },
+          { text: "Lista de queries", url: "query-list.html", description: "Consulta e manutencao das queries salvas." },
+          { text: "Resultado de query", url: "query-result.html", description: "Visualizacao direta de resultados." },
+          { text: "Runner de arquivo", url: "query-file-runner.html", description: "Execucao de consultas a partir de arquivo." }
+        ] },
+        { text: "Metadados", expanded: true, items: [
+          { text: "Navegador de tabelas", url: "table-browser.html", description: "Busca de campos, indices e joins por banco e tabela." },
+          { text: "Manutencao de metadados", url: "metadata-maintenance.html", description: "Atualizacao em lote e cadastro manual de joins e view-as." },
+          { text: "Configuracao de campos", url: "field-metadata-config.html", description: "Ajustes manuais dos metadados de campos." },
+          { text: "Armazenamento de metadados", url: "metadata-storage-config.html", description: "Configuracao do local de cache dos metadados." },
+          { text: "Aliases de bancos", url: "database-alias-config.html", description: "Edicao visual dos aliases de bancos conectados." }
+        ] },
+        { text: "Logica", expanded: true, items: [
+          { text: "Lista de logicas", url: "logic-list.html", description: "Consulta das regras e logicas disponiveis." },
+          { text: "Construtor de logica", url: "logic-builder.html", description: "Edicao visual de regras de logica." }
+        ] },
+        { text: "Configuracao", expanded: true, items: [
+          { text: "Clientes", url: "client-config.html", description: "Cadastro de clientes e ambientes pelo contexto do cliente." }
+        ] }
+      ];
+      let activeItem = null;
+      let allItems = [];
+
+      function setStatus(message) {
+        $("#statusBar").text(message);
+      }
+
+      function textOrDash(value) {
+        const text = String(value || "").trim();
+        return text || "-";
+      }
+
+      function currentContextParts() {
+        const api = window.SursumContext || null;
+
+        if (!api) {
+          return { client: null, environment: null };
+        }
+
+        return {
+          client: typeof api.getCurrentClient === "function" ? api.getCurrentClient() : null,
+          environment: typeof api.getCurrentEnvironment === "function" ? api.getCurrentEnvironment() : null
+        };
+      }
+
+      function refreshContextHeader(detail) {
+        const context = detail || currentContextParts();
+        const client = context.client || null;
+        const environment = context.environment || null;
+
+        $("#contextClient").text(textOrDash(client && client.name));
+        $("#contextEnvironment").text(textOrDash(environment && environment.name));
+      }
+
+      function bindContextHeader() {
+        refreshContextHeader();
+
+        window.addEventListener("sursum:context-changed", function (event) {
+          refreshContextHeader(event.detail || null);
+        });
+
+        window.addEventListener("message", function (event) {
+          const frame = document.getElementById("contentFrame");
+          const fromContentFrame = frame && event.source === frame.contentWindow;
+          const sameOrigin = event.origin === window.location.origin;
+
+          if (!sameOrigin && !fromContentFrame) {
+            return;
+          }
+
+          if (event.data && event.data.type === "sursum:context-changed") {
+            refreshContextHeader(event.data.detail || null);
+          }
+        });
+
+        window.addEventListener("storage", function (event) {
+          if (!event.key || event.key.indexOf("sursum") === 0) {
+            refreshContextHeader();
+          }
+        });
+      }
+
+      function flatten(items, target) {
+        (items || []).forEach(function (item) {
+          if (getItemUrl(item)) {
+            target.push(item);
+          }
+          flatten(item.items, target);
+        });
+      }
+
+      function getItemUrl(item) {
+        return item ? (item.pageUrl || item.url || "") : "";
+      }
+
+      function cloneMenuForTree(items) {
+        return (items || []).map(function (item) {
+          const clone = Object.assign({}, item);
+
+          if (clone.url) {
+            clone.pageUrl = clone.url;
+            delete clone.url;
+          }
+
+          if (clone.items) {
+            clone.items = cloneMenuForTree(clone.items);
+          }
+
+          return clone;
+        });
+      }
+
+      function firstPage(items) {
+        for (let i = 0; i < items.length; i += 1) {
+          if (getItemUrl(items[i])) {
+            return items[i];
+          }
+          const child = firstPage(items[i].items || []);
+          if (child) {
+            return child;
+          }
+        }
+        return null;
+      }
+
+      function pageFromQuery(items) {
+        const params = new URLSearchParams(window.location.search);
+        const page = params.get("page");
+        if (!page) {
+          return null;
+        }
+        return items.find(function (item) {
+          return getItemUrl(item) === page;
+        }) || null;
+      }
+
+      function openItem(item, updateQuery) {
+        const url = getItemUrl(item);
+        if (!item || !url) {
+          return;
+        }
+
+        activeItem = item;
+        $("#currentTitle").text(item.text || url);
+        $("#currentDescription").text(item.description || url);
+        $("#contentFrame").attr("src", frameUrl(url));
+        setStatus("Pagina carregada: " + url);
+
+        if (updateQuery && window.history && window.history.replaceState) {
+          window.history.replaceState(null, "", "?page=" + encodeURIComponent(url));
+        }
+      }
+
+      function frameUrl(url) {
+        if (url === "metadata-maintenance.html") {
+          return url + "?v=20260616-context-wait";
+        }
+        return url;
+      }
+
+      function filterTree(value) {
+        const tree = $("#menuTree").data("kendoTreeView");
+        const term = (value || "").toLowerCase();
+
+        if (!tree) {
+          return;
+        }
+
+        if (!term) {
+          tree.dataSource.filter({});
+          tree.expand(".k-item");
+          return;
+        }
+
+        tree.dataSource.filter({
+          logic: "or",
+          filters: [
+            { field: "text", operator: "contains", value: term },
+            { field: "description", operator: "contains", value: term }
+          ]
+        });
+        tree.expand(".k-item");
+        decorateMenuOpenLinks();
+      }
+
+      function decorateMenuOpenLinks() {
+        const tree = $("#menuTree").data("kendoTreeView");
+        if (!tree) {
+          return;
+        }
+
+        $("#menuTree .k-treeview-item-content").each(function () {
+          const node = $(this).closest(".k-treeview-item")[0];
+          const item = node ? tree.dataItem(node) : null;
+          const leaf = $(this).find(".k-treeview-leaf").first();
+          const label = leaf.find(".k-treeview-leaf-text").first();
+
+          if (!item || !item.text || !leaf.length || !label.length) {
+            return;
+          }
+
+          if (leaf.find(".menu-item-row").length) {
+            return;
+          }
+
+          const encodedText = kendo.htmlEncode(item.text || "");
+          const itemUrl = getItemUrl(item);
+          if (itemUrl) {
+            leaf.html(
+              "<span class='menu-item-row'>"
+                + "<span class='menu-item-label'>" + encodedText + "</span>"
+                + "<a class='menu-item-open' href='" + kendo.htmlEncode(itemUrl) + "' target='_blank' title='Abrir em nova aba' aria-label='Abrir em nova aba' data-menu-open='1'>↗</a>"
+              + "</span>"
+            );
+          } else {
+            leaf.html("<span class='menu-item-label'>" + encodedText + "</span>");
+          }
+        });
+      }
+
+      function initMenu(menuData, fromFallback) {
+        menuData = cloneMenuForTree(menuData);
+        allItems = [];
+        flatten(menuData, allItems);
+
+        $("#menuTree").kendoTreeView({
+          dataSource: menuData,
+          dataTextField: "text",
+          loadOnDemand: false,
+          select: function (event) {
+            const item = this.dataItem(event.node);
+            if (getItemUrl(item)) {
+              openItem(item, true);
+            } else {
+              this.toggle(event.node);
+            }
+          }
+        });
+
+        $("#menuSearch").kendoTextBox({
+          change: function () {
+            filterTree(this.value());
+          }
+        });
+        $("#menuSearch").on("input", function () {
+          filterTree(this.value);
+        });
+
+        $("#reloadPage").on("click", function () {
+          const frame = document.getElementById("contentFrame");
+          if (frame && frame.contentWindow) {
+            frame.contentWindow.location.reload();
+          }
+        });
+        $("#menuTree").on("click", ".k-treeview-leaf", function (event) {
+          if ($(event.target).closest("[data-menu-open='1']").length) {
+            return;
+          }
+
+          const tree = $("#menuTree").data("kendoTreeView");
+          const node = $(this).closest(".k-treeview-item")[0];
+          const item = tree && node ? tree.dataItem(node) : null;
+
+          if (getItemUrl(item)) {
+            event.preventDefault();
+            event.stopPropagation();
+            tree.select(node);
+            openItem(item, true);
+          }
+        });
+        $("#menuTree").on("click", "[data-menu-open='1']", function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          const href = $(this).attr("href");
+          if (href) {
+            window.open(href, "_blank");
+          }
+        });
+        $("#openPage").on("click", function () {
+          const url = getItemUrl(activeItem);
+          if (url) {
+            window.open(url, "_blank");
+          }
+        });
+        $("#logoutButton").on("click", function () {
+          fetch("auth.php?action=logout", { credentials: "same-origin" })
+            .finally(function () { location.href = "login.html"; });
+        });
+        $("#changeContextLink").on("click", function (event) {
+          event.preventDefault();
+          const item = allItems.find(function (entry) {
+            return getItemUrl(entry) === "context-selector.html";
+          }) || { text: "Selecao de contexto", pageUrl: "context-selector.html", description: "Define cliente e ambiente base." };
+          openItem(item, true);
+        });
+
+        decorateMenuOpenLinks();
+        openItem(pageFromQuery(allItems) || firstPage(menuData), false);
+        setStatus(fromFallback ? "Menu carregado pelo fallback local." : "Menu carregado de " + menuUrl + ".");
+        if (window.SursumUiReady) window.SursumUiReady();
+      }
+
+      function parseMenuJson(text) {
+        const data = JSON.parse(text || "[]");
+        if (!Array.isArray(data)) {
+          throw new Error("A fonte do menu deve ser um array JSON.");
+        }
+        return data;
+      }
+
+      function readMenuFromObject() {
+        return new Promise(function (resolve, reject) {
+          const object = document.getElementById("menuJsonObject");
+          let done = false;
+
+          function tryRead() {
+            if (done) {
+              return;
+            }
+
+            try {
+              const doc = object.contentDocument || (object.contentWindow && object.contentWindow.document);
+              const text = doc && doc.body ? doc.body.innerText : "";
+              if (text) {
+                done = true;
+                resolve(parseMenuJson(text));
+              }
+            } catch (error) {
+              done = true;
+              reject(error);
+            }
+          }
+
+          object.addEventListener("load", tryRead, { once: true });
+          window.setTimeout(function () {
+            if (!done) {
+              tryRead();
+            }
+            if (!done) {
+              reject(new Error("Nao foi possivel ler " + menuUrl + "."));
+            }
+          }, 700);
+        });
+      }
+
+      $.ajax({ url: menuUrl, dataType: "text", cache: false })
+        .done(function (text) {
+          try {
+            initMenu(parseMenuJson(text), false);
+          } catch (error) {
+            readMenuFromObject()
+              .then(function (data) {
+                initMenu(data, false);
+              })
+              .catch(function () {
+                initMenu(fallbackMenu, true);
+              });
+          }
+        })
+        .fail(function () {
+          readMenuFromObject()
+            .then(function (data) {
+              initMenu(data, false);
+            })
+            .catch(function () {
+              initMenu(fallbackMenu, true);
+            });
+        });
+
+      bindContextHeader();
+    }());
+  </script>
+</body>
+</html>

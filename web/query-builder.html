@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sursum Dynamic Query Builder</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="ui-ready.css?v=20260616-grid-loading">
+  <link rel="stylesheet" href="query-builder.css">
+</head>
+<body class="sursum-ui-pending">
+  <div class="shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Sursum Dynamic Query</p>
+        <div class="title-row">
+          <h1>Designer visual de consultas e pipelines</h1>
+          <button id="pageHelpToggle" class="help-icon" type="button" data-help="Construa a consulta em etapas, use metadados do PASOE, salve a extracao e execute o resultado em uma tela separada.">?</button>
+        </div>
+      </div>
+      <div class="endpoint-card">
+        <div class="endpoint-field">
+          <label for="queryName">Nome da consulta</label>
+          <input id="queryName" placeholder="Clientes ativos por UF">
+        </div>
+        <div class="endpoint-field">
+          <label for="queryCode">Codigo</label>
+          <input id="queryCode" placeholder="pedidos-em-aberto">
+        </div>
+        <div class="endpoint-field">
+          <label for="queryStoreStatus">Status</label>
+          <input id="queryStoreStatus">
+        </div>
+        <div class="endpoint-field">
+          <label for="apiCompany">Empresa</label>
+          <input id="apiCompany" placeholder="Selecione a empresa">
+        </div>
+        <input id="apiBaseUrl" type="hidden" value="http://localhost:8890/web/SursumDynamicQuery">
+        <div class="action-row tight">
+          <button id="backToQueryList">Consultas salvas</button>
+          <button id="saveQuery">Salvar consulta</button>
+          <button id="saveQueryAs">Salvar como</button>
+          <button id="saveQueryBackend">Salvar no PASOE</button>
+          <button id="openDatabaseAliasConfig">Aliases de bancos</button>
+          <button id="openMetadataStorageConfig">Pasta metadados</button>
+          <button id="openFieldMetadataConfig">Campos e opcoes</button>
+          <button id="openMetadataSyncWizard">Sincronizar metadados (.zip/.p)</button>
+          <button id="openLogicBuilder">Motor de logica</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="wizard-nav" aria-label="Etapas da consulta">
+      <button class="wizard-step is-active" data-step="1"><strong>1</strong><span>Metadados</span></button>
+      <button class="wizard-step" data-step="2"><strong>2</strong><span>Fontes</span></button>
+      <button class="wizard-step" data-step="3"><strong>3</strong><span>Selecao</span></button>
+      <button class="wizard-step" data-step="4"><strong>4</strong><span>Filtros</span></button>
+      <button class="wizard-step" data-step="5"><strong>5</strong><span>Ordenacao</span></button>
+      <button class="wizard-step" data-step="6"><strong>6</strong><span>Relacoes</span></button>
+      <button class="wizard-step" data-step="7"><strong>7</strong><span>Pipeline</span></button>
+      <button class="wizard-step" data-step="8"><strong>8</strong><span>Salvar</span></button>
+    </nav>
+
+    <main class="wizard-workspace">
+      <section class="panel wizard-panel is-active" data-step-panel="1">
+        <div class="panel-title">
+          <h2>1. Metadados e configuracao base</h2>
+          <span>Carrega bancos, tabelas e campos disponiveis</span>
+        </div>
+
+        <div class="grid three">
+          <label>Execucao
+            <input id="execution">
+          </label>
+          <label>Pipeline version
+            <input id="pipelineVersion" placeholder="v1">
+          </label>
+          <label>Modo de montagem
+            <input id="requestMode">
+          </label>
+        </div>
+
+        <div class="action-row">
+          <button id="loadMetadata">Atualizar tabelas/bancos</button>
+          <button id="loadCustomerSample">Exemplo Customer</button>
+          <button id="loadAdvancedSample">Pipeline avancado</button>
+        </div>
+
+        <div class="metadata-load-box" id="metadataLoadBox">
+          <div class="metadata-load-title">Metadados</div>
+          <div id="metadataLoadText">Aguardando carga inicial.</div>
+          <div class="metadata-progress"><div id="metadataProgressBar"></div></div>
+        </div>
+
+        <div class="wizard-help">
+          <strong>Como usar:</strong> carregue primeiro os metadados. Em consultas multi-banco, selecione o banco diretamente em cada fonte, nao apenas neste combo.
+        </div>
+      </section>
+
+      <section class="panel wizard-panel" data-step-panel="2">
+        <div class="panel-title">
+          <h2>2. Fontes de dados</h2>
+          <span>Tabelas, aliases e campos disponiveis</span>
+        </div>
+
+        <div class="grid four">
+          <label>Banco da fonte
+            <input id="sourceDatabase" placeholder="Banco da tabela">
+          </label>
+          <label>Tabela
+            <input id="sourceTable" placeholder="Customer">
+          </label>
+          <label>Alias
+            <input id="sourceAlias" placeholder="customer">
+          </label>
+          <label>&nbsp;
+            <button id="searchTable">Buscar tabela</button>
+          </label>
+        </div>
+
+        <div class="action-row">
+          <button id="addSource">Adicionar fonte</button>
+          <button id="clearSources">Limpar fontes</button>
+          <button id="loadTable">Carregar tabela</button>
+        </div>
+        <div id="sourcesGrid"></div>
+      </section>
+
+      <div id="tableSearchWindow" class="search-window">
+        <div class="grid two">
+          <label>Pesquisar tabela
+            <input id="tableSearchText" placeholder="codigo, descricao ou dump-name">
+          </label>
+          <label class="step-actions">&nbsp;
+            <button id="applyTableSearch">Pesquisar</button>
+            <button id="reloadTableSearch">Recarregar banco</button>
+          </label>
+        </div>
+        <div id="tableSearchGrid"></div>
+      </div>
+
+      <section class="panel wizard-panel" data-step-panel="3">
+        <div class="panel-title">
+          <h2>3. Selecao</h2>
+          <span>Define os campos retornados pela consulta</span>
+        </div>
+
+        <div class="grid two" id="selectionSourceRow">
+          <label>Tabela/fonte
+            <input id="selectionSource" placeholder="Selecione a tabela/fonte">
+          </label>
+          <label>&nbsp;
+            <span class="field-note">Quando houver mais de uma fonte, os campos abaixo sao filtrados pela tabela selecionada.</span>
+          </label>
+        </div>
+
+        <div class="grid four">
+          <label>Alias
+            <input id="selectAlias" placeholder="customer">
+          </label>
+          <label>Campo
+            <input id="selectField" placeholder="CustNum">
+          </label>
+          <label>Nome de saida
+            <input id="selectOutput" placeholder="codigo">
+          </label>
+          <label>&nbsp;
+            <button id="addSelect">Adicionar campo</button>
+          </label>
+        </div>
+        <div id="selectGrid"></div>
+      </section>
+
+      <section class="panel wizard-panel" data-step-panel="4">
+        <div class="panel-title">
+          <h2>4. Filtros</h2>
+          <span>Define restricoes antes da execucao da consulta</span>
+        </div>
+
+        <div class="grid two" id="filterSourceRow">
+          <label>Tabela/fonte
+            <input id="filterSelectionSource" placeholder="Selecione a tabela/fonte">
+          </label>
+          <label>&nbsp;
+            <span class="field-note">Os campos de filtro sao carregados conforme a tabela/fonte selecionada.</span>
+          </label>
+        </div>
+
+        <div class="grid five">
+          <label>Alias
+            <input id="filterAlias" placeholder="customer">
+          </label>
+          <label>Campo
+            <input id="filterField" placeholder="CustNum">
+          </label>
+          <label>Operador
+            <input id="filterOperator">
+          </label>
+          <label>Valor
+            <input id="filterValue" placeholder="1">
+          </label>
+          <label>&nbsp;
+            <button id="addFilter">Adicionar filtro</button>
+          </label>
+        </div>
+        <div id="filtersGrid"></div>
+
+        <div class="divider"></div>
+        <div class="panel-title slim">
+          <h2>Filtros externos permitidos</h2>
+          <span>Parametros aceitos quando a consulta salva for executada por codigo</span>
+        </div>
+
+        <div class="grid two" id="externalFilterSourceRow">
+          <label>Tabela/fonte
+            <input id="externalFilterSelectionSource" placeholder="Selecione a tabela/fonte">
+          </label>
+          <label>&nbsp;
+            <span class="field-note">Somente parametros cadastrados aqui podem entrar na execucao por codigo.</span>
+          </label>
+        </div>
+
+        <div class="grid six">
+          <label>Parametro
+            <input id="externalFilterName" placeholder="pedido">
+          </label>
+          <label>Origem
+            <input id="externalFilterSource">
+          </label>
+          <label>Alias
+            <input id="externalFilterAlias" placeholder="ped">
+          </label>
+          <label>Campo
+            <input id="externalFilterField" placeholder="nr-pedido">
+          </label>
+          <label>Operador
+            <input id="externalFilterOperator">
+          </label>
+          <label class="checkbox-field">Obrigatorio
+            <input id="externalFilterRequired" type="checkbox">
+          </label>
+        </div>
+        <div class="action-row">
+          <button id="addExternalFilter">Adicionar filtro externo</button>
+          <button id="clearExternalFilters">Limpar filtros externos</button>
+        </div>
+        <div id="externalFiltersGrid"></div>
+      </section>
+
+      <section class="panel wizard-panel" data-step-panel="5">
+        <div class="panel-title">
+          <h2>5. Ordenacao e paginacao</h2>
+          <span>Define ordenacao e tamanho da pagina retornada</span>
+        </div>
+
+        <div class="grid two" id="orderSourceRow">
+          <label>Tabela/fonte
+            <input id="orderSelectionSource" placeholder="Selecione a tabela/fonte">
+          </label>
+          <label>&nbsp;
+            <span class="field-note">Os campos de ordenacao sao carregados conforme a tabela/fonte selecionada.</span>
+          </label>
+        </div>
+
+        <div class="grid four">
+          <label>Alias
+            <input id="orderAlias" placeholder="customer">
+          </label>
+          <label>Campo
+            <input id="orderField" placeholder="CustNum">
+          </label>
+          <label>Direcao
+            <input id="orderDirection">
+          </label>
+          <label>&nbsp;
+            <button id="addOrder">Adicionar ordenacao</button>
+          </label>
+        </div>
+        <div id="ordersGrid"></div>
+
+        <div class="grid three compact">
+          <label>Pagina
+            <input id="page" value="1">
+          </label>
+          <label>Page size
+            <input id="pageSize" value="500">
+          </label>
+          <label>&nbsp;
+            <span class="field-note">A paginacao tambem entra no step limit quando o pipeline for gerado.</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="panel wizard-panel" data-step-panel="6">
+        <div class="panel-title">
+          <h2>6. Relacoes reutilizaveis</h2>
+          <span>Relações salvas no SQLite por ambiente, empresa, banco e tabela.</span>
+        </div>
+        <div class="grid six">
+          <label>Banco esquerdo
+            <input id="relationLeftDatabase" placeholder="Banco esquerdo">
+          </label>
+          <label>Tabela esquerda
+            <input id="relationLeftTable" placeholder="Customer">
+          </label>
+          <label>Campo esquerdo
+            <input id="relationLeftField" placeholder="CustNum">
+          </label>
+          <label>Banco direito
+            <input id="relationRightDatabase" placeholder="Banco direito">
+          </label>
+          <label>Tabela direita
+            <input id="relationRightTable" placeholder="Order">
+          </label>
+          <label>Campo direito
+            <input id="relationRightField" placeholder="CustNum">
+          </label>
+          <label>Tipo
+            <input id="relationType">
+          </label>
+        </div>
+        <div class="action-row">
+          <button id="saveRelation">Salvar relacao</button>
+          <button id="loadRelation">Buscar relacao</button>
+          <button id="addRelationAsJoin">Adicionar como join</button>
+        </div>
+        <div id="joinsGrid"></div>
+        <input id="relationPayload" type="hidden">
+      </section>
+
+      <section class="panel wizard-panel" data-step-panel="7">
+        <div class="panel-title">
+          <h2>7. Pipeline</h2>
+          <span>Preparacao e transformacao pos-query</span>
+        </div>
+
+        <div class="pipeline-layout">
+          <aside class="pipeline-flow-card">
+            <h3>Fluxo atual</h3>
+            <div id="pipelineFlow" class="pipeline-flow"></div>
+            <div class="action-row tight">
+              <button id="addPipelineFromForm">Regenerar base</button>
+              <button id="clearPipeline">Limpar pipeline</button>
+            </div>
+          </aside>
+
+          <section class="pipeline-editor-card">
+            <div class="grid three">
+              <label>Tipo do passo
+                <input id="stepType">
+              </label>
+              <label>Campo principal
+                <input id="pipelineField" placeholder="saldo">
+              </label>
+              <label>Nome de saida
+                <input id="pipelineAlias" placeholder="saldoTotal">
+              </label>
+            </div>
+
+            <div class="grid three">
+              <label>Operacao
+                <input id="pipelineOperation" placeholder="sum">
+              </label>
+              <label>Campos/lista
+                <input id="pipelineFields" placeholder="codigo,nome,uf">
+              </label>
+              <label>Formato de saida
+                <input id="pipelineOutputFormat" placeholder="json">
+              </label>
+            </div>
+
+            <div class="grid two">
+              <label>Expressao / transformacao
+                <input id="pipelineExpression" placeholder="substring(char-1,1,2)">
+              </label>
+              <label>Payload gerado
+                <textarea id="stepPayload" rows="5" placeholder='{ "fields":["uf"] }'></textarea>
+              </label>
+            </div>
+
+            <div class="action-row tight">
+              <button id="generateStepPayload">Gerar payload</button>
+              <button id="addStep">Adicionar step</button>
+            </div>
+          </section>
+        </div>
+
+        <div id="pipelineGrid"></div>
+
+        <div class="operator-help">
+          <h3>Operadores suportados</h3>
+          <div class="chips">
+            <span>source</span><span>join</span><span>select</span><span>filter</span><span>sort</span><span>limit</span><span>map</span><span>distinct</span><span>group</span><span>aggregate</span><span>calculated</span><span>output</span>
+          </div>
+          <p><strong>map:</strong> renomeia/reprojeta campos. <strong>calculated:</strong> cria campo derivado, como substring de char-1/char-2. <strong>distinct:</strong> remove duplicados. <strong>group:</strong> agrupa campos. <strong>aggregate:</strong> count, sum, min, max, avg.</p>
+        </div>
+      </section>
+
+      <section class="panel wizard-panel" data-step-panel="8">
+        <div class="panel-title">
+          <h2>8. Salvar consulta</h2>
+          <span>Salve a consulta ou envie para pagina de resultado</span>
+        </div>
+        <div class="action-row">
+          <button id="buildJson">Atualizar consulta</button>
+          <button id="openResultPage">Abrir resultado</button>
+        </div>
+        <input id="requestPayload" type="hidden">
+      </section>
+    </main>
+
+    <footer class="wizard-footer">
+      <button id="prevStep">Etapa anterior</button>
+      <div id="statusBox" class="status-box">Pronto.</div>
+      <button id="nextStep">Proxima etapa</button>
+    </footer>
+  </div>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="ui-ready.js?v=20260616-grid-loading"></script>
+  <script src="auth-guard.js"></script>
+
+  <script src="context-manager.js"></script>
+  <script src="query-builder.js?v=20260612-relations-sqlite"></script>
+</body>
+</html>

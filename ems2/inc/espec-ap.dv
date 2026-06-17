@@ -1,0 +1,10 @@
+/*****************************************************************************
+** espec-ap.dv
+** Arquivo: espec-ap
+*****************************************************************************/
+
+not (can-find (first tit-ap use-index especie
+     where tit-ap.cod-esp = espec-ap.cod-esp))
+
+/* fim */
+

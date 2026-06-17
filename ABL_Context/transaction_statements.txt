@@ -1,0 +1,130 @@
+BLOCK-LEVEL ON ERROR UNDO, THROW statement
+
+Use this statement in a procedure (.p) or class (.cls) file to change the default ON ERROR directive to ON ERROR UNDO, THROW for all blocks that have a default error directive associated with them. (A simple DO block, for example, does not have default error handling and is not affected by this statement.). This is specifically for ERROR, not STOP conditions because STOP conditions are already thrown by default. The statement must come before any executable or DEFINE statements in a file. However, it can come either before or after a USING statement.
+
+Syntax
+
+    BLOCK-LEVEL ON ERROR UNDO, THROW.
+
+
+This statement affects the following block types:
+•   Procedure (also called main block, external procedure, or .p file, including database trigger .p files)
+•   Internal procedures
+•   User-defined functions
+•   Methods of a class
+•   Class constructors
+•   Property accessors
+•   ON blocks used as database triggers with CREATE, DELETE, WRITE or ASSIGN events
+•   REPEAT blocks
+•   FOR blocks
+•   DO TRANSACTION blocks
+
+This statement does not affect:
+•   Destructors
+•   Error directives that are explicitly coded in individual, non routine-level blocks
+•   ON blocks that are UI triggers.
+
+Note these alternatives to the BLOCK-LEVEL ON ERROR UNDO, THROW statement:
+•   Instead of adding the statement to source-code files, you can use the -undothrow 2 startup parameter to change
+    the default error-handling to UNDO, THROW on every block affected by the BLOCK-LEVEL statement during
+    compilation. See the Startup Command and Parameter Reference for more information.
+•   The ROUTINE-LEVEL ON ERROR UNDO, THROW statement on page 895 can be used if you want to change the
+    default error-handling only on routine-level blocks. (You can use the -undothrow 1 startup parameter to change
+    the default error handling on routine-level blocks to UNDO, THROW during compilation.)
+
+Example
+An error propagates from the DO TRANSACTION block to the internal procedure, from the internal procedure up to the main .p file (b-BLOCK-LEVEL-01.p), and finally up to the CATCH block in the calling .p file(b-BLOCK-LEVEL-02.p). An error is raised at each of these levels. At each level the ON ERROR UNDO, THROW directive takes effect.
+
+   b-BLOCK-LEVEL-01.p
+
+       BLOCK-LEVEL ON ERROR UNDO, THROW.
+
+       /* Update first order for a customer shipped by a certain date */
+       DEFINE INPUT PARAMETER custName AS CHAR.
+       DEFINE INPUT PARAMETER latestShipDate AS DATE.
+
+       RUN updateCustomers.
+
+       PROCEDURE updateCustomers:
+            DO TRANSACTION:
+                 FIND customer WHERE customer.NAME = custName.
+                 FIND order OF customer WHERE shipDate < latestShipDate.
+                 UPDATE order.
+            END.
+       END.
+
+
+   b-BLOCK-LEVEL-02.p
+
+       RUN b-BLOCK-LEVEL-01.p (INPUT cValue, INPUT dDate).
+
+       CATCH err AS Progress.Lang.Error:
+            MESSAGE "Customer or order not found " err:GetMessage(1)
+                VIEW-AS ALERT-BOX INFO BUTTONS OK.
+       END.
+
+
+
+   Notes
+   •   The BLOCK-LEVEL ON ERROR UNDO, THROW statement guarantees that all unhandled errors in affected blocks
+       are propagated up to the caller. You can decide whether to handle errors at the block level with a CATCH statement,
+       or to handle all errors with a CATCH block at a higher level.
+   •   The BLOCK-LEVEL statement affects the same blocks as the ROUTINE-LEVEL ON ERROR UNDO, THROW
+       statement on page 895, plus REPEAT, FOR, and DO TRANSACTION blocks. Therefore, there is no need to add both
+       statements to a file. If both statements exist in a file, the more inclusive BLOCK-LEVEL statement takes precedence.
+   •   Error objects can be thrown from an application server and handled by a CATCH block on an ABL client. To be
+       throwable from an application server to an ABL client, user-defined error classes must be defined on both the server
+       and client sides, and the classes must be defined as SERIALIZABLE. 
+
+
+
+TRANSACTION function
+
+Returns a LOGICAL value that indicates whether a transaction is currently active.
+
+   Syntax
+
+       TRANSACTION
+
+
+
+
+TRANSACTION-MODE AUTOMATIC statement
+(PAS for OE only)
+Causes the procedure file that executes this statement to become an automatic transaction initiating procedure. This transaction initiating procedure allows you to control an automatic transaction in the context of an application server session.
+
+Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       TRANSACTION-MODE AUTOMATIC [ CHAINED ]
+
+
+   CHAINED
+               Tells the application server session to automatically create a new transaction every time the current
+               transaction is either committed or rolled back.
+
+   Notes
+   •   This statement must appear before any other executable statement in a top-level persistent procedure (transaction
+       initiating procedure) running on the application server.
+   •   You can control an automatic transaction by accessing the attributes and methods of the transaction object. You can
+       access these attributes and methods on the transaction handle returned by the TRANSACTION attribute of any
+       application server procedure handle.
+   •   An automatic transaction remains open in an application server session until:
+       •   The current request service returns control to the client after an application server procedure invokes the transaction
+           handle SET-COMMIT( ) method or SET-ROLLBACK( ) method.
+       •   The transaction initiating procedure is deleted from the session.
+   •   If you specify the CHAINED option, a transaction is always active in the application server session until either the
+       transaction initiating procedure is deleted or the application server session terminates.
+   •   If you do not specify the CHAINED option and the transaction initiating procedure is still active, after the current
+       transaction terminates, a client application can start a new transaction by directly calling any remote internal procedure
+       of the transaction initiating procedure. When so executed, this remote internal procedure (which can otherwise be
+       empty) creates a new transaction that you can control using the transaction handle.
+   •   As long as an automatic transaction is open, you can execute any internal procedure of the current transaction initiating
+       procedure from any other procedure running on the application server. However, if no automatic transaction is open,
+       only a client application can execute such an internal procedure as a remote procedure call, which then opens an
+       automatic transaction. If an application server procedure tries to execute such an internal procedure with no automatic
+       transaction open, the procedure call returns an error.
+   •   If a transaction is open when you delete the transaction initiating procedure, the transaction is committed or rolled
+       back according to the value of the transaction handle DEFAULT-COMMIT attribute.
+

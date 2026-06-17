@@ -1,0 +1,98 @@
+/*****************************************************************************
+** item.dv
+** Arquivo: item ( componente do produto Magnus utilizado pelo EMS)
+*****************************************************************************/
+
+not (can-find (first item-desenho
+                     where item-desenho.it-codigo = item.it-codigo)
+     or
+     can-find (first estrutura
+               where estrutura.it-codigo = item.it-codigo)
+     or
+     can-find (first estrutura use-index onde-se-usa
+               where estrutura.es-codigo = item.it-codigo)
+     or
+     can-find (first alternativo
+               where alternativo.it-codigo = item.it-codigo)
+     or
+     can-find (first alternativo use-index onde-se-usa
+               where alternativo.al-codigo = item.it-codigo)
+     or
+     can-find (first operacao
+               where operacao.it-codigo = item.it-codigo)
+     or
+     can-find (first estr-modelo
+               where estr-modelo.it-codigo = item.it-codigo)
+     or
+     can-find (first cotacao-item
+                     where cotacao-item.it-codigo = item.it-codigo)
+     or
+     can-find (first item-fornec
+               where item-fornec.it-codigo = item.it-codigo)
+     or
+     can-find (first ordem-compra
+               where ordem-compra.it-codigo = item.it-codigo)
+     or
+     can-find (first recebimento
+               where recebimento.it-codigo = item.it-codigo)
+     or
+     can-find (first ord-prod use-index item
+               where ord-prod.it-codigo = item.it-codigo)
+     or
+     can-find (first reserva use-index data
+               where reserva.it-codigo = item.it-codigo)
+     or
+     can-find (first preco-item use-index ch-itemtab
+               where preco-item.it-codigo = item.it-codigo)
+     or
+     can-find (first ped-item use-index ch-item-entr
+               where ped-item.it-codigo = item.it-codigo)
+     or
+     can-find (first oper-ord use-index item
+               where oper-ord.it-codigo = item.it-codigo)
+     or
+     can-find (first item-cli use-index ch-item-cli
+               where item-cli.it-codigo = item.it-codigo)
+     or
+     can-find (first item-tab
+               where item-tab.it-codigo = item.it-codigo)
+     or
+     can-find (first consumo use-index item-conta
+               where consumo.it-codigo = item.it-codigo)
+     /* or
+     can-find (first inventario use-index data-invent
+               where inventario.it-codigo = item.it-codigo) */
+     or
+     can-find (first movto-estoq use-index item-data
+               where movto-estoq.it-codigo = item.it-codigo)
+     or
+     can-find (first saldo-estoq use-index item
+               where saldo-estoq.it-codigo = item.it-codigo)
+     or
+     can-find (first item-estab use-index item
+               where item-estab.it-codigo = item.it-codigo)
+     or
+     can-find (first movto-mat use-index onde-usou
+               where movto-mat.it-codigo = item.it-codigo)
+     or
+     can-find (first it-nota-fisc use-index ch-item-nota
+               where it-nota-fisc.it-codigo = item.it-codigo)
+     or
+     can-find (first it-doc-fisc use-index ch-item
+               where it-doc-fisc.it-codigo = item.it-codigo)
+     or
+     can-find (first rot-item use-index codigo
+               where rot-item.it-codigo = item.it-codigo)
+     /* or
+     can-find (first narrativa use-index codigo
+               where narrativa.it-codigo = item.it-codigo)*/
+     or
+     can-find (first sl-it-per use-index item
+               where sl-it-per.it-codigo = item.it-codigo)
+     or
+     can-find (first pr-it-per use-index codigo
+               where pr-it-per.it-codigo = item.it-codigo)
+     or
+     can-find (first trad-item
+               where trad-item.it-codigo = item.it-codigo))
+

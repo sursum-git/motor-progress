@@ -1,0 +1,60 @@
+{
+  "success": true,
+  "execution": "sync",
+  "page": 1,
+  "pageSize": 25,
+  "recordsReturned": 3,
+  "hasMore": true,
+  "data": [
+    {
+      "customerCustNum": 1,
+      "customerName": "Lift Tours",
+      "customerCity": "Boston",
+      "customerState": "MA",
+      "orderNum": 1,
+      "orderDate": "1998-01-20",
+      "promiseDate": "1998-02-03"
+    },
+    {
+      "customerCustNum": 1,
+      "customerName": "Lift Tours",
+      "customerCity": "Boston",
+      "customerState": "MA",
+      "orderNum": 2,
+      "orderDate": "1998-03-27",
+      "promiseDate": "1998-04-10"
+    },
+    {
+      "customerCustNum": 2,
+      "customerName": "Urpon Frisbee",
+      "customerCity": "New York",
+      "customerState": "NY",
+      "orderNum": 3,
+      "orderDate": "1998-05-12",
+      "promiseDate": "1998-05-26"
+    }
+  ],
+  "metadata": {
+    "sources": [
+      {
+        "name": "Customer",
+        "alias": "customer"
+      },
+      {
+        "name": "Order",
+        "alias": "custOrder"
+      }
+    ],
+    "joins": [
+      {
+        "type": "INNER",
+        "left": "customer.CustNum",
+        "right": "custOrder.CustNum"
+      }
+    ],
+    "orderBy": [
+      "customer.CustNum ASC",
+      "custOrder.OrderNum ASC"
+    ]
+  }
+}

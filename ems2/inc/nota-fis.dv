@@ -1,0 +1,10 @@
+/*****************************************************************************
+** nota-fis.dv (Magnus I.00)
+** Arquivo: nota-fiscal
+*****************************************************************************/
+
+not (can-find (first it-nota-fisc use-index ch-nota-item where
+                     it-nota-fisc.cod-estabel = nota-fiscal.cod-estabel  and
+                     it-nota-fisc.serie = nota-fiscal.serie              and
+                     it-nota-fisc.nr-nota-fis = nota-fiscal.nr-nota-fis))
+/* fim */

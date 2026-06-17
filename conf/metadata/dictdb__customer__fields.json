@@ -1,0 +1,183 @@
+{"database":"DICTDB","kind":"fields","table":"Customer","updatedAt":"06/05/2026 10:19:06.369-03:00","data":[
+  {
+    "name": "CustNum",
+    "database": "DICTDB",
+    "type": "integer",
+    "label": "Cust Num",
+    "format": ">>>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Country",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "Country",
+    "format": "x(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Name",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "Name",
+    "format": "x(30)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Address",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "Address",
+    "format": "x(35)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Address2",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "Address2",
+    "format": "x(35)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "City",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "City",
+    "format": "x(25)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "State",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "State",
+    "format": "x(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "PostalCode",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "Postal Code",
+    "format": "x(10)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Contact",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "Contact",
+    "format": "x(30)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Phone",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "Phone",
+    "format": "x(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "SalesRep",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "Sales Rep",
+    "format": "x(4)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "CreditLimit",
+    "database": "DICTDB",
+    "type": "decimal",
+    "label": "Credit Limit",
+    "format": "->,>>>,>>9",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Balance",
+    "database": "DICTDB",
+    "type": "decimal",
+    "label": "Balance",
+    "format": "->,>>>,>>9.99",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Terms",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "Terms",
+    "format": "x(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Discount",
+    "database": "DICTDB",
+    "type": "integer",
+    "label": "Discount",
+    "format": ">>9%",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Comments",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "Comments",
+    "format": "x(80)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "Fax",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "Fax",
+    "format": "x(20)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  },
+  {
+    "name": "EmailAddress",
+    "database": "DICTDB",
+    "type": "character",
+    "label": "Email",
+    "format": "x(50)",
+    "mandatory": false,
+    "extent": 0,
+    "indices": ""
+  }
+]
+}

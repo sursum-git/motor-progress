@@ -1,0 +1,10 @@
+/*****************************************************************************
+** fat-estat.fv1
+** Arquivo: fat-estat
+** Campo..: nome-ab-cli
+*****************************************************************************/
+
+can-find (emitente where emitente.nome-abrev =
+                   fat-estat.nome-ab-cli)
+
+/* fim */

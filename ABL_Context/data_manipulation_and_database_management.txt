@@ -1,0 +1,2449 @@
+BUFFER-GROUP-ID function
+
+Returns the group ID (as an integer) of the tenant group to which the current record in a specified record buffer belongs. If the buffer does not contain a record from a tenant group, the function returns the Unknown value (?).
+
+   Syntax
+
+     BUFFER-GROUP-ID ( buffer-name )
+
+
+   buffer-name
+             An identifier that specifies the name of a record buffer.
+
+   Note
+   BUFFER-GROUP-ID can be used in a WHERE or TENANT-WHERE option as long as the buffer specified by
+   buffer-name is not the same as the buffer of the query or FOR EACH statement.
+
+
+
+
+BUFFER-GROUP-NAME function
+
+Returns the name (as a character string) of the tenant group to which the current record in a specified record buffer belongs. If the buffer does not contain a record from a tenant group, the function returns the Unknown value (?).
+
+   Syntax
+
+     BUFFER-GROUP-NAME ( buffer-name )
+
+
+   buffer-name
+             An identifier that specifies the name of a record buffer.
+
+   Note
+   BUFFER-GROUP-NAME can be used in a WHERE or TENANT-WHERE option as long as the buffer specified by
+   buffer-name is not the same as the buffer of the query or FOR EACH statement.
+
+
+
+
+
+BUFFER-PARTITION-ID function
+
+Returns the partition ID (as an integer) of the partition of the current record in a specified buffer.
+
+   Syntax
+
+       BUFFER-PARTITION-ID ( buffer-name )
+
+
+   buffer-name
+             An identifier that specifies the name of a record buffer.
+               If the buffer is not populated with a record, this function returns the Unknown value (?). If there is a
+               record in the buffer but it is not for a partitioned table, this function returns zero (0).
+
+   Notes
+   •   If you use this function in a WHERE clause, it will be evaluated for each iteration on the client side after the record
+       has been retrieved. It will not participate in any index bracketing, so unless there are other partition-column criteria
+       in the same WHERE clause, it will be very inefficient.
+   •   The partition ID is only unique within a given table.
+
+
+
+
+
+BUFFER-TENANT-ID function
+
+Returns the tenant ID (as an integer) of the tenant that owns the current record in a specified buffer.
+
+   Syntax
+
+       BUFFER-TENANT-ID ( buffer-name )
+
+
+   buffer-name
+             An identifier that specifies the name of a record buffer.
+               If the buffer is not populated with a record, this function returns the Unknown value (?). If the buffer
+               is for a shared table, a temp-table, or for the default tenant of a multi-tenant table, the function returns
+               the value zero (0).
+               If the buffer contains a record for a tenant group and the user is a super tenant, the function returns
+               the tenant ID of one of the members of the group. The tenant ID returned is indeterminate, but is always
+               the tenant ID of a tenant in the group.
+               For a regular tenant, the record in the buffer always belongs to that tenant. So, the function always
+               returns the user's own tenant ID. This is true even if the record belongs to a tenant group.
+
+   Notes
+   •   BUFFER-TENANT-ID can be used in a WHERE or TENANT-WHERE option as long as the buffer specified by
+       buffer-name is not the same as the buffer of the query or FOR EACH statement.
+   •   This function can be used by database triggers on the buffers passed to the trigger to get the tenant ID of these buffers. This allows the application provider to code tenant-specific database triggers.
+
+
+
+
+
+BUFFER-TENANT-NAME function
+
+Returns the name (as a character string) of the tenant that owns the current record in a specified buffer.
+
+   Syntax
+
+       BUFFER-TENANT-NAME ( buffer-name )
+
+
+   buffer-name
+             An identifier that specifies the name of a record buffer. If the buffer is not populated with a record, this function returns the Unknown value (?). If the buffer is for a shared table or a temp-table, the function returns the empty string (""). If the buffer contains a record that belongs to a tenant group and the user is a super tenant, the function returns the tenant name of one of the members of the group. The tenant name returned is indeterminate, but is always the name of a tenant in the group. For a regular tenant user, the record in the buffer always belongs to that tenant. So, the function always returns the user's own tenant name. This is true even if the record belongs to a tenant group.
+
+   Notes
+   BUFFER-TENANT-NAME can be used in a WHERE or TENANT-WHERE option as long as the buffer specified by buffer-name is not the same as the buffer of the query or FOR EACH statement.
+
+
+
+
+
+CREATE DATABASE statement
+
+Creates a new OpenEdge database.
+
+   Syntax
+
+       CREATE DATABASE new-database [ FROM old-database [ NEW-INSTANCE ] ]
+         [ REPLACE ] [ NO-ERROR ]
+
+
+   new-database
+             A CHARACTER expression that returns the absolute or relative pathname of the database you want to create. Any relative pathname is relative to the current working directory. If the database already exists, a new database is not created unless you specify REPLACE. The pathname is restricted to alphanumeric characters. Diacritical marks and the symbols \ " ' * ; | ? [ ] ( ) ! { } < > @ + = : ~ are not permitted.
+   FROM old-database
+           A CHARACTER expression that returns the name of the database whose schema and data you want
+           to copy to the new database. The value of old-database can be an absolute or relative pathname or one of the special strings "EMPTY", "DEMO", or "Sports2020". If you omit this option, the AVM creates an empty database. Any relative pathname is relative to the current working directory.
+   NEW-INSTANCE
+           If specified, the AVM assigns the new database a new globally unique identifier (GUID) value as the database identifier. If not specified, the AVM assigns the new database the same GUID database identifier as the old database. When you create a new database by copying an existing database provided by OpenEdge (such as the empty database, demo database, or Sports2020 database), the AVM always assigns the new database a new GUID database identifier.
+
+            Note: Use this option only when creating a new database by copying an existing database.
+REPLACE If specified and a database already exists with the name specified by new-database, the existing database is deleted and replaced with the new database. If not specified and a database already exists with the name specified by new-database, an error occurs.
+    NO-ERROR
+            The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying error messages.
+
+Example
+This procedure prompts for the name of a database to connect. If the database does not exist, the procedure creates it.
+r-credb.p
+
+  DEFINE VARIABLE dbname AS CHARACTER NO-UNDO LABEL "Database" FORMAT "x(65)".
+
+  /* Prompt the user for the name of a demo database to connect. */
+  SET dbname HELP "Enter the name of your database."
+    WITH FRAME dbname-frame SIDE-LABELS.
+
+  /* If the entered name does not have the .db suffix, add it. This is necessary
+     for the search function to work correctly. */
+  IF LENGTH(dbname) < 3 THEN
+    dbname = dbname + ".db".
+  ELSE IF SUBSTRING(dbname, LENGTH(dbname) - 2) = ".db" THEN
+    dbname = dbname + ".db".
+
+  /* If the database does not exist, create it from Sports2020. */
+  IF SEARCH(dbname) = ? THEN DO:
+    MESSAGE "Database does not exist. Do you want to create it?"
+      VIEW-AS ALERT-BOX QUESTION BUTTONS YES-NO TITLE "Connect Database"
+      UPDATE create-it AS LOGICAL.
+
+    IF create-it THEN DO:
+       CREATE DATABASE dbname FROM "Sports2020".
+       MESSAGE "New database created:" dbname.
+    END.
+    ELSE UNDO, RETRY.
+  END.
+
+  /* Connect the database. */
+  CONNECT VALUE(dbname) -1.
+
+
+
+Notes
+If you omit the FROM option, the AVM uses the empty database.
+
+
+
+
+
+CURRENT-CHANGED function
+
+Returns TRUE if the copy of the record in the buffer after executing a FIND CURRENT or GET CURRENT differs from the copy of the record in the buffer before executing the FIND CURRENT or GET CURRENT. That is, if the current application changes the record, but no other user changes the record during its scope in the current application, CURRENT-CHANGED returns FALSE.
+
+  Syntax
+
+    CURRENT-CHANGED record
+
+
+  record
+              The name of a table or buffer.
+
+  Example
+  The following example finds the first customer record with NO-LOCK and makes it available to the user to review and change:
+
+  r-currch.p
+
+      FORM Customer.Name Bustomer.Balance WITH FRAME upd.
+
+      ON GO OF FRAME upd DO:
+        DO TRANSACTION:
+           FIND CURRENT Customer EXCLUSIVE-LOCK.
+           IF CURRENT-CHANGED Customer THEN DO:
+             MESSAGE "This record has been changed by another user" SKIP
+                "Please re-enter your changes." VIEW-AS ALERT-BOX.
+             DISPLAY Customer.Name Customer.Balance WITH FRAME upd.
+             RETURN NO-APPLY.
+           END.
+           ASSIGN Customer.Name Customer.Balance.
+        END.
+        FIND CURRENT Customer NO-LOCK.
+      END.
+
+      FIND FIRST Customer NO-LOCK.
+      DISPLAY Customer.Name Customer.Balance WITH FRAME upd.
+      DO ON ENDKEY UNDO, LEAVE:
+        ENABLE Customer.Name Customer.Balance WITH FRAME upd.
+        WAIT-FOR "GO" OF FRAME upd.
+      END.
+
+
+  While the user reviews the record, other users can change it. After the user makes a change of their own and enters GO in the frame, the first FIND CURRENT statement refetches the current customer record with an EXCLUSIVE-LOCK (preventing other users from reading or updating it). Then, the CURRENT-CHANGED function compares the contents of the customer record with the copy of the customer record that was in the buffer before the FIND CURRENT statement.
+  If it differs, the CURRENT-CHANGED function returns a TRUE value, prints a message, and displays the contents of the customer record contained in the buffer. The RETURN NO-APPLY option prevents the program from ending and gives the user another chance to change the customer record.
+  The CURRENT-CHANGED function returns a FALSE value if the copy of the customer record that is in the buffer was not modified. After verifying that the copy of the record has not changed, the ASSIGN statement updates the customer record and a second FIND CURRENT statement down grades the record to NO-LOCK. Thus, while the user has ample time to review and change the record, the actual transaction time is kept to a minimum to allow other users access.
+
+  Notes
+  •   The CURRENT-CHANGED function is valid only when called after a FIND CURRENT or GET CURRENT statement.
+  •   If a client application modifies the buffer, the AVM compares the newly read record with the buffer contents from that application, rather than with the record read from the server. The CURRENT-CHANGED function continues to return a value based on the contents of the buffer until the next FIND CURRENT or GET CURRENT operates on that buffer or until the buffer goes out of scope or is released.
+  •   The CURRENT-CHANGED function can compare the current values with the initial values of BLOB or CLOB fields provided the table is in an OpenEdge database.
+
+
+
+
+
+Data types
+
+The data type of a data element defines what kind of data the data element can store. ABL supports the following basic kinds of data types:
+   •   ABL built-in primitive types, including mappings to corresponding .NET primitive types
+   •   Object types, which include both ABL and supported .NET object types, including both built-in and user-defined class, enumeration, and interface types
+   •   ABL handle-based objects
+   •   ABL arrays, including one-dimensional arrays of ABL primitive types, ABL object types, or .NET object types ABL primitive types (see Table 21: ABL primitive types on page 261) are built-in data types that can hold values with relatively simple content and that support relatively simple operations that can typically be applied using built-in ABL operands, such as arithmetic or relational operands (for example, the + Addition operator on page 42, or the EQ or = operator on page 503). The values for all ABL primitive types, other than the MEMPTR, BLOB, CLOB, and LONGCHAR, are limited in memory size to 32KB. BLOB and CLOB fields can be up to 1GB in size. MEMPTR and LONGCHAR variables can be up to 2GB - 1 byte in size, but are limited by available memory.
+
+Note that you can define BLOB and CLOB data types only for table or temp-table fields, and, unlike most other ABL primitive types, the operations they support do not have built-in ABL operands, but are available using built-in ABL functions (for example, the COPY-LOB statement on page 208). Note that COPY-LOB file operations involving LONGCHAR variables are limited to 1GB - 1 byte.
+
+You can use a primitive data type keyword in the following ABL syntax:
+•   DEFINE PARAMETER statement on page 358
+•   DEFINE PROPERTY statement on page 370
+•   DEFINE VARIABLE statement on page 412
+•   Fields of a table from an OpenEdge RDBMS using Progress Developer Studio for OpenEdge or the Data Dictionary.
+•   Fields of a temp-table using the DEFINE TEMP-TABLE statement on page 402 or methods of a Temp-table object handle.
+•   FUNCTION statement on page 574 (return type)
+•   METHOD statement on page 702 (return type)
+•   Parameter definition syntax on page 778 (for a user-defined method or function)
+ABL object types (see Table 22: ABL complex types on page 263) are complex types that function according to object-oriented principles. They can be broadly divided into two categories:
+•   Classes — ABL supports a set of built-in object types and also allows you to create your own user-defined object types using using the CLASS statement on page 132 and the INTERFACE statement on page 644. All ABL class types ultimately inherit from the ABL root class, Progress.Lang.Object class. Each object type encapsulates a set of data and behavioral elements (members). ABL class members can include implementations for data members, properties, and methods. You can create instances of classes (class-based objects) at run time using the NEW function (classes), and you can reference each instance and its PUBLIC members using an object reference, which is an ABL data element defined to reference a specific object type. You can define an object reference for any kind of ABL data element that you can define as an ABL primitive type (except a database table field). However, you can define a field of a temp-table as an object reference to the ABL root class (Progress.Lang.Object class).
+•   Enumerations — An enumeration (also known as enumerated types or enums) is made up of a list of strongly typed, named constants called members. The value of a variable defined as an enumeration is restricted to the list of members defined for that enumeration. As with classes, ABL supports a set of built-in enumeration types and also allows you to create your own user-defined enumerations using the ENUM statement on page 495. You can define two types of enum. In the standard version, a variable defined as an enum can only be assigned one value at a time. You can also define a flag enum. Any variable defined as a flag enum can be assigned any combination of the enum's members at one time. Enumerations are implicitly class based, but unlike classes defined using the CLASS statement, enumeration types cannot be explicitly instantiated using the NEW function. To assign a value to a variable, property, or parameter defined as an enumeration type, you use Type-name syntax on page 1011 to access the members defined in the enumeration type. See the Enumeration member access on page 502 reference entry for more information.
+
+For information on the built-in ABL class, interface, and enumeration types, see the Class, Interface, and Enumeration Reference.
+.NET primitive types (see Table 24: Implicit mappings between .NET and ABL data types on page 266) include data types that are built-into .NET languages. (Note that each language uses its own nomenclature. Compare, for example, the C# int versus the Visual Basic Integer.) .NET also aliases (maps) a standard set of object types (.NET mapped object types, for example, System.Int32) to these primitive types. All .NET languages can reference each such type as either the primitive type that the particular language supports or as the alias for the corresponding .NET object type that every language supports.
+ABL also references both the .NET primitive types and their corresponding mapped object types by mapping each ABL primitive type to a given set of .NET primitive and object type mappings (see Table 24: Implicit mappings between .NET and ABL data types on page 266). Thus, ABL documentation refers collectively to both the .NET primitive types and the corresponding .NET mapped object types as .NET mapped data types.
+.NET object types (see Table 22: ABL complex types on page 263) include all class types (and their derivatives) that derive from the .NET root class, System.Object, and .NET interface types, which can inherit from other .NET interface types, but otherwise function for a class much like an ABL interface type. You can reference a .NET object type like an ABL object type, by using an ABL object reference defined as that object type, or by referencing members of a .NET class. .NET object types also consist of two basic kinds of types:
+•   Value types — Objects that .NET creates, passes, and assigns by value. Value type objects all inherit from the .NET class, System.ValueType. In ABL, when you access a value type from .NET, you access a new copy of the object that is separate from the one that is maintained by .NET. If you then change object data in ABL, these changes do not appear in any copy of the object maintained by .NET. In addition, the ABL object reference to the ABL copy of the object has no affect on the .NET garbage collection of any .NET copy of the object.
+•   Reference types — Objects that .NET creates, passes, and assigns by reference. In ABL, when you access a .NET reference type, you access the same copy of the object that is maintained by .NET. If you then change object data in ABL, these changes also appear in .NET, because .NET references the same object. In addition, the ABL object reference is counted as a reference to the object for .NET garbage collection.
+ABL also provides limited support for .NET abstract classes and .NET generic types. A .NET abstract class is similar to an ABL abstract class. A generic type has a type definition that can function as one of several different types, depending on type parameters used to complete the effective type name. .NET generic types are briefly described further in this entry. For more information on the basic kinds of .NET object types that ABL supports, see the notes section of this reference entry. OpenEdge also provides a set of built-in .NET class and interface types to support access to .NET object types. For information on the built-in .NET class and interface types, see the Class, Interface, and Enumeration Reference.
+Within certain restrictions, an ABL class can inherit from a .NET class and implement .NET interfaces, similar to inheriting from an ABL class or implementing an ABL interface, respectively. When an ABL class inherits from a .NET class, any of its methods that override methods in the .NET class hierarchy can be called polymorphically on the .NET super class from both ABL and .NET. As a result, any ABL class that inherits from a .NET class becomes an ABL-derived .NET class. In fact, when an ABL-derived .NET class is instantiated in an ABL session, an instance with a corresponding .NET class type is also instantiated in the .NET context with reference to any ABL-overridden methods.
+
+Similarly, when an ABL class implements a .NET interface, all of the ABL-implemented properties and methods can be called polymorphically on the interface type from both ABL and .NET. As a result, any ABL class that implements a .NET interface becomes an ABL-extended .NET class. In fact, when an ABL-extended .NET class that implements .NET interfaces is instantiated in an ABL session, an instance with a corresponding .NET class type is also instantiated in the .NET context with reference to the ABL-implemented properties and methods that might be accessed from .NET on each of the implemented interface types.
+
+Note: An ABL-derived .NET class is also considered an ABL-extended .NET class. However, an ABL-extended .NET class that only implements .NET interfaces is not an ABL-derived .NET class. Thus, when OpenEdge documentation refers to an ABL-extended .NET class, it can also (but not necessarily) be referring to an ABL-derived .NET class.
+ABL handle-based objects (see Table 22: ABL complex types on page 263) include a set of complex, weakly-typed objects, some of which ABL provides as built-in system objects (such as, the SESSION system handle), and others that ABL supports as a pre-defined set of objects that you can create as needed (such as, a FRAME widget or a record buffer).
+Handle-based objects exist independently and have no inheritance hierarchy like class-based objects. However, like class-based objects, handle-based objects have members consisting of a set of attributes (data) and methods (behavior).
+Depending on the object, you can create a handle-based object as a compile-time (static) object using an appropriate DEFINE statement or as a run-time (dynamic) object using an appropriate CREATE statement or other executable statement. You can reference system objects using the built-in system handle (keyword) pre-defined for them. You can reference static handle-based objects by name, using appropriate syntax for each type, and you can reference dynamic or static handle-based objects using a common primitive data element known as a handle, which you define as the HANDLE data type. Because of the weak typing of these objects, you can reference all static and dynamic handle-based objects that you define or create using the same handle. ABL also provides some system handles that provide access to particular types of pre-defined handle-based objects that are in a given state (such as, the CURRENT-WINDOW system
+handle for accessing a particular WINDOW widget).
+ABL arrays (see Table 22: ABL complex types on page 263) are limited to one dimension and can include elements of any primitive or object type that you can define for a variable (see the DEFINE VARIABLE statement on page 412 reference entry). ABL also provides support for mapping ABL arrays to one-dimensional .NET array objects of the same element type. This means that while you can access all .NET arrays as class instances, you can also make direct array assignments and pass routine parameters between ABL arrays and equivalent one-dimensional .NET array objects.
+This also includes .NET arrays whose elements are .NET mapped data types (referred to as .NET arrays of mapped types), where assignments to or from ABL arrays work using the rules of implicit data type mapping. The element types supported for a .NET array of mapped types are identical to the .NET data types that ABL implicitly maps to ABL primitive types (see Table 24: Implicit mappings between .NET and ABL data types on page 266). For more information on support for both ABL arrays and .NET arrays, see the notes section of this reference entry.
+
+The following table describes the primitive types supported in ABL.
+Table 21: ABL primitive types
+
+
+BLOB                            
+BLOB (Binary Large OBject) specifies a database table or temp-table field that contains a BLOB locator, which points to the associated BLOB data stored in the database. You must use a MEMPTR to manipulate the binary contents of a BLOB field in ABL.
+
+CHAR                            
+CHAR data consists of numbers, letters, and special characters. CHAR is a synonym for the CHARACTER data type.
+
+CHARACTER                       
+CHARACTER data consists of numbers, letters, and special characters.
+
+CLOB                            
+CLOB (Character Large OBject) specifies a database table or temp-table field that contains a CLOB locator, which points to the associated CLOB data stored in the database. You must use a LONGCHAR to manipulate the character contents of a CLOB field in ABL.
+
+COM-HANDLE                      
+A COM-HANDLE is a handle to a COM object (ActiveX Automation object or ActiveX Control).
+
+DATE                            
+DATE fields contain dates.
+
+DATETIME                        
+DATETIME data has two parts: an ABL date and an ABL time. The unit of time is milliseconds from midnight.
+
+DATETIME-TZ                     
+DATETIME-TZ data has three parts: an ABL date, an ABL time, and an integer representing the time zone offset from Coordinated Universal Time (UTC). The unit of time is milliseconds from midnight. The unit of time zone offset is minutes.
+
+DECIMAL                         
+DECIMAL data consists of decimal numbers up to 50 digits in length including up to 10 digits to the right of the decimal point.
+
+HANDLE                          
+A HANDLE is a pointer to an ABL handle-based object. This can be a compile-time defined static object or a run-time defined dynamic object.
+Note: HANDLE and WIDGET-HANDLE can be assigned to each other and used interchangeably. WIDGET-HANDLE is supported only for backward compatibility.
+
+INT                             
+An INT consists of 32-bit data (whole numbers). INT is a synonym for the INTEGER data type.
+
+INT64                           
+An INT64 consists of 64-bit data (whole numbers).
+
+INTEGER                         
+An INTEGER consists of 32-bit data (whole numbers).
+
+LOGICAL                         
+LOGICAL data evaluates to TRUE or FALSE (or YES or NO).
+
+LONGCHAR                       
+A LONGCHAR consists of CHARACTER data that can be up to 2GB - 1 byte in size. You can use a LONGCHAR to manipulate the character contents of a CLOB database or temp-table field in ABL.
+
+MEMPTR                         
+A MEMPTR contains a sequence of bytes in memory. You can use a MEMPTR to manipulate the contents of a BLOB database or temp-table field in ABL.
+
+RAW                            
+RAW data can be any kind of data, even data from non-OpenEdge databases. It is not converted in any way.
+
+RECID                          
+A RECID is a unique internal identifier for a record within a single database storage area.
+Note: RECID is supported mainly for backward compatibility. For most applications, use ROWID instead.
+
+ROWID                          
+A ROWID is a unique internal identifier for a record within a single database storage area. For partitioned tables, it is also unique across all partitions of a given table.
+
+WIDGET-HANDLE                  
+A WIDGET-HANDLE is a pointer to an ABL handle-based object.
+Note: HANDLE and WIDGET-HANDLE can be assigned to each other and used interchangeably. WIDGET-HANDLE is supported only for backward compatibility.
+
+
+The following table describes the non-primitive (complex) types supported in ABL.
+Table 22: ABL complex types
+
+Array                     
+An ABL array type is complex type that specifies a one-dimensional array of elements of the same scalar data type with a 1-based index, where a scalar data type is any data type that is not, itself, an array. The elements of an ABL array can contain scalars of any supported ABL primitive type, any ABL object type, or any .NET object type (other than a .NET mapped object type). The type definition for an ABL array is specified by the type definition for the array element with the addition of the EXTENT option (or with the Extent option selected in OpenEdge database tools). Thus, you can define an ABL array data element using similar features and syntax used to define primitive and object-type data elements. However, you cannot define ABL array types for the BLOB or CLOB primitive type.
+Also, note that unlike ABL arrays, .NET arrays are objects with an object type, just like any other .NET type. However, all .NET array object types derive from the System.Array class (a reference type), and you can create and access .NET arrays using public members of System.Array. Also, .NET arrays can be multi-dimensional and typically have a 0-based index. In .NET, the object type name of an array object is the object type name of its array elements appended with a set of square brackets ([]) with an embedded comma added for each additional dimension in the array. For example, System.Drawing.Point[] is a one-dimensional array object type and System.Drawing.Point[,] is a two-dimensional array object type. .NET languages support syntax for additional kinds of array objects, including jagged arrays. For more information on .NET array syntax, see the "Single-Dimensional Arrays (C# Programming Guide" in the .NET documentation.
+
+In ABL, you must also enclose any .NET array object type name in double-quotes in order to handle the square brackets and any commas, which are special characters in ABL names, for example, "System.Drawing.Point[]".
+
+For more information on specifying array types, see the Type-name syntax reference entry.
+
+Class
+Classes encapsulate a set of data and behavioral elements (members), including implementations for data members, properties, and methods. Class definitions can also implement interfaces, which define a common set of prototypes for methods, properties, and events that classes can implement.
+For more information on classes and interfaces, see Develop Object-oriented ABL Applications.               
+
+Enumeration               
+An enumeration is made up of a list of strongly typed, named constants called members. The value of a variable defined as an enumeration type is restricted to the list of members defined for that enumeration type.
+
+Handle-based object               
+A handle-based object has a built-in and inherent ABL type that provides data and behavior of varying complexity depending on the purpose of the object. A few examples include:
+Visual representation objects (widgets), such as buttons (defined using the DEFINE BUTTON statement, rectangles (defined using the DEFINE RECTANGLE statement statement), or data-representation widgets, such as a fill-ins (defined as part of the DEFINE VARIABLE statement or DEFINE PARAMETER statement) or browses (grid-like widgets defined using the DEFINE BROWSE statement)
+Data objects, such as temp-tables (defined using the DEFINE TEMP-TABLE statement), ProDataSets, (defined using the DEFINE DATASET statement), and related data objects, such as queries (defined using the DEFINE QUERY statement)
+Streams (defined using the DEFINE STREAM statement), which are used for reading and writing sequential data, such as text files
+Procedure objects (each defined as a file of ABL source code and created at run time using the RUN statement)
+Socket and server socket objects (created at run time using the CREATE SOCKET statement and CREATE SERVER-SOCKET statement
+Note: While each type of handle-based object is unique, because of their weak typing, you can reference all such objects using the same primitive type, HANDLE (see Table 1).
+For more information on each type of handle-based object, see the reference entry for its type in the Widget Reference or the Handle Reference, and see the reference entry for its respective DEFINE, CREATE, or other instantiating executable statement.
+
+The following table lists the default data formats and initial values for ABL primitive and object types.
+
+Table 3: Default ABL data type initial values and display formats
+
+      Data type                         Default initial value                 Default display format
+        BLOB1, 3				Unknown value (?)			See footnote 1.
+	CHARACTER			"" (an empty string)				X(8)
+	CLASS2, 3,			Unknown value (?)				See footnote 1 .
+	CLOB1, 3			Unknown value (?)				See footnote 1.
+	COM-HANDLE3			Unknown value (?)				>>>>>>9
+	DATE				Unknown value (?)(displays as blanks)		99/99/99
+	DATETIME			Unknown value (?)			99/99/9999 HH:MM:SS.SSS
+	DATETIME-TZ			Unknown value (?)		     99/99/9999 HH:MM:SS.SSS+HH:MM
+	DECIMAL					0					->>,>>9.99
+	HANDLE3				Unknown value (?)				  >>>>>>9
+	INT64					0					->,>>>,>>9
+	INTEGER					0					->,>>>,>>9
+	LOGICAL					no					yes/no
+	LONGCHAR1			"" (an empty string)				See footnote 1.
+	MEMPTR1				A zero-length sequence of bytes			See footnote 1.
+	RAW1				A zero-length sequence of bytes			See footnote 1.
+	RECID					Unknown value (?)			  >>>>>>9
+	ROWID1					Unknown value (?)			See footnote 1.
+
+For more information on using the built-in ABL primitive types, see Develop ABL Applications and the Web paper, ABL Data Types.
+
+As noted previously in this entry, ABL supports references to .NET types in two basic ways:
+
+You can make direct and explicit reference to .NET object types using similar syntax that is supported for referencing ABL user-defined class and interface types. For supported .NET object types, this includes both the instantiation of a .NET class in ABL and the derivation of the .NET class by an ABL user-defined class (ABL-derived .NET class), and it includes the implementation of supported .NET interfaces by an ABL user-defined class (ABL-extended .NET class). To integrate the .NET class hierarchy with the ABL class hierarchy, ABL views System.Object as an immediate subclass of the ABL root class (Progress.Lang.Object class). In this way, you can manage .NET object types in ABL using many of the same mechanisms that you use for managing ABL class and interface types. However, you must observe the following limitations:
+You cannot directly reference any .NET object type that is supported as a .NET mapped data type, except to define a .NET array of such types. You can only reference .NET mapped data types as their equivalent ABL built-in primitive types. For more information on .NET mapped data types, see the immediately following Step 2.
+You cannot use System.Threading.Thread, or any derived class—ABL is single-threaded.
+You cannot use System.MulticastDelegate, or any derived class (otherwise referred to as delegates) to provide handlers for .NET events. ABL provides its own event handling model for .NET events. For more information, see the Class Events Reference.
+You cannot define an ABL interface that inherits from a .NET interface.
+ABL imposes additional requirements on the .NET classes you can extend and the .NET interfaces you can implement in an ABL user-defined class. For more information, see the CLASS statement and INTERFACE statement reference entries.
+For more information on the requirements for accessing .NET object types, see the notes section of this reference entry and Use .NET Classes in ABL Applications.
+You can make implicit access to all .NET primitive types and their associated mapped object types by using the ABL built-in primitive types that are mapped to them. Because .NET mapped object types and .NET primitive types, together, represent the complete set of .NET mapped data types, the implicit mapping between .NET mapped data types and ABL primitive types allows you to access .NET method parameters, fields (data members), and properties using the corresponding ABL primitive types without direct reference to their .NET data type equivalents. In fact, ABL does not allow you to directly reference either the .NET primitive types or the .NET mapped object types as scalars without raising a compile-time error. (The exception is when defining a .NET array of mapped types. For more information, see the notes section of this reference entry.)
+
+The following table shows the implicit mappings supported between .NET mapped data types and ABL built-in primitive types, showing the corresponding primitive types from C#.
+     Table 24: Implicit mappings between .NET and ABL data types
+
+      Implicit .NET object type                Implicit C# primitive type               ABL primitive type
+      System.Boolean                           bool                                     LOGICAL
+      System.Byte                              byte                                     INTEGER18, 19
+      System.SByte                             sbyte                                    INTEGER18
+      System.DateTime                          N/A                                      DATETIME
+      System.Decimal                           decimal                                  DECIMAL20, 21,
+      System.Int16                             short                                    INTEGER18
+      System.UInt16                            ushort                                   INTEGER18, 19
+      System.Int32                             int                                      INTEGER21
+      System.UInt32                            uint                                     INT6422, 19
+      System.Int64                             long                                     INT6421
+      System.UInt64                            ulong                                    DECIMAL19, 23
+      System.Double                            double                                   DECIMAL24
+      Implicit .NET object type              Implicit C# primitive type             ABL primitive type
+      System.Single                          float                                  DECIMAL24
+      System.Char                            char                                   CHARACTER25
+      System.String                          string                             CHARACTER21 or LONGCHAR
+
+
+Thus, instead of using an object reference to the corresponding .NET mapped object type, you must provide or access all .NET primitive (or mapped object type) values for .NET methods, data members, and properties as ABL primitive types. Similarly, when you reference any data element or value defined as a .NET mapped data type, ABL evaluates the .NET value to its corresponding ABL primitive value. ABL checks for .NET/ABL type compatibility at compile time, except in rare cases where data type narrowing is allowed, in which case the AVM checks for data overflow or underflow at run time.
+
+Note: To access all other .NET value types in ABL except mapped data types (for example, System.Drawing.Size), you can and must use object references to the value type objects.
+.NET supports a concept known as boxing. Boxing is the process of converting a value type (such as a C# int or .NET System.Int32) to a reference type object. Boxing a value type wraps its value inside a System.Object. Unboxing extracts the value from the System.Object as the original value type. In .NET, boxing and unboxing between a value type and a System.Object occurs during assignment or parameter passing.
+
+So, in addition to implicitly mapping its native primitive types to their corresponding .NET mapped data types, ABL also supports boxing between its primitive or array types and a .NET System.Object or array object. ABL performs boxing operations automatically in two cases:
+
+When you assign values between a .NET System.Object or one-dimensional array object and a compatible ABL primitive or array type
+When you pass parameter values for .NET methods and constructors between a .NET System.Object or one-dimensional array object and a compatible ABL primitive or array type
+However, as described further in this entry, ABL does not support automatic boxing operations when passing parameters to ABL routines.
+
+When ABL does automatic boxing that involves ABL primitive types or arrays of elements containing primitive types, it also does implicit conversion between these types and the corresponding .NET mapped types (see Table 4). For example, if you assign an ABL INTEGER to a System.Object, ABL converts the ABL INTEGER to a System.Int32, which the System.Object accepts as a subclass value. Similarly, if you assign an ABL INTEGER array to a System.Object, ABL converts the ABL INTEGER array to a "System.Int32[]", which the System.Object accepts as a subclass value. The same occurs when you pass an ABL INTEGER or INTEGER array to a System.Object INPUT parameter of a .NET method.
+
+In reverse, when you assign an appropriate System.Object to an ABL INTEGER or INTEGER array, ABL unboxes the System.Object by determining the .NET mapped type that the System.Object represents, converts that value to its equivalent ABL primitive or primitive array value, and attempts to assign the result to the ABL INTEGER or INTEGER array (which is validated at run time). For example, if the System.Object represents the System.Decimal subclass and you are assigning it to an ABL INTEGER, ABL converts the System.Decimal value to an ABL DECIMAL and attempts to assign it to the ABL INTEGER.
+
+In a similar manner, ABL also does automatic boxing directly between compatible ABL arrays and one-dimensional .NET array objects. For example, if you assign or pass .NET method parameters between a "System.Windows.Forms.Button[]" array object and an ABL array of System.Windows.Forms.Button elements, ABL automatically does the required boxing and unboxing to convert between the different array types. A similar boxing and unboxing operation occurs between an ABL primitive array and a compatible .NET array of mapped types, for example, between an ABL array of INTEGER and a .NET "System.Int16[]" array object. For more information on boxing and unboxing between ABL and .NET arrays, see the notes section in this reference entry on working with .NET arrays.
+
+However in the following four ABL contexts, automatic ABL boxing or unboxing is either not supported or might not be supported as you require:
+
+When you use a System.Object directly in an expression, ABL does not unbox the System.Object into a compatible ABL primitive type.
+When you assign an ABL primitive value (or primitive array) to a System.Object and the ABL primitive type maps to multiple .NET data types, it automatically boxes the ABL primitive value (or primitive array elements) as the default matching .NET mapped object type, which might not be the .NET data type mapping that you require.
+ABL does no automatic boxing or unboxing when you pass an ABL primitive or array type to a compatible .NET object parameter of an ABL routine (ABL method, procedure, or user-defined function). Similarly, ABL also does no automatic boxing or unboxing when you pass a compatible .NET object argument to the ABL primitive or array parameter of an ABL routine.
+ABL does no boxing or unboxing of array elements when you box or unbox an ABL array. For example, ABL cannot assign between a "System.Object[]" and an ABL INTEGER array, because it does not handle boxing and unboxing between the corresponding System.Object and the INTEGER array elements. For more information on ABL support for array assignments, see the notes section of this reference entry.
+When you use a System.Object directly in an expression, ABL raises a compile-time error because ABL does not support automatic unboxing of a System.Object in an expression. Instead, you can use the ABL built-in UNBOX function in the expression to explicitly unbox the value. This function accepts the System.Object as input and returns an ABL primitive value that is equivalent to the .NET mapped object type value (subclass) represented by the specified .NET System.Object instance.
+
+When you assign an ABL primitive value or primitive array to a System.Object, ABL always boxes the value or array into a particular .NET mapped type or array of mapped types, which might not be the .NET type you want. In Table 4, several ABL primitive types implicitly map to more than one .NET mapped data type. For each ABL primitive type that maps to multiple .NET data types, ABL uses one of these mappings as the .NETdefault match for the ABL primitive type (indicated by a footnote 7 in Table 4). Thus, when you assign an ABL primitive value or primitive array to a System.Object, ABL automatically boxes the value or array using the .NET default match for the specified ABL data type. For example, by default an INTEGER automatically boxes as a System.Int32, and an INTEGER array automatically boxes as a "System.Int32[]".
+
+However, you can explicitly box the ABL value or array using a .NET mapped type other than the default match with the ABL built-in BOX function. This function accepts an ABL primitive value or array as input and, by default, returns a boxed .NET type according to the .NET default match for the ABL data type of the input value or array. In order to box the value using a mapped type other than the .NET default match, you can pass an ABL keyword as a string to the function that indicates the explicit .NET type you want to use. For example, an ABL DECIMAL value can represent both a .NET System.Decimal (the default match) and a System.Double (among other possible types). If you need to box the ABL DECIMAL as a .NET System.Double, you can explicitly indicate this to the BOX function. Similarly, if you need to box an ABL DECIMAL array as a "System.Double[]", you can use the same indication.
+
+Note: When you unbox a System.Object using the UNBOX function, you cannot similarly specify a particular ABL primitive or primitive array type as the result. ABL always unboxes any System.Object using the default matching ABL type.
+Another case for which you must use the BOX function or the UNBOX function is when you pass parameters between compatible ABL primitive or array types and .NET object types in the parameters of ABL methods, procedures, and user-defined functions. ABL raises a compiler error if you try to pass these types to each other directly in ABL routine parameters. Appropriate use of the BOX function or UNBOX function allows this type of parameter passing to occur without a compile-time error. Note, again, that ABL does support the automatic boxing and unboxing of .NET objects in parameter passing for .NET method calls.
+
+Similarly, three additional cases exist (other than the need for explicit boxing) where you must specify the .NET data type mapping you want for a given ABL primitive type:
+
+When a method parameter is overloaded by multiple implicit .NET data type mappings for a passed ABL primitive type. You must specify the exact .NET data type when you pass the parameter to the method.
+When you override a method inherited from a .NET class, or when you implement (or override) a .NET interface (or abstract) method, property, or event, and the types of any associated parameters, properties, or return values are .NET mapped data types. You must specify the exact .NET data type in the definition of each .NET mapped parameter, property, and return value.
+When you pass an ABL primitive value (not an array) to a .NET method or constructor parameter that is a System.Object, and you want the result to be a .NET mapped type other than the default match. You must indicate the explicit mapped type on the passed ABL primitive argument. A common use case is the SetValue( ) method of the System.Array class, which sets the value of a .NET array element. If the .NET type of the array element is other than the default match, you must indicate the .NET mapped type for the value parameter to match the array definition.
+When you reference a constructed .NET generic type (described further in this entry) using type parameters that include a .NET mapped type.
+To indicate a non-default .NET mapped type in the previous cases where you want an explicit mapped type to be used, the syntax for the following ABL elements allows you to specify an appropriate ABL keyword:
+
+BOX function
+DEFINE PROPERTY statement
+METHOD statement
+Parameter definition syntax
+Parameter passing syntax
+This keyword is referred to as an AS data type, because you specify it for a passed parameter using the AS option. So, for example, when you override a .NET method, you must explicitly specify .NET data type for each .NET mapped parameter, property, or return type. If the .NET data type is a default match, you must simply use the matching ABL data type. Otherwise, you must indicate the appropriate AS data type keyword for the data type of the method parameter, return type, or property definition.
+
+Table 5 lists each explicit .NET data type mapping for a given ABL primitive type. For each listed .NET data type, you indicate this explicit mapping either by using the corresponding ABL primitive type (for a default match) or by using the appropriate option to specify the AS data type that corresponds to the explicit .NET data type you want to map. For more information on specifying the AS data type option when using the BOX function or when calling overloaded .NET methods, see the reference entries for the BOX function and Parameter passing syntax in this book. For more information on specifying AS data types when overriding a .NET method, or when implementing (or overriding) a .NET interface (or abstract) method, property, or event, see the METHOD statement, the DEFINE PROPERTY statement, the DEFINE EVENT statement, or the Parameter definition syntax reference entry, as appropriate.
+
+Note: The AS data types in Table 5 represent some different data types than you can specify using the AS option to pass a COM method parameter. For more information on passing COM method parameters, see Syntax for accessing COM object properties and methods.
+
+Table 5. Explicit mappings between ABL and .NET data types
+Explicit .NET object type	Explicit C# primitive type	ABL primitive type	ABL AS data type
+System.Boolean			bool				LOGICAL13			–
+System.Byte			byte				INTEGER			UNSIGNED-BYTE14
+System.SByte			sbyte				INTEGER				BYTE
+System.DateTime			N/A				DATETIME			–
+System.Decimal			decimal				DECIMAL				–
+System.Int16			short				INTEGER				SHORT
+System.UInt16			ushort				INTEGER			UNSIGNED-SHORT
+System.Int32			int				INTEGER13			–
+System.UInt32			uint				INT64			UNSIGNED-INTEGER
+System.Int64			long				INT6413				–
+System.UInt64			ulong				DECIMAL			UNSIGNED-INT64
+System.Double			double				DECIMAL				DOUBLE
+System.Single			float				DECIMAL				FLOAT
+System.Char			char				CHARACTER		SINGLE-CHARACTER
+System.String			string				CHARACTER/LONGCHAR13		–
+
+A .NET generic type is a class or interface defined so that it functions as one of several different types, depending on how you reference its type name. A reference to a .NET generic type name includes one or more type parameters, each of which specifies a data type that the generic type can use in its implementation. When you reference the generic type name in ABL, you substitute a specific data type for each type parameter defined for the generic type. This reference then identifies the generic type as a constructed type. The notation for a generic type that you see in .NET documentation or in a class browser, where the type parameters are not resolved, is called an open type. An open type reference contains only placeholders for the parameters in the type name, such as <T>, which defines the single parameter for the following generic type:
+
+System.Collections.Generic.List<T>
+In ABL, you can only reference a .NET generic type as a constructed type using a type name that has the following syntax:
+
+"namespace.object-name<type-parameter[ , type-parameter ]...>"
+The namespace is a .NET namespace and the syntax from object-name up to and including the right angle bracket (>) forms the dotNET-object-name as described in the Type-name syntax reference entry. The left and right angle brackets (<>) are the part of .NET generic type name references that enclose the type parameters, as shown in the previous example. Each type-parameter in the parameter list represents a placeholder for a specific .NET data type. The number of type parameters and the data type that you can specify for each type-parameter in a constructed type reference depends on the generic type definition. However, you can never specify an ABL object type or an ABL-extended .NET class type as the data type of any type-parameter; it can only be a pure .NET type. The quotes are required in order to allow for the angle brackets and any spaces in the type name.
+
+The definition for each type-parameter in a .NET generic type definition can specify constraints that determine the .NET types you can substitute for a given parameter when you reference the constructed type. If these constraints on a type-parameter allow you to specify one or more .NET mapped types, you must specify an appropriate explicit mapping for each such type when you specify the type-parameter in ABL, as described in Table 5.
+
+For example, to define an object reference to a System.Collections.Generic.List<T> that is constructed as a list of System.Int16, you might use one of the following ABL statements:
+VAR CLASS System.Collections.Generic.List<SHORT> shortList.
+
+DEFINE VARIABLE shortList AS 
+  CLASS System.Collections.Generic.List<SHORT> NO-UNDO.
+You can also reference an array of a generic type and define generic types with a type parameter that is an array. For more information, see the information on .NET arrays in the notes of this reference entry.
+
+You can use a .NET generic type in all the same contexts as any other .NET type except to define an ABL class that:
+
+Inherits from a .NET generic class
+Implements a .NET generic interface
+Also, while you can cast an object reference to a .NET generic type using the CAST function, you cannot cast to a .NET generic type using the DYNAMIC-CAST function.
+
+For more information on how to identify .NET generic types and understand the constraints on their type parameters, see the "Generic type parameters (C# Programming Guide)" in the .NET documentation. For more information on working with .NET generic types in ABL, see Use .NET Classes in ABL Applications.
+
+Notes:
+ABL provides built-in data types, built-in class data types, and user-defined class data types. References to built-in data types follow these rules:
+Like most other keywords, references to specific built-in data types appear in all UPPERCASE, using a font that is appropriate to the context. No uppercase reference ever includes or implies any data type other than itself.
+Wherever integer appears, this is a reference to the INTEGER or INT64 data type.
+Wherever character appears, this is a reference to the CHARACTER, LONGCHAR, or CLOB data type.
+Wherever decimal appears, this is a reference to the DECIMAL data type.
+Wherever numeric appears, this is a reference to the INTEGER, INT64, or DECIMAL data type.
+References to built-in class data types appear in mixed case with initial caps, for example, Progress.Lang.Object. References to user-defined class data types appear in mixed case, as defined for a given application example.
+INT64 support applies to all of the ABL built-in methods and functions that take integer-expression parameters. That is, integer-expression parameters can be either INT64 expressions or INTEGER expressions.
+All intermediate calculations are carried out in 64-bit arithmetic. For example, 2,000,000,000 * 100 / 100 gives the correct result whether the target field is INTEGER or INT64. However, although 2,000,000,000 * 100 does not cause an overflow, you must assign the result to an INT64 field. If you assign it to an INTEGER field, the AVM generates a run-time error.
+When you copy one MEMPTR (M1) to another MEMPTR (M2), the data that M1 points to is also copied. Therefore, MEMPTR M1 points to memory location L1, and MEMPTR M2 points to memory location L2 which contains a copy of the data in L1. You must change the data in both memory locations if you want both MEMPTRs to reflect the change. To clear memory after using the MEMPTRs, you must execute SET-SIZE = 0 on both MEMPTRs to be sure that both memory locations are cleared.
+If you define a MEMPTR, you should deallocate it once it is no longer used, usually before the routine that defines it returns, otherwise you will have a memory leak in your application. Note that, if you define a MEMPTR inside a routine (other than an external .p) and you don’t deallocate it before returning to the caller, that MEMPTR will still contain the data allocated in the previous call, when that routine gets called again.
+Since RAW variables are limited in size to 32K and MEMPTR variables can be up to 2GB - 1 byte in size, if a MEMPTR with a size greater than 32K is copied to a RAW variable, the AVM generates an error.
+Both a primitive type or object type can be defined as an array. Use the EXTENT option (for the DEFINE VARIABLE statement) or brackets (for the VAR statement) when defining or creating a field, variable, or object to establish an array. For example:
+DEFINE VARIABLE someIntArray AS INTEGER EXTENT 4.
+
+VAR INTEGER[4] someIntArray.
+The variable is now defined as an array of four integers. Since the size is set to 4, this is a determinate array. You can also define an indeterminate array by omitting the constant integer value after EXTENT (in the DEFINE VARIABLE statement) or within the brackets (for the VAR statement). In this case, the number of elements in the array is undefined.
+To refer to an individual element in an array, enclose the INTEGER index (subscript) using bracket syntax. This is known as a subscripted array reference. For example:
+
+someIntArray[2] = 128.
+Here, 2 references the second element in the INTEGER array.
+
+Arrays can also be manipulated as a whole for array-to-array deep copy operations and to pass or return parameters. By omitting the brackets, a reference to the field, variable, or object name is a reference to the entire array. This is called an unsubscripted array reference. For example:
+
+someIntArray = anotherIntArray.
+Here, each element of the anotherIntArray will be copied into the corresponding element of the someIntArray. This is called a deep copy. Note that unsubscripted array references are not supported in expressions or comparison operations. For more information on array assignments, see the Assignment (=) statement reference entry.
+
+ABL supports access to the following kinds of .NET object types:
+Classes — Viewed and managed like ABL classes with support for additional features that are unique to .NET classes, such as inner classes and indexers for indexed properties. For information on accessing instances of .NET classes, see the Class-based object reference entry.
+Interfaces — Viewed and managed as ABL interfaces with support for additional features that are unique to .NET, such as inner interfaces.
+Structures — Viewed and managed similar to ABL classes. Structure types are supported using syntax native to each .NET language, for example, using the struct keyword in C# and C++. For information on accessing instances of .NET structures, see the Class-based object reference entry. The essential difference between .NET structures and most other .NET classes is that structures inherit from System.ValueType and are therefore value types. Thus, all structures are passed within .NET, and between ABL and .NET, by value. However within ABL, structure objects are passed, like all other class instances, by reference. Therefore, when you access a structure from .NET, you reference a copy of the object in ABL that is separate from the object in .NET, and when you pass an ABL reference to a structure back to .NET, .NET gets a copy of the object that is separate from the object that is referenced in ABL. Structures therefore have different object management requirements in ABL than reference type objects. For more information, see the information on ABL support for value types in Use .NET Classes in ABL Applications.
+Enumerations — Like ABL enumerations, .NET enumerations are classes that correspond to a named set of constant values with a single underlying data type. Each of these constant values corresponds to a member of a given enumeration class. Each .NET language allows you to define and reference enumeration members using its own syntax. ABL also provides syntax that allows you to reference .NET enumerations as object types. For more information, see the Enumeration member access reference entry. Enumerations inherit from the System.Enum structure, which inherits from System.ValueType. Thus, like structures, enumerations are value types that are passed by value between .NET and ABL. However, unlike .NET languages that can view enumerations as values, ABL views enumerations only as objects that are passed by reference, like any other class instance. Enumerations therefore have similar object management requirements to structures in ABL. For more information, see the information on ABL support for value types in Use .NET Classes in ABL Applications.
+You can instantiate .NET class or structure instances using the NEW function (classes), as with any ABL class. However, you cannot create an enumeration object. ABL can only reference enumeration objects that have already been defined in .NET. For information on specific .NET object types, see the documentation provided by the vendor for that object type.
+ABL supports widening relationships between certain ABL data types. Widening allows you to pass an argument to a method parameter that has a different data type than the parameter, depending on the data flow (INPUT or OUTPUT). Thus, the target of the data flow can be a different data type if it can hold the largest value provided by the source of the data flow. When passing .NET method parameters or getting and setting .NET property values, ABL supports additional widening relationships between the ABL data type being passed and the .NET data type of the parameter. For more information, see the description of widening for .NET parameters in the Parameter passing syntax reference entry.
+A .NET array is an object that extends the System.Array class. You can access a .NET array in ABL using an object reference, like any other object. Thus, in ABL, you can access all .NET arrays, of all dimensions, whose element type is either an ABL-supported .NET object type (such as System.Windows.Forms.Form) or a .NET mapped data type (such as System.Int16 or C# short). You can also create .NET arrays directly in ABL by creating instances of the System.Array class. Note that while you cannot explicitly define a variable as a System.Int16, ABL does allow you to define a .NET array where the element type is a System.Int16 (or any other mapped object type). .NET arrays have the following class hierarchy in ABL, in order of derivation from the ABL root class:
+Progress.Lang.Object
+System.Object
+System.Array
+Any array class of a specified element type, for example, "System.Int32[]", which specifies a one-dimensional array of System.Int32 elements
+You can define references to .NET arrays or ABL arrays (extents) of .NET array references:
+DEFINE VARIABLE buttonArray AS 
+  CLASS "System.Windows.Forms.Button[]" NO-UNDO.
+
+DEFINE VARIABLE buttonArrayExt AS 
+  CLASS "System.Windows.Forms.Button[]" EXTENT 3 NO-UNDO.
+You can also define references to arrays of a generic type or to generic types that have type parameters that are arrays. For example:
+
+DEFINE VARIABLE shortListArrayObj AS 
+  CLASS "System.Collections.Generic.List<SHORT>[]" NO-UNDO.
+
+DEFINE VARIABLE shortListArrayExt AS 
+  CLASS "System.Collections.Generic.List<SHORT>" EXTENT 3 NO-UNDO.
+
+DEFINE VARIABLE buttonArrayList AS CLASS
+   "System.Collections.Generic.List<System.Windows.Forms.Button[]>"
+   NO-UNDO.
+
+DEFINE VARIABLE buttonArrayListExt AS CLASS
+   "System.Collections.Generic.List<System.Windows.Forms.Button[]>"
+   EXTENT 3 NO-UNDO.
+Because all .NET array objects inherit from System.Array, you can access any .NET array object using the members of the System.Array class. To help create .NET array objects, OpenEdge provides a Progress.Util.TypeHelper class to specify the System.Type object needed for creating .NET array objects. For more information on working with .NET arrays, see the sections on accessing .NET arrays in Use .NET Classes in ABL Applications.
+
+If a .NET array is a multi-dimensional array, you can only work with it as a .NET array object, using the System.Array access mechanisms. However, if a .NET array is a one-dimensional array, you can work with it in two different ways:
+Directly as a .NET array object
+As an ABL array by directly assigning the .NET array to an equivalent ABL array, working with the resulting ABL array using ABL mechanisms, and directly assigning the reworked ABL array back to a .NET array
+An array assignment can occur between .NET and ABL arrays of compatible element types, either by direct assignment of one array to another using the Assignment (=) statement or the ASSIGN statement, or by passing array parameters to .NET methods using Parameter passing syntax. In these specific cases, ABL performs automatic boxing and unboxing between the compatible ABL and .NET array types. In general, you can assign an ABL or .NET array of .NET value types (such as System.Drawing.Size) only to another ABL or .NET array of identical value type elements. ABL makes an exception if the ABL array in the assignment is an array of primitive type elements (such as INTEGER), in which case ABL allows assignment to or from a compatible .NET array of mapped types (such as "System.Int32[]" or "System.Byte[]"). Otherwise (for reference types), elements of the target array must be identical to or higher in the class hierarchy than the elements of the source array. For example, you can assign an array of System.Windows.Forms.Form elements to an array of System.Object elements.
+While ABL does automatically box and unbox entire arrays for supported array assignments, ABL does not automatically box and unbox the elements of the source and target arrays. So, for example, you cannot assign an ABL array of INTEGER elements to a .NET array of System.Object elements ("System.Object[]").
+Given that array element types are compatible, how an array assignment works, depends on the system context (ABL or .NET) of the arrays involved. In general, if either or both the target or source of the assignment is an ABL array, this results in a deep copy of all the array elements from the source array to the target. If both the target and source of the assignment is a .NET array, as with any object assignment, this results in an object reference copy, where the target references the same array as the source. Other array interactions depend on the array type of the target.
+CAUTION: Because assignment between a .NET array and an ABL array requires a deep copy, note the performance impact it might have on your application before coding this operation. For a .NET array, you might prefer to work directly with the object reference, and access individual elements using System.Array mechanisms.
+For a .NET and ABL array assignment where the target is an ABL array:
+The source array must be another ABL array, a one-dimensional .NET array, or a System.Object whose type at run time is a one-dimensional .NET array, and the element data type of the target array must be compatible with the element data type of the source, or the assignment raises an error. In general, the compatibility between source and target element types follows standard ABL rules for data type assignments, both within ABL and between ABL and .NET. For more information on data type compatibility for assignment and parameter passing, see the Assignment (=) statement and the Parameter passing syntax reference entry.
+If the target is an ABL array of System.Object elements and the source array is an array of .NET mapped types (such as System.Int32) or ABL primitive types, ABL raises a compile-time error, because (as noted previously) ABL does not automatically do the unboxing and boxing operations that are required on the elements of each array.
+If the target has an indeterminate EXTENT, the elements from the source array are copied to the target, setting its EXTENT to the number of elements in the source array.
+If the target has a set EXTENT and the number of elements in the source array match the target EXTENT, the elements from the source array are copied to the target; otherwise, the assignment raises an error. This is true for both ABL and .NET source arrays.
+For a .NET and ABL array assignment where the target is a .NET array object or other object reference:
+The source array can be any ABL array or .NET array with an element data type that is compatible with the target. If the element data type of the target array is a .NET value type, a .NET source array must be defined with elements of an identical value type. If the target array is a .NET array of mapped types, an ABL source array must be defined with elements of an ABL primitive type that implicitly maps to the target element type (see Table 4. If the target element type is not mapped (such as System.Drawing.Size), an ABL source array (like a .NET array) must be defined with elements of an identical value type. Otherwise, assignment to arrays of .NET reference type elements follow standard rules for assigning object references of related class and interface types.
+If the target is a System.Array or a System.Object, you can assign to it any .NET source array object or any ABL source array that is defined as a supported .NET object type or as an ABL primitive type that maps implicitly to a .NET mapped data type (see Table 4). If the source is a .NET array object, ABL simply assigns it to the System.Array or System.Object reference. If the source is an ABL array, ABL creates a new .NET array object to hold the ABL array elements and assigns it to the System.Array or System.Object reference. In addition, if the ABL array elements have a primitive type, ABL automatically maps the ABL array elements into the default matching .NET object type before storing them in the specified System.Array or System.Object.
+If the target is a .NET array of System.Object elements ("System.Object[]"), you can also assign any compatible ABL or .NET array to it. Note (as previously described) that a source array with .NET value type elements (such as System.Drawing.Size or ABL INTEGER, which resolves to the value-type, System.Int32) is not compatible. .NET requires that the element types must be identical in array assignments involving value type elements.
+If the target is a Progress.Lang.Object, you can assign to it any .NET source array object, but not a native ABL array (which is not an object).
+The EXTENT of any ABL source array and the dimensions and size of a .NET source array do not matter. As noted previously, ABL copies the elements of an ABL source array to a newly created .NET array object and stores the object into the target object reference.
+CAUTION: The index for ABL arrays is 1-based, while the index for .NET arrays is generally 0-based.
+You can pass the Unknown value (?) as a parameter to a .NET method or assign the Unknown value (?) to a .NET property or data member. ABL translates the Unknown value (?) in these cases to the .NET null value. For the numeric and logical .NET primitive types listed in Table 4, when they are set to null, .NET sets a different default value—0, 0.0, or no—depending on the data type. In these cases, ABL also returns the .NET null value as the ABL Unknown value (?).
+ABL does not do any mapping between System.Data.DataSet or System.Data.DataTable method parameters, properties, or data members on one hand and ABL ProDataSets and temp-tables on the other. ABL supports data binding between ProDataSets or temp-tables (among other data sources) and .NET form controls using the Progress.Data.BindingSource class (the ProBindingSource). For more information, see the Progress.Data.BindingSource class reference entry. However, you can always directly access .NET DataSet and DataTable objects as any other .NET object, using their class members.
+
+
+
+
+
+DBCODEPAGE function
+
+Returns, as a character string, the name of a connected database's code page.
+
+   Syntax
+
+     DBCODEPAGE ( {integer-expression|logical-name|alias} )
+
+
+   integer-expression
+              The sequence number of a database the ABL session is connected to. For example, DBCODEPAGE(1) returns information on the first database the ABL session is connected to, DCODEPAGE(2) returns information on the second database the ABL session is connected to, etc. If you specify a sequence number that does not correspond to a database the ABL session is connected to, the DBCODEPAGE function returns the Unknown value (?).
+   logical-name
+              A character expression that specifies the database by its logical name or alias. A code page maps each character in a character set to a numeric value. For an OpenEdge database, DBCODEPAGE returns the code page of the database represented by the integer expression, logical name, or alias. For a non-OpenEdge database, DBCODEPAGE returns the value originally inserted when the schema was created.
+
+   There are three possible types of non-OpenEdge code pages:
+   •   Physical data source for the database
+   •   Code page of a non-OpenEdge vendor library linked in with an OpenEdge dataserver executable (either dynamically or at compile time)
+   •   Code page that is in the schema holder that is part of the create activity
+   If any parameter is invalid, it returns the Unknown value (?).
+
+   Example
+   This procedure displays the logical name and code page of all connected databases:
+   r-dbcp.p
+
+       DEFINE VARIABLE ix AS INTEGER NO-UNDO.
+
+       REPEAT ix = 1 TO NUM-DBS:
+         DISPLAY LDBNAME(ix) DBCODEPAGE(ix) FORMAT "x(19)".
+       END.
+
+
+
+   Notes
+   A database must be connected in order for the DBCODEPAGE function to work as described.
+
+
+
+
+
+DBCOLLATION function
+
+Returns, as a character string, the name of the collating sequence for character set information contained in the database. This name corresponds to the definition of the collating sequence contained in the convmap.dat file, which usually resides in the $DLC directory. If any parameter is invalid, DBCOLLATION returns the Unknown value (?).
+
+   Syntax
+
+       DBCOLLATION
+         ( {integer-expression|logical-name|alias} )
+
+
+   integer-expression
+              The sequence number of a database the ABL session is connected to. For example, DBCOLLATION(1) returns information on the first database the ABL session is connected to, DBCOLLATION(2) returns information on the second database the ABL session is connected to, etc. If you specify a sequence number that does not correspond to a database the ABL session is connected to, the DBCOLLATION function returns the Unknown value (?).
+   logical-name or alias
+              A character expression that specifies the database by its logical name or alias.
+
+   Example
+   This procedure displays the logical name and collation of all connected databases:
+
+   r-dbcoll.p
+
+       DEFINE VARIABLE ix AS INTEGER NO-UNDO
+       .
+       REPEAT ix = 1 TO NUM-DBS:
+         DISPLAY LDBNAME(ix) DBCOLLATION(ix) FORMAT "x(19)".
+       END.
+
+   Notes
+   •   OpenEdge and non-OpenEdge DataServers can evaluate the syntactical expression stated in a DBCOLLATION function. However, the methods used to process multiple byte code pages can differ based on the actual server used. Keep this point in mind if the actual results you receive differ from the results you expected.
+   •   A database must be connected in order for the DBCOLLATION function to work as described.
+
+
+
+
+
+DBNAME function
+
+Returns, as a character string, the name of the logical database currently in use or the name of your first connected database.
+
+   Syntax
+
+       DBNAME
+
+
+
+Example
+This portion of a procedure defines a header frame to hold a date, page number, database name, and user ID:
+   r-dbname.p
+
+       DEFINE VARIABLE pageno AS INTEGER NO-UNDO FORMAT "zzz9" INITIAL 1.
+
+       FORM HEADER "Date:" TO 10 TODAY
+         "Page:" AT 65 pageno SKIP
+         "Database:" TO 10 DBNAME FORMAT "x(60)" SKIP
+         "Userid:" TO 10 USERID WITH NO-BOX NO-LABELS.
+       VIEW.
+
+
+
+   Notes
+   •   The AVM returns the database name in the same form you used when you connected to the database. If you used a fully qualified pathname, the AVM returns the full directory pathname (such as /usr/acctg/gl on UNIX or C:\acctg\gl in Windows). If you used a name relative to your current working directory, then the AVM returns that name (for example, gl).
+   •   Unless you define a format, the database name is displayed in a character field with the default format of x(8).
+   •   A database must be connected in order for the DBNAME function to work as described.
+
+
+
+
+DBPARAM function
+Returns, as a character string, a comma-separated list of the parameters used to connect to the database.
+
+   Syntax
+
+       DBPARAM ( integer-expression|logical-name|alias )
+
+
+   integer-expression
+              The sequence number of a database the ABL session is connected to. For example, DBPARAM(1)
+              returns information on the first database the ABL session is connected to, DBPARAM(2) returns information on the second database the ABL session is connected to, etc. If you specify a sequence number that does not correspond to a database the ABL session is connected to, the DBPARAM function returns the Unknown value (?).
+   logical-name or alias
+              These forms of the DBPARAM function require a character expression as a parameter. An unquoted character string is not permitted. If the parameter is an alias or the logical name of a connected database, then the AVM returns the comma-separated parameter list. Otherwise, it returns the Unknown value(?).
+
+   Notes
+   •   A database must be connected for the DBPARAM function to work as described.
+   •   If the CONNECT statement does not contain a -db (database) parameter, which is permissible, the string DBPARAM returns includes the -db parameter and the database name.
+   •   If the CONNECT statement contains the -pf parameter, which refers to a parameter file, the string DBPARAM returns includes the parameters in the file without "-pf" or any reference to the file.
+   •   If the CONNECT statement contains a userid and a password, the string DBPARAM returns includes only the userid.
+   •   The database can connect through the CONNECT statement, the command line, or an auto-connection.
+
+
+
+
+
+DB-REMOTE-HOST function
+
+Returns a character string containing the IP address of the database connection. The IP address format is determined by the Internet Protocol used when the connection was established. A single input parameter identifies the database, which can be either the logical database name or database number. If the database is not connected using TCP/IP or the -ipver IPv6 startup parameter is not used, the function returns the Unknown value (?).                                                                                                          
+
+
+   Syntax
+
+     DB-REMOTE-HOST ( {logical-name|integer-expression} )
+
+
+   logical-name
+              A character expression specifying the logical name of a connected database.
+   integer-expression
+                The sequence number of a connected database. For example, DB-REMOTE-HOST(1) returns
+                information on the first connected database, DB-REMOTE-HOST(2) returns information on the
+                second connected database, and so on.
+
+   Note
+   For more information on the Internet Protocol (IP) version (-ipver) startup parameter, see Startup Command and Parameter Reference.
+
+   
+
+
+
+DBRESTRICTIONS function
+
+Returns a character string that describes features that are not supported for this database. You can use this function with OpenEdge DataServers.
+
+   Syntax
+
+     DBRESTRICTIONS
+       ( {integer-expression|logical-name|alias}
+         [ , table-name]
+       )
+
+
+   integer-expression
+              The sequence number of a database the ABL session is connected to. For example,
+              DBRESTRICTIONS(1) returns information on the first database the ABL session is connected to,
+              DBRESTRICTIONS(2) returns information on the second database the ABL session is connected
+              to, and so on. If you specify a sequence number that does not correspond to a database the ABL session is connected to, the DBRESTRICTIONS function returns the Unknown value (?).
+   logical-name or alias
+                These forms of the DBRESTRICTIONS function require a character expression as a parameter. An unquoted character string is not permitted. If the parameter is an alias or the logical name of a connected database, then the AVM returns the database restrictions string. Otherwise, it returns the Unknown value (?).
+   table-name
+                A character expression equal to the name of a table in the specified database. An unquoted character string is not permitted. If the table name is valid, DBRESTRICTIONS returns the list of unsupported features for the specified table. Otherwise, it returns the Unknown value (?).
+
+   Example
+   This procedure displays the logical name and database restrictions of all connected databases:
+
+r-dbrest.p
+
+    DEFINE VARIABLE ix AS INTEGER NO-UNDO.
+
+    REPEAT ix = 1 to NUM-DBS:
+      DISPLAY LDBNAME(ix) LABEL "Database"
+         DBRESTRICTIONS(ix) FORMAT "x(40)" LABEL "Restrictions".
+    END.
+
+
+
+Notes
+•   If you want to use the DBRESTRICTIONS function for a database, you must be connected to the database in the current ABL session.
+•   DBRESTRICTIONS returns a string. This string is a comma-separated list of keywords that represent features not supported by the specified database. The following table shows the possible keywords and their descriptions.
+    Table 26: DBRESTRICTIONS keyword values
+
+     Keyword                               Description
+     AGGREGATE                             Cannot use the AGGREGATE statement.
+     COUNT-OF                              Cannot use the COUNT-OF function.
+     DEFAULT-AREAS                         Cannot use default areas.
+     LAST                                  Cannot invoke the FIND LAST statement.
+     PREV                                  Cannot invoke the FIND PREV statement.
+     READ-ONLY                             The database or table is available for read only.
+     RECID                                 Cannot use the RECID function.
+     SET-CURRENT-VALUE                     Cannot set the current value of sequence generators.
+     SETUSERID                             Cannot use the SETUSERID function.
+
+
+    For example, if the database is accessed through a manager that does not support FIND LAST and FIND PREV, then the DBRESTRICTIONS function returns the string LAST, PREV.
+•   The possible keyword values returned by DBRESTRICTIONS depends on the DataServer type. The following table shows the possible values returned for each DataServer.
+
+    Table 27: DBRESTRICTIONS return values by DataServer
+
+     DataServer           Possible return values
+     ORACLE               "LAST,PREV,READ-ONLY,RECID,SETUSERID,
+                          SET-CURRENT-VALUE,DEFAULT-AREAS,AGGREGATE"
+     OpenEdge             "READ-ONLY,DEFAULT-AREAS,AGGREGATE"
+
+
+    Note: The available DataServers depend on your version of OpenEdge. For more information, see your OpenEdge DataServer documentation.
+•   The form of the returned string makes it easy to use with the ENTRY and LOOKUP function.
+•   If you connect to a database with the Read Only (-RO) parameter, the AVM lists the character string READ-ONLY in the restrictions list for that database.
+
+
+
+
+
+DBTASKID function
+
+Returns an INTEGER value that uniquely identifies a database's transaction.
+
+   Syntax
+
+       DBTASKID ( integer-expression|logical-name|alias )
+
+
+   integer-expression
+              The sequence number of a database the ABL session is connected to. For example, DBTASKID(1)
+              returns information on the first database the ABL session is connected to, DBTASKID(2) returns information on the second database the ABL session is connected to, etc. If you specify a sequence number that does not correspond to a database the ABL session is connected to, the DBTASKID function returns the Unknown value (?).
+   logical-name or alias
+              A character expression that evaluates to the logical name or alias of a database that is connected to the current ABL session. If the character expression does not evaluate to the logical name or alias of a connected database, DBTASKID returns the Unknown value (?).
+    Note: You must enclose all character strings in quotes.
+
+   Notes
+   •   If the application is not in a transaction, DBTASKID returns the Unknown value (?).
+   •   If the client is connected to two databases and both databases participate in the transaction, DBTASKID does not necessarily return the same value for each database. The value DBTASKID returns for a database is for that database only.
+   •   DBTASKID returns the Unknown value (?) for DataServers and the temp-table database.
+   •   DBTASKID is designed for database replication. When you create a log record for a transaction, you can call DBTASKID and store the transaction ID. When you load the transaction, you can group log records by transaction ID. For more information on database replication, see Manage the OpenEdge Database, and the reference entry for the RAW-TRANSFER statement on page 859.
+
+
+
+
+
+DBTYPE function
+
+Returns, as a character string, the database type of a currently connected database. This function returns one of the following strings: "MSS", "ORACLE", or "PROGRESS".
+
+   Syntax
+
+     DBTYPE ( integer-expression|logical-name|alias )
+
+
+   integer-expression
+              The sequence number of a database the ABL session is connected to. For example, DBTYPE(1) returns information on the first database the ABL session is connected to, DBTYPE(2) returns information on the second database the ABL session is connected to, etc. If you specify a sequence number that does not correspond to a database the ABL session is connected to, the DBTYPE function returns the Unknown value (?).
+   logical-name or alias
+              These forms of the DBTYPE function require a quoted character string or a character expression as a parameter. An unquoted character string is not permitted. If the parameter is an alias of a connected database or the logical name of a connected database, then the AVM returns the database type. Otherwise, it returns the Unknown value (?).
+
+   Example
+   This procedure displays the logical name and database type of all connected databases:
+   r-dbtype.p
+
+     DEFINE VARIABLE ix AS INTEGER NO-UNDO.
+
+     REPEAT ix = 1 TO NUM-DBS:
+       DISPLAY LDBNAME(ix) DBTYPE(ix) FORMAT "x(40)".
+     END.
+
+
+
+   Note
+   You can reference the DBTYPE function within a preprocessor expression. For more information, see the &IF, &THEN, &ELSEIF, &ELSE, and &ENDIF preprocessor directives on page 35 reference entry.
+
+
+
+
+
+DBVERSION function
+
+Returns, as a character string, the version number of an OpenEdge database.
+
+   Syntax
+
+     DBVERSION ( integer-expression|logical-name|alias )
+
+
+   integer-expression
+                The sequence number of a database the ABL session is connected to. For example, DBVERSION(1) returns information on the first database the ABL session is connected to, DBVERSION(2) returns information on the second database the ABL session is connected to, etc. If you specify a sequence number that does not correspond to a database the ABL session is connected to, the DBVERSION function returns the Unknown value (?).
+   logical-name or alias
+              These forms of the DBVERSION function require a quoted character string or a character expression as a parameter. If the parameter is an alias of a connected database or the logical name of a connected database, then the AVM returns the version number. Otherwise, it returns the Unknown value (?).
+
+   Example
+   This procedure displays the version number of all connected databases:
+   r-dbvers.p
+
+     DEFINE VARIABLE ix AS INTEGER NO-UNDO.
+
+     REPEAT ix = 1 TO NUM-DBS:
+        DISPLAY LDBNAME(ix) DBVERSION(ix) WITH 1 DOWN.
+     END.
+
+
+
+   Note
+   DBVERSION does not apply to non-OpenEdge data sources.
+
+
+
+
+
+
+DECRYPT function
+
+Converts encrypted data (a binary byte stream) to its original source format, and returns a MEMPTR containing the decrypted data. You must use the same cryptographic algorithm, initialization vector, and encryption key values to encrypt and decrypt the same data instance.
+
+   Syntax
+
+     DECRYPT ( data-to-decrypt [ , encrypt-key [ , iv-value [ , algorithm
+         [, tag [, aad ] ] ]]] )
+
+
+   Note: The tag and aad parameters are applicable only to the AES_GCM_128, AES_GCM_192 and AES_GCM_256
+   encryption algorithms. They are not applicable to other supported encryption algorithms.
+   data-to-decrypt
+              The encrypted data to decrypt. The value may be of type RAW or MEMPTR.
+   encrypt-key
+              An optional RAW expression that evaluates to the encryption key (a binary value) originally used to encrypt the specified data. If you specify the Unknown value (?), the current value of the SYMMETRIC-ENCRYPTION-KEY attribute is used. If the value of the SYMMETRIC-ENCRYPTION-KEY attribute is also the Unknown value (?), the AVM generates a run-time error. The AVM compares the size of the specified encryption key to the key size specified by the cryptographic algorithm. If the key sizes are inconsistent, the AVM generates a run-time error. You can use the GENERATE-PBE-KEY function on page 582 to regenerate the same encryption key originally used to encrypt the specified data as long as you specify the same password string, hash algorithm, number of iterations, and salt value.
+
+Note: Do not use the GENERATE-RANDOM-KEY function on page 583 to generate this encryption key. The random key it generates will always be different than the key originally used to encrypt the specified data. You are responsible for generating, storing, and transporting this value.
+   iv-value
+               An optional RAW expression that evaluates to the initialization vector value to use with the specified encryption key in the original encryption operation. If you specify the Unknown value (?), the current value of the SYMMETRIC-ENCRYPTION-IV attribute is used.
+   algorithm
+               An optional CHARACTER expression that evaluates to the name of the symmetric cryptographic
+               algorithm originally used to encrypt the specified data instance. If you specify the Unknown value(?), the current value of the SYMMETRIC-ENCRYPTION-ALGORITHM attribute is used. For a list the supported cryptographic algorithms, see the SYMMETRIC-SUPPORT attribute reference entry.
+   tag (Authentication Tag)
+              For AES_GCM encryption, a mandatory MEMPTR expression of a cryptographic checksum generated on unencrypted data and additional authenticated data. It is designed to reveal both accidental errors and the intentional modification of the data.
+   aad (Additional Authenticated Data)
+              For AES_GCM encryption, an optional RAW expression of input data that is authenticated but not encrypted.
+
+
+
+
+
+DEFINE STREAM statement
+
+Defines a stream for use in one or more procedures, or within a single class. Use this statement when you want to use streams other than the two ABL built-in unnamed streams. Using additional streams allows you to get input from more than one source simultaneously or to send output to more than one destination simultaneously.
+
+   Syntax
+
+     DEFINE {[[ NEW [ GLOBAL ]] SHARED ]|[ PRIVATE ]} STREAM stream-name
+
+
+   NEW SHARED STREAM stream-name
+          Defines and identifies a stream that can be shared by other procedures. When the procedure using the DEFINE NEW SHARED STREAM statement ends, the stream is no longer available to any procedure.
+   NEW GLOBAL SHARED STREAM stream-name
+          Defines and identifies a stream that can be shared by other procedures and that will remain available even after the procedure that contains the DEFINE NEW GLOBAL SHARED STREAM statement ends.
+   SHARED STREAM stream-name
+           Defines and identifies a stream that was created by another procedure using the DEFINE NEW SHARED STREAM statement or the DEFINE NEW GLOBAL SHARED STREAM statement.
+   [ PRIVATE ] STREAM stream-name
+            Defines and identifies a stream as a class-scoped object. A class-scoped handle-based object is not a member of a class, but provides a resource that is privately available to the class definition similar to a non-shared data element in a procedure definition. The option to specify the PRIVATE access mode is provided for readability. You cannot specify PRIVATE when defining a stream as a data element in a method or procedure.
+Note: This option is applicable only when defining a class-scoped stream in a class definition (.cls) file.
+   STREAM stream-name
+          Defines and identifies a stream for access only within the current procedure, class, or method of a class.
+
+   Example
+   This procedure, in a single pass through the item table, uses the rpt stream to create a report and the exceptions stream to create a list of exceptions:
+
+r-dfstr.p
+
+    DEFINE VARIABLE fnr     AS CHARACTER NO-UNDO FORMAT "x(12)".
+    DEFINE VARIABLE fne     AS CHARACTER NO-UNDO FORMAT "x(12)".
+    DEFINE VARIABLE excount AS INTEGER    NO-UNDO
+      LABEL "Total Number of exceptions".
+    DEFINE NEW SHARED BUFFER xitem FOR item.
+
+    DEFINE NEW SHARED STREAM rpt.
+    DEFINE STREAM exceptions.
+
+    SET fnr LABEL "Enter filename for report output" SKIP(1)
+      fne LABEL "Enter filename for exception output"
+      WITH SIDE-LABELS FRAME fnames.
+
+    OUTPUT STREAM rpt TO VALUE(fnr) PAGED.
+    OUTPUT STREAM exceptions TO VALUE(fne) PAGED.
+
+    FOR EACH xitem:
+      IF on-hand < alloc THEN DO:
+         DISPLAY STREAM exceptions
+           xitem.ItemNum xitem.ItemName xitem.OnHand xitem.Allocated
+           WITH FRAME exitem DOWN.
+         excount = excount + 1.
+      END.
+      RUN r-dfstr2.p.
+    END.
+
+    DISPLAY STREAM exceptions SKIP(1) excount WITH FRAME exc SIDE-LABELS.
+    DISPLAY STREAM rpt WITH FRAME exc.
+
+    OUTPUT STREAM rpt CLOSE.
+    OUTPUT STREAM exceptions CLOSE.
+
+
+Include the DISPLAY statement in the r-dfstr2.p procedure in the r-dfstr.p procedure for efficiency. (It is in a separate procedure here to illustrate shared streams.)
+r-dfstr2.p
+
+    DEFINE SHARED STREAM rpt.
+    DEFINE SHARED BUFFER xitem FOR Item.
+
+    DISPLAY STREAM rpt ItemNum ItemName WITH NO-LABELS NO-BOX.
+
+
+
+Notes
+•   You cannot define a SHARED or NEW SHARED stream in a user-defined function, an internal procedure, or a persistent procedure. If you do, the AVM raises an ERROR on the RUN statement that creates the procedure.
+•   You cannot define a SHARED or NEW SHARED stream in a class definition (.cls) file. If you do, ABL generates a compilation error.
+•   You can overcome the limitations on SHARED or NEW SHARED streams by using stream handles. For more
+    information, see the Stream object handle reference entry and the topics on alternate I/O sources in OpenEdge Programming Interfaces.
+   •   ABL automatically provides two unnamed streams to each procedure: the input stream and the output stream. These streams give the procedure a way to communicate with an input source and an output destination. For example, the following statement tells ABL to use the unnamed input stream to get input from the file named testfile:
+
+         INPUT FROM testfile.
+
+   •   Using the DEFINE STREAM statement creates a stream, but it does not actually open that stream. To open a stream, you must use the STREAM option with the INPUT FROM, INPUT THROUGH, OUTPUT TO, OUTPUT THROUGH, or INPUT-OUTPUT THROUGH statements. You must also use the STREAM option with any data handling statements that move data to and from the stream.
+   •   After you open the stream, you can use the SEEK function to return the offset value of the file pointer, or you can use the SEEK statement to position the file pointer to any location in the file.
+   •   For information about limits on the number of streams per procedure, see the application limits appendix in Manage ABL Applications.
+
+
+
+
+
+
+DICTIONARY statement
+
+Runs the OpenEdge Data Dictionary.
+
+Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       DICTIONARY
+
+
+
+   Example
+   This procedure runs the Data Dictionary if the user answers yes to a prompt:
+   r-dict.p
+
+       DEFINE VARIABLE ans AS LOGICAL NO-UNDO.
+
+       DISPLAY "Do you want to access the Dictionary?"
+         WITH ROW 7 COLUMN 20 NO-LABELS.
+       UPDATE ans.
+       IF ans THEN DICTIONARY.
+
+   Notes
+   •   The DICTIONARY statement is equivalent to RUN dict.p: it runs the ABL procedure called dict.p. The AVM uses the regular search rules to find the dictionary procedure. The dictionary procedure is part of the ABL system software.
+   •   The AVM Query/Run-time provides a restricted version of the Data Dictionary.
+   •   For more information on the Data Dictionary, see its on-line help.
+
+
+
+
+
+FIX-CODEPAGE statement
+
+Sets the code page of an empty LONGCHAR variable. When set to a valid code page, the code page of the specified variable is fixed and overrides any default behavior in assignment operations (including the COPY-LOB, OVERLAY, and SUBSTRING statements).
+
+   Syntax
+
+     FIX-CODEPAGE ( longchar ) = codepage
+
+
+   longchar
+                The name of a LONGCHAR variable. The variable must be set to the Unknown value (?) or the empty string (""). If the string length is greater than 0, the AVM returns an error.
+   codepage
+                A character expression that evaluates to the name of a code page. The name you specify must be a valid code page name available in DLC/convmap.cp. If codepage is the Unknown value (?), the code page of the LONGCHAR variable is not fixed.
+
+
+
+
+
+
+GATEWAYS function
+
+The GATEWAYS function has been replaced by the DATASERVERS function on page 276, which is exactly equivalent. This function is supported only for backward compatibility.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       GATEWAYS
+
+
+
+
+
+
+
+GENERATE-UUID function
+
+Generates a universally unique identifier (UUID), as a 16-byte RAW value.
+
+   Syntax
+
+       GENERATE-UUID
+
+   Example
+   The following code fragment illustrates how to use the GENERATE-UUID function:
+
+     DEFINE VARIABLE MyUUID     AS RAW       NO-UNDO.
+     DEFINE VARIABLE Base64UUID AS CHARACTER NO-UNDO.
+
+     ASSIGN
+       MyUUID     = GENERATE-UUID
+       Base64UUID = BASE64-ENCODE(MyUUID).
+
+
+   You can use the GENERATE-UUID function with the BASE64-ENCODE function to generate a UUID and convert it to use in a Base64 character index. You can also remove the two trailing Base64 pad characters to reduce the size of the UUID. For example:
+
+     SUBSTRING(BASE64-ENCODE(GENERATE-UUID), 1, 22)
+
+
+
+
+
+
+
+GET-BITS function
+
+Interprets one or more consecutive bits in an integer variable or field as an ABL integer value and returns that value.
+
+   Syntax
+
+       GET-BITS( source , position , numbits )
+
+
+   source
+               An ABL integer variable.
+   position
+               A variable or expression that returns an integer. This parameter designates the position of the lowest-order bit of the bits that are to be interpreted as an integer. Bits are numbered from 1 through the length of an integer; with 1 being the low-order bit. If position is greater than the length of an integer, the AVM returns the Unknown value (?). If position is less than 1, the AVM generates a run-time error.
+   numbits
+               The number of bits to examine when generating the return value. If position plus numbits is greater than the length of an integer plus 1, the AVM generates a run-time error.
+
+   Note
+   This function can return a value greater than 32 bits if source is an INT64.
+
+
+
+
+
+GET-BYTE function
+
+Returns the unsigned 1 byte value at the specified memory location as an INTEGER value.
+
+   Syntax
+
+     GET-BYTE ( source , position )
+
+
+   source
+                A function or variable that returns a RAW or MEMPTR value. If source is the Unknown value (?), GET-BYTE returns the Unknown value (?).
+   position
+                An integer value greater than 0 that indicates the byte position where you want to find the information. If position is greater than the length of source, the AVM returns the Unknown value (?). If position is less than 1, the AVM generates a run-time error.
+
+   Examples
+   In this example, the RAW function goes to the Customer field in the non-OpenEdge database. The GET-BYTE function accesses the first byte and stores the integer value of that byte in the variable ix. The procedure then tests the value, if the integer value is 83 (the character code value for S), the AVM displays the Customer Name.
+   r-rawget.p
+
+     /* You must connect to a non-OpenEdge database to run this procedure */
+     DEFINE VARIABLE ix AS INTEGER NO-UNDO.
+
+     FOR EACH Customer:
+       ix = GET-BYTE(RAW(Customer.Name), 1).
+       IF ix = 83 THEN
+          DISPLAY Customer.Name.
+     END.
+
+
+   The next procedure sets up a MEMPTR region with a character string and uses the GET-BYTE function to display the character code value of each character in the string:
+   r-mptget.p
+
+     DEFINE VARIABLE mptr AS MEMPTR NO-UNDO.
+     DEFINE VARIABLE cnt AS INTEGER NO-UNDO.
+
+     ASSIGN
+       SET-SIZE(mptr)      = LENGTH("DANIEL") + 1
+       PUT-STRING(mptr, 1) = "DANIEL".
+
+     REPEAT cnt = 1 TO LENGTH("DANIEL"):
+       DISPLAY GET-BYTE(mptr, cnt).
+     END.
+
+   Notes
+   •   For more information on using the MEMPTR and RAW data types, see OpenEdge Programming Interfaces.
+   •   You can use the alternative keyword GETBYTE instead of GET-BYTE.
+
+
+
+
+
+GET-BYTE-ORDER function
+
+Returns an INTEGER value indicating the byte order setting of a MEMPTR variable. This will be either the value provided by the last execution of SET-BYTE-ORDER with this MEMPTR variable, or HOST-BYTE-ORDER if SET-BYTE-ORDER has not been executed.
+
+   Syntax
+
+       GET-BYTE-ORDER( memptr )
+
+
+   memptr
+              An expression that returns a MEMPTR.
+
+   Note
+   GET-BYTE-ORDER never affects data currently in the MEMPTR. That is, it does not actually re-order the data.
+
+
+
+
+
+GET-BYTES function
+
+Returns the specified number of bytes, from the specified location, into a RAW or MEMPTR variable.
+
+   Syntax
+
+       GET-BYTES( source , position , numbytes )
+
+
+   source
+              An expression that evaluates to a RAW or MEMPTR value indicating the source location. If source is the Unknown value (?), GET-BYTES returns the Unknown value (?).
+   position
+              An integer value greater than 0 indicating the byte position of the first byte to get. If position is greater than the length of source, the AVM returns the Unknown value (?). If position is less than 1, the AVM generates a run-time error.
+   numbytes
+              An integer value greater than 0 indicating how many bytes to return as a RAW value. If position plus numbytes is greater than the size of source, the AVM returns the Unknown value (?). If the variable that accepts the returned data is a RAW variable and numbytes is greater than its length but less than or equal to 32K, the AVM increases the size of the variable to numbytes.
+
+If either the source location, source, or the variable that accepts the returned data is a RAW value, and numbytes is greater than 32K, the AVM generates a run-time error.
+If the variable that accepts the returned data is a MEMPTR variable and numbytes is greater than its length, the AVM generates a run-time error.
+
+
+
+
+
+
+GET-CODEPAGE function
+
+The GET-CODEPAGE function returns the code page of a LONGCHAR variable or CLOB field.
+
+   Syntax
+
+     GET-CODEPAGE ( large-char-object )
+
+   large-char-object
+              The name of a LONGCHAR variable or CLOB field. If the specified LONGCHAR is empty and the
+              code page was not fixed using the FIX-CODEPAGE statement on page 529, the AVM returns the
+              Unknown value (?).
+
+
+
+
+
+GET-CODEPAGES function
+
+The GET-CODEPAGES function returns a comma-delimited list of the code pages listed in convmap.cp or specified by the Conversion Map (-convmap) startup parameter for the current ABL session.
+
+   Syntax
+
+     GET-CODEPAGES
+
+   Example
+   This procedure displays a list of the code pages available in memory for the current ABL session and the collations available for each code page:
+   r-get.p
+
+     DEFINE    VARIABLE      code-page-list        AS   CHARACTER      NO-UNDO.
+     DEFINE    VARIABLE      collation-list        AS   CHARACTER      NO-UNDO.
+     DEFINE    VARIABLE      ix                    AS   INTEGER        NO-UNDO.
+     DEFINE    VARIABLE      jx                    AS   INTEGER        NO-UNDO.
+
+     code-page-list = GET-CODEPAGES.
+
+     REPEAT ix = 1 TO NUM-ENTRIES(code-page-list):
+       DISPLAY ENTRY(ix, code-page-list) FORMAT "x(19)" COLUMN-LABEL "Code Page"
+         WITH DOWN FRAME a.
+       collation-list = GET-COLLATIONS(ENTRY(ix, code-page-list)).
+
+       REPEAT jx = 1 TO NUM-ENTRIES(collation-list):
+          DISPLAY ENTRY(jx, collation-list) FORMAT "x(19)"
+            COLUMN-LABEL "Collation"
+            WITH DOWN FRAME a.
+          DOWN WITH FRAME a.
+       END.
+     END.
+
+
+
+ 
+
+
+GET-COLLATION function
+
+The GET-COLLATION function returns the collation name for a CLOB field.
+
+   Syntax
+
+     GET-COLLATION ( clob-field )
+
+
+   clob-field
+                A CLOB field name.
+
+
+
+
+GET-COLLATIONS function
+
+The GET-COLLATIONS function returns a comma-delimited list of the collations either listed in convmap.cp or specified by the Conversion Map (-convmap) startup parameter for the specified code page.
+
+   Syntax
+
+     GET-COLLATIONS ( codepage )
+
+
+   codepage
+                A code page name. If there are no collations for the specified code page, the AVM returns the Unknown value (?).
+
+   Example
+   This procedure displays a list of the code pages available in memory for the current ABL session and the collations available for each code page:
+   r-get.p
+
+     DEFINE      VARIABLE     code-page-list         AS   CHARACTER     NO-UNDO.
+     DEFINE      VARIABLE     collation-list         AS   CHARACTER     NO-UNDO.
+     DEFINE      VARIABLE     ix                     AS   INTEGER       NO-UNDO.
+     DEFINE      VARIABLE     jx                     AS   INTEGER       NO-UNDO.
+
+     code-page-list = GET-CODEPAGES.
+
+     REPEAT ix = 1 TO NUM-ENTRIES(code-page-list):
+       DISPLAY ENTRY(ix, code-page-list) FORMAT "x(19)" COLUMN-LABEL "Code Page"
+         WITH DOWN FRAME a.
+       collation-list = GET-COLLATIONS(ENTRY(ix, code-page-list)).
+
+       REPEAT jx = 1 TO NUM-ENTRIES(collation-list):
+          DISPLAY ENTRY(jx, collation-list) FORMAT "x(19)"
+            COLUMN-LABEL "Collation"
+            WITH DOWN FRAME a.
+          DOWN WITH FRAME a.
+       END.
+     END.
+
+
+
+
+
+
+GET-DB-CLIENT function
+
+Returns the handle to a copy of the sealed client-principal object that represents the user identity for the specified database connection.
+
+   Syntax
+
+       GET-DB-CLIENT ( [db-exp] )
+
+
+   db-exp
+               An optional character expression that evaluates to a case-insensitive logical or alias name of an OpenEdge RDBMS. This expression can be unspecified or evaluate to the Unknown value (?) only if there is a single OpenEdge database connection, in which case the client-principal object handle is returned for that connection.
+
+   Example
+   In the following procedure fragment, GET-DB-CLIENT returns the sealed client-principal that the CONNECT statement creates from authenticating a new connection to the Sports2020 database based on the user ID (cUserID) and password (cPasswd) that are passed as input parameters:
+
+       DEFINE INPUT PARAMETER cUserID AS CHARACTER NO-UNDO.
+       DEFINE INPUT PARAMETER cPasswd AS CHARACTER NO-UNDO.
+
+       DEFINE VARIABLE hCP AS HANDLE NO-UNDO.
+
+       CONNECT C:\OpenEdge\WRK\db\Sports2020
+         VALUE( "-U " + cUserID +
+               " -P " + "oech1::" + AUDIT-POLICY:ENCRYPT-AUDIT-MAC-KEY(cPasswd))
+         -H dbserver -S 1900 NO-ERROR.
+       ASSIGN hCP = GET-DB-CLIENT("Sports2020").
+
+       SECURITY-POLICY:LOAD-DOMAINS("Sports2020").
+       SECURITY-POLICY:SET-CLIENT(hCP).
+
+       DELETE OBJECT hCP.
+       ASSIGN hCP = ?.
+
+
+   The fragment then loads the ABL session domain registry from the Sports2020 database and uses the returned client-principal object (hCP) to set the session identity (and the identities of any other available database connections) to the existing Sports2020 connection identity. The fragment ends by deleting the client-principal, which is no longer needed for the session. Typically, you also check the LOGIN-STATE attribute and STATE-DETAIL attribute on the client-principal object handle, along with other error handling mechanisms, to identify if both the database connection and its authentication are successful. Note also that this fragment encrypts the password value (cPasswd) and concatenates it with a prefix in a form that OpenEdge expects for encrypted passwords. For more information, see the ENCRYPT-AUDIT-MAC-KEY() method reference entry.
+
+Notes 
+• You can use the client-principal object returned by this function to set the identity for this and other database connections or ABL sessions using single sign-on (SSO) operations unless the object represents an OpenEdge default connection identity. A default connection identity is set by establishing a database connection without specifying the User ID (-U) and Password (-P) connection parameters, either on the AVM startup command line or as options of the CONNECT statement on page 199. To seal a client principal with a default connection identity, OpenEdge creates a unique domain access code to seal the client-principal object returned by this function. Sealing the client principal with an internal domain access code provides backwards compatibility with previous OpenEdge releases that prohibit a database connection from being reverted back to the connection's default user identity. Thus, you can use the GET-DB-CLIENT function to return a valid client-principal object from a database connection with a default connection identity. However, because the domain access code used to seal the object is not configured for any registered domain, you cannot use that client-principal in single sign-on (SSO) operations to assign a default user identity to any ABL session or database connection, including the connection for which GET-DB-CLIENT returned the client-principal. For more information on how OpenEdge sets a default connection identity, see the reference entry for the User ID (-U) client connection parameter in Startup Command and Parameter Reference. 
+• To avoid a memory leak, you must explicitly delete the client-principal object whose handle is returned by this function when you no longer need it.
+
+
+
+
+
+
+
+GET-EFFECTIVE-TENANT-ID function
+
+Returns the tenant ID of the effective tenant as an integer.
+
+   Syntax
+
+       GET-EFFECTIVE-TENANT-ID( [database-name] )
+
+
+   database-name
+             A character expression that evaluates to a logical database name or database alias. If no database is specified and more than one database is connected, the AVM raises an error. If the database name is not a valid name for a connected database, the AVM raises an error.
+
+   Notes
+   •   If a super tenant executes this function and they have already executed the SET-EFFECTIVE-TENANT function on page 952, this function returns the tenant ID of any effective tenant that is in scope. If they have not executed the SET-EFFECTIVE-TENANT function on page 952 or there is no effective tenant in scope, this function returns the default tenant ID (0).
+   •   If a regular-tenant user executes this function, it returns the tenant ID associated with the user's tenancy.
+
+
+
+
+
+GET-EFFECTIVE-TENANT-NAME function
+
+Returns the name of the effective tenant as a character string.
+
+   Syntax
+
+       GET-EFFECTIVE-TENANT-NAME( [database-name] )
+
+
+   database-name
+             A character expression that evaluates to a logical database name or database alias. If no database is specified and more than one database is connected, the AVM raises an error. If the database name is not a valid name for a connected database, the AVM raises an error.
+
+Notes 
+• If a super tenant executes this function and they have already executed the SET-EFFECTIVE-TENANT function on page 952, this function returns the name of any effective tenant that is in scope. If they have not executed the SET-EFFECTIVE-TENANT function or there is no effective tenant in scope, this function returns the name of the default tenant ("Default"). 
+• If a regular-tenant user executes this function, it returns the tenant name associated with the user's tenancy.
+
+
+
+
+
+GUID function
+
+Converts a universally unique identifier (UUID) value into a globally unique identifier (GUID) value. This function returns a GUID as a 36-character string value consisting of 32 hexadecimal digits (0 through 9 and A through F) and 4 hyphens formatted as follows (where X is a hexadecimal digit): XXXXXXXX—XXXX—XXXX—XXXX—XXXXXXXXXXXX.
+
+   Syntax
+
+       GUID [( UUID )]
+
+
+   UUID
+               An optional 16-byte raw UUID value to be converted. If the specified UUID is not exactly 16 bytes in length, the AVM returns the Unknown value (?). If not specified, the AVM generates a UUID and then converts it into a GUID.
+
+   Examples
+   The following code fragment illustrates how to use the GUID function:
+
+       DEFINE VARIABLE MyUUID AS RAW      NO-UNDO.
+       DEFINE VARIABLE vGUID AS CHARACTER NO-UNDO.
+
+       ASSIGN
+         MyUUID = GENERATE-UUID
+         vGUID = GUID(MyUUID).
+   The following code fragment generates a GUID value:
+
+       DEFINE VARIABLE vGUID             AS CHARACTER NO-UNDO.
+
+       ASSIGN
+           vGUID      = GUID.
+
+
+
+
+
+
+
+IS-CODEPAGE-FIXED function
+
+Returns TRUE if the code page of the specified LONGCHAR variable is fixed; otherwise it returns FALSE.
+
+   Syntax
+
+       IS-CODEPAGE-FIXED ( longchar )
+
+
+   longchar
+               The name of a LONGCHAR variable.
+
+
+
+
+
+IS-COLUMN-CODEPAGE function
+
+Returns TRUE if the specified CLOB field is a COLUMN-CODEPAGE CLOB. Otherwise, it returns FALSE (that is, if the CLOB is a DBCODEPAGE CLOB or a TTCODEPAGE CLOB).
+
+   Syntax
+
+     IS-COLUMN-CODEPAGE ( field )
+
+
+   field
+               The name of a CLOB field.
+
+
+
+
+IS-DB-MULTI-TENANT function
+
+Returns TRUE if a specified database is multi-tenant enabled, and returns FALSE if it is not.
+
+   Syntax
+
+     IS-DB-MULTI-TENANT( [database-name])
+
+
+   database-name
+             A character expression that evaluates to a logical database name or database alias. If no database is specified and more than one database is connected, the AVM raises an error. If the database name is not a valid name for a connected database, the AVM raises an error.
+
+
+
+
+
+IS-DB-MULTI-TENANT function
+
+Returns TRUE if a specified database is multi-tenant enabled, and returns FALSE if it is not.
+
+   Syntax
+
+     IS-DB-MULTI-TENANT( [database-name])
+
+
+   database-name
+             A character expression that evaluates to a logical database name or database alias. If no database is specified and more than one database is connected, the AVM raises an error. If the database name is not a valid name for a connected database, the AVM raises an error.
+
+
+
+
+
+IS-LEAD-BYTE function
+
+Returns TRUE if the first character of the string is the lead-byte of a multi-byte character. Returns FALSE if it is not.
+
+   Syntax
+
+     IS-LEAD-BYTE ( string )
+
+
+   string
+               A character expression (a constant, field name, variable name, or any combination of these) whose value is a character.
+
+   Example
+   In this example, IS-LEAD-BYTE returns TRUE because the first byte of the first character is the lead-byte of a double-byte character. The output is "Lead: yes":
+
+
+
+
+
+LDBNAME function
+
+Returns the logical name of a database that is currently connected.
+
+   Syntax
+
+       LDBNAME
+         (
+             {     integer-expression
+               |   logical-name
+               |   alias
+               |   BUFFER bufname
+             }
+           )
+
+
+   integer-expression
+              The sequence number of a database the ABL session is connected to. For example, LDBNAME(1)
+              returns information on the first database the ABL session is connected to, LDBNAME(2) returns information on the second database the ABL session is connected to, etc. If you specify a sequence  number that does not correspond to a database the ABL session is connected to, the LDBNAME function returns the Unknown value (?).
+   logical-name or alias
+              These forms of the LDBNAME function require a quoted character string or a character expression as a parameter. If the parameter is the logical name of a connected database or an alias of a connected database then the logical name is returned. Otherwise, the AVM returns the Unknown value (?).
+   BUFFER bufname
+           The name of a database table or buffer. The BUFFER option lets you determine the database a certain table belongs to without hard-coding the logical database name or alias.
+
+   Example
+   This procedure disconnects all currently connected databases. After a database is disconnected, the connected databases are renumbered to reflect the change. For example, if databases 1, 2, 3, and 4 are connected and the procedure disconnects database 3, database 4 becomes database 3.
+   r-ldbnm.p
+
+     DO WHILE LDBNAME(1) <> ? : /* the parameter. is the number 1 */
+       DISCONNECT VALUE(LDBNAME(1)).
+     END.
+
+
+
+   Note
+   To determine if a particular name is an ALIAS or a logical database name, use the following procedure:
+   r-tstnm.p
+
+     DEFINE VARIABLE testnm AS CHARACTER NO-UNDO.
+
+     SET testnm.
+     IF LDBNAME(testnm) = testnm THEN
+       MESSAGE testnm "is a true logical database name.".
+     ELSE IF LDBNAME(testnm) = ? THEN
+       MESSAGE testnm "is not the name or alias of any connected database.".
+     ELSE
+       MESSAGE testnm "is an ALIAS for database " LDBNAME(testnm).
+
+
+
+
+
+NEXT-VALUE function
+
+Returns the next INT64 value of a static sequence, incremented by the positive or negative value defined in the Data Dictionary.
+
+   Syntax
+
+     NEXT-VALUE ( sequence [ , logical-dbname ] [ , tenant-id ] )
+
+
+   sequence
+              An identifier that specifies the name of a sequence defined in the Data Dictionary.
+   logical-dbname
+              An identifier that specifies the logical name of the database in which the sequence is defined. The database must be connected. If multiple databases are connected, you can omit this parameter if you specify a sequence that is unique to one of the databases.
+    tenant-id
+              An integer expression that evaluates to the tenant ID of a regular tenant, including the default tenant (0). This option applies only to a multi-tenant sequence specified by sequence and is intended for access primarily by a super-tenant user. If you are a regular-tenant user and you specify tenant-id, the specified tenant must be the same as the tenant associated with the database connection identity for logical-dbname or the AVM raises a run-time error. If you are a super-tenant user and you do not specify tenant-id, the function assumes the effective tenant ID (GET-EFFECTIVE-TENANT-ID function on page 594). If the sequence specified by sequence is non-multi-tenant (a shared sequence in a multi-tenant database), and you specify tenant-id, the option is ignored.
+
+   Example
+   The following trigger procedure uses the NextItemNum sequence to set the ItemNum field for a new Item record:
+
+   r-critem.p
+
+       TRIGGER PROCEDURE FOR Create OF Item.
+
+       /* Automatically assign a unique item number using NextItemNum seq */
+       ASSIGN Item.ItemNum = NEXT-VALUE(NextItemNum).
+
+Notes 
+• If sequence is a cycling sequence, and the NEXT-VALUE function increments the sequence beyond its upper limit (for positive increments) or decrements the sequence beyond its lower limit (for negative increments), the function sets and returns the initial value defined for the sequence. 
+• If sequence is a terminating sequence, and the NEXT-VALUE function attempts to increment the sequence beyond its upper limit (for positive increments) or decrement the sequence beyond its lower limit (for negative increments), the function returns the Unknown value (?) and leaves the current sequence value unchanged. Once a sequence terminates, NEXT-VALUE continues to return the Unknown value (?) for the specified sequence until it is reset to a new value with the CURRENT-VALUE statement, or its definition is changed to a cycling sequence. After changing the sequence definition to cycle, the first use of NEXT-VALUE for the sequence sets and returns its initial value. 
+• If sequence is a multi-tenant sequence in the database, each regular tenant has their own current value of the sequence. So, the same values are returned for each tenant that invokes this function. If the sequence is shared in a multi-tenant database, the values returned by this function are unique across all tenants in the database. CAUTION: Be very careful using multi-tenant sequences when you are updating shared tables or multi-tenant tables for a tenant group. For more information, see the sections on using multi-tenant-enabled sequences in OpenEdge Programming Interfaces. 
+• The value of a sequence set by the NEXT-VALUE function persists in the database until the next CURRENT-VALUE statement or NEXT-VALUE function is invoked for the sequence, or until the sequence is deleted from the database. 
+• You cannot invoke the NEXT-VALUE function from within a WHERE clause. Doing so generates a compiler error because the value returned by the NEXT-VALUE function can result in ambiguous expressions. To use a result from the NEXT-VALUE function in a WHERE clause, assign the result to a variable and use the variable in the WHERE clause instead. 
+• You can use any combination of the NEXT-VALUE function, CURRENT-VALUE function, CURRENT-VALUE statement, and their dynamic versions. Use the dynamic version when you don't know what the database name or sequence name is at compile time. 
+• Be careful when accessing a database sequence with an alias that points to a different database than the one used when the alias was defined. If you supply an alias name to the CURRENT-VALUE function or the NEXT-VALUE function, only the database used to define the alias is referenced. In this case, it is preferable to use the DYNAMIC-CURRENT-VALUE function and DYNAMIC-NEXT-VALUE function instead of the CURRENT-VALUE function and NEXT-VALUE function, respectively.
+
+
+
+
+
+NUM-ALIASES function
+
+Returns an INTEGER value that represents the number of aliases defined. The NUM-ALIASES function uses no arguments.
+
+   Syntax
+
+     NUM-ALIASES
+
+
+
+   Example
+   This procedure displays the number of defined aliases. It also displays the aliases and logical database names of all connected databases.
+   r-numal.p
+
+     DEFINE VARIABLE ix AS INTEGER NO-UNDO.
+
+     DISPLAY NUM-ALIASES LABEL "Number of Defined Aliases:".
+     REPEAT ix = 1 TO NUM-ALIASES:
+       DISPLAY ALIAS(ix) LABEL "Aliases"
+          LDBNAME(ALIAS(ix)) LABEL "Logical Database".
+     END.
+
+
+
+
+
+NUM-DBS function
+
+Takes no arguments; returns the number of connected databases as an INTEGER value.
+
+   Syntax
+
+     NUM-DBS
+   Example
+   This procedure uses NUM-DBS to display the logical name and database restrictions of all connected databases:
+   r-numdbs.p
+
+     DEFINE VARIABLE ix AS INTEGER NO-UNDO.
+
+     REPEAT ix = 1 TO NUM-DBS:
+       DISPLAY LDBNAME(ix) DBRESTRICTIONS(ix) FORMAT "x(40)".
+     END.
+
+
+
+
+
+PDBNAME function
+
+Returns the physical name of a currently connected database.
+
+   Syntax
+
+       PDBNAME ( integer-expression|logical-name|alias )
+
+
+   integer-expression
+              If the parameter supplied to PDBNAME is an integer expression, and there are, for example, three currently connected databases, then PDBNAME(1), PDBNAME(2), and PDBNAME(3) return their physical names. Also, continuing the same example of three connected databases, PDBNAME(4), PDBNAME(5), etc., return the Unknown value (?).
+   logical-name | alias
+              This form of the PDBNAME function requires a quoted character string or a character expression as a parameter. If the parameter is the logical name of a connected database or an alias of a connected database, then the physical name is returned. Otherwise, it returns the Unknown value (?).
+
+   Example
+   This procedure finds the physical name of the database that currently has the DICTDB alias:
+   r-pdbnam.p
+
+       MESSAGE "The current DICTDB is" PDBNAME("DICTDB") + ".db".
+
+
+
+   Notes
+   The old DBNAME function has been retained for compatibility and is equivalent to PDBNAME(1).
+
+
+
+
+
+
+RAW-TRANSFER statement
+
+Copies a record wholesale from a source to a target.
+
+Syntax
+
+    RAW-TRANSFER
+      {     [ BUFFER ]buffer                    TO     [ FIELD ]raw-field
+           |[ FIELD ]raw-field                  TO     [ BUFFER ]buffer
+           |[ BUFFER ]buffer                    TO     [ BUFFER ]buffer
+      }
+    [ NO-ERROR ]
+
+
+BUFFER
+             Specifies a parameter is a buffer.
+buffer
+             A source or target database record.
+             Note: If the source buffer contains only a partial field list, RAW-TRANSFER fails.
+FIELD
+             Specifies a parameter is a raw-field.
+raw-field
+             A source or target data field of type RAW.
+NO-ERROR
+             The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying error messages.
+
+Example
+The following ABL example performs a RAW-TRANSFER of a newly created Customer record to the Record field of Replication-Log table:
+
+    TRIGGER PROCEDURE FOR REPLICATION-CREATE OF Customer.
+    CREATE Replication-Log.
+    ASSIGN
+      Replication-Log.Taskid = DBTASKID(LDBNAME(BUFFER Replication-Log))
+      Replication-Log.Table = 'Customer'
+      Replication-Log.Action = 'CREATE'.
+    RAW-TRANSFER Customer TO Replication-Log.Record.
+
+
+For more information on database replication, see Manage the OpenEdge Database.
+
+Notes 
+• The RAW-TRANSFER statement has several variations: 
+	• The 'buffer to raw-field' variation copies the entire record from the buffer to the raw field, prepending information on the source schema to the raw field. 
+	• The 'raw-field to buffer' variation first checks that the source schema information prepended to the raw field matches the schema of the buffer. Then it creates a target record, if necessary. Finally it updates each key field in the new record using values from the raw field, which forces indexing to occur. 
+	• The 'buffer to buffer' variation is the same as the 'raw-field to buffer' variation, except that the source is a record in another buffer. 
+	• The RAW-TRANSFER statement respects database triggers. 
+	• You can marshal an OpenEdge database record so that it can be sent across sockets by using the RAW-TRANSFER statement to put the record into a RAW variable and then copying the RAW variable to a MEMPTR that is being written to a socket. Use the PUT-BYTES function to do this. You can unmarshal database records by using the GET-BYTES function and then RAW-TRANSFER. 
+• At run time, the RAW-TRANSFER statement: 
+	• Checks that the signatures of the source data and the target data match. 
+	• Compares source and target code page ids, and (if they are present and different) translates the source's character data, writing any warnings to the database log file and raising any error conditions. 
+	• Creates the target record, if none exists, and runs all appropriate CREATE and REPLICATE-CREATE triggers (unless the DISABLE TRIGGERS FOR LOAD option is active for the target). 
+	• Registers changes in key fields with the index manager by updating each key field in the target when it differs from the source. 
+	• Copies all data from the source record to the target record. 
+	• Executes ASSIGN triggers for any modified fields (unless the DISABLE TRIGGERS FOR LOAD option is active for the target). 
+	• When using the RAW-TRANSFER statement to copy a record that contains a BLOB or CLOB field, the AVM skips the BLOB or CLOB field and stores the Unknown value (?) in the BLOB or CLOB field of the target record.
+
+
+
+
+
+RECID function
+
+Returns the unique internal identifier of the database record currently associated with the record buffer you name. This internal identifier has the data type RECID, a four-byte value that is supported by OpenEdge databases and some non-OpenEdge DataServers.
+This function is supported for backward compatibility. For most applications, use the ROWID function, instead. 
+
+   Syntax
+
+       RECID ( record )
+
+
+   record
+               The name of the record whose RECID you want.
+               To use the RECID function with a record in a table defined for multiple databases, you must qualify the record's table name with the database name. 
+
+   Example
+   You might decide that you do not want to lock a record until the user starts to update that record. In the example procedure, the FIND statement reads a Customer record without locking the record. The RECID function puts the internal database identifier of that record in the crecid variable. If the user decides to update the CreditLimit field, the procedure finds the record again using the value in crecid. The second FIND statement reads the record again, this time placing an EXCLUSIVE-LOCK on it. Because the record is first found with NO-LOCK, it is possible for the record to be updated by another user after the first FIND and before the second.
+   r-recid.p
+
+       DEFINE VARIABLE response AS LOGICAL NO-UNDO.
+       DEFINE VARIABLE crecid   AS RECID   NO-UNDO.
+
+       REPEAT:
+         PROMPT-FOR Customer.CustNum.
+         FIND Customer NO-LOCK USING Customer.CustNum.
+         crecid = RECID(Customer).
+         DISPLAY Customer.name.
+         response = YES.
+         UPDATE response LABEL "Update credit-limit ?".
+         IF response THEN DO:
+            FIND Customer WHERE RECID(Customer) = crecid EXCLUSIVE-LOCK.
+            UPDATE Customer.CreditLimit.
+         END.
+       END.
+
+
+
+Notes 
+• Use the RECID function to rapidly retrieve a previously identified record, even if that record has no unique index. 
+• If you want a called procedure to use the same record as a calling procedure, use the RECID function to ensure that you are retrieving the same record. Use a SHARED variable to communicate the RECID of a record from one procedure to another. The second procedure can then find the same record. This is an alternative to using shared buffers. 
+• Avoid storing RECID values in database fields because those RECIDs will change if you dump and reload the database. 
+• You cannot use a RECID to identify the partition of a record in a partitioned table. Using a stored RECID to retrieve a record in a partitioned table will not work unless the record is in the initial composite partition. Use ROWID instead. 
+• You do not have to explicitly check to see whether a record is AVAILABLE before using the RECID function. The RECID function returns the Unknown value (?) if a record cannot be accessed. This example displays a RECID only when a record can be accessed:
+
+           DISPLAY (IF AVAILABLE Customer THEN RECID(Customer) ELSE ?).
+
+
+       Directly reference RECID even if a record cannot be found:
+
+           FOR EACH Customer NO-LOCK:
+             DISPLAY Customer.CustNum.
+           END.
+           DISPLAY RECID(Customer).
+
+
+
+
+
+
+RECORD-LENGTH function
+
+Returns the length of a record in a buffer as an INTEGER value.
+
+   Syntax
+
+       RECORD-LENGTH ( buffer )
+
+
+   buffer
+               A database buffer containing a record.
+
+   Notes
+   The RECORD-LENGTH function is especially useful when implementing ABL-based database replication, which involves storing entire database records in log record fields. ABL limits records to 32K. Before you transfer a record to a raw field in another record, you can use RECORD-LENGTH to ensure that you are not expanding the record beyond the 32K limit.
+
+
+
+
+
+
+RELEASE statement
+
+Verifies that a record complies with mandatory field and unique index definitions. It clears the record from the buffer and unites it to the database if it has been changed.
+
+Syntax
+
+  RELEASE record[ NO-ERROR ]
+
+
+record
+           The name of a record buffer.
+           To use RELEASE with a record in a table defined for multiple databases, you must qualify the record's table name with the database name. See the record definition in the Record phrase on page 864 reference entry for more information.
+NO-ERROR
+           The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying error messages. For the RELEASE statement, as an exception to the general rule, if a unique index constraint is violated the NO-ERROR clause is ignored when validating the record. An error is raised before any changes are saved to the record to avoid damaging any indexes.
+
+Example
+The following example uses a browse widget to scan Customer records. Records within the browse are read with NO-LOCK. If you choose the Update Customer button, the CHOOSE trigger starts a transaction and applies an EXCLUSIVE-LOCK to the Customer record. When you have completed any updates, the procedure displays the new values in the browse widget and then executes a RELEASE statement. This ensures that the lock is released when the transaction ends.
+
+r-rels.p
+
+    DEFINE VARIABLE methRtn   AS LOGICAL NO-UNDO.
+    DEFINE VARIABLE curr-cust AS ROWID   NO-UNDO.
+
+    DEFINE BUTTON upd-cust LABEL "Update Customer".
+    DEFINE BUTTON exit-app LABEL "Exit".
+
+    DEFINE QUERY seq-cust FOR customer.
+    DEFINE BROWSE brow-cust QUERY seq-cust
+      DISPLAY Customer.CustNum Customer.Name WITH 10 DOWN.
+
+    FORM
+      upd-cust exit-app SKIP(1)
+      brow-cust
+      WITH FRAME main-frame.
+    FORM
+      Customer EXCEPT Customer.Comments
+      WITH FRAME curr-frame COLUMN 40.
+
+    OPEN QUERY seq-cust FOR EACH Customer.
+
+    ON VALUE-CHANGED OF brow-cust DO:
+      DISPLAY Customer EXCEPT Customer.Comments
+         WITH FRAME curr-frame SIDE-LABELS.
+      curr-cust = ROWID(Customer).
+    END.
+
+    ON CHOOSE OF upd-cust DO: /* TRANSACTION */
+      FIND Customer WHERE ROWID(Customer) = curr-cust EXCLUSIVE-LOCK.
+      UPDATE Customer WITH FRAME cust-frame VIEW-AS DIALOG-BOX
+      TITLE "Customer Update".
+      methRtn = brow-cust:REFRESH().
+      DISPLAY Customer EXCEPT Customer.Comments
+         WITH FRAME curr-frame SIDE-LABELS.
+      RELEASE Customer.
+    END.
+
+    ENABLE ALL WITH FRAME main-frame.
+    APPLY "VALUE-CHANGED" TO brow-cust.
+    PAUSE 0 BEFORE-HIDE.
+    WAIT-FOR CHOOSE OF exit-app OR WINDOW-CLOSE OF DEFAULT-WINDOW.
+
+
+If you omit the RELEASE statement in this example, the EXCLUSIVE-LOCK is downgraded to a SHARE-LOCK at the end of the transaction. This prevents other users from updating that record. The SHARE-LOCK is released when you change the iteration of the browse.
+Notes:
+An ERROR occurs if the validation of the record fails. This can happen only with newly created records.
+If a record has been modified, the RELEASE statement causes a WRITE event and fires any related WRITE trigger to execute. All WRITE triggers execute before the record is actually written. If a WRITE trigger fails (or executes a RETURN statement with the ERROR option), the corresponding record is not written or released and the ERROR condition is raised for the RELEASE statement.
+See Develop ABL Applications for more information on transactions.
+
+
+
+
+
+
+ROWID function
+
+Returns the unique internal identifier of the database record currently associated with the record buffer you name. This internal identifier has the data type ROWID, which is supported for OpenEdge and all other DataServer databases. 
+
+Note: The ROWID function corresponds to the ROWID attribute. This function replaces the RECID function for most applications. However, you must use the RECID function for maintaining schema objects (file and field relationships) in the ABL meta-schema files.
+   Syntax
+
+       ROWID ( record )
+
+
+   record
+               The name of the record whose ROWID you want. To use the ROWID function with a record in a table defined for multiple databases, you must qualify the record's table name with the database name. 
+
+Example
+You might decide that you do not want to lock a record until the user starts to update that record. In the example procedure, the FIND statement reads a Customer record without locking the record. The ROWID function puts the internal database identifier of that record in the crowid variable. If the user decides to update the CreditLimit field, the procedure finds the record again using the value in crowid. The second FIND statement reads the record again, this time placing an EXCLUSIVE-LOCK on it. Because the record is first found with NO-LOCK, it is possible for the record to be updated by another user after the first FIND and before the second.
+   r-rowid.p
+
+       DEFINE VARIABLE response AS LOGICAL NO-UNDO.
+       DEFINE VARIABLE crowid   AS ROWID   NO-UNDO.
+
+       REPEAT:
+         PROMPT-FOR Customer.CustNum.
+         FIND Customer USING Customer.CustNum NO-LOCK.
+         crowid = ROWID(Customer).
+         DISPLAY Customer.Name.
+         response = YES.
+         UPDATE response LABEL "Update CreditLimit ?".
+         IF response THEN DO:
+            FIND Customer WHERE ROWID(Customer) = crowid EXCLUSIVE-LOCK.
+            UPDATE Customer.CreditLimit.
+         END.
+       END.
+
+
+Notes:
+Use the ROWID function to rapidly retrieve a previously identified record, even if that record has no unique index.
+The ROWID data type is a variable-length byte string capable of representing a record identifier for any DataServer database. However, the scope of a specific ROWID returned by the ROWID function depends on the DataServer and possibly the table within a database. The ROWID values for some DataServers change whenever the corresponding record is modified. For others, a ROWID value can change when a particular column in a table is modified. For more information on how different DataServers derive and work with ROWID values, see the OpenEdge DataServer Guides (Use the Microsoft SQL Data Server and Use the Oracle Data Server).
+You cannot return a ROWID for a view because view records do not have unique identifiers.
+You can compare ROWID values using the ABL relational operators (=, >, <, <>, >=, and <=), such as in the WHERE option of the Record phrase.
+You can use a ROWID value in a REPOSITION statement to specify the new position for a query cursor.
+If you want a called procedure to use the same record as a calling procedure, use the ROWID function to ensure that you are retrieving the same record. Use a SHARED ROWID variable or procedure parameter to communicate the ROWID of a record from one procedure to another. The second procedure can then find the same record. This is an alternative to using shared buffers or buffer parameters.
+You can store a ROWID value in a work table or temp-table, but not directly in a database table.
+You can use the STRING function to convert a ROWID value to a character string, and convert it back to a ROWID value using the TO-ROWID function.
+You do not have to explicitly check to see whether a record is AVAILABLE before using the ROWID function. The ROWID function returns the Unknown value (?) if a record cannot be accessed. This example checks the ROWID for each Customer record returned for a query to determine if another record exists to update. If no more records exist, the update loop (QuickFix) terminates.
+
+OPEN QUERY qCustomer FOR EACH Customer
+           WHERE Customer.Balance > 5000 AND Customer.Balance < 6000.
+
+         QuickFix:
+         REPEAT:
+           GET NEXT qCustomer.
+           IF ROWID(Customer) = ? THEN LEAVE QuickFix.
+           ELSE UPDATE Customer.
+         END. /* QuickFix */
+
+The ROWID of a record in a partitioned table identifies both the partition and the address of the record in the partition. If a partition field is updated in the record and, as a result, the record is moved to a different partition, the record's ROWID will change.
+
+
+
+
+
+
+SDBNAME function
+
+Accepts an integer expression or a character expression as a parameter. If the parameter resolves to a currently connected non-OpenEdge database, then the SDBNAME function returns the logical name of the schema holder database containing the non-OpenEdge schema. If the parameter resolves to a currently connected OpenEdge database, the SDBNAME function returns the logical name of this database.
+
+   Syntax
+
+     SDBNAME ( { integer-expression | logical-name | alias } )
+
+
+   integer-expression
+                If the parameter supplied to SDBNAME is an integer expression, and there are, for example, three connected databases, then SDBNAME(1), SDBNAME(2), and SDBNAME(3) return the logical names of their respective schema holder databases. Also, if there are three connected databases, SDBNAME(4), SDBNAME(5), etc., return the Unknown value (?).
+   logical-name or alias
+              These forms of the SDBNAME function require a quoted character string or a character expression as a parameter. If the parameter is the logical name of a connected database or an alias of a connected database, then the logical name of the schema holder database is returned according to the rule. Otherwise, SDBNAME returns the Unknown value (?).
+
+   Example
+   This procedure displays schema holder databases, if applicable, for all connected databases:
+   r-sdbnm.p
+
+     DEFINE VARIABLE ix AS INTEGER NO-UNDO.
+
+     REPEAT ix = 1 TO NUM-DBS:
+       DISPLAY SDBNAME(ix) SDBNAME(ix) = LDBNAME(ix)
+       FORMAT "SCHEMA-HOLDER/SUB-SCHEMA        "
+          COLUMN-LABEL " DataServer!Classification".
+     END.
+
+
+
+
+
+
+SET-DB-CLIENT function
+
+Sets the user identity for a specified connected OpenEdge database using an unsealed or a sealed client-principal object. For an unsealed client-principal object (in the INITIAL state), this function performs a user authentication operation on the user identity asserted by the object. If successful, the function seals the client-principal and assigns the user identity to a specified database connection, and if the database is multi-tenant this also sets the user's tenancy. For a sealed client-principal object (in the LOGIN state), this function performs a single sign-on (SSO) operation to validate the user identity represented by the object. If successful, the function assigns the user identity to a database connection, and if the database is multi-tenant this also sets the user's tenancy. If the user identity is set successfully and the database is multi-tenant, the connection accesses the database through the tenant organization that is configured for the user's domain, and the tenant information is added to the client-principal object used to set the identity. The function returns TRUE if the user identity is set successfully; if unsuccessful, the function returns FALSE, and the connection identity remains unchanged. Note: Using this function overrides any user identity previously set for the database connection by either the SECURITY-POLICY:SET-CLIENT() method or the SETUSERID function on page 955.
+
+   Syntax
+
+       SET-DB-CLIENT ( { client-principal-handle | ? }
+         [ , { integer-expression | logical-name |alias | ? } ] )
+
+client-principal-handle
+            A handle to a client-principal object. If the client-principal object is unsealed, it must be initialized with the attribute values required by the SEAL() method in addition to any PRIMARY-PASSPHRASE attribute value required to authenticate the asserted user identity. If the object is sealed, it must be sealed with a domain access code that is the same as the access code configured for the user's domain stored in the domain registry trusted by the specified database connection. If this parameter is set to the Unknown value (?), the current identity of affected database connections remains unchanged, and the function unlocks and allows the connection identity to be set using the SET-CLIENT() method, as described for the setting of database parameters.
+
+integer-expression | logical-name | alias | ?
+           Specifies a database connection on which to set the identity as follows: integer-expression The sequence number of a connected OpenEdge database for which to set the user identity. For example, SET-DB-CLIENT(hCP, 1) sets the user identity associated with the specified client-principal object for the first database connection, SET-DB-CLIENT(hCP, 2) sets the user identity for the second database connection, and so on. If you specify a sequence number that does not correspond to a connected database, the function returns FALSE. logical-name | alias The logical name or alias of a connected OpenEdge database for which to set the user identity. These forms require a quoted character string or a character expression. If you specify a logical name or alias that does not correspond to a connected database, the function returns FALSE. If you pass a valid option to identify an OpenEdge database connection, the function operates on that OpenEdge database connection as follows: 
+• If the LOGIN-STATE attribute on the client-principal object is set to "INITIAL", the function performs a user authentication operation, and if successful, sets user identity for the database connection, 
+• If the LOGIN-STATE attribute on the client-principal object is set to "LOGIN", the function performs a validation (SSO) of the user identity, and if successful, sets the user identity for the database connection. 
+• If client-principal-handle is the Unknown value (?), the current connection identity remains unchanged, and the function removes the SECURITY-POLICY:SET-CLIENT() method lockout on the database connection. If you do not pass an option to identify the specific database connection or you specify the Unknown value (?), the function operates on all OpenEdge database connections as follows: 
+	• If the LOGIN-STATE attribute on the client-principal object is set to "INITIAL", the function performs a user authentication operation for the first OpenEdge database connection, and if the authentication is successful, the function: 1. Sets that database connection's user identity. 2. With the client-principal LOGIN-STATE attribute set to "LOGIN", performs an SSO operation to validate and (if successful) set the user identity for each remaining OpenEdge database connection in the ABL session. 
+	• If the LOGIN-STATE attribute on the client-principal object is set to "LOGIN", the function performs an SSO operation to validate and (if successful) set the user identity for each OpenEdge database connection in the ABL session. 
+	• If client-principal-handle is the Unknown value (?), the current identity remains unchanged for all OpenEdge databases connections, and the function removes the SECURITY-POLICY:SET-CLIENT() method lockout on all the connections.
+
+Example
+To use the _login.p procedure that is provided with ABL, you must define user IDs and passwords for users who are authorized to access the database in user accounts associated with authentication-enabled domains. The following sample procedure (r-login1.p) is simplified from the _login.p procedure provided with ABL.
+ 
+r-login1.p
+
+    /* Prompt user for userid and password and set the userid */
+    DEFINE VARIABLE id       AS CHARACTER FORMAT "x(255)" VIEW-AS FILL-IN
+                                SIZE 50 BY 1 LABEL "User id" NO-UNDO.
+    DEFINE VARIABLE password AS CHARACTER FORMAT "x(255)" VIEW-AS FILL-IN
+                                SIZE 50 BY 1 LABEL "Password" NO-UNDO.
+
+    DEFINE VARIABLE tries                AS INTEGER                     NO-UNDO.
+    DEFINE VARIABLE lFound               AS LOGICAL                     NO-UNDO.
+    DEFINE VARIABLE hCP                  AS HANDLE                      NO-UNDO.
+
+    CREATE CLIENT-PRINCIPAL hCP. /* create a CLIENT-PRINCIPAL only once during
+    login*/
+
+    DO ON ENDKEY UNDO, RETURN: /* return if they hit endkey */
+      /* Reset id and password to blank in case of retry */
+      ASSIGN
+        id       = ""
+        password = "".
+      UPDATE SPACE(2) id SKIP password BLANK
+        WITH CENTERED ROW 8 SIDE-LABELS
+        TITLE " Database " + LDBNAME("DICTDB") + " ".
+
+      /* Use SET-DB-CLIENT instead of SETUSERID */
+      hCP:INITIALIZE(id,?,?,password).
+
+      IF NOT SET-DB-CLIENT(hCP,"DICTDB") THEN DO:
+        MESSAGE "Sorry, userid/password is incorrect.".
+        IF tries > 1 THEN QUIT. /* Only allow 3 tries */
+        tries = tries + 1.
+        UNDO, RETRY.
+      END.
+
+    END.
+
+    DELETE OBJECT hCP.
+    hCP = ?.
+
+    HIDE ALL.
+
+
+This procedure uses the SET-DB-CLIENT function to authenticate the prompted user identity passed in through the client-principal (hCP) to set the connection identity for the database with the logical name, dictdb. If the value of the function is FALSE, the procedure allows the user another try. The user has three tries to log in. The first time, the tries variable is 0; tries is 1 the second time, and 2 the third. The third time, tries is greater than 1 and the procedure exits without any further attempts. If function value is TRUE, the database connection is set to the prompted user identity. In either case, the procedure exits after deleting the client-principal object and hiding the prompt. 
+
+Notes 
+• For any errors while operating on database connections, SET-DB-CLIENT returns FALSE, records any errors in the ERROR-STATUS system handle, and leaves the current identity for a given database connection unchanged. Also, a validation failure when setting the identity for a database connection does not stop SET-DB-CLIENT from operating on other connected databases. It records an error message for that database and attempts the operation on the next one. 
+• Within a transaction on a: 
+• Multi-tenant database — Any attempt to set an identity for the connection that changes the current database tenancy raises a run-time error. 
+• Non-multi-tenant database — As a best practice, Progress Software recommends that you not set a new identity for the connection. 
+• To assign a user identity while making a database connection, use the CONNECT statement on page 199. 
+• This function also checks the value of the LOGIN-EXPIRATION-TIMESTAMP attribute on the client-principal object. If the timestamp has expired before the function can seal (during user authentication) or validate (during SSO) the object, the function sets the LOGIN-STATE attribute to "EXPIRED" and returns FALSE without changing the current connection identity. 
+• To set a connection identity through a user authentication operation: 
+• The client-principal object must be unsealed (in the INITIAL state). 
+• The required attributes must be properly set (see the SEAL() method and PRIMARY-PASSPHRASE attribute entries). 
+• The domain in the registry trusted by the database connection must be authentication-enabled. This can include a domain configured with a user-defined authentication system that has an ABL authentication plugin enabled. For information on OpenEdge support for domains and domain configuration, see Learn about Identity Management. When the user authentication operation fails for a database connection, for auditing purposes, this function implicitly executes the AUTHENTICATION-FAILED() method on the client-principal and leaves the previous connection identity unchanged. 
+• To set a connection identity through an SSO operation: 
+• The client-principal object must be sealed and set to the LOGIN state either explicitly by the application (using the SEAL() method) or implicitly by OpenEdge. 
+• The object must be valid according to the domain registry used by the database connection: it must be sealed using the access code defined for a registry domain whose name matches the domain name stored in the object. 
+• The domain in the registry trusted by the database connection must be enabled and configured with an authentication system that supports SSO. 
+• To set a connection identity when the authentication system is your ABL application, you must manually authenticate the user credentials for the client-principal object, explicitly call the SEAL() method to seal the object, and perform an SSO operation using this function to set the connection identity. 
+• For an STS-enabled database, this function always checks the user identity against the database’s own domain registry configuration. 
+• For databases not using STS, the domain registry this function uses to perform a user authentication or SSO operation depends on the database's own domain registry configuration. If it is configured to use the application domain registry, the function checks the user identity against the ABL session domain registry loaded using the SECURITY-POLICY:LOAD-DOMAINS() method. If it is configured not to use the application domain registry, the function checks the user identity against the database's own local domain registry that OpenEdge loads for the connection. For more information on domain and domain registry configuration, see OpenEdge Getting Started: Identity Management. 
+• After a user identity is set for a database connection, the AVM uses that identity to determine if the user has permission to access tables and fields in that particular database. 
+• If you do not specify a database or pass the Unknown value (?), the user identity that this function sets for all connected databases overrides the user identity previously set by a call to the SET-CLIENT() method. 
+• Any database connection whose user identity is set using this function locks out the SET-CLIENT() method from setting an identity for that connection until you use this function to unlock it. 
+• You can also use this function, instead of the SETUSERID function, to set the user identity for a database connection whether or not the user account is in the _User table. 
+• Calling this method generates an audit event, and creates an audit record for the event in all connected audit-enabled databases according to each database's current audit policy settings. 
+• This function returns FALSE and with messages recorded in the ERROR-STATUS system handle when: 
+• A database connection is specified, the client-principal object is sealed, and SSO validation of its identity for the specified database connection fails. 
+• No database connection is specified, the client-principal object is sealed, and SSO validation of its identity for any connected database fails. In this case, ERROR-STATUS records a message for each database connection that fails SSO validation. 
+• The client-principal object is unsealed and the domain configuration is restricted to SSO operations. 
+• A database connection is specified, the client-principal object is unsealed, and user authentication of its asserted identity on the specified database connection fails. 
+• The client-principal object is sealed and the domain configuration is restricted to user authentication operations. 
+• This function does not attempt set the connection identity for the foreign data source of a DataServer connection. However, it does attempt to set the connection identity for the OpenEdge schema holder database.
+
+
+
+
+
+
+
+SET-EFFECTIVE-TENANT function
+
+Sets the effective tenancy of a multi-tenant database connection for a super-tenant user. A super tenant has no real tenancy of its own, but can act as if it is a particular regular tenant without the user having to authenticate a new connection identity that has that particular tenancy. Therefore, the effective tenancy is the acting regular tenancy of a super tenant. Initially, OpenEdge sets the effective tenancy for any super-tenant identity to the default tenant. The purpose of this function is to change the effective tenancy of a super tenant identity to any regular tenant.
+
+   Syntax
+
+       SET-EFFECTIVE-TENANT ( tenant-expression[ , database-name ])
+
+
+   tenant-expression
+              An integer or character string expression. If tenant-expression evaluates to an integer, the value must be a valid tenant ID for a regular or default tenant. If tenant-expression evaluates to a character string, the value must be a valid tenant name for a regular or default tenant. Otherwise, the statement raises ERROR.
+   database-name
+             A character expression that evaluates to a logical database name or database alias. If no database is specified and more than one database is connected, the AVM raises an error. If the database name is not a valid name for a connected database, the AVM raises an error.
+
+Notes 
+• The function returns a logical TRUE if successful, and raises an error if not successful. 
+• If a regular-tenant user executes this function, the tenant identified by tenant-expression must match the user's tenancy; otherwise, the function raises an error. If a super-tenant user executes this function, and tenant-expression is not a valid regular tenant (not a super tenant), the function raises an error. 
+• All super-tenant users login with access to shared data and data owned by the effective default tenant, with access conditioned on the user's table and field permission settings. When a super-tenant user executes SET-EFFECTIVE-TENANT, they have access to shared data and data owned by the new effective tenant, with access, again, conditioned by the user's same table and field permission settings. This super-tenant access can include data for multiple tenants, without changing effective tenancy, by using the TENANT-WHERE option of the record phrase. (The TENANT-WHERE option, itself, does not change the effective tenancy.) 
+• When you execute SET-EFFECTIVE-TENANT, buffers and cursors for existing tenant data from a previous effective tenancy are not cleared. In this way, a super tenant can get records for more than one tenant. Note that regardless of changes in effective tenancy, any subsequent updates to prior tenant data are written to the original tenant tables. 
+• The scope of SET-EFFECTIVE-TENANT ends when a new identity is set for the database connection using the SET-DB-CLIENT function on page 948, the SECURITY-POLICY:SET-CLIENT() method, or the SETUSERID function on page 955, at which point the effective tenancy changes back to the default tenant for any super tenant user identity or to the real tenant of a regular tenant user identity (including the default tenant). Unlike setting the effective tenant, setting a new connection identity also clears buffers and cursors of any prior tenant data. 
+• An UNDO does not undo the tenancy of a SET-EFFECTIVE-TENANT. 
+• The AVM looks up tenant-expression in the _Tenant table with a share lock. The AVM waits 60 seconds to get the share lock, and if it fails to get the share lock in that amount of time, the AVM raises an error. The AVM releases the share lock immediately after successfully retrieving the tenant information. This share lock is released even if the function is called within a transaction.
+
+
+
+SET-EFFECTIVE-TENANT function
+
+Sets the effective tenancy of a multi-tenant database connection for a super-tenant user. A super tenant has no real tenancy of its own, but can act as if it is a particular regular tenant without the user having to authenticate a new connection identity that has that particular tenancy. Therefore, the effective tenancy is the acting regular tenancy of a super tenant. Initially, OpenEdge sets the effective tenancy for any super-tenant identity to the default tenant. The purpose of this function is to change the effective tenancy of a super tenant identity to any regular tenant.
+
+   Syntax
+
+       SET-EFFECTIVE-TENANT ( tenant-expression[ , database-name ])
+
+
+   tenant-expression
+              An integer or character string expression. If tenant-expression evaluates to an integer, the value must be a valid tenant ID for a regular or default tenant. If tenant-expression evaluates to a character string, the value must be a valid tenant name for a regular or default tenant. Otherwise, the statement raises ERROR.
+   database-name
+             A character expression that evaluates to a logical database name or database alias. If no database is specified and more than one database is connected, the AVM raises an error. If the database name is not a valid name for a connected database, the AVM raises an error.
+
+Notes 
+• The function returns a logical TRUE if successful, and raises an error if not successful. 
+• If a regular-tenant user executes this function, the tenant identified by tenant-expression must match the user's tenancy; otherwise, the function raises an error. If a super-tenant user executes this function, and tenant-expression is not a valid regular tenant (not a super tenant), the function raises an error. 
+• All super-tenant users login with access to shared data and data owned by the effective default tenant, with access conditioned on the user's table and field permission settings. When a super-tenant user executes SET-EFFECTIVE-TENANT, they have access to shared data and data owned by the new effective tenant, with access, again, conditioned by the user's same table and field permission settings. This super-tenant access can include data for multiple tenants, without changing effective tenancy, by using the TENANT-WHERE option of the record phrase. (The TENANT-WHERE option, itself, does not change the effective tenancy.) 
+• When you execute SET-EFFECTIVE-TENANT, buffers and cursors for existing tenant data from a previous effective tenancy are not cleared. In this way, a super tenant can get records for more than one tenant. Note that regardless of changes in effective tenancy, any subsequent updates to prior tenant data are written to the original tenant tables. 
+• The scope of SET-EFFECTIVE-TENANT ends when a new identity is set for the database connection using the SET-DB-CLIENT function on page 948, the SECURITY-POLICY:SET-CLIENT() method, or the SETUSERID function on page 955, at which point the effective tenancy changes back to the default tenant for any super tenant user identity or to the real tenant of a regular tenant user identity (including the default tenant). Unlike setting the effective tenant, setting a new connection identity also clears buffers and cursors of any prior tenant data. 
+• An UNDO does not undo the tenancy of a SET-EFFECTIVE-TENANT. 
+• The AVM looks up tenant-expression in the _Tenant table with a share lock. The AVM waits 60 seconds to get the share lock, and if it fails to get the share lock in that amount of time, the AVM raises an error. The AVM releases the share lock immediately after successfully retrieving the tenant information. This share lock is released even if the function is called within a transaction.
+
+
+
+
+
+TENANT-ID function
+
+Returns the tenant ID (as an integer) of the real tenant associated with a database connection.
+
+   Syntax
+
+       TENANT-ID ( [ database-name                 ] )
+
+
+   database-name
+               A character expression that evaluates to a logical database name or database alias. If the database is not enabled for multi-tenancy, the function returns zero (0). If no database is specified and more than one database is connected, the AVM raises an error. If the database name is not a valid name for a connected database, the AVM raises an error.
+
+   Notes
+   •   The tenant ID of the default tenant is 0. The tenant ID of a non-default regular tenant is greater than 0 and that of a super tenant is less than 0.
+   •   For a super-tenant connection identity, this function returns the tenant ID of the super tenant, not the effective tenant.
+
+
+
+
+
+TENANT-NAME function
+
+Returns the name (as a character string) of the real tenant associated with a database connection.
+                                                                                                           | ABL Syntax Reference | 994
+
+
+
+   Syntax
+
+       TENANT-NAME ( [ database-name ] )
+
+
+   database-name
+               A character expression that evaluates to a logical database name or database alias. If the database is not enabled for multi-tenancy, the function returns the empty string (""). If no database is specified and more than one database is connected, the AVM raises an error. If the database name is not a valid name for a connected database, the AVM raises an error.
+
+   Notes
+   For a super-tenant connection identity, this function returns the tenant name of the super tenant, not the effective tenant.
+
+
+
+
+
+TENANT-NAME-TO-ID function
+
+Returns the tenant ID associated with an input tenant name.
+
+   Syntax
+
+       TENANT-NAME-TO-ID ( tenant-name [ , database-name ] )
+
+
+   tenant-name
+               A character expression that evaluates to the name of a tenant.
+   database-name
+               A character expression that evaluates to a logical database name or database alias. If no database is specified and more than one database is connected, the AVM raises an error. If the database name is not a valid name for a connected database, the AVM raises an error.
+
+   Notes
+   •   If a super tenant executes this function and tenant-name is not valid, the AVM raises an error.
+   •   If a regular tenant executes this function, tenant-name must be the user's own tenant name or the AVM raises an error.
+
+
+
+
+
+
+UPDATE statement
+
+Displays fields or variables, requests input, and then puts the input data in both the screen buffer and in the specified fields or variables. The UPDATE statement is a combination of the following statements:
+   •   DISPLAY - Moves the values of fields or variables into the screen buffer and displays them (#1 in the figure)
+   •   PROMPT-FOR - Prompts the user for data and puts that data into the screen buffer (#2 in the figure)
+   •   ASSIGN - Moves data from the screen buffer to the record buffer (#3 in the figure)
+   Note: Does not apply to SpeedScript programming.
+
+Syntax
+
+  UPDATE
+    [ UNLESS-HIDDEN ]
+    [ field [ format-phrase ] [ WHEN expression ]
+      | TEXT ( field [ format-phrase ] ... )
+      | field = expression
+      | constant [ AT n | TO n ]
+      | ^
+      | SPACE [ ( n ) ]
+      | SKIP [ ( n ) ]
+    ] ...
+    [ GO-ON ( key-label ... ) ]
+    [ frame-phrase ]
+    [ editing-phrase ]
+    [ NO-ERROR ]
+
+
+
+  UPDATE record
+    [ EXCEPT field ... ]
+    [frame-phrase ]
+    [ NO-ERROR ]
+
+
+UNLESS-HIDDEN
+         Restricts UPDATE to fields whose HIDDEN attribute is FALSE. field Represents the name of the field or variable whose value you want to display, change, and store in the screen and record buffers. In array fields, array elements with constant subscripts are handled as any other field. Array fields with no subscripts are expanded as though you entered the implicit elements. See the DISPLAY statement on page 450 reference entry for information on how array fields with expressions as subscripts are handled. You can supply values for array elements in the UPDATE statement as follows:
+
+           UPDATE x[1] = "x".
+
+
+         This statement assigns the letter x to the first element of array x. If you do not include an array subscript, the AVM assigns the value to all elements of the array.
+
+           UPDATE X = "X".
+          This statement assigns the letter x to all elements of the array x. format-phrase Specifies one or more frame attributes for a field, variable, or expression. For more information on format-phrase, see the Format phrase on page 545 reference entry. WHEN expression Updates the field only when expression has a value of TRUE. The expression is a field name, variable name, or expression whose value is logical. TEXT Defines a group of character fields or variables (including array elements) to use automatic word wrap. The TEXT option works only with character fields that are ABL default FILL-IN widgets (not specified with the FILL-IN NATIVE option). When you insert data in the middle of a TEXT field, the AVM wraps data that follows into the next TEXT field, if necessary. If you delete data from the middle of a TEXT field, the AVM wraps data that follows to the empty area. If you enter more characters than the format for the field allows, the AVM discards the extra characters. The character fields formats must be in the x(n) format. A blank in the first column of a line marks the beginning of a paragraph.
+
+          Lines within a paragraph are treated as a group and will not wrap into other paragraphs.
+          The following table lists the keys you can use within a TEXT field and their actions.
+          Table 62: Key actions in a TEXT() field
+
+           Key                   Action
+           APPEND-LINE           Combines the line the cursor is in with the next line.
+           BACK-TAB              Moves the cursor to the previous TEXT field.
+           BREAK-LINE            Breaks the current line into two lines beginning with the character the
+                                 cursor is in.
+           BACKSPACE             Moves the cursor one position to the left and deletes the character at that position. If the cursor is at the beginning of a line, BACKSPACE moves the cursor to the end of the previous line.
+           CLEAR                 Clears the current field and all fields in the TEXT group that follow.
+           DELETE-LINE           Deletes the line the cursor is in.
+           NEW-LINE              Inserts a blank line below the line the cursor is in.
+           RECALL                Clears fields in the TEXT group and returns initial data values for the
+                                 group.
+           RETURN                In overstrike mode, moves to the next field in the TEXT group on the
+                                 screen. In insert mode, the line breaks at the cursor and the cursor is
+                                 positioned at the beginning of the new line.
+           TAB                   Moves to the field after the TEXT group on the screen. If there is no
+                                 other field, the cursor moves to the beginning of the TEXT group.
+
+
+          In this procedure, the s-com field is a TEXT field. Run the procedure and enter text in the field to see how the TEXT option works:
+
+            r-text.p
+
+                 DEFINE VARIABLE s-com AS CHARACTER NO-UNDO FORMAT "x(40)"
+                 EXTENT 5.
+
+                 FORM
+                   "Shipped    :" order.ship-date AT 13 SKIP
+                   "Misc Info :" order.instructions AT 13 SKIP(1)
+                   "Order Comments :" s-com AT 1
+                   WITH FRAME o-com CENTERED NO-LABELS TITLE "Shipping
+                 Information".
+
+                 FOR EACH Customer NO-LOCK, EACH Order OF Customer:
+                   DISPLAY Customer.CustNum Customer.Name Order.OrderNum
+                 Order.OrderDate
+                      Order.PromiseDate WITH FRAME order-hdr CENTERED.
+                   UPDATE Order.ShipDate Order.Instructions TEXT(s-com) WITH
+                 FRAME o-com.
+                   s-com = "".
+                 END.
+
+
+field = expression 
+Indicates that the value of field is determined by evaluating the expression rather than having it entered on the screen or from a file. In effect, an assignment statement is embedded in the UPDATE statement. constant AT n Represents a constant value that you want to display in the frame. The n is the column in which you want to start the display. constant TO n Represents a constant value that you want to display in the frame. The n is the column in which you want to end the display. ^ Tells the AVM to ignore an input field when input is being read from a file. Also, the following statement reads a line from an input file and ignore that line:
+
+                 UPDATE^
+
+
+SPACE [ ( n ) ]
+            Identifies the number (n) of blank spaces to insert after the expression displays. The n can be 0. If the number of spaces you specify is more than the spaces left on the current line of the frame, the AVM starts a new line and discards any extra spaces. If you do not use this option or do not use n, the AVM inserts one space between items in the frame.
+SKIP [ ( n ) ]
+            Identifies the number (n) of blank lines to insert after the expression is displayed. The n can be 0. If you do not use this option, the AVM does not skip a line between expressions unless they do not fit on one line. If you use the SKIP option, but do not specify n or if n is 0, the AVM starts a new line unless it is already at the beginning of a new line.
+GO-ON ( keylabel . . . )
+            Tells the AVM to take the GO action when the user presses any of the keys listed. You list keys in addition to keys that perform the GO action by default or because of ON statements. For example, if you want the AVM to execute the GO action when the user presses F1, use the statement GO-ON(F1). If you list more than one key, separate them with spaces, not commas. Note that the GO-ON option is valid if you specify a list of fields in the UPDATE statement, but is invalid if you specify a record. frame-phrase Specifies the layout and processing properties of a frame. For more information on frame-phrase, see the Frame phrase on page 552 reference entry. editing-phrase Supported only for backward compatibility. Identifies processing to take place as each keystroke is entered. This is the syntax for editing-phrase:
+
+               [ LABEL : ] EDITING : statement ... END
+
+
+            For more information on editing-phrase, see the EDITING phrase on page 478 reference entry. NO-ERROR The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying error messages. record Specifies the name of a record buffer. All of the fields in the record are processed as if you updated each of them individually. To update a record in a table defined for multiple databases, you must qualify the record's table name with the database name. See the record definition in the Record phrase on page 864 reference entry for more information. EXCEPT field Affects all fields except those fields listed in the EXCEPT phrase; they are omitted from the update list. 
+
+Note: Compound assignment operators (+=, -=, *=, /=) can be used with the UPDATE statement. For more information, see += Addition assignment operator on page 46, -= Subtraction assignment operator on page 52, *= Multiplication assignment operator on page 54, and /= Division assignment operator on page 57. Examples The following procedure lets you update the Name, Address, City, State, and Country for each Customer record in the database:
+r-updat.p
+
+  FOR EACH Customer:
+    UPDATE Customer.Name Customer.Address Customer.City Customer.State
+       Customer.Country.
+  END.
+
+
+The r-updat2.p procedure reads each Customer record and lets you update the Name and CreditLimit fields.
+The VALIDATE option on the first UPDATE statement ensures that you enter a CreditLimit value that is less than 500000. The HELP option displays a message to that effect.
+
+r-updat2.p
+
+    FOR EACH Customer:
+      UPDATE Customer.Name
+        Customer.CreditLimit VALIDATE(Customer.CreditLimit < 500000, "Too high")
+
+        HELP "Enter CreditLimit < 500000".
+
+      FOR EACH Order OF Customer:
+        DISPLAY Order.OrderNum.
+        UPDATE Order.PromiseDate Order.ShipDate VALIDATE(Order.ShipDate > TODAY,
+
+            "Ship date must be later than today").
+      END.
+    END.
+
+
+The second FOR EACH block reads every Order belonging to the Customer, displays the OrderNum field, and lets you update the PromiseDate and ShipDate fields. The VALIDATE option ensures that you enter a ship date value that is after today's date. This procedure requests a Customer number and then lets you update information for that Customer record. The frame phrase WITH 1 COLUMN 1 DOWN tells the AVM to display the fields in a single column on the screen (rather than in a row across the screen) and to display only one Customer record on the screen at a time.
+
+r-updat3.p
+
+    REPEAT:
+      PROMPT-FOR Customer.CustNum.
+      FIND Customer USING Customer.CustNum.
+      UPDATE Customer.Name Customer.Address Customer.City Customer.State
+         Customer.Country WITH 1 COLUMN 1 DOWN.
+    END.
+
+
+
+Notes 
+• If any field is a field in a database record, the UPDATE statement upgrades the record lock condition to EXCLUSIVE-LOCK before updating the record. 
+• If any field is part of a record retrieved with a field list, the UPDATE statement rereads the complete record before updating it. If any field is not part of the field list (or related fields) fetched with the record, or if record includes such unfetched fields, the AVM raises the ERROR condition before the UPDATE statement accepts input. This is because the UPDATE attempts to display the fields before it rereads the record. 
+• If an error occurs during UPDATE statement input (for example, the user enters a duplicate index value for a unique index), the AVM retries the data entry part of the statement and does not do the error processing associated with the block that contains the statement. 
+• The UPDATE statement is not equivalent to a combination of the DISPLAY and SET statements.
+
+      REPEAT:
+        PROMPT-FOR Customer.CustNum.
+        FIND Customer USING Customer.CustNum.
+        UPDATE Customer.CreditLimit.
+      END.
+       The previous procedure is approximately equivalent to the following procedure:
+
+         REPEAT:
+           PROMPT-FOR Customer.CustNum.
+           FIND Customer USING Customer.CustNum.
+           DISPLAY Customer.CreditLimit.
+
+           DO ON ERROR UNDO, RETRY:
+              SET Customer.CreditLimit.
+           END.
+         END.
+
+
+       If an error occurs during an UPDATE statement, the statement is retried until the error is corrected. If this happens during a SET statement, an entire block is retried. 
+• If you receive input from a device other than the terminal, and the number of characters read by the UPDATE statement for a particular field or variable exceeds the display format for that field or variable, the AVM returns an error. However, if you are setting a logical field that has a y/n format and the data file contains a value of YES or NO, the AVM converts that value to 'y' or 'n'. 
+• If you use a single qualified identifier with the UPDATE statement, the compiler first interprets the reference as dbname.tablename. If the compiler cannot resolve the reference as dbname.tablename, it tries to resolve it as tablename.fieldname. 
+• When updating fields, you must use table names that are different from field names to avoid ambiguous references. See the Record phrase on page 864 reference entry for more information. 
+• The UPDATE statement causes ASSIGN and WRITE events to occur and all related database ASSIGN and WRITE triggers to execute. The ASSIGN triggers execute before the WRITE triggers and after the field is actually updated. The WRITE triggers only execute if the ASSIGN triggers do not return an error. If an ASSIGN trigger fails, the database update is undone. This means that all database changes are backed out. If the UPDATE statement occurs within a transaction, any changes to variables, worktable fields, and temp-table fields are also undone unless the variable or field is defined with the NO-UNDO option. Likewise, if a WRITE trigger fails, the UPDATE statement is undone. 
+
+Note: If the value to be updated is the same as the value already in the database field, then any associated database ASSIGN triggers are not executed. 
+• When you execute UPDATE with a specific or implied GO-ON(keylabel) from a called program, the AVM generates an error message (4123). This is due to an incompatibility in focus. The workaround is to add a VIEW FRAME statement after the call to the subprocedure such that the VIEW FRAME is the first statement executed on return from the called procedure. 
+• In the context of the .NET blocking method, System.Windows.Forms.Application:Run(), if you execute the UPDATE statement for a non-modal ABL window from within a user-defined function or non-VOID method, this statement raises the STOP condition. For more information on the .NET Application:Run() method, see the reference entry for the WAIT-FOR statement (.NET and ABL) on page 1055.
+
+

@@ -1,0 +1,18 @@
+$ErrorActionPreference = "Stop"
+
+$ProgressBin = "C:\Progress\OpenEdge\bin"
+$InstanceName = "sursum-pasoe-dev"
+$Workspace = "D:\opencode\motor-progress"
+$DatabaseArgs = "-db $Workspace\db\sports2000 -1 -ld DICTDB"
+$Propath = "$Workspace\sursum,$Workspace\rest,$Workspace\sursum\esp,$Workspace"
+
+Write-Host "Configurar instancia PASOE local: $InstanceName"
+Write-Host "Progress bin: $ProgressBin"
+Write-Host "Database args: $DatabaseArgs"
+Write-Host "PROPATH: $Propath"
+Write-Host ""
+Write-Host "Este script e intencionalmente declarativo nesta etapa."
+Write-Host "Use pasman/tcman conforme a instalacao local para criar a instancia e aplicar:"
+Write-Host "  - nome: $InstanceName"
+Write-Host "  - startup ABL: $DatabaseArgs"
+Write-Host "  - PROPATH: $Propath"

@@ -1,0 +1,29 @@
+/*   idioma.dv - arquivo de idiomas   */
+
+not (can-find (first trad-ge use-index ch-idioma where
+                     trad-ge.id-codigo   = idioma.id-codigo)
+     or
+     can-find (first decl-pa use-index ch-idioma where
+                     decl-pa.id-codigo   = idioma.id-codigo)
+     or
+     can-find (first decl-cli use-index ch-idioma where
+                     decl-cli.id-codigo  = idioma.id-codigo)
+     or
+     can-find (first trad-un use-index ch-idioma where
+                     trad-un.id-codigo   = idioma.id-codigo)
+     or
+     can-find (first trad-cond use-index ch-idioma where
+                     trad-cond.id-codigo = idioma.id-codigo)
+     or
+     can-find (first trad-emb use-index ch-idioma where
+                     trad-emb.id-codigo  = idioma.id-codigo)
+     or
+     can-find (first trad-item use-index ch-idioma where
+                     trad-item.id-codigo = idioma.id-codigo)
+     or
+     can-find (first trad-ref use-index ch-idioma where
+                     trad-ref.id-codigo  = idioma.id-codigo)
+     or
+     can-find (first pais use-index ch-idioma where
+                     pais.id-codigo      = idioma.id-codigo))
+

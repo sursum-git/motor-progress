@@ -1,0 +1,9 @@
+/*****************************************************************************
+** pedido-c.dv
+** Arquivo: pedido-compr
+*****************************************************************************/
+
+not (can-find (first ordem-compra where
+                     ordem-compra.num-pedido = pedido-compr.num-pedido))
+
+/* fim */

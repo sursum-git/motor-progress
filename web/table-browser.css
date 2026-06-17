@@ -1,0 +1,134 @@
+.table-browser-toolbar {
+  display: grid;
+  grid-template-columns: minmax(620px, max-content) minmax(360px, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.table-browser-search-card {
+  align-items: end;
+  grid-template-columns: minmax(180px, 240px) minmax(150px, 210px) minmax(220px, 280px) auto;
+  width: 100%;
+}
+
+.table-browser-search-actions {
+  align-self: end;
+  margin: 0 0 1px;
+  min-height: 34px;
+  white-space: nowrap;
+}
+
+.table-browser-sync-card {
+  display: block;
+  grid-template-columns: 1fr;
+  width: 100%;
+}
+
+.table-browser-sync-card .metadata-sync-options {
+  grid-column: auto;
+  grid-template-columns: 1fr;
+  align-items: start;
+  gap: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.table-browser-sync-card .metadata-sync-checks {
+  gap: 8px 14px;
+}
+
+.table-browser-sync-card #refreshMetadata {
+  justify-self: start;
+}
+
+.table-name-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  gap: 6px;
+  align-items: end;
+}
+
+.table-name-picker .k-input,
+.table-name-picker .k-input-inner,
+.table-name-picker .k-textbox {
+  min-height: 34px;
+}
+
+.table-search-button,
+.table-search-button.k-button {
+  align-self: end;
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  margin: 0;
+}
+
+.browse-toolbar {
+  display: grid;
+  grid-template-columns: 120px 150px minmax(260px, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+
+.join-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.browse-field-select {
+  min-width: 0;
+}
+
+.browse-actions {
+  margin: 0;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.browse-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 0 10px;
+  color: #4b5563;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .table-browser-toolbar,
+  .table-browser-search-card {
+    grid-template-columns: 1fr;
+  }
+
+  .browse-toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .browse-field-select,
+  .browse-actions {
+    grid-column: 1 / -1;
+  }
+
+  .browse-actions {
+    justify-content: flex-start;
+    white-space: normal;
+  }
+
+  .browse-summary {
+    flex-direction: column;
+    gap: 4px;
+  }
+}

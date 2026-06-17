@@ -1,0 +1,17 @@
+{
+  "authMode": "json",
+  "jwt": {
+    "enabled": false,
+    "issuer": "sursum-api",
+    "expirationMinutes": 60
+  },
+  "users": [
+    {
+      "username": "apiadmin",
+      "passwordHash": "trocar-por-hash-com-salt",
+      "roles": ["admin"],
+      "companies": ["01", "05"],
+      "enabled": false
+    }
+  ]
+}

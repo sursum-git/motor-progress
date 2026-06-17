@@ -1,0 +1,203 @@
+HANDLE function
+   Converts a string representation of a handle to a valid handle. If the string does not correlate to a valid handle in the
+   session, the function returns 0.
+
+   Syntax
+
+       HANDLE ( handle-string )
+
+
+           CAUTION: Use this function only to convert a handle previously stored as a string value back to a valid handle.
+           If you convert an arbitrary string to handle using this function and then reference the new handle, a system error
+           will occur. If you use the VALID-HANDLE function to validate a handle generated from an arbitrary string
+           value, a system error will occur.
+
+   handle-string
+              A string representation of a handle. Since handles are integer values, the string must contain only
+              numeric characters.
+
+   Example
+   The following procedure creates a frame, stores the handle of the frame as a string value, deletes the frame, converts
+   the string representation of the frame handle back to a valid handle, and then tests if the handle is valid:
+   r-widhd.p
+
+       DEFINE VARIABLE whand AS HANDLE    NO-UNDO.
+       DEFINE VARIABLE chand AS CHARACTER NO-UNDO.
+
+       CREATE FRAME whand.
+       chand = STRING(whand).
+       DELETE WIDGET whand.
+       whand = HANDLE(chand).
+       MESSAGE VALID-HANDLE(whand) VIEW-AS ALERT-BOX INFORMATION BUTTONS OK.
+
+
+   The VALID-HANDLE function returns a FALSE value because the frame was deleted and the handle is no longer valid.
+
+   Notes
+   •   The HANDLE function can convert the string representation of procedure, system, and widget handles.
+   •   For SpeedScript, the only valid use is to convert the handle of a QUERY object that you create using the CREATE
+       WIDGET statement.
+
+
+LIST-SET-ATTRS function
+   Returns a comma-separated list of attributes that can be set for an object or widget.
+
+   Syntax
+
+     LIST-SET-ATTRS ( handle )
+
+
+   handle
+                A handle to a valid object or widget. The function returns a list of the attributes that can be set for that
+                object or widget.
+                                                                                                 
+
+   Example
+   For an example of the LIST-SET-ATTRS function, see the LIST-QUERY-ATTRS function on page 679 reference entry.
+
+   Note
+   When used with the SECURITY-POLICY handle, this function does not return the XCODE-SESSION-KEY writeable
+   attribute because this attribute contains an encryption key for encrypted source code.
+
+
+PROC-HANDLE function
+   Returns a value in the appropriate data type (usually INTEGER) that is a unique identifier for a stored procedure.
+
+   Syntax
+
+     PROC-HANDLE
+
+   Example
+   This procedure runs the stored procedure pcust and writes the procedure handle to the variable iHandle. It writes the
+   results of the stored procedure identified by this procedure handle into the ABL-supplied buffer, proc-text-buffer, and
+   displays it.
+
+     DEFINE VARIABLE iHandle AS INTEGER NO-UNDO.
+
+     RUN STORED-PROCEDURE pcust iHandle = PROC-HANDLE (10, OUTPUT 0, OUTPUT 0).
+     FOR EACH proc-text-buffer WHERE PROC-HANDLE = iHandle:
+       DISPLAY proc-text.
+     END.
+     CLOSE STORED-PROCEDURE pcust WHERE PROC-HANDLE = iHandle.
+
+
+   Notes
+   •   Progress Software Corporation recommends that you specify a procedure handle for each stored procedure that you
+       run.
+   •   You do not have to specify a handle if there is only one active stored procedure and you do not include SQL statements
+       in the ABL application. In the case of ORACLE only, the DataServer passes SQL statements to the ORACLE
+       RDBMS and uses the default system handle in the process.
+   For more information on using this function, see the OpenEdge DataServer Guides (Use the Microsoft SQL Data Server
+   and Use the Oracle Data Server).
+
+
+
+PROC-STATUS function
+   Returns the return status from a stored procedure. The return status is an INTEGER value that indicates whether a stored
+   procedure failed and why.
+
+   Syntax
+
+       PROC-STATUS
+
+   Example
+   This procedure runs the ORACLE stored procedure pcust and writes the results of the stored procedure into the
+   ABL-supplied buffer, proc-text-buffer. The CLOSE STORED-PROCEDURE statement then retrieves the output
+   parameters. The return status is written to the variable iStat and is displayed. This same code works for accessing a
+   stored procedure from an Microsoft SQL Server-compliant data source:
+
+       DEFINE VARIABLE iStat AS INTEGER NO-UNDO.
+
+       RUN STORED-PROCEDURE pcust (10, OUTPUT 0, OUTPUT 0).
+       FOR EACH proc-text-buffer:
+       END.
+       CLOSE STORED-PROCEDURE pcust iStat = PROC-STATUS.
+       DISPLAY iStat.
+
+
+   Notes
+   •   For descriptions of the possible values for the return status of a non-ABL stored procedure, see the procedure's
+       documentation.
+   •   For more information on using this function, see the OpenEdge DataServer Guides (Use the Microsoft SQL Data
+       Server and Use the Oracle Data Server).
+
+
+VALID-EVENT function
+   Verifies whether a specified event is valid for a specified widget. For each type of widget, only certain events are valid.
+   The function returns a value (TRUE/FALSE).
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+     VALID-EVENT ( handle , event-name [ , platform ] )
+
+
+   handle
+                 An expression that produces a value of type HANDLE. The value must be the handle of a valid widget.
+   event-name
+                 A character-string expression that evaluates to the name of an event.
+   platform
+                 A character-string expression that evaluates to the name of a platform type: GUI or TTY.
+
+
+VALID-HANDLE function
+   Verifies that a handle is valid.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       VALID-HANDLE ( handle )
+
+
+   handle
+                An expression that evaluates to a value of type HANDLE. If the handle represents an object that is
+                currently valid, VALID-HANDLE returns TRUE. If the handle is no longer valid (if, for example,
+                some procedure deleted the object), the function returns FALSE.
+
+   Example
+   In the following example, the user creates a window dynamically. The WINDOW-CLOSE trigger uses the
+   VALID-HANDLE function to determine whether the window has been created.
+   r-valhnd.p
+
+       DEFINE VARIABLE mywin AS HANDLE NO-UNDO.
+
+       DEFINE BUTTON mkwin LABEL "New Window".
+
+       ENABLE mkwin.
+
+       ON CHOOSE OF mkwin DO:
+         CREATE WINDOW mywin ASSIGN
+            VISIBLE          = TRUE
+            TITLE            = "Second Window"
+            MAX-WIDTH-CHARS = 40
+            MAX-HEIGHT-CHARS = 10.
+         SELF:SENSITIVE    = FALSE.
+       END.
+
+       ON WINDOW-CLOSE OF DEFAULT-WINDOW DO:
+         IF VALID-HANDLE(mywin) THEN
+            DELETE WIDGET mywin.
+       END.
+
+       WAIT-FOR WINDOW-CLOSE OF DEFAULT-WINDOW.
+
+
+   In the example, the VALID-HANDLE function returns a TRUE value only if the window has been created (that is,
+   mywin does not have the Unknown value (?)) and the window has not been deleted. Therefore, the DELETE WIDGET
+   statement executes only if mywin is a valid handle.
+
+   Notes
+   •   A handle becomes invalid if the associated widget or procedure is deleted or is out of scope.
+   •   This function is useful when walking through a list of widgets or persistent procedures using the PREV-SIBLING
+       or NEXT-SIBLING attributes.
+
+       VALID-HANDLE(handle:PREV-SIBLING) is FALSE when you reach the first handle in the list.
+       VALID-HANDLE(handle:NEXT-SIBLING) is FALSE when you reach the last handle in the list.
+
+   •   If a handle is valid, it can still point to an obsolete object. That is, ABL can recycle a previously used handle value
+       to reference a new object instance, leaving previously set handles with the same value pointing to older objects. So
+       you can recognize that seemingly identical handles are actually handle copies that point to different objects, ABL
+       supports the UNIQUE-ID attribute on some types of object handles. For more information, see the UNIQUE-ID
+       attribute reference entry.
+   •   The VALID-HANDLE function supports handles to application servers, proxy procedures, remote persistent
+       procedures, and COM objects. For more information on COM objects, see OpenEdge Programming Interfaces.

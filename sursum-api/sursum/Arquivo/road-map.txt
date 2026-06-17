@@ -1,0 +1,30 @@
+/*
+- Ler Arquivo Chave/valor
+- Interpretar JSon
+- Interpretar XML
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*/

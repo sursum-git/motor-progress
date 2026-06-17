@@ -1,0 +1,137 @@
+VAR statement
+   Defines a variable. The VAR statement is a short-hand notation for the DEFINE VARIABLE statement on page 412.
+   Variables defined with the VAR statement are NO-UNDO, meaning that the value of the variable will not be restored if
+   the variable changed during a transaction and the transaction is undone. If you wish to have the option to restore the
+   variable to its prior value, use the DEFINE VARIABLE statement instead.
+Syntax
+
+  VAR [ access-mode ] [ STATIC | SERIALIZABLE | NON-SERIALIZABLE ]
+      type [ [ [ size ] ] ] | [ CLASS ] classname [ [ [ size ] ] ]
+      variable [ = expression [, expression ]...].
+
+
+access-mode
+             Specifies an access mode (PRIVATE, PACKAGE-PRIVATE, PROTECTED, PACKAGE-PROTECTED,
+             or PUBLIC) for the user-defined class variable. For more information, see Access modes in
+             Object-oriented ABL Developer Guided Journey.
+STATIC
+             Indicates that the user-defined class variable is scoped to the ABL session where it is referenced. ABL
+             creates one copy of the specified class static variable on first reference to the class type, and ABL
+             creates only one such copy for any number of instances of the class that you create. You can reference
+             an accessible static variable data member in any piece of code
+             Without the STATIC option, the user-defined class variable is scoped to a single instance of the class
+             where it is defined. ABL creates one copy of the specified instance variable for each such class instance
+             that you create. You can reference any public instance variable in any procedure, or in any instance
+             or static method defined inside or outside of the class where the instance variable is defined. Any static
+             method can reference the public instance variable only using an object reference to a class instance
+             that defines the variable as a data member. If the referencing static method is defined in the same class
+             as the public instance variable, the class must instantiate itself in order to have access to an instance
+             reference.
+SERIALIZABLE | NON-SERIALIZABLE
+             Indicates whether the user-defined class variable will participate in serialization. SERIALIZABLE
+             and NON-SERIALIZABLE options can only be used with instance (not STATIC) variables. For more
+             information, see Serialization and deserialization in Develop Object-oriented ABL Applications.
+type
+             Specifies a built-in data type for the variable you are defining. Type can be one of the following:
+             CHAR, CHARACTER, COM-HANDLE, DATE, DATETIME, DATETIME-TZ, DECIMAL,
+             HANDLE, INT, INTEGER, INT64, LOGICAL, LONGCHAR, MEMPTR, RAW, RECID, or ROWID.
+             Type cannot be abbreviated.
+             Note: CHAR is a synonym for CHARACTER and INT is a synonym for INTEGER.
+             
+[CLASS] classname
+             Indicates that the variable is an object of type classname. The CLASS keyword is optional. However,
+             if the specified class or interface type name conflicts with an abbreviation for a built-in primitive type
+             name, such as INT for INTEGER, you must specify the CLASS keyword.
+             
+[size]
+             Indicates that the variable is an array. size is optional and specifies the number of elements in the array.
+             If size is specified, it must be an integer constant. If size is not specified ([]), then the variable is
+             considered an indeterminate array. For more information about arrays, see Work with one-dimensional
+             arrays in Basic ABL.
+variable
+             Specifies the name of the variable. Variable names must begin with a letter, but subsequent characters
+             can include letters, numeric digits, periods(.), hyphens(-), and underscores(_). Variable names are
+             case-insensitive.
+expression
+An Expression which evaluates to a data type that is consistent with the data type of the defined variable.
+Examples
+The following example code shows variable declarations using VAR.
+
+  /* Four character variables with default initial values */
+  VAR CHAR s1, s2, s3, s4.
+
+  /* Three integer variables. */
+  /* z’s initial value is 3. x and y default to 0 */
+  VAR INT x, y, z = 3.
+
+  /* Three date variables */
+  VAR DATE d1, d2 = 1/1/2020, d3 = TODAY.
+
+  /* Date variables with the protected access mode */
+  VAR PROTECTED DATE d1, d2 = 1/1/2020.
+
+  /* Three arrays of size 3 */
+  /* x's third element defaults to 2 (the previous element) */
+  /* y's elements default to 0 */
+  VAR INT[3] x = [1, 2], y, z = [100, 200, 300].
+
+  /* Two indeterminate arrays. x has no size. y has a size of 3. */
+  VAR INT[] x, y = [1,2,3].
+
+  /* .NET generic object */
+  VAR "System.Collections.Generic.List<char>" cList.
+
+  /* Three object variables */
+  VAR mypackage.subdir.myclass myobj1, myobj2, myobj3.
+
+  /* Object variable with the optional CLASS keyword */
+  VAR CLASS mypackage.subdir.myclass myobj1.
+
+  /* Object array of size 2 */
+  VAR foo[2] classArray.
+
+  /* Instantiated object variables */
+  VAR myclass myobj = NEW myclass().
+  VAR myclass myobj = NEW myclass("Progress", 2020,?).
+
+  /* Multiple instantiated object variables */
+  VAR myclass myobj1 = NEW myclass("MA"),
+              myobj2 = NEW myclass("VT"),
+              myobj3 = NEW myclass("NH").
+
+  /* Instantiated base class type */
+  VAR baseclass myobj1 = NEW derivedAClass(), myobj2 = NEW derivedBClass("foo").
+
+  /* Instantiated interface type */
+  VAR IMaps myobj1 = NEW GoogleMap("CANADA"), myobj2 = NEW OpenStreetMap("USA").
+
+  /* Instantiated and initialized determinate array object variable */
+  VAR StateClass[2] objArrayA = [NEW StateClass(“MA”), NEW StateClass(“NH”)].
+
+  /* Instantiated and initialized indeterminate array object variable */
+  VAR StateClass[] objArrayB = [NEW StateClass(“MA”), NEW StateClass(“NH”)].
+
+  /* Integer variables initialized using expressions */
+  VAR INT x = a + b , y = a - b, z = x - y.
+
+  /* Indeterminate integer array initialized using expressions */
+  VAR INT[ ] x = [funct( ), a + b].
+
+   Notes
+   •   VAR may only be used at the beginning of an ABL routine, before any executable statements in the block.
+       If in a procedure, the VAR statement must follow these statements:
+       •   USING...
+       •   BLOCK-LEVEL ON ERROR UNDO, THROW.
+       •   ROUTINE-LEVEL ON ERROR UNDO, THROW.
+       If in a class, the VAR statement:
+       •   Must come after the CLASS statement.
+       •   Can be in any order within the class, like other class members.
+       •   Must be at the top of the block within a method or property body.
+   •   VAR does not allow abbreviated data types. For example, when specifying a decimal variable, you cannot write VAR
+       DEC. You must write VAR DECIMAL. In Release 12.3, CHAR and INT are actual keywords and not abbreviations.
+       CHAR is a synonym for CHARACTER and INT is a synonym for INTEGER. Therefore you can write VAR CHAR
+       or VAR INT.
+   •   Other options allowed with the DEFINE VARIABLE statement, such as FORMAT or LABEL, cannot be used with
+       VAR. If you need those other options, use the DEFINE VARIABLE statement instead.
+   •   Uninitialized elements in a determinate array object variable are set to the Unknown (?) value, unlike scalar array
+       variables where uninitialized elements are set to the last initialized value, if any.

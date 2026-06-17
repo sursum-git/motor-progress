@@ -1,0 +1,680 @@
+ADD-INTERVAL function
+   Adds a time interval to, or subtracts a time interval from, a DATE, DATETIME, or DATETIME-TZ value, and returns
+   the new value.
+                                                                                                              
+   Syntax
+
+       ADD-INTERVAL (datetime, interval-amount, interval-unit)
+
+
+   datetime
+               An expression whose value is a DATE, DATETIME, or DATETIME-TZ.
+   interval-amount
+              A signed integer (positive or negative) indicating the amount of time you want to add to or subtract
+              from datetime value.
+   interval-unit
+              A character constant, or a character expression that evaluates to one of the following time units: ‘years',
+              ‘months', ‘weeks', ‘days', 'hours', ‘minutes', ‘seconds' or ‘milliseconds'. These values are case insensitive
+              and may be singular.
+
+   Note
+   To add or subtract months or years, this function converts the date to Gregorian before adding or subtracting the year
+   or month value. If the result is an invalid date, the function decrements the day part of the date until a valid date is
+   obtained. For example:
+   •   Adding 1 month to January 30, 2003 yields February 28, 2003
+   •   Adding 13 months to January 30, 2003 yields February 29, 2004 (2004 is a leap year)
+   •   Subtracting 1 month from December 31, 2003 yields November 30, 2003
+
+
+DATE function
+   Converts a single character string, a set of month, day, and year values, an integer expression, a DATETIME expression,
+   or a DATETIME-TZ expression into a DATE value.
+   If the DATE function cannot produce a valid date given the specified argument(s), it returns a run-time error.
+
+   Syntax
+
+       DATE ( month , day , year )
+
+
+
+       DATE ( string )
+
+
+
+       DATE ( integer-expression )
+
+
+
+       DATE ( datetime-expression )
+
+
+   month
+              A constant, field name, variable name, or expression whose value is an integer from 1 to 12, inclusive.
+   day
+              An expression whose value is an integer from 1 to the highest valid day of the month.
+   year
+              An expression whose value is the year (for example, 1994).
+   string
+              A character string containing a date value to convert into a DATE data type. The string value must
+              have the format specified by the Date Format (-d) startup parameter (the default is mdy). Note that
+              -d sets the display format, not the date storage format, which is fixed. Furthermore, date constants                                                                       
+           entered in procedures, or as initial values in the Data Dictionary, are always specified in month/day/year
+           format.
+           You do not have to specify separator characters for the month, day, and year components of the date
+           string; however, slashes(/), periods(.), and hyphens(-) are accepted as separator characters.
+integer-expression
+           An expression that evaluates to a signed integer value that represents the number of days since the
+           origin of the ABL date data type. Usually this integer is obtained from a previous operation where the
+           date was converted to an integer using the INTEGER(ABL-date) or INT64(ABL-date) function.
+           The value of the expression cannot be a date value before 12/31/-32768 or after 12/31/32767.
+           Note: The resulting date from the DATE(integer-expression) function is guaranteed to be a valid
+           ABL date only if the integer-expression originated from the INTEGER(ABL-date) or INT64(ABL-date)
+           function.
+datetime-expression
+           An expression that evaluates to a DATETIME or DATETIME-TZ. The DATE function returns the
+           date portion of the datetime-expression as a DATE.
+           If datetime-expression is a DATETIME-TZ, the DATE function returns the date relative to the time
+           zone of the DATETIME-TZ value. For example, a DATETIME-TZ field, fdt, is created in London
+           (time zone UTC+00:00) with a value of May 5, 2002 at 7:15:03.002 am. DATE (fdt) returns 05/05/2002,
+           regardless of the session's time zone.
+
+Examples
+This procedure reads data from an input file that contains date information from another system stored as character
+strings without slashes or dashes between month, day, and year. It tries to convert these dates to ABL dates. Some
+formats cannot be successfully converted. For example:
+r-date.p
+
+  /* r-date.p */
+  DEFINE VARIABLE         cnum     AS   CHARACTER       NO-UNDO FORMAT "x(3)".
+  DEFINE VARIABLE         cdate    AS   CHARACTER       NO-UNDO FORMAT "x(16)".
+  DEFINE VARIABLE         iday     AS   INTEGER         NO-UNDO.
+  DEFINE VARIABLE         imon     AS   INTEGER         NO-UNDO.
+  DEFINE VARIABLE         iyr      AS   INTEGER         NO-UNDO.
+  DEFINE VARIABLE         ddate    AS   DATE            NO-UNDO.
+
+  INPUT FROM VALUE(SEARCH("r-date.dat")).
+  REPEAT:
+    SET cnum cdate.
+    ASSIGN
+      imon = INTEGER(SUBSTR(cdate,1,2))
+      iday = INTEGER(SUBSTR(cdate,4,2))
+      iyr   = INTEGER(SUBSTR(cdate,7,2))
+      /* Works for years within 50 of 2000 */
+      iyr   = iyr + (IF (iyr < 50) THEN 2000 ELSE 1900)
+      ddate = DATE(imon,iday,iyr).
+
+    DISPLAY ddate.
+  END.
+  INPUT CLOSE.
+
+
+The following example shows the DATE (string) syntax:
+                                                                                                        
+   r-date2.p
+
+     /* r-date2.p */
+     DEFINE VARIABLE cnum AS CHARACTER NO-UNDO FORMAT "x(3)".
+     DEFINE VARIABLE cdate AS CHARACTER NO-UNDO FORMAT "x(16)".
+     DEFINE VARIABLE ddate AS DATE      NO-UNDO FORMAT "99/99/9999".
+
+     INPUT FROM VALUE(SEARCH("r-date.dat")).
+     REPEAT:
+       SET cnum cdate.
+       ddate = DATE(cdate).
+       DISPLAY ddate.
+     END.
+     INPUT CLOSE.
+
+
+   This example produces the following output. It produces no date for the first example since spaces are not a valid date
+   separator:
+
+     cnum      cdate            ddate
+     ----      ---------------- ----------
+
+      nyd      01 01 86
+      ad       11-28-52                 11/28/1952
+      red      12/08/56                 12/08/1956
+      nsm      10.01.01                 10/01/2001
+      hrl      1/8/1994                 10/08/1994
+
+
+
+   
+
+DATETIME function
+   Converts date and time values, or a character string, into a DATETIME value.
+   Note: If any argument is the Unknown value (?), the result is the Unknown value (?).
+
+   Syntax
+
+     DATETIME ( date-exp[ , mtime-exp ] )
+
+
+
+     DATETIME ( string )
+
+
+
+     DATETIME ( month , day , year , hours , minutes
+            [ , seconds[ , milliseconds]] )
+                                                                                                      
+date-exp
+            An expression whose value is a DATE.
+mtime-exp
+            An expression whose value is an integer representing the number of milliseconds since midnight.
+string
+            A character expression whose value is a string containing a DATETIME. The date portion of the string
+            must have the format specified by the DATE-FORMAT attribute. The time portion must be in a valid
+            time format (HH:MM:SS, and so on).
+month
+            An expression whose value is an integer from 1 to 12, inclusive.
+day
+            An expression whose value is an integer from 1 to the highest valid day of the month.
+year
+            An expression that evaluates to a year.
+hours
+            An expression whose value is an integer from 0 to 23, inclusive.
+minutes
+            An expression whose value is an integer from 0 to 59, inclusive.
+seconds
+            An expression whose value is an integer from 0 to 61, inclusive. The upper limit is 61 for leap seconds.
+milliseconds
+           An expression whose value is an integer from 0 to 999, inclusive.
+
+Example
+Following is an example of using the DATETIME function:
+
+  DEFINE VARIABLE my-datetime AS DATETIME NO-UNDO.
+
+  /* This statement is equivalent to "my-datetime = NOW". */
+  my-datetime = DATETIME(TODAY, MTIME).
+
+
+The following statements result in the same DATETIME value:
+
+  my-datetime = DATETIME(5, 5, 2002, 7, 15, 3).
+  my-datetime = DATETIME("05-05-2002 07:15:03").
+
+
+
+
+
+
+DATETIME-TZ function
+   Converts a date, time, and time zone value, or a character string, into a DATETIME-TZ value.
+   Note: If any argument is the Unknown value (?), the result is the Unknown value (?).
+
+   Syntax
+
+     DATETIME-TZ ( date-exp[ , mtime-exp [ , timezone-exp]] )
+
+
+
+     DATETIME-TZ ( datetime-exp [ , timezone-exp] )
+
+
+
+     DATETIME-TZ ( datetime-tz-exp [ , timezone-exp] )
+
+
+
+     DATETIME-TZ ( month , day , year , hours , minutes
+                 [ , seconds[ , milliseconds[ , timezone-exp]]] )
+
+
+
+     DATETIME-TZ ( string )
+
+
+   date-exp
+               An expression whose value is a DATE.
+   mtime-exp
+               An expression whose value is an integer representing the number of milliseconds since midnight.
+   timezone-exp
+              An expression whose value is an integer representing the time zone offset from Coordinated Universal
+              Time (UTC) in minutes. If not specified the function uses the ABL session's time zone, as specified
+              by the TIMEZONE attribute.
+   datetime-exp
+              An expression whose value is a DATETIME.
+   datetime-tz-exp
+               An expression whose value is a DATETIME-TZ. If the timezone-exp is not specified, then the
+               datetime-tz-exp value is returned as is. If the timezone-exp is specified, then the function returns the
+               datetime-tz-exp value in the timezone-exp time zone.
+   month
+               An expression whose value is an integer from 1 to 12, inclusive.
+   day
+               An expression whose value is an integer from 1 to the highest valid day of the month.
+   year
+               An expression that evaluates to a year.
+   hours
+               An expression whose value is an integer from 0 to 23, inclusive.
+   minutes
+
+              An expression whose value is an integer from 0 to 59, inclusive.
+   seconds
+              An expression whose value is an integer from 0 to 61, inclusive. The upper limit is 61 for leap seconds.
+   milliseconds
+              An expression whose value is an integer from 0 to 999, inclusive.
+   string
+              A character expression whose value is a string containing a DATETIME-TZ. The date portion of the
+              string must have the format specified by the DATE-FORMAT attribute. The time portion must be in
+              a valid time format (HH:MM:SS, and so on). If the string contains a time zone, it must be in +HH:MM
+              format. If the string does not contain a time zone, the DATETIME-TZ inherits the time zone of the
+              machine running the ABL session as specified by the TIMEZONE attribute.
+
+   Example
+   Following is an example of using the DATETIME-TZ function:
+
+     DEFINE VARIABLE my-datetime-tz AS DATETIME-TZ NO-UNDO.
+
+     /* This statement is equivalent to "my-datetime-tz = NOW". */
+     my-datetime-tz = DATETIME-TZ(TODAY, MTIME, TIMEZONE).
+
+
+   The following statements result in the same DATETIME-TZ value (when SESSION:DATE-FORMAT is mdy):
+
+     my-datetime-tz = DATETIME-TZ(5, 5, 2002, 7, 15, 3, 0, -300).
+     my-datetime-tz = DATETIME-TZ("05-05-2002 07:15:03-05:00").
+
+
+
+  
+
+DAY function
+   Evaluates a date expression and returns a day of the month as an INTEGER value from 1 to 31, inclusive.
+
+   Syntax
+
+     DAY ( date )
+
+
+
+     DAY ( datetime-expression )
+
+
+   date
+              An expression whose value is a DATE.
+   datetime-expression
+
+              An expression that evaluates to a DATETIME or DATETIME-TZ. The DAY function returns the day
+              of the month of the date part of the DATETIME or DATETIME-TZ value.
+
+   Example
+   This procedure determines the date one year from a given date, allowing for leap years. You could simply determine a
+   date 365 days later by adding 365 to the d1 variable, but that might not produce the correct result (for example, 1/1/92
+   + 365 days is 12/31/92).
+   r-day.p
+
+     DEFINE    VARIABLE      d1       AS   DATE        NO-UNDO LABEL "Date".
+     DEFINE    VARIABLE      d2       AS   DATE        NO-UNDO LABEL "Same date next year".
+     DEFINE    VARIABLE      d-day    AS   INTEGER     NO-UNDO.
+     DEFINE    VARIABLE      d-mon    AS   INTEGER     NO-UNDO.
+
+     REPEAT:
+       SET d1.
+       d-day = DAY(d1).
+       d-mon = MONTH(d1).
+       IF d-mon = 2 AND d-day = 29 THEN d-day = 28.
+       d2 = DATE(d-mon,d-day,YEAR(d1) + 1).
+       DISPLAY d2.
+     END.
+
+
+ETIME function
+   Returns, as an INT64 value, the time (in milliseconds) elapsed since the ABL session began or since ETIME (elapsed
+   time) was last set to 0. To set ETIME to 0, pass it a positive logical value, such as YES or TRUE.
+
+   Syntax
+
+       ETIME [ ( logical ) ]
+
+
+   logical
+               A logical value, such as YES or TRUE. The default value is NO.
+
+   Examples
+   This procedure displays the time that elapsed since you began your ABL session:
+   r-etime.p
+
+       DISPLAY ETIME.
+
+
+   This procedure sets ETIME to 0, runs a procedure called applhelp.p, and displays the elapsed time, which, in this
+   case, equals the time required to execute applhelp.p:
+ r-etime2.p
+
+       DEFINE VARIABLE a AS INT64 NO-UNDO.
+
+       DO:
+         a = ETIME(yes).
+         RUN applhelp.p.
+         DISPLAY ETIME.
+       END.
+
+
+
+   Notes
+   •   ETIME is accurate to at least one-sixtieth of a second, but accuracy varies among systems.
+   •   ABL resets ETIME during startup, not immediately after you enter the pro command. Therefore, the time returned
+       is only an approximation of the time elapsed since your session began.
+
+
+INTERVAL function
+   Returns the time interval between two DATE, DATETIME, or DATETIME-TZ values as an INT64 value.
+
+   Syntax
+
+       INTERVAL ( datetime1 , datetime2 , interval-unit )
+
+
+   datetime1
+               An expression whose value is a DATE, DATETIME, or DATETIME-TZ.
+   datetime2
+               An expression whose value is a DATE, DATETIME, or DATETIME-TZ.
+   interval-unit
+              A character constant, or a character expression that evaluates to one of the following time units:
+              ‘years', ‘months', ‘weeks', ‘days', 'hours', ‘minutes', ‘seconds' or ‘milliseconds'.
+              These values are case insensitive and might be singular.
+
+   Notes
+   •   This function returns a signed integer value (positive or negative). For example, if datetime1 is less than datetime2,
+       the INTERVAL function returns a negative value.
+   •   If datetime1 or datetime2 is a DATE or DATETIME, the time value defaults to midnight and the time zone value
+       defaults to the session's time zone, respectively.
+   •   You are responsible for managing value overflow, if any.
+   •   When used with 'months', the INTERVAL function does not take into account that not all months have the same
+       number of days. For example, when determining if an interval between dates in two consecutive months is one full
+       month, the function only checks to see if the day in the date of the later month is greater than or equal to the day in
+       the date of the earlier month. Both of the following function calls return '0', i.e., not a full month, in spite of the fact
+       that the second example involves the calendar end dates of March and April.
+
+         INTERVAL(04/29/2009,03/30/2009,"months")
+
+         INTERVAL(04/30/2009,03/31/2009,"months")
+
+
+ISO-DATE function
+   Returns a character representation of a DATE, DATETIME , or DATETIME-TZ that conforms to the ISO 8601 standard
+   for date/time representations.
+   Note: These formats are equivalent to the XML Schema date and dateTime formats.
+
+   Syntax
+
+     ISO-DATE ( expression )
+
+
+   expression
+                An expression that evaluates to a DATE, DATETIME or DATETIME-TZ.
+                The ISO-DATE function returns the character string in the standard ISO format of the data type. The
+                following table lists the standard ISO formats for each data type.
+                Table 44: Standard ISO formats
+
+                Data type                             ISO format
+                DATE                                  YYYY-MM-DD
+                DATETIME                              YYYY-MM-DDTHH:MM:SS.SSS
+                DATETIME-TZ                           YYYY-MM-DDTHH:MM:SS.SSS+HH:MM
+
+
+MONTH function
+   Evaluates a date expression and returns a month INTEGER value from 1 to 12, inclusive.
+
+   Syntax
+
+     MONTH ( date )
+
+
+
+     MONTH ( datetime-expression )
+
+
+   date
+              A date expression where you want a month value.
+   datetime-expression
+              An expression that evaluates to a DATETIME or DATETIME-TZ. The MONTH function returns the
+              month of the date part of the DATETIME or DATETIME-TZ value.
+
+   Example
+   This procedure displays all the Orders that have a PromiseDate in a month that has passed, and whose ShipDate
+   field is the Unknown value (?), which is the initial value of the ShipDate field:
+   r-mon.p
+
+     FOR EACH Order NO-LOCK:
+       IF (MONTH(Order.PromiseDate) < MONTH(TODAY) OR
+          YEAR(Order.PromiseDate) < YEAR(TODAY)) AND Order.ShipDate = ? THEN
+          DISPLAY Order.OrderNum LABEL "Order Num" Order.PO LABEL "P.O. Num"
+            Order.PromiseDate LABEL "Promised By"
+            Order.OrderDate LABEL "Ordered" terms
+            WITH TITLE "These orders are overdue".
+     END.
+
+
+
+MTIME function
+   Returns an INTEGER value representing the time in milliseconds. If the MTIME function has no arguments, it returns
+   the current number of milliseconds since midnight (similar to TIME, which returns seconds since midnight).
+
+   Syntax
+
+     MTIME ( [datetime-expression] )
+
+
+   datetime-expression
+              An expression that evaluates to a DATETIME or DATETIME-TZ. The MTIME function returns the
+              time portion of datetime-expression in milliseconds.
+              If datetime-expression is a DATETIME-TZ, the MTIME function returns the local time relative to the
+              time zone of the DATETIME-TZ value. For Example, a DATETIME-TZ field, fdt, is created in London       
+                (time zone UTC+00:00) with a value of May 5, 2002 at 7:15:03.002 am. MTIME(fdt)
+                returns 26,103,002, regardless of the session's time zone.
+   The MTIME function gets the current system time of the client or server machine that serves as the time source for
+   applications running during the ABL session (specified by the TIME-SOURCE attribute).
+
+
+NOW function
+   Returns the current system date, time, and time zone as a DATETIME-TZ value.
+   The NOW function returns the system date and time of the client or server machine that serves as the time source for
+   applications running during the ABL session (specified by the TIME-SOURCE attribute).
+
+   Syntax
+
+     NOW
+
+   Example
+   Following is an example of using the NOW function:
+
+     DEFINE VARIABLE v-datetime    AS DATETIME    NO-UNDO.
+     DEFINE VARIABLE v-datetime-tz AS DATETIME-TZ NO-UNDO.
+
+     ASSIGN
+       v-datetime    = NOW
+       v-datetime-tz = NOW.
+
+
+TIME function
+   Returns an INTEGER value representing the time as the number of seconds since midnight. Use this function together
+   with the STRING function to produce the time in hours, minutes, and seconds.
+
+   Syntax
+
+     TIME
+
+
+   Example
+   In r-time.p, the timeleft variable is set to the result of the TIME function subtracted from the number of seconds in
+   a day. The procedure translates this value into seconds, minutes, and hours.
+   r-time.p
+
+     DEFINE    VARIABLE     hour          AS   INTEGER    NO-UNDO.
+     DEFINE    VARIABLE     minute        AS   INTEGER    NO-UNDO.
+     DEFINE    VARIABLE     sec           AS   INTEGER    NO-UNDO.
+     DEFINE    VARIABLE     timeleft      AS   INTEGER    NO-UNDO.
+
+     timeleft = (24 * 60 * 60) - TIME.
+
+     /* seconds till next midnight */
+     sec = timeleft MOD 60.
+     timeleft = (timeleft - sec) / 60.
+
+     /* minutes till next midnight */
+     minute = timeleft MOD 60.
+
+     /* hours till next midnight */
+     hour = (timeleft - minute) / 60.
+
+     DISPLAY "Time to midnight:" hour                  minute      sec .
+
+
+   This DISPLAY statement displays the current time.
+   r-time2.p
+
+     DISPLAY STRING(TIME,"HH:MM:SS").
+
+
+TIMEZONE function
+   Returns an INTEGER value representing the time zone offset from Coordinated Universal Time (UTC), in minutes.
+   Use this function together with the STRING function to produce the time in hours, minutes, and seconds.
+   Note: Coordinated Universal Time (UTC) is the current universal standard for time. Local time zone values are relative
+   to UTC. For example, Eastern Standard Time is UTC-05:00.
+
+   Syntax
+
+     TIMEZONE ( [ datetime-tz-expression | char-expression ] )
+
+
+   datetime-tz-expression
+              An expression whose value is a DATETIME-TZ.
+   char-expression
+              A character expression representing the time zone offset. The format of the expression must be
+              +HH:MM.
+              If the TIMEZONE function has no arguments, it returns the client or server machine that serves as the
+              time source for applications running during the ABL session (specified by the TIME-SOURCE
+              attribute).
+
+   Example
+   Following is an example of using the TIMEZONE function:
+
+     DEFINE VARIABLE v-dt-tz AS DATETIME-TZ NO-UNDO
+       INITIAL 2002-05-05T07:15:03.002-05:00.
+     DEFINE VARIABLE v-tz    AS INTEGER     NO-UNDO.
+
+     ASSIGN
+       v-tz = TIMEZONE("+08:00") /* v-tz = 480 */
+       v-tz = TIMEZONE (v-dt-tz). /* v-tz = -300 */
+
+
+TODAY function
+   Returns the current system date.
+
+   Syntax
+
+     TODAY
+
+   Example
+   This procedure prints the date in the first line at the top of each page of a report. Instead of using TODAY in the FORM
+   statement, the procedure uses a variable to hold the date. This ensures that the same date appears on all pages of the
+   report, even if this procedure runs through midnight.
+   r-today.p
+
+     DEFINE VARIABLE rptdate AS DATE NO-UNDO.
+
+     OUTPUT TO PRINTER.
+
+     rptdate = TODAY.
+     FORM HEADER rptdate "Customer List" AT 34
+       "Page" AT 66 PAGE-NUMBER FORMAT ">>>9" SKIP(2)
+       WITH NO-BOX PAGE-TOP.
+     VIEW.
+
+     FOR EACH Customer NO-LOCK:
+       DISPLAY Customer.Name AT 1 Customer.Address AT 31
+          Customer.City + ", " + " " + Customer.State FORMAT "x(35)" AT 31
+          WITH NO-BOX NO-LABELS CENTERED.
+     END.
+
+
+   PAGE-TOP frames are re-evaluated on every new page. Therefore, if you do not use a variable for the date, a different
+   date is displayed on the following page(s) if the report starts before midnight and ends after midnight.
+
+
+WEEKDAY function
+   Evaluates a date expression and returns the day of the week as an INTEGER value from 1 (Sunday) to 7 (Saturday) for
+   that date.
+
+   Syntax
+
+       WEEKDAY ( date )
+
+
+
+       WEEKDAY ( datetime-expression )
+
+
+   date
+               A date expression for which you want the day of the week.
+   datetime-expression
+               An expression that evaluates to a DATETIME or DATETIME-TZ. The WEEKDAY function returns
+               the weekday of the date part of the DATETIME or DATETIME-TZ value.
+
+   Example
+   This procedure tells you the day of the week that you were born and how many days old you are:
+
+   r-wkday.p
+
+     DEFINE VARIABLE birth-date AS DATE      NO-UNDO
+       LABEL "Birth Date".
+     DEFINE VARIABLE daynum     AS INTEGER   NO-UNDO.
+     DEFINE VARIABLE daylist    AS CHARACTER NO-UNDO FORMAT "x(9)"
+       INITIAL "Sunday,Monday,Tuesday,Wednesday,Thursday,Friday,Saturday".
+     DEFINE VARIABLE dayname    AS CHARACTER NO-UNDO
+       LABEL "Day You Were Born".
+     DEFINE VARIABLE daysold    AS INTEGER   NO-UNDO
+       LABEL "Days Since You Were Born".
+
+     REPEAT:
+       SET birth-date.
+       ASSIGN
+         daynum = WEEKDAY(birth-date)
+         dayname = ENTRY(daynum, daylist)
+         daysold = TODAY - birth-date.
+
+       DISPLAY dayname daysold.
+     END.
+
+
+
+YEAR function
+   Evaluates a date expression and returns the year value of that date, including the century, as an INTEGER value.
+
+   Syntax
+
+       YEAR ( date )
+
+
+
+       YEAR ( datetime-expression )
+
+
+   date
+              A date expression for which you want to determine the year.
+   datetime-expression
+              An expression that evaluates to a DATETIME or DATETIME-TZ. The YEAR function returns the
+              year of the date part of the DATETIME or DATETIME-TZ value.
+Example
+This procedure uses the YEAR function to determine if an Order date is in this century or the next, and then uses a
+different display format for each:
+r-year.p
+
+  DEFINE VARIABLE outfmt AS CHARACTER NO-UNDO.
+  DEFINE VARIABLE orddate AS CHARACTER NO-UNDO
+    LABEL "Order Date" FORMAT "x(10)".
+
+  FOR EACH Order NO-LOCK:
+    ASSIGN
+      outfmt = IF YEAR(Order.OrderDate) >= 2000 THEN
+                  "99/99/9999" ELSE "99/99/99"
+      orddate = STRING(Order.OrderDate, outfmt).
+
+    DISPLAY Order.OrderNum orddate Order.Terms.
+  END.
+
+

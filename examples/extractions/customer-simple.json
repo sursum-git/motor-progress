@@ -1,0 +1,31 @@
+{
+  "execution": "sync",
+  "sources": [
+    {
+      "nome": "Customer",
+      "alias": "customer",
+      "campos": "CustNum,Name"
+    }
+  ],
+  "select": [
+    {
+      "sourceAlias": "customer",
+      "field": "CustNum",
+      "outputAlias": "codigo"
+    },
+    {
+      "sourceAlias": "customer",
+      "field": "Name",
+      "outputAlias": "nome"
+    }
+  ],
+  "orderBy": [
+    {
+      "sourceAlias": "customer",
+      "field": "CustNum",
+      "direction": "ASC"
+    }
+  ],
+  "page": 1,
+  "pageSize": 500
+}

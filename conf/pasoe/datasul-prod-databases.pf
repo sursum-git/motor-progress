@@ -1,0 +1,36 @@
+#***************************************************************************
+# Copyright DATASUL S.A. (2010)
+# All rights reserved.
+#
+# Arquivo...............: scripts-8080/datasul-appserver.pf
+# Descricao.............: Parametros de conexao Cliente/Servidor
+# Criado por............: Instalador TOTVS Datasul - GAPE
+# Data de criacao.......: 6-24-2013 19:40:48
+#***************************************************************************
+
+-mmax 16384
+-l 10248
+-s 1024
+-TB 31
+-TM 32
+-d dmy
+-Bt 16384
+-tmpbsize 8
+-Mr 512
+-Mm 16384
+-cpstream ibm850
+-cpterm iso8859-1
+-inp 32000
+-h 50
+-numsep 46
+-numdec 44
+-T c:\temp
+
+-db ems2adt  -ld mgadt    -S 10002 -H 192.168.0.111 -N tcp
+-db emsfnd   -ld emsfnd   -S 10010 -H 192.168.0.111 -N tcp
+-db espec    -ld espec    -S 10012 -H 192.168.0.111 -N tcp
+-db hcm      -ld hcm      -S 10014 -H 192.168.0.111 -N tcp
+-db mdtcrm   -ld mdtcrm   -S 10015 -H 192.168.0.111 -N tcp
+-db ems2med  -ld ems2med  -S 10031 -H 192.168.0.111 -N tcp
+-db ems2cad  -ld ems2cad  -S 10033 -H 192.168.0.111 -N tcp
+-db ems5     -ld ems5     -S 10032 -H 192.168.0.111 -N tcp

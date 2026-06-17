@@ -1,0 +1,611 @@
+{"database":"sports2000","kind":"tables","table":"","updatedAt":"06/06/2026 10:44:56.200-03:00","data":[
+  {
+    "name": "Benefits",
+    "database": "sports2000",
+    "displayName": "sports2000.Benefits",
+    "label": "",
+    "dumpName": "benefits",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "BillTo",
+    "database": "sports2000",
+    "displayName": "sports2000.BillTo",
+    "label": "",
+    "dumpName": "billto",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Bin",
+    "database": "sports2000",
+    "displayName": "sports2000.Bin",
+    "label": "",
+    "dumpName": "bin",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Customer",
+    "database": "sports2000",
+    "displayName": "sports2000.Customer",
+    "label": "",
+    "dumpName": "customer",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Department",
+    "database": "sports2000",
+    "displayName": "sports2000.Department",
+    "label": "",
+    "dumpName": "departme",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Employee",
+    "database": "sports2000",
+    "displayName": "sports2000.Employee",
+    "label": "",
+    "dumpName": "employee",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Family",
+    "database": "sports2000",
+    "displayName": "sports2000.Family",
+    "label": "",
+    "dumpName": "family",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Feedback",
+    "database": "sports2000",
+    "displayName": "sports2000.Feedback",
+    "label": "",
+    "dumpName": "feedback",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "InventoryTrans",
+    "database": "sports2000",
+    "displayName": "sports2000.InventoryTrans",
+    "label": "",
+    "dumpName": "inventor",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Invoice",
+    "database": "sports2000",
+    "displayName": "sports2000.Invoice",
+    "label": "",
+    "dumpName": "invoice",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Item",
+    "database": "sports2000",
+    "displayName": "sports2000.Item",
+    "label": "",
+    "dumpName": "item",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "LocalDefault",
+    "database": "sports2000",
+    "displayName": "sports2000.LocalDefault",
+    "label": "",
+    "dumpName": "localdef",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Order",
+    "database": "sports2000",
+    "displayName": "sports2000.Order",
+    "label": "",
+    "dumpName": "order",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "OrderLine",
+    "database": "sports2000",
+    "displayName": "sports2000.OrderLine",
+    "label": "",
+    "dumpName": "orderlin",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "POLine",
+    "database": "sports2000",
+    "displayName": "sports2000.POLine",
+    "label": "",
+    "dumpName": "poline",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "PurchaseOrder",
+    "database": "sports2000",
+    "displayName": "sports2000.PurchaseOrder",
+    "label": "",
+    "dumpName": "purchase",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "RefCall",
+    "database": "sports2000",
+    "displayName": "sports2000.RefCall",
+    "label": "",
+    "dumpName": "refcall",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Salesrep",
+    "database": "sports2000",
+    "displayName": "sports2000.Salesrep",
+    "label": "",
+    "dumpName": "salesrep",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "ShipTo",
+    "database": "sports2000",
+    "displayName": "sports2000.ShipTo",
+    "label": "",
+    "dumpName": "shipto",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "State",
+    "database": "sports2000",
+    "displayName": "sports2000.State",
+    "label": "",
+    "dumpName": "state",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Supplier",
+    "database": "sports2000",
+    "displayName": "sports2000.Supplier",
+    "label": "",
+    "dumpName": "supplier",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "SupplierItemXref",
+    "database": "sports2000",
+    "displayName": "sports2000.SupplierItemXref",
+    "label": "",
+    "dumpName": "suppitem",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "SursumQueryJob",
+    "database": "sports2000",
+    "displayName": "sports2000.SursumQueryJob",
+    "label": "",
+    "dumpName": "sursumqueryjob",
+    "lastUpdate": "1780617833"
+  },
+  {
+    "name": "SursumQueryJobEvent",
+    "database": "sports2000",
+    "displayName": "sports2000.SursumQueryJobEvent",
+    "label": "",
+    "dumpName": "sursumqueryjobevent",
+    "lastUpdate": "1780617833"
+  },
+  {
+    "name": "SYSBIGINTSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSBIGINTSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCALCTABLE",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSCALCTABLE",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCHARSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSCHARSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCHKCONSTR_NAME_MAP",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSCHKCONSTR_NAME_MAP",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCOLAUTH",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSCOLAUTH",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCOLSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSCOLSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCOLUMNS",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSCOLUMNS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSCOLUMNS_FULL",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSCOLUMNS_FULL",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSDATATYPES",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSDATATYPES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSDATESTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSDATESTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSDBAUTH",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSDBAUTH",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSFLOATSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSFLOATSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSIDXSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSIDXSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSINDEXES",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSINDEXES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSINTSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSINTSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSNCHARSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSNCHARSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSNUMSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSNUMSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSNVARCHARSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSNVARCHARSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSPROCAUTH",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSPROCAUTH",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSPROCBIN",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSPROCBIN",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSPROCCOLUMNS",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSPROCCOLUMNS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSPROCEDURES",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSPROCEDURES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSPROCTEXT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSPROCTEXT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSREALSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSREALSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSROLES",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSROLES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSSCHEMAS",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSSCHEMAS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSSEQAUTH",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSSEQAUTH",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSSEQUENCES",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSSEQUENCES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSSMINTSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSSMINTSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSSQL_PROPERTIES",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSSQL_PROPERTIES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSSYNONYMS",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSSYNONYMS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTABAUTH",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSTABAUTH",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTABLES",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSTABLES",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTABLES_FULL",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSTABLES_FULL",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTBLSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSTBLSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTIMESTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSTIMESTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTINYINTSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSTINYINTSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTRIGCOLS",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSTRIGCOLS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTRIGGER",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSTRIGGER",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTSSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSTSSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSTSTZSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSTSTZSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSVARCHARSTAT",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSVARCHARSTAT",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSVIEWS",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSVIEWS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYSVIEWS_NAME_MAP",
+    "database": "sports2000",
+    "displayName": "sports2000.SYSVIEWS_NAME_MAP",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYS_CHKCOL_USAGE",
+    "database": "sports2000",
+    "displayName": "sports2000.SYS_CHKCOL_USAGE",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYS_CHK_CONSTRS",
+    "database": "sports2000",
+    "displayName": "sports2000.SYS_CHK_CONSTRS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYS_KEYCOL_USAGE",
+    "database": "sports2000",
+    "displayName": "sports2000.SYS_KEYCOL_USAGE",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYS_REF_CONSTRS",
+    "database": "sports2000",
+    "displayName": "sports2000.SYS_REF_CONSTRS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "SYS_TBL_CONSTRS",
+    "database": "sports2000",
+    "displayName": "sports2000.SYS_TBL_CONSTRS",
+    "label": "",
+    "dumpName": "",
+    "lastUpdate": "463860476"
+  },
+  {
+    "name": "TimeSheet",
+    "database": "sports2000",
+    "displayName": "sports2000.TimeSheet",
+    "label": "",
+    "dumpName": "timeshee",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Vacation",
+    "database": "sports2000",
+    "displayName": "sports2000.Vacation",
+    "label": "",
+    "dumpName": "vacation",
+    "lastUpdate": "1703173634"
+  },
+  {
+    "name": "Warehouse",
+    "database": "sports2000",
+    "displayName": "sports2000.Warehouse",
+    "label": "",
+    "dumpName": "warehous",
+    "lastUpdate": "1703173634"
+  }
+]
+}

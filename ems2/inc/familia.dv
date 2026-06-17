@@ -1,0 +1,12 @@
+/*****************************************************************************
+** familia.dv
+** Arquivo: familia
+*****************************************************************************/
+
+not (can-find (first item
+                     where item.fm-codigo = familia.fm-codigo)) and
+not (can-find (first estr-modelo
+                     where estr-modelo.fm-codigo = familia.fm-codigo))
+
+/* fim */
+

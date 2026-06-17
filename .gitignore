@@ -1,0 +1,54 @@
+# OpenEdge build artifacts
+*.r
+*.pl
+*.protrace
+*.lg
+
+# Local database files
+db/
+db/*.db
+db/*.d1
+db/*.d2
+db/*.b1
+db/*.b2
+db/*.lg
+db/*.lk
+
+# Generated output and benchmarks
+output/
+examples/responses/
+temp/
+test-results/
+node_modules/
+progress_pl_extracted/
+
+# Local tool/runtime migration leftovers
+.codex-tool-check.tmp
+.codex.migrado-motor-progress/
+.git.migrado-motor-progress/
+
+# Local PASOE instance runtime
+pasoe/sursum-pasoe-dev/
+pasoe/sursum-pasoe-dev/logs/
+pasoe/sursum-pasoe-dev/temp/
+pasoe/sursum-pasoe-dev/work/
+pasoe/sursum-pasoe-dev/bin/
+pasoe/sursum-pasoe-dev/conf/
+pasoe/sursum-pasoe-dev/common/
+pasoe/sursum-pasoe-dev/lib/
+pasoe/sursum-pasoe-dev/webapps/
+
+# Editor/system noise
+.DS_Store
+Thumbs.db
+
+# Local scratch state
+db/*.lic
+sursum-conf/*.sqlite
+sursum-conf/*.sqlite-shm
+sursum-conf/*.sqlite-wal
+web/sursum-conf/*.sqlite
+web/sursum-conf/*.sqlite-shm
+web/sursum-conf/*.sqlite-wal
+sursum-conf/auth.json
+web/sursum-conf/auth.json

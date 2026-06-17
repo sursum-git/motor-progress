@@ -1,0 +1,798 @@
+DEFINE VARIABLE statement
+   Defines a variable for use in one or more procedures, a variable data member of a class for use in a single class or class
+   hierarchy, or by other classes and procedures, or a variable data element for use within a single class-based method.
+   The VAR statement is a shorthand notation for the DEFINE VARIABLE statement and may be used for NO-UNDO
+   variables. For more information, see the VAR statement on page 1041 in the ABL Reference.
+
+Syntax
+
+  DEFINE {[[ NEW [ GLOBAL ]] SHARED ]|
+            [ PRIVATE | PACKAGE-PRIVATE | PROTECTED | PACKAGE-PROTECTED | PUBLIC
+   ]
+             [ STATIC ][ SERIALIZABLE | NON-SERIALIZABLE ]}
+     VARIABLE variable-name
+     {{   AS primitive-type-name
+          | AS [ CLASS ]{object-type-name}
+          | LIKE field       }[ EXTENT [constant]]}
+     [ SERIALIZE-NAME serialize-name ]
+     [ BGCOLOR expression]
+     [ COLUMN-LABEL label]
+     [ CONTEXT-HELP-ID expression]
+     [ DCOLOR expression]
+     [ DECIMALS n]
+     [ DROP-TARGET ]
+     [ FONT expression]
+     [ FGCOLOR expression]
+     [ FORMAT string]
+     [ INITIAL
+         { constant |{[ constant[ , constant]...]}}]
+     [ LABEL string[ , string]...]
+     [ MOUSE-POINTER expression]
+     [ NO-UNDO ]
+     [[ NOT ] CASE-SENSITIVE ]
+     [ PFCOLOR expression]
+     {[ view-as-phrase ]}
+     {[ trigger-phrase ]}
+
+
+NEW SHARED VARIABLE variable-name
+       Defines and identifies a variable to be shared by a procedure called directly or indirectly by the current
+       procedure. The called procedure must name the same variable in a DEFINE SHARED VARIABLE
+       statement.
+NEW GLOBAL SHARED VARIABLE variable-name
+       Defines and identifies a variable that can be used by any procedure that names that variable using the
+       DEFINE SHARED VARIABLE statement. The value of a global shared variable remains available
+       throughout an ABL session.
+SHARED VARIABLE variable-name
+       Defines and identifies a variable that was created by another procedure that used the DEFINE NEW
+       SHARED VARIABLE or DEFINE NEW GLOBAL SHARED VARIABLE statement.
+[PRIVATE|PACKAGE-PRIVATE|PROTECTED|PACKAGE-PROTECTED|PUBLIC] [STATIC]
+[SERIALIZABLE|NON-SERIALIZABLE] VARIABLE variable-name
+        Defines and identifies a variable as a data member of a class, and optionally specifies an access mode
+        (PRIVATE, PACKAGE-PRIVATE, PROTECTED, PACKAGE-PROTECTED, or PUBLIC) and
+        scope (instance or STATIC) for that data member, as well as whether or not the variable will participate
+        in serialization (SERIALIZABLE or NON-SERIALIZABLE).
+           You cannot specify these options when defining a variable as a data element of a method (including
+           constructors, destructors, and property accessors) or procedure.
+           Note: The specified options are applicable only when defining a data member for a class in a class
+           definition (.cls) file. The access mode modifier and the STATIC modifier can appear in either order,
+           e.g., DEFINE STATIC PUBLIC VARIABLE myVariable... is valid syntax. Note also that
+           you cannot override the definition of a given variable data member in a class hierarchy.
+           PRIVATE variable data members can be accessed by the defining class. An instance can access a
+           private data member of another instance if both instances are from the same class.
+PACKAGE-PRIVATE variable data members can be accessed from within the class and any class
+within its package. PROTECTED variable data members can be accessed by the defining class and
+any of its derived classes. PACKAGE-PROTECTED variable data members can be accessed from
+within the class, any class within its package, and from within any subclass that inherits the class.
+PUBLIC variable data members can be accessed from any code (in a class or a procedure) that has
+access to a class instance.
+The default access mode is PRIVATE.
+A variable defined with the STATIC option is a static data member of the class type for which it is
+defined and is scoped to the ABL session where it is referenced. ABL creates one copy of the specified
+class static variable on first reference to the class type, and ABL creates only one such copy for any
+number of instances of the class that you create. You can reference an accessible static variable data
+member in any piece of code.
+Without the STATIC option, ABL creates an instance variable data member that is scoped to a single
+instance of the class where it is defined. ABL creates one copy of the specified instance variable for
+each such class instance that you create. You can reference any public instance variable in any procedure,
+or in any instance or static method defined inside or outside of the class where the instance variable
+is defined. Any static method can reference the public instance variable only using an object reference
+to a class instance that defines the variable as a data member. If the referencing static method is defined
+in the same class as the public instance variable, the class must instantiate itself in order to have access
+to an instance reference.
+
+Note: Members of a class are grouped into six namespaces, including buffers/temp-tables, methods,
+variables/properties/events, ProDataSets, queries, and data-sources. Variables, properties, and events
+defined as members of a class share the same namespace. There can be only one class member in this
+namespace with a given name (not counting abstract member overrides).
+Class-based objects that are defined as serializable can be passed as parameters in remotes call between the application server and
+ABL clients and can be serialized to binary or JSON format. By default, both passing a class as a
+parameter and serializing an object to binary via the Progress.IO.BinarySerializer class
+include all data members regardless of access mode. However, for JSON serialization via
+Progress.IO.JsonSerializer, only public data members are serialized. To include other
+access modes during JSON serialization, SERIALIZABLE must be added to the definition. See
+Serialize( ) method (JsonSerializer) for more information.
+Use the NON-SERIALIZABLE option to exclude a given variable from the serialization process via
+the Progress.IO.BinarySerializer or Progress.IO.JsonSerializer class. A
+variable marked as NON-SERIALIZABLE is assigned its initial value when the class is deserialized.
+You can also use the NON-SERIALIZABLE option to make a class that otherwise would not be
+serializable because one or more of its members. For example, if a variable itself is a class-based
+object that is not serializable, adding the NON-SERIALIZABLE keyword to that variable will allow
+the class that contains it to be defined as SERIALIZABLE.
+Note: Use the SERIALIZABLE and NON-SERIALIZABLE options only with instance variables.
+These options are not for use with variables defined as STATIC or as part of an interface.
+If variable-name is an ABL reserved keyword, you must include the access mode in its definition.
+You must also use the THIS-OBJECT system reference on page 997 or Type-name syntax on page 1011
+to access the variable data member. 
+
+Note: If the data member is defined in a class that is derived from a .NET class, other restrictions on
+variable-name apply. 
+VARIABLE variable-name
+       Defines and identifies a variable whose value you can access only within the current procedure, method
+       of a class (including constructors, destructors, and property accessors), or as a PRIVATE data member
+       of a class.
+AS primitive-type-name
+           Specifies a built-in primitive type for the variable you are defining. The built-in data type
+           (primitive-type-name) can be one of the following:
+
+               CHARACTER | COM-HANDLE | DATE | DATETIME | DATETIME-TZ |
+               DECIMAL
+               | HANDLE | INT64 | INTEGER | LOGICAL | LONGCHAR | MEMPTR |
+               RAW
+               | RECID | ROWID
+
+
+AS [ CLASS ]{object-type-name}
+         Defines the variable as an object reference with the data type of a class or interface. The default value
+         of the variable is the Unknown value (?). You cannot assign an initial value using the INITIAL option.
+         object-type-name
+         Specifies the type name of an ABL or .NET class or interface. Specify an object type name using the
+         syntax described in the Type-name syntax on page 1011 reference entry. With an appropriate USING
+         statement on page 1035, you can also specify a class or interface name alone, without the qualifying
+         package or namespace.
+             You cannot directly specify the type name of a .NET mapped object type (such as System.Int32). To
+             define a variable that matches a .NET mapped type, you must define it as the corresponding ABL
+             primitive type (primitive-type-name).
+             CLASS
+             If the specified class or interface type name conflicts with an abbreviation for a built-in primitive type
+             name, such as INT for INTEGER, you must specify the CLASS keyword.
+             
+LIKE field
+             Indicates the name of the variable, database field, temp-table field, or work table field whose
+             characteristics you want to use for the variable you are defining. If you name a variable with this
+             option, you must have defined that variable earlier in the procedure. You can override the format,
+             label, initial value, decimals, and extent of the variable or database field by using the FORMAT,
+             LABEL, COLUMN-LABEL, INITIAL, DECIMALS, EXTENT, and VIEW-AS options. If you do
+             not use these options, the variable takes on the characteristics of the variable or database field you
+             name.
+             If field has help and validate options defined, the variable you are defining does not inherit those
+             characteristics.
+             If you reference a database field in a LIKE option in a DEFINE VARIABLE statement, DEFINE
+             TEMP-TABLE statement, DEFINE WORK-TABLE statement, or format phrase, the database
+             containing the referenced field must be connected at compile time but not necessarily at run time.
+             Therefore, use the LIKE option with caution.
+
+EXTENT [constant ]           Defines the variable as an array of data elements, where the element data type is specified by the AS
+           primitive-type-name option, the LIKE field option, or the AS object-type-name option. This option
+           can specify an array variable as either determinate (has a defined number of elements) or indeterminate
+           (has an undefined number of elements). To define a determinate array variable, specify the EXTENT
+           option with the constant argument. This optional argument is an integer value that represents the
+           number of data elements in the array variable. To define an indeterminate array variable, specify the
+           EXTENT option without the constant argument.
+           The EXTENT is part of the variable data type. For more information, see the Type-name syntax on
+           page 1011 reference entry.
+           An indeterminate array variable can be in one of two states: with a size (fixed) or without a size
+           (unfixed). An indeterminate array variable does not have a size when first defined, unless initial values
+           are provided.. You can set the size of an indeterminate array variable by:
+           •   Initializing the array values when you define the variable, using the INITIAL option
+           •   Setting the number of elements in the array variable using the EXTENT statement on page 514
+           •   Assigning a sized array to the indeterminate array, setting the size to the size of the source array
+           •   Passing array parameters to a procedure, user-defined function, or class-based method, so that the
+               indeterminate array variable is the target for the passing of a determinate array, setting the size to
+               the size of the determinate array
+           If you want to define a variable that is like an array variable or field, using the LIKE option, but if you
+           do not want the variable to be an array, you can use EXTENT 0 to indicate a non-array field.
+           If you are using the AS option and you do not use the EXTENT option (or you specify constant as 0),
+           the variable is not an array variable. If you are using the LIKE field option and you do not use the
+           EXTENT option, the variable uses the extent defined for the database field you name (if any).
+SERIALIZE-NAME serialize-name
+        An optional CHARACTER constant that specifies the name of the variable as it should appear when
+        serialized into JSON. The default is variable-name. Use this option when the serialized name contains
+        invalid characters for an ABL name, is an ABL keyword, or an invalid JSON property name.
+           This option is only valid for class members, and it cannot be used if the variable is defined as
+           NON-SERIALIZABLE or the class that contains it is not defined as SERIALIZABLE.
+BGCOLOR expression
+      Specifies a background color for the variable in graphical interfaces. This option is ignored in character
+      interfaces.
+[ NOT ] CASE-SENSITIVE
+          CASE-SENSITIVE indicates that the value stored for a character variable is case sensitive, and that
+          all comparisons operations involving the variable are case sensitive. If you do not use this option, ABL
+          comparisons are usually case insensitive. If you define a variable LIKE another field of variable, the
+          new variable inherits case sensitivity. Use [NOT] CASE-SENSITIVE to override this default.
+COLUMN-LABEL label
+      Names the label you want to display above the variable data in a frame that uses column labels. If you
+      want the label to use more than one line (a stacked label), use an exclamation point (!) in the label to
+      indicate where to break the line. For example:
+            r-collbl.p
+
+              DEFINE VARIABLE credit-percent AS INTEGER NO-UNDO
+                COLUMN-LABEL "Enter   !percentage!increase ".
+
+              FOR EACH Customer:
+                DISPLAY Customer.Name Customer.CreditLimit.
+                SET credit-percent.
+                Customer.CreditLimit = (Customer.CreditLimit *
+                   (credit-percent / 100)) + Customer.CreditLimit.
+                DISPLAY Customer.CreditLimit @ new-credit LIKE
+              Customer.CreditLimit
+                   LABEL "New max cred".
+              END.
+
+
+            If you want to use the exclamation point (!) as one of the characters in a column label, use two
+            exclamation points (!!).
+            The AVM does not display column labels if you use the SIDE-LABELS or NO-LABELS options with
+            the Frame phrase.
+            If you define a variable to be LIKE a field, and that field has a column label in the Data Dictionary,
+            the variable inherits that column label.
+CONTEXT-HELP-ID expression
+       An integer value that specifies the identifier of the help topic for this variable in a help file specified
+       at the session, window or dialog box level using the CONTEXT-HELP-FILE attribute.
+DCOLOR expression
+       Specifies the display color for the variable in character interfaces. This option is ignored in graphical
+       interfaces.
+DECIMALS n
+       Specifies the number of decimal places to store for a DECIMAL variable, where n is an integer constant.
+       When you define a variable AS DECIMAL, ABL automatically stores up to 10 decimal places for the
+       value of that variable. Use the DECIMALS option to store a smaller number of decimal places. The
+       DECIMALS option has nothing to do with the display format of the variable, just the storage format.
+            If you use the LIKE option to name a field whose definition you want to use to define a variable, ABL
+            uses the number of decimals in the field definition to determine how many decimal places to store for
+            the variable.
+            Note: The XML-WRITE() method on a temp-table, temp-table buffer, or ProDataSet object also uses
+            the DECIMALS attribute to determine the number of decimal places to export to the XML Document.
+DROP-TARGET
+       Indicates whether you want to be able to drop a file onto the object.
+            The following example shows setting the DROP-TARGET option for a variable:
+
+              DEFINE VARIABLE fill-in-1 AS CHARACTER DROP-TARGET.
+
+
+FGCOLOR expression
+       Specifies a foreground color for the variable in graphical interfaces. This option is ignored in character
+       interfaces.
+FONT expression
+         Specifies a font for the variable.
+FORMAT string
+       The data format of the variable you define. If you use the AS primitive-type-name option and you do
+       not use FORMAT string, the variable uses the default format for its data type. The following table
+       lists the default data formats for the data types.
+       Table 35: Default display formats
+
+            Data type                                     Default display format
+            BLOB                                          (See note)
+            CHARACTER                                     x(8)
+            CLASS                                         N/A (See note)
+            CLOB                                          (See note)
+            COM-HANDLE                                    >>>>>>9
+            DATE                                          99/99/99
+            DATETIME                                      99/99/9999 HH:MM:SS.SSS
+            DATETIME-TZ                                   99/99/9999 HH:MM:SS.SSS+HH:MM
+            DECIMAL                                       ->>,>>9.99
+            HANDLE                                        >>>>>>9
+            INT64                                         ->,>>>,>>9
+            INTEGER                                       ->,>>>,>>9
+            LOGICAL                                       yes/no
+            LONGCHAR                                      (See note)
+            MEMPTR                                        (See note)
+            RAW                                           (See note)
+            RECID                                         >>>>>>9
+            ROWID                                         (See note)
+
+
+            Note: You cannot display a BLOB, CLOB, MEMPTR, RAW, or ROWID value directly. However,
+            you can convert a MEMPTR, RAW, or ROWID value to a character string representation using the
+            STRING function and display the result. You can also convert a BLOB to a MEMPTR, and then use
+            the STRING function. A MEMPTR or RAW value converts to decimal integer string. A ROWID
+            value converts to a hexadecimal string, "0xhexdigits", where hexdigits is any number of characters
+            "0" through "9" and "A" through "F". You can only display a LONGCHAR using the VIEW-AS
+            EDITOR LARGE phrase. You can display a CLOB field by converting it to a LONGCHAR.
+            Note: If you display a class instance using the MESSAGE statement on page 694, ABL automatically
+            invokes the ToString( ) method (Object) (provided by the Progress.Lang.Object class) on the object
+            reference. To display a class instance in a frame (for example, using the DISPLAY statement on page
+            450), you must first explicitly convert the object reference to a displayable type using the INT64 function
+            on page 641, the INTEGER function on page 643, the STRING function on page 968, or the ToString(
+            ) method (Object).
+            See Develop ABL Applications for more information on data formatting.
+            If you use the LIKE field option and you do not use the FORMAT string option, the variable uses the
+            format defined for the database field you name. You must enclose the string in quotes.
+INITIAL {constant| [ constant[ , constant] . . . ] }
+The initial value of the variable you want to define. If you use the AS primitive-type-name option and
+you do not use the INITIAL constant option, the default is the initial value for the data type of the
+variable or array element.
+When you define an array variable, you can supply initial values for each element in the array. For
+example:
+
+  DEFINE VARIABLE array-var AS CHARACTER NO-UNDO EXTENT 3
+    INITIAL ["Add","Delete","Update"].
+
+
+If you do not supply enough values to fill up the elements of the array, the AVM puts the last value
+you named into the remaining elements of the array. If you supply too many values, the AVM raises
+an error.
+If you define a variable as an indeterminate array, and you supply initial values for elements in the
+array, the AVM sets the size to the number of elements in the array. You can then use the array as you
+would a determinate array, but you can also change its size later, if desired.
+You can also use the EXTENT statement to set or reset the number of elements in an indeterminate
+array variable. For more information, see the EXTENT statement on page 514 reference entry.
+The following table lists the default initial values for the various variable data types.
+Table 36: Default variable initial values
+
+Data type                               Default initial value
+CHARACTER                               "" (an empty string)
+CLASS                                   Unknown value (?)
+                                        (See note)
+
+COM-HANDLE                              Unknown value (?)
+                                        (See note)
+
+DATE                                    Unknown value (?) (displays as blanks)
+DATETIME                                Unknown value (?)
+DATETIME-TZ                             Unknown value (?)
+DECIMAL                                 0
+HANDLE                                  Unknown value (?)
+                                        (See note)
+
+INT64                                   0
+INTEGER                                 0
+LOGICAL                                 no
+LONGCHAR                                Unknown value (?)
+MEMPTR                                  A zero-length sequence of bytes
+                                        (See note)
+
+RAW                                     A zero-length sequence of bytes
+                                        (See note)
+
+
+            Data type                              Default initial value
+            RECID                                  Unknown value (?)
+            ROWID                                  Unknown value (?)
+                                                   (See note)
+
+
+            Note: You cannot use the INITIAL option of the variable definition to specify an initial value for
+            CLASS, COM-HANDLE, HANDLE, MEMPTR, RAW, and ROWID data types.
+            If you are using the LIKE field option and you do not use the INITIAL constant option, the variable
+            uses the initial value of the field or variable. In the DEFINE SHARED VARIABLE statement, the
+            INITIAL option has no effect. However, the DEFINE NEW SHARED VARIABLE, the DEFINE
+            NEW SHARED TEMP-TABLE, and the DEFINE NEW WORK-TABLE statements work with the
+            INITIAL option.
+LABEL string[ , string]...
+         The label you want to use when the variable is displayed. If you use the AS primitive-type-name option
+         and you do not use the LABEL string option, the default label is the variable name. If you use the
+         LIKE field option and you do not use the LABEL string option, the variable uses the label of the field
+         or variable you name. You must enclose the string in quotes.
+            You can specify a label for each element in a determinate array variable. You cannot specify a label
+            for elements in an indeterminate array variable.
+            In MS-Windows, you can designate a character within each label as a navigation mnemonic. Precede
+            the character with an ampersand (&). When the variable is displayed with side labels, the mnemonic
+            is underlined. The user can move focus to the variable by pressing ALT and the underlined letter.
+            Navigation mnemonics operate only when you use side labels. If you specify more than one widget
+            with the same mnemonic, the AVM transfers focus to each of these in tab order when you make a
+            selection.
+            Ending a label with an ampersand might produce unwanted behavior. To include a literal ampersand
+            within a label, specify a double ampersand (&&).
+MOUSE-POINTER expression
+       Specifies the default mouse pointer for the variable.
+NO-UNDO
+       When the value of a variable is changed during a transaction and the transaction is undone, the AVM
+       restores the value of the variable to its prior value. If you do not want, or if you do not need, the value
+       of a variable to be undone even when it has been changed during a transaction, use the NO-UNDO
+       option with the DEFINE VARIABLE statement. NO-UNDO variables are more efficient; use this
+       option whenever possible.
+            Specifying NO-UNDO for a variable is especially useful if you want to indicate an error condition as
+            the value of the variable, perform an UNDO, and later take some action based on that error condition.
+            If one variable is defined LIKE another that is NO-UNDO, the second variable will be NO-UNDO
+            only if you specify NO-UNDO in the definition of the second variable.
+PFCOLOR expression
+       Specifies the prompt-for color for the variable in character interfaces. This option is ignored in graphical
+       interfaces.
+view-as-phrase
+            Specifies the default data representation widget for this variable. Following is the syntax for the
+            view-as-phrase:
+
+              VIEW-AS
+                {     combo-box-phrase
+                   | editor-phrase
+                   | FILL-IN
+                        [ NATIVE ]
+                        [size-phrase]
+                        [ TOOLTIP tooltip]
+                   | radio-set-phrase
+                   | selection-list-phrase
+                   | slider-phrase
+                   | TEXT
+                        [size-phrase]
+                        [ TOOLTIP tooltip]
+                   | TOGGLE-BOX
+                        [size-phrase]
+                        [ TOOLTIP tooltip]
+                }
+
+
+           
+trigger-phrase
+           Defines triggers for the data representation widget specified in the view-as-phrase. Following is the
+           syntax for the trigger-phrase:
+
+              TRIGGERS:
+                { ON event-list[ ANYWHERE ]
+                     {    trigger-block
+                        | PERSISTENT RUN proc-name
+                            [ IN handle]
+                            [ ( input-parameters ) ]
+                     }
+                }...
+              END [ TRIGGERS ]
+
+
+           
+
+Example
+The r-dfvar.p procedure defines two variables, del and nrecs to be shared with procedure r-dfvar2.p. The
+del variable passes information to r-dfvar2.p, while nrecs passes information back to r-dfvar.p from
+r-dfvar2.p.
+r-dfvar.p
+
+  DEFINE NEW SHARED VARIABLE del   AS LOGICAL NO-UNDO.
+  DEFINE NEW SHARED VARIABLE nrecs AS INTEGER NO-UNDO.
+
+  MESSAGE "Do you want to delete the orders being printed (y/n)?" UPDATE del.
+  RUN r-dfvar2.p.
+  IF del THEN
+    MESSAGE nrecs "orders have been shipped and were deleted".
+  ELSE
+    MESSAGE nrecs "orders have been shipped".
+ 
+r-dfvar2.p
+
+  DEFINE SHARED VARIABLE del   AS LOGICAL NO-UNDO.
+  DEFINE SHARED VARIABLE nrecs AS INTEGER NO-UNDO.
+
+  OUTPUT TO PRINTER.
+  FOR EACH Order WHERE Order.ShipDate <> ?:
+     nrecs = nrecs + 1.
+     FOR EACH OrderLine OF Order:
+       DISPLAY OrderLine.OrderNum OrderLine.LineNum OrderLine.Qty
+          OrderLine.Price.
+          IF del THEN DELETE OrderLine.
+     END.
+     IF del THEN DELETE Order.
+  END.
+  OUTPUT CLOSE.
+
+
+The following example is a startup procedure. It defines a new global variable with the initial value TRUE and uses that
+variable to determine whether to run an initialization procedure, r-init.p, that displays sign-on messages. Then the
+global variable first-time is set to FALSE. If you restart this procedure during the same session (pressed STOP),
+r-init.p does not run again.
+The procedure also defines the variable selection for entering menu choices within this procedure:
+r-dfvar3.p
+
+  DEFINE NEW GLOBAL SHARED VARIABLE first-time AS LOGICAL NO-UNDO INITIAL TRUE.
+  DEFINE VARIABLE selection AS INTEGER NO-UNDO FORMAT "9" LABEL "Selection".
+
+  IF first-time THEN DO:
+    RUN r-init.p.
+    first-time = FALSE.
+  END.
+
+  FORM
+    "        MAIN MENU          " SKIP(1)
+    "1 -     Accounts Payable   " SKIP
+    "2 -     Accounts Receivable"
+    WITH     CENTERED ROW 5 FRAME menu.
+
+  REPEAT:
+    VIEW FRAME menu.
+    UPDATE selection AUTO-RETURN WITH FRAME sel CENTERED ROW 12 SIDE-LABELS.
+    IF selection = 1 THEN DO:
+       HIDE FRAME menu.
+       HIDE FRAME sel.
+       RUN apmenu.p.
+    END.
+    ELSE IF selection = 2 THEN DO:
+       HIDE FRAME menu.
+       HIDE FRAME sel.
+       RUN armenu.p.
+    END.
+    ELSE DO:
+       MESSAGE "Invalid selection. Try again".
+       UNDO, RETRY.
+    END.
+  END.
+
+The following procedure finds the day of the week of a date the user enters. The procedure defines an array with seven
+elements and uses the INITIAL option to define the initial value of each element in the array.
+r-dfvar4.p
+
+    DEFINE VARIABLE dow AS CHARACTER NO-UNDO FORMAT "x(9)" EXTENT 7
+      INITIAL ["Sunday", "Monday", "Tuesday", "Wednesday",
+      "Thursday", "Friday", "Saturday"].
+
+    DEFINE VARIABLE dob AS DATE NO-UNDO INITIAL TODAY.
+
+    REPEAT WITH SIDE-LABELS 1 DOWN CENTERED ROW 10 TITLE "Date of Birth":
+      DISPLAY SKIP(1).
+      UPDATE dob LABEL "Enter date of birth".
+      DISPLAY dow[WEEKDAY(dob)] LABEL "It was a".
+    END.
+
+
+The following example defines a variable with a VIEW-AS phrase and a Trigger phrase:
+r-defsel.p
+
+    DEFINE VARIABLE ix     AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE clubs AS CHARACTER NO-UNDO
+      VIEW-AS SELECTION-LIST SIZE 20 BY 5 MULTIPLE SCROLLBAR-VERTICAL NO-DRAG
+        LIST-ITEMS "One Iron", "Two Iron", "Three Iron", "Four Iron",
+                    "Five Iron", "Six Iron", "Seven Iron", "Eight Iron",
+                    "Nine Iron", "Pitching Wedge"
+      LABEL "Golf Clubs Available"
+      TRIGGERS:
+        ON GO DO:
+          IF SELF:SCREEN-VALUE <> "" THEN
+          DO ix = 1 TO NUM-ENTRIES(SELF:SCREEN-VALUE) :
+             DISPLAY ENTRY(ix, SELF:SCREEN-VALUE) FORMAT "X(16)"
+               WITH FRAME clubs-sel CENTERED
+                 NUM-ENTRIES(SELF:SCREEN-VALUE) + 1 DOWN
+                 TITLE "Clubs Selected" USE-TEXT.
+             DOWN 1 WITH FRAME clubs-sel.
+          END.
+        END.
+      END TRIGGERS.
+
+    ENABLE clubs WITH FRAME get-info TITLE "Select the Desired Club(s)".
+    WAIT-FOR WINDOW-CLOSE OF CURRENT-WINDOW.
+
+
+For examples of instance and static variable data member definitions, see the descriptions of r-CustObj.cls,
+r-CustObjStatic.cls, and r-CustObjAbstract.cls in the CLASS statement on page 132 reference entry.
+
+Notes
+•   You can use the DEFINE VARIABLE statement anywhere. However, all references to the variable must appear
+    after the DEFINE VARIABLE statement that defines it.
+•   You cannot define a variable as a BLOB or CLOB field. You can define a variable using their MEMPTR and
+    LONGCHAR counterparts, respectively.
+•   A HANDLE variable defined as a static data member can reference the handle of any compile-time defined (static)
+    or run-time defined (dynamic) handle-based object, such as a button, temp-table, or ProDataSet.
+•   Defining a LONGCHAR variable supports the same options as a CHARACTER variable, except for the FORMAT
+    option and all VIEW-AS options except VIEW-AS EDITOR LARGE.
+   •   You should use the CASE-SENSITIVE option only when it is important to distinguish between uppercase and
+       lowercase values entered for a character variable. For example, use CASE-SENSITIVE to define a variable for a
+       part number that contains mixed uppercase and lowercase characters.
+   •   After you use the DEFINE NEW GLOBAL SHARED VARIABLE statement to create a global shared variable, use
+       the DEFINE SHARED VARIABLE statements in other procedures to access that variable.
+   •   You cannot define the same global variable twice in the same ABL session. If you try, and the definitions of the two
+       variables do not match, the AVM raises an error. If the definitions of the two variables match, the AVM disregards
+       the second variable you tried to define (if you are rerunning a startup procedure).
+   •   Changes made to variables when there is no active transaction are not undone when a block is undone.
+   •   When a procedure names and uses a shared variable:
+       •   The AVM searches through the calling chain of procedures looking for the most recent DEFINE NEW SHARED
+           VARIABLE statement that created that shared variable.
+       •   If no DEFINE NEW SHARED VARIABLE statement is found, the AVM searches for a DEFINE NEW GLOBAL
+           SHARED VARIABLE statement that created the shared variable.
+       •   If the procedure that names the shared variable is called from a trigger or internal procedure that is part of a
+           persistent procedure context, the persistent context is also checked for the most recent DEFINE NEW SHARED
+           VARIABLE or DEFINE NEW GLOBAL SHARED VARIABLE statement at the point in the calling chain where
+           the trigger or internal procedure is executed.
+       •   If the AVM finds one of these statements, it does not search any further for other statements that might have
+           defined the same variable as NEW or NEW GLOBAL.
+   •   The AVM checks the definition of a SHARED variable against that of the corresponding NEW SHARED or NEW
+       GLOBAL SHARED variable. The data types and array extents must match. If the FORMAT, LABEL and DECIMALS
+       specifications are not the same, each procedure uses its individual specification. The DEFINE NEW SHARED
+       statement determines if a shared variable is NO-UNDO.
+   •   A SHARED variable remains in scope for an instance of a persistent procedure until the instance is deleted. This is
+       true even if the original procedure that defined the variable as NEW SHARED goes out of scope while the procedure
+       instance remains persistent.
+       If a trigger or internal procedure of a persistent procedure executes an external subprocedure that defines a SHARED
+       variable, the AVM includes the persistent procedure in the resolution of the corresponding NEW SHARED variable
+       as though the procedure were on the procedure call stack.
+   •   If an application with several procedures defines a NEW SHARED variable with the same name in each procedure,
+       the AVM creates a different instance of the NEW SHARED variable in each procedure. This behavior supports
+       recursive procedures and bill-of-materials applications.
+   •   You can neither define a SHARED or NEW SHARED variable, nor access such a variable defined in a procedure
+       file, from within a class definition (.cls) file. If you do, ABL generates a compilation error. However, multiple
+       procedure (.p) files can define and access an object reference variable for a class instance as a NEW SHARED or
+       NEW GLOBAL SHARED variable. In this case, the object reference variables must be defined for the same class
+       (not a subclass or a super class) in all procedures that use them.
+   •   For SpeedScript, the following options are invalid: BGCOLOR, CONTEXT-HELP-ID, DCOLOR, FONT, FGCOLOR,
+       MOUSE-POINTER, PFCOLOR, and view-as-phrase.
+
+VIEW-AS phrase
+   Defines a compile-time defined (static) widget to represent a field or variable on the screen.
+   Note: Does not apply to SpeedScript programming.
+
+   Syntax
+
+       VIEW-AS
+         {     combo-box-phrase
+            | editor-phrase
+            | FILL-IN
+                  [ NATIVE ]
+                  [ size-phrase ]
+                  [ TOOLTIP tooltip ]
+           | radio-set-phrase
+           | selection-list-phrase
+           | slider-phrase
+           | TEXT
+                  [ size-phrase ]
+                  [ TOOLTIP tooltip ]
+           | TOGGLE-BOX
+                  [ size-phrase ]
+                  [ TOOLTIP tooltip ]
+         }
+
+
+   Use the following syntax to specify the type of widget to use for displaying values in a browse column:
+
+       VIEW-AS combo-box-phrase | TOGGLE-BOX
+
+
+   combo-box-phrase
+               Specifies that a field or variable is viewed as a combo box widget. You can use a combo box to represent
+               a value of any data type. This is the syntax for combo-box-phrase:
+
+                 VIEW-AS COMBO-BOX
+                   [ LIST-ITEMS item-list | LIST-ITEM-PAIRS item-pair-list]
+                   [ INNER-LINES lines ] [size-phrase ] [ SORT ]
+                   [ TOOLTIP tooltip]
+                   [ SIMPLE | DROP-DOWN | DROP-DOWN-LIST ]
+                   [ MAX-CHARS characters ]
+                   [ AUTO-COMPLETION [ UNIQUE-MATCH ] ]
+
+           Use the following syntax to specify a combo-box widget for displaying values in a browse column:
+
+                COMBO-BOX
+                  [ LIST-ITEMS item-list | LIST-ITEM-PAIRS item-pair-list]
+                  [ INNER-LINES lines ] [ SORT ]
+                  [ DROP-DOWN | DROP-DOWN-LIST ]
+                  [ MAX-CHARS characters ]
+                  [ AUTO-COMPLETION [ UNIQUE-MATCH ] ]
+
+
+           Note: In a character interface, browse columns are always displayed as fill-in widgets no matter what
+           VIEW-AS option you specify.
+           
+editor-phrase
+           Specifies that a CHARACTER or LONGCHAR field or variable is viewed as a text editor widget. A
+           text editor widget supports cut, paste, word-wrap, and auto-indent features. This is the syntax for
+           editor-phrase:
+
+                EDITOR
+                  {     size-phrase
+                     | INNER-CHARS char INNER-LINES lines
+                  }
+                  [ BUFFER-CHARS chars ]
+                  [ BUFFER-LINES lines ]
+                  [ LARGE ]
+                  [ MAX-CHARS characters ]
+                  [ NO-BOX ]
+                  [ NO-WORD-WRAP ]
+                  [ SCROLLBAR-HORIZONTAL ]
+                  [ SCROLLBAR-VERTICAL ]
+                  [ TOOLTIP tooltip ]
+
+
+           
+FILL-IN [ NATIVE ] [ size-phrase ]
+           Specifies that the field or variable is viewed as a fill-in widget. In a fill-in field, the literal value of the
+           field or variable is displayed. On update, the user types the literal value into the fill-in field.
+           You can specify FILL-IN for any CHARACTER, INT64, INTEGER, DECIMAL, DATE, DATETIME,
+           DATETIME-TZ, or LOGICAL value (with or without extents). FILL-IN is the default representation
+           for those values.
+           Note that Windows allows a user to transfer focus to the fill-in field by pressing ALT and one of the
+           letters in the label. For more information on specifying a label using the LABEL option, see the Format
+           phrase reference entry.
+           If you specify NATIVE, then the field behaves like a native fill-in field under the current user interface.
+           A non-NATIVE field behaves like a default ABL fill-in field under any interface. Native fill-in fields
+           provide better consistency with other applications in graphical environments, but do not support some
+           ABL constructs such as the UPDATE statement with the TEXT option or the CHOOSE statement.
+           When a non-NATIVE (ABL) fill-in is disabled, the border disappears, but the text does not gray out.
+           When a NATIVE fill-in is disabled, the text grays out.
+           Like the other static widgets that can be defined using the VIEW-AS phrase, you can specify ToolTips
+           for the fill-in widget using the TOOLTIP option.
+radio-set-phrase
+           Specifies that the field or variable is viewed as a radio set widget. A radio button set is a series of
+           buttons, of which only one can be TRUE at a time. When the user sets one of the buttons to TRUE,
+           the others are set to FALSE. You can specify a radio-set-phrase for any group of CHARACTER,
+           INT64, INTEGER, DECIMAL, DATE, or LOGICAL values (with or without extents). This is the
+           syntax for radio-set-phrase:
+
+                RADIO-SET
+                  [ HORIZONTAL [ EXPAND ] | VERTICAL ]
+                  [ size-phrase ]
+                  RADIO-BUTTONS label , value [ , label, value ... ]
+                  [ TOOLTIP tooltip ]
+
+
+           Note: If two or more buttons of a radio set use the same label, the AVM uses only the value of the
+           first button.
+       
+selection-list-phrase
+           Specifies that the field or variable is viewed as a selection list widget. You can only specify the
+           selection-list-phrase for a character-string value. A selection list is a scrollable list of CHARACTER
+           values. If the field is enabled for input, the user can select one or more values from the list. This is the
+           syntax for selection-list-phrase:
+
+                SELECTION-LIST
+                  [ SINGLE | MULTIPLE ]
+                  [ NO-DRAG ]
+                  [ LIST-ITEMS item-list ]
+                  [ SCROLLBAR-HORIZONTAL ]
+                  [ SCROLLBAR-VERTICAL ]
+                  { size-phrase | INNER-CHARS cols INNER-LINES rows }
+                  [ SORT ]
+                  [ TOOLTIP tooltip ]
+
+
+          
+slider-phrase
+           Specifies that the field or variable is viewed as a slider. Specify the slider-phrase for an integer value
+           only. A slider is a graphical representation of a numeric range. It is composed of a rectangular area
+           that contains a trackbar. You can change the current value within a defined range by moving the pointer
+           that resides on the trackbar. This is the syntax for slider-phrase:
+
+                VIEW-AS SLIDER
+                  MAX-VALUE max-value MIN-VALUE min-value
+                  [ HORIZONTAL | VERTICAL ]
+                  [ NO-CURRENT-VALUE ]
+                  [ LARGE-TO-SMALL ]
+                  [ TIC-MARKS
+                      { NONE | TOP | BOTTOM | LEFT | RIGHT | BOTH }
+                      [ FREQUENCY n ]
+                  ]
+                  [ TOOLTIP tooltip ]
+                  [ size-phrase ]
+TEXT [ size-phrase ]
+             Specifies that the field or variable is viewed as read-only text. In a graphical environment, a text field
+             takes up less space on the screen than a native fill-in field.
+             You can specify TEXT for any CHARACTER, INT64, INTEGER, DECIMAL, DATE, or LOGICAL
+             value (with or without extents).
+TOGGLE-BOX [ size-phrase ]
+             Specifies that the field or variable is viewed as a toggle box widget. A toggle box is a small box that
+             is either marked or not marked to indicate a TRUE or FALSE value, respectively. You can specify
+             TOGGLE-BOX for any LOGICAL value, or any calculated value whose expression evaluates to a
+             LOGICAL value.
+             Note that Windows allows a user to select a toggle-box item by pressing ALT and one of the letters
+             in the side label. 
+             For toggle-box browse columns, the toggle-box always appears whether it is enabled or not. A solid
+             outline appears to indicate that a cell in a toggle-box column currently has focus. The toggle-box is
+             always centered within the column. You cannot specify size-phrase for toggle-box browse columns.
+             Note: In a character interface, browse columns are always displayed as fill-in widgets no matter what
+             VIEW-AS option you specify.
+TOOLTIP tooltip
+             Allows you to define a help text message for a toggle box. The AVM automatically displays this text
+             when the user pauses the mouse over the toggle-box.
+             You can add or change the TOOLTIP option at any time. If TOOLTIP is set to "" or the Unknown
+             value (?), then the ToolTip is removed. No ToolTip is the default. The TOOLTIP option is supported
+             in Windows only.
+
+Example
+The following procedure defines a character variable and views it in succession as a text widget, a fill-in widget, an
+editor widget, and finally as a text widget again. The procedure shows that you can represent a character variable in
+several ways, as long as each representation appears in a separate frame.
+r-viewas.p
+
+  DEFINE VARIABLE test AS CHARACTER NO-UNDO INITIAL "Now is the time"
+    FORMAT "x(30)".
+
+  DISPLAY test VIEW-AS TEXT LABEL "Labels cannot be changed"
+    WITH FRAME a SIDE-LABELS.
+  PAUSE.
+
+  UPDATE test VIEW-AS FILL-IN LABEL "But fillins can, please enter a new value"
+    WITH FRAME b SIDE-LABELS.
+
+  UPDATE test VIEW-AS EDITOR INNER-CHARS 16 INNER-LINES 2 MAX-CHARS 70
+    LABEL "As can editors, please enter a new value:"
+    WITH FRAME c.
+
+  DISPLAY test VIEW-AS TEXT FORMAT "x(70)" LABEL "The final value is:"
+    WITH FRAME d.
+   Notes
+   •   To create a static widget, you must define a static frame that contains the widget. Each frame you define that contains
+       the widget creates an additional instance of that widget for the underlying field or variable. The handle for a static
+       widget is not available until the widget is created.
+   •   You can also use the VIEW-AS option in the Frame phrase and MESSAGE statement to indicate a dialog box and
+       alert box, respectively.
+   •   In Windows, if no font is specified for a fill-in field, ABL uses two default fonts:
+       •   A fixed font for date fields, numeric fields, and character fields that contain fill characters (such as the parentheses
+           surrounding the area code of a telephone number).
+       •   A proportional font for character fields that do not contain fill characters.
+       The AVM looks for these fonts in the current environment, which may be the registry (Windows only) or an
+       initialization file. If the current environment does not define these fonts, the AVM uses the system default fixed and
+       proportional fonts. For more information on environments, see Manage ABL Applications.
+
+
+

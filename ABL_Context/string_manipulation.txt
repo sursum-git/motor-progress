@@ -1,0 +1,2785 @@
+Assignment (=) statement
+
+Assigns the value of an expression to a database field or variable.
+
+   Syntax
+
+       field = expression [ NO-ERROR ]
+
+
+   field
+             The name of an ABL data element to which you want to assign the value of expression and that is
+             defined with a data type that is compatible with the data type of expression. This data element can include a:
+             •   Database or temp-table field
+             •   Variable scoped to the current procedure, user-defined function, or method of a class or an accessible
+                 class-based variable data member, including a subscripted or unsubscripted array variable
+             •   Parameter defined for the current procedure, user-defined function, or method of a class, including
+                 a subscripted or unsubscripted array parameter
+             •   Writable class-based or COM property, including a subscripted or unsubscripted array property
+             •   Writable handle attribute (such as PRIVATE-DATA)
+             •   Writable system handle (such as CURRENT-WINDOW)
+             •   ABL syntax that specifies a keyword-driven assignment statement (such as the PROPATH statement,
+                 SUBSTRING statement, or similar statement)
+expression
+             An expression with a data type that is consistent with the data type of field. 
+NO-ERROR
+             The NO-ERROR option is used to prevent the statement from raising ERROR and displaying
+             error messages.
+             For the assignment (=) statement with NO-ERROR, if ERROR is raised, then the left side of the
+             assignment will be unchanged.
+
+Note: You can use compound assignment operators (+=, -=, *=, /=) to perform an operation and an assignment, using
+a shorthand notation. Supported operations include addition (numeric and date-based) and concatenation, subtraction
+(numeric and date-based), multiplication, and division. For more information, see += Addition assignment operator on
+page 46, -= Subtraction assignment operator on page 52, *= Multiplication assignment operator on page 54, and /=
+Division assignment operator on page 57.
+
+Example
+This procedure resets all the monthly quota values to 2500 in all salesrep records. If you want to set values for individual
+array elements, you can do so by making an explicit assignment using the assignment statement (=) and a specific array
+reference, such as month-quota[1] or month-quota[i].
+r-asgmnt.p
+
+    DEFINE VARIABLE ctr AS INTEGER NO-UNDO.
+
+    FOR EACH SalesRep:
+      DO ctr = 1 TO 12:
+         SalesRep.MonthQuota[ctr] = 2500.
+      END.
+    END.
+
+
+
+Notes
+•   If field expression is a decimal, the AVM rounds the value of the expression before assigning it. If field is a decimal
+    and expression is a decimal, the AVM rounds the value of the expression to the number of decimal places defined
+    for the field in the Data Dictionary, or defined or implied for a variable or temp-table field.
+•   If field is an ABL array type and expression is not an array, and you do not identify a particular array element, the
+    AVM stores is an integer and expression in each element of the array. If you identify a particular element, the AVM
+    stores expression in the specified array element.
+•   If both field and expression are ABL array types, the AVM copies the data for all expression array elements into the
+    corresponding elements of the field array. This is known as a deep copy. For more information, see Work with
+    one-dimensional arrays in Basic ABL.
+•   ABL allows you to assign ABL arrays and .NET array objects to each other. How an array assignment works between
+    ABL and .NET arrays depends upon the array type of field (the target of the assignment) and the array type of
+    expression (the source for the assignment). For more information, see the Data types on page 258 reference entry.
+•   If an assignment of one array to another encounters an error after some, but not all of the source array's elements are
+    retrieved, none of the target's elements are updated.
+•   If expression is an ABL handle-based object (for example, a temp-table, ProDataSet, widget, or socket), field must
+    be a temp-table field, variable, or other ABL data element defined as a compatible handle. In this case, the AVM
+    assigns only the handle of the ABL handle-based object to field, not the entire object and its contents.
+•   If you assign a value to a database field, any ASSIGN trigger associated with that field executes at the end of the
+    assignment statement (after any index changes are made). If the trigger raises ERROR, the assignment fails and the
+    database changes are undone.
+    Note: If the value to be assigned is the same as the value already in the database field, then any associated database
+    ASSIGN triggers are not executed.
+•   You can embed an assignment in a SET or UPDATE statement.
+•   For multiple assignments, use the ASSIGN statement. This is more efficient than multiple assignment statements.
+•   If field is a handle, the expression on the right-hand-side must also evaluate to a handle value that is specified using
+    an appropriate reference to a handle-based object handle. 
+•   You can assign DATE, DATETIME, and DATETIME-TZ data. When the data type expression on the left side of the
+    assignment statement contains more information than the data type expression on the right side provides (for example,
+    datetime-tz = date where a DATETIME-TZ value contains more information than a DATE value), the time value
+    defaults to midnight and the time zone is calculated using SESSION:TIMEZONE when that attribute is in use. If
+    the attribute is not in use, the value defaults to the session's timezone. When the data type expression on the left side
+    of the assignment statement contains less information than the data type expression on the right side provides (for
+    example, date = datetime-tz where a DATE value contains less information than a DATETIME-TZ value), the AVM
+    converts the DATETIME-TZ value to the local date and time of the session, then drops the time and time zone.
+•   You can assign RAW values to MEMPTR variables and MEMPTR values to RAW variables. If the target variable
+    is a RAW data type, the AVM re-sizes the target variable, if necessary, so that after the assignment is the same size
+    as the source. Note that after the assignment (whether RAW = MEMPTR or MEMPTR = RAW), the target variable
+    has a copy of the memory associated with the source—each variable has an independent copy of the data.
+•   You can assign large object data from one BLOB or MEMPTR to another, and from one CLOB, LONGCHAR, or
+    CHARACTER to another. You cannot assign large object data between BLOBs and CLOBs or MEMPTRs and
+    LONGCHARs. You can accomplish this, indirectly, by using the COPY-LOB statement. 
+    
+    Note: When assigning BLOB or CLOB fields, the field must appear by itself on either the right-hand or the left-hand
+    side of the assignment.
+    The following table lists the default character conversions that the AVM performs when assigning CLOB,
+    LONGCHAR, and CHARACTER data between a source and target object. References to CLOBCP and CLOBDB
+    represent CLOB data in either the CLOB's defined code page or the database's defined code page, respectively.
+    References to the "fixed code page" represent the code page of a target LONGCHAR variable set using the
+    FIX-CODEPAGE statement.
+    
+Table 8: Default assignment character conversions
+
+    When the target object       And the source object       The AVM converts the data in the source object to . . .
+    (on the left) is a . . .     (on the right) is a . . .
+    LONGCHAR                     CLOBDB                      -cpinternal or the fixed code page
+    LONGCHAR                     CLOBCP                      The CLOB's defined code page or the fixed code page
+    When the target object       And the source object       The AVM converts the data in the source object to . . .
+       (on the left) is a . . .     (on the right) is a . . .
+       LONGCHAR                     CHARACTER                   -cpinternal or the fixed code page
+       LONGCHAR                     LONGCHAR                    The source LONGCHAR’s code page or the target’s fixed
+                                                                code page
+       CLOBDB                       CHARACTER                   The database's defined code page
+       CLOBDB                       LONGCHAR                    The database's defined code page
+       CLOBCP                       CHARACTER                   The CLOB's defined code page
+       CLOBCP                       LONGCHAR                    The CLOB's defined code page
+       CHARACTER                    CLOBDB                      -cpinternal code page
+       CHARACTER                    CLOBCP                      -cpinternal code page
+       CHARACTER                    LONGCHAR                    -cpinternal code page
+
+   •   When you assign the Unknown value (?) to a BLOB or CLOB field, the AVM deletes any associated object data.
+   •   If expression is a solitary invocation of the NEW function (classes) on page 713, this statement represents and conforms
+       to the rules specified for the NEW statement on page 717.
+   •   If expression evaluates to an object reference value, field must also be a data element defined as a class or interface
+       type that is type-compatible with expression according to the rules for assigning references to class instances defined
+       for the NEW statement. For more information, see the NEW statement on page 717 reference entry. Thus, you can
+       assign one object reference variable to another object reference variable when the destination object reference (on
+       the left side of the assignment) is defined for the same class, a super class, or an interface of the object reference
+       being assigned (on the right side of the assignment). The destination object reference retains its defined class or
+       interface type for compilation. However, following its assignment, at run time, the destination represents the subclass
+       of field (or the class that implements the interface specified by field) that is defined by expression.
+       If field has a class type that is a subclass lower in the class hierarchy than the class type represented by expression,
+       you can cast expression to the type of field using the CAST function, but only if expression is a super class that
+       actually contains an instance of the field class type. If field has a class type that implements an interface type
+       represented by expression, you can similarly cast expression using the CAST function, but only if expression actually
+       contains an instance of the field class type. For more information about the CAST function, see the CAST function
+       on page 111 reference entry.
+       After the assignment, field contains a copy of the object reference value returned by expression, which points to the
+       same object instance, not a copy of the object referenced by expression.
+   •   Although you can assign an object reference to a temp-table field defined as a Progress.Lang.Object class type, you
+       cannot assign an object reference to a field in a database table. For more information, see Develop Object-oriented
+       ABL Applications.
+
+
+
+
+ASSIGN statement
+
+Moves data previously placed in the screen buffer by a data input statement or moves data specified within the ASSIGN statement by an expression to the corresponding fields and variables in the record buffer.
+
+Syntax
+
+  ASSIGN {
+                  [ [ INPUT ] FRAME frame | BROWSE browse ]
+                         { field [ = expression] } [ WHEN expression ]
+               } ... [ NO-ERROR ]
+
+
+
+  ASSIGN { record [ EXCEPT field ... ] } [ NO-ERROR ]
+
+
+[ FRAME frame | BROWSE browse ] field
+         The name of the field or variable (field) to be set from the corresponding value found in the screen
+         buffer or expression. The field must be qualified by a frame name (frame) or browse name (browse)
+         if field is specified as an input widget in more than one frame. If field is set from expression, field can
+         include all of the elements that are defined for the left side of an Assignment (=) statement on page
+         74.
+expression
+             An expression with a data type that is consistent with the data type of field. In this case, the AVM
+             determines the field value from the expression rather than from the screen buffer. 
+WHEN expression
+        Moves data to the record buffer only when expression has a value of TRUE. Here, expression is a field
+        name, variable name, or expression whose value is logical. The AVM evaluates WHEN expressions
+        at the beginning of the assignment, before any assignments take place.
+NO-ERROR
+             The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying
+             error messages.
+record
+             The record buffer name with the fields set, from the corresponding values in the screen buffer. Naming
+             a record is a shorthand way to list each field in that record individually.
+             To use ASSIGN with a record in a table defined for multiple databases, you might have to qualify the
+             record's table name with the database name. See the record definition in the Record phrase on page
+             864 reference entry for more information.
+EXCEPT field
+        All fields in the record buffer are affected except for those listed. Separate field names with a space.
+Note: Compound assignment operators (+=, -=, *=, /=) can be used with the ASSIGN statement. For more information,
+see += Addition assignment operator on page 46, -= Subtraction assignment operator on page 52, *= Multiplication
+assignment operator on page 54, and /= Division assignment operator on page 57.
+
+Examples
+The following procedure prompts you for a customer number and retrieves the customer record if one exists, or creates
+a new one if it does not exist. If it creates a new record, the value for the CustNum field is assigned from the value you
+entered in response to the PROMPT-FOR statement.
+r-asgn.p
+
+  REPEAT:
+    PROMPT-FOR Customer.CustNum.
+    FIND Customer USING Customer.CustNum NO-ERROR.
+    IF NOT AVAILABLE Customer THEN DO:
+       CREATE Customer.
+       ASSIGN Customer.CustNum. END.
+    UPDATE Customer WITH 2 COLUMNS.
+  END.
+
+
+The next procedure changes the order number and line number of an order-line record. (It copies an order-line from one
+order to another.) It sets the new values into variables and modifies the record with a single ASSIGN statement that
+contains two assignment phrases in the form field = expression. Thus, both fields are changed within a single statement.
+Because the AVM re-indexes records at the end of any statement that changes an index field value, and because
+OrderLine.OrderNum and OrderLine.LineNum are used jointly in one index, this technique does not generate
+an index until both values change.
+r-asgn2.p
+
+  DEFINE VARIABLE neword   LIKE order-line.order-num LABEL "New Order".
+  DEFINE VARIABLE newordli LIKE order-line.line-num LABEL "New Order Line".
+
+  REPEAT:
+    PROMPT-FOR OrderLine.OrderNum OrderLine.LineNum.
+    FIND OrderLine USING OrderLine.OrderNum AND OrderLine.LineNum.
+    SET neword newordli.
+    FIND Order WHERE Order.OrderNum = neword.
+    ASSIGN
+       OrderLine.OrderNum = neword
+       OrderLine.LineNum = newordli.
+  END.
+
+
+The following example code uses the += assignment operator, with the ASSIGN statement, to update the CreditLimit field and the myCtr variable.
+
+  VAR INT myCtr = 0.
+
+  FOR EACH Customer WHERE NAME BEGINS "K":
+       ASSIGN
+           CreditLimit += 1000
+           myCtr += 1.
+  END.
+
+  /* Equivalent statement
+  ASSIGN CreditLimit = CreditLimit + 1000 myCtr = myCtr + 1. */
+
+Notes
+•   If field is an integer and expression is a decimal, the AVM rounds the value of the expression before assigning it. If
+    field is a decimal and expression is a decimal, the AVM rounds the value of the expression to the number of decimal
+    places defined for the field in the Data Dictionary, or defined or implied for a variable or temp-table field.
+•   If field is an ABL array type and expression is not an array, and you do not identify a particular array element, the
+    AVM stores expression in each element of the array. If you identify a particular element, the AVM stores expression
+    in the specified array element.
+•   If both field and expression are ABL array types, the AVM copies the data for all expression array elements into the
+    corresponding elements of the field array. This is known as a deep copy. For more information, see Work with
+    one-dimensional arrays in Basic ABL.
+•   ABL allows you to assign ABL arrays and .NET array objects to each other. How an array assignment works between
+    ABL and .NET arrays depends upon the array type of field (the target of the assignment) and the array type of
+    expression (the source for the assignment). For more information, see the Data types on page 258 reference entry.
+•   If an assignment of one array to another encounters an error after some, but not all of the source array's elements are
+    retrieved, none of the target's elements are updated.
+•   If expression is an ABL handle-based object (for example, a temp-table, ProDataSet, widget, or socket), field must
+    be a temp-table field, variable, or other ABL data element defined as a compatible handle. In this case, the AVM
+    assigns only the handle of the ABL handle-based object to field, not the entire object and its contents.
+•   If any field is a field in a database record, the ASSIGN statement upgrades the record lock condition to
+    EXCLUSIVE-LOCK before updating the record.
+•   If any field is part of a record retrieved with a field list, the ASSIGN statement rereads the complete record before
+    updating it.
+•   If field is a handle, the expression on the right-hand-side of the corresponding assignment must also evaluate to a
+    handle value that is specified using an appropriate reference to a handle-based object handle. For more information
+    on object handle references, see the Handle Attributes and Methods Reference.
+•   During data entry, a validation expression defined for the field in the database or in a Format phrase executes only
+    if the widget associated with the field receives input focus. Use the VALIDATE( ) method to execute a validation
+    expression defined for a field regardless of whether it receives input focus or not.
+•   Use an ASSIGN statement after a PROMPT-FOR statement or to write changes from an enabled field to the database.
+    ASSIGN moves the value from the screen buffer into the field or variable.
+•   Use the PROMPT-FOR statement to receive one or more index fields from the user, and you use the FIND statement
+    to find a record matching those index values. If no record is found, use the CREATE statement to create a new record
+    and use the ASSIGN statement to assign the values the user supplied to the new record.
+•   You cannot use the SET statement in place of the PROMPT-FOR statement. The SET statement prompts the user
+    for input and then assigns that input to the record in the buffer. However, if there is not a record available, SET
+    cannot assign the values.
+•   ASSIGN does not move data into a field or variable if there is no data in the corresponding screen field. There is
+    data in a screen field if a DISPLAY of the field was done or if data was entered into the field. If you PROMPT-FOR
+    a field or variable that has not been DISPLAYed in the frame and enter blanks, the AVM does not change the field
+    or variable because it considers the screen field changed only if the data differs from what was in the field.
+•   If an ASSIGN statement references a field or variable that is used in more than one frame, it uses the value in the
+    frame most recently introduced in the procedure.
+•   If you type blanks into a field that has never displayed data, the ENTERED function returns FALSE and the SET or
+    ASSIGN statement does not update the underlying field or variable. Also, if the AVM marks a field as entered, and
+    the PROMPT-FOR statement prompts for the field again and you do not enter any data, the AVM no longer considers
+    the field entered.
+•   If you use a single, qualified identifier with the ASSIGN statement, the Compiler interprets the reference as
+    dbname.filename. If the Compiler cannot resolve the reference as dbname.filename, it tries to resolve it as
+    filename.fieldname.
+•   Many assignments within a single ASSIGN statement are more efficient than multiple ASSIGN statements. It saves
+    r-code size and improves performance.
+•   The ASSIGN statement, when used in database fields, causes all related database ASSIGN triggers to execute in the
+    order in which the fields were assigned. The ASSIGN triggers execute after all the assignments have taken place. If
+    an ASSIGN trigger fails (or executes a RETURN statement with the ERROR option), all of the database changes are
+    undone. See Use ABL Database Triggers and Indexes for more information on database triggers.
+    Note: If the value to be assigned is the same as the value already in the database field, then any associated database
+    ASSIGN triggers are not executed.
+•   You can assign large object data from one BLOB or MEMPTR to another, and from one CLOB, LONGCHAR, or
+    CHARACTER to another. You cannot assign large object data between BLOBs and CLOBs or MEMPTRs and
+    LONGCHARs. You can accomplish, indirectly, by using the COPY-LOB statement. 
+    The following table lists the default character conversions that the AVM performs when assigning CLOB,
+    LONGCHAR, and CHARACTER data. References to CLOBCP and CLOBDB represent CLOB data in either the
+    CLOB's defined code page or the database's defined code page, respectively. References to the "fixed code page"
+    represent the code page of a target LONGCHAR variable set using the FIX-CODEPAGE statement.
+    Table 9: Default character conversions with the ASSIGN statement
+
+    When the target field is a And the source            The AVM converts the result of the source expression
+    ...                        expression results in a . to . . .
+                               ..
+    LONGCHAR                       CLOBDB                     -cpinternal or the fixed code page
+    LONGCHAR                       CLOBCP                     The CLOB's defined code page or the fixed code page
+    LONGCHAR                       CHARACTER                  -cpinternal or the fixed code page
+    LONGCHAR                       LONGCHAR                   The source LONGCHAR’s code page or the target’s fixed
+                                                              code page
+    CLOBDB                         CHARACTER                  The database's defined code page
+    CLOBDB                         LONGCHAR                   The database's defined code page
+    CLOBCP                         CHARACTER                  The CLOB's defined code page
+    CLOBCP                         LONGCHAR                   The CLOB's defined code page
+    CHARACTER                      CLOBDB                     -cpinternal code page
+    CHARACTER                      CLOBCP                     -cpinternal code page
+    CHARACTER                      LONGCHAR                   -cpinternal code page
+
+•   When you assign the Unknown value (?) to a BLOB or CLOB field, the AVM deletes any associated object data.
+•   You can assign DATE, DATETIME, and DATETIME-TZ data. When the data type expression on the left side of the
+    assignment statement contains more information than the data type expression on the right side provides (for example,
+    datetime-tz = date where a DATETIME-TZ value contains more information than a DATE value), the time value
+    defaults to midnight and the time zone is calculated using SESSION:TIMEZONE when that attribute is in use. If
+    the attribute is not in use, the value defaults to the session's timezone. When the data type expression on the left side
+    of the assignment statement contains less information than the data type expression on the right side provides (for
+    example, date = datetime-tz where a DATE value contains less information than a DATETIME-TZ value), the AVM
+    converts the DATETIME-TZ value to the local date and time of the session, then drops the time and time zone.
+    
+    Note: For releases 11.6.0 and earlier, assignments such as datetime-tz = date used the system's timezone, regardless
+    of whether or not SESSION:TIMEZONE was set. To revert to this earlier behavior, use the Use
+    SESSION:TIMEZONE (-useSessionTZ) startup parameter. 
+•   If expression is a solitary invocation of the NEW function, this function behaves according to the rules specified for
+    the NEW function (classes) on page 713 when not operating in the context of a NEW statement on page 717.
+   •   If expression evaluates to an object reference value, field must also be a data element defined as a class or interface
+       type that is type-compatible with expression according to the rules for assigning references to class instances defined
+       for the NEW statement. For more information, see the NEW statement on page 717 reference entry. Thus, you can
+       assign one object reference variable to another object reference variable when the destination object reference (on
+       the left side of the assignment) is defined for the same class, a super class, or an interface of the object reference
+       being assigned (on the right side of the assignment). The destination object reference retains its defined class or
+       interface type for compilation. However, following its assignment, at run time, the destination represents the subclass
+       of field (or the class that implements the interface specified by field) that is defined by expression.
+       If field has a class type that is a subclass lower in the class hierarchy than the class type represented by expression,
+       you can cast expression to the type of field using the CAST function, but only if expression is a super class that
+       actually contains an instance of the field class type. If field has a class type that implements an interface type
+       represented by expression, you can similarly cast expression using the CAST function, but only if expression actually
+       contains an instance of the field class type. 
+       After the assignment, field contains a copy of the object reference value returned by expression, which points to the
+       same object instance, not a copy of the object referenced by expression.
+   •   Although you can assign an object reference to a temp-table field defined as a Progress.Lang.Object class type, you
+       cannot assign an object reference to a field in a database table. 
+
+
+
+
+BASE64-DECODE function
+
+Converts a Base64 character string into a binary value. The result is a MEMPTR containing the binary data.
+
+   Syntax
+
+       BASE64-DECODE ( expression )
+
+
+   expression
+                A CHARACTER or LONGCHAR expression containing the string you want to convert.
+   
+   Note: The BASE64-ENCODE and BASE64-DECODE functions:
+   •   Use the Base64 Alphabet table as found in RFC 4648.
+   •   Do not enforce line lengths with separators.
+   •   Require use of the ‘=’ padding character.
+   •   Do not implement the Filename Safe Alphabet needed for Base64URL encoding.
+
+   Note: The BASE64-ENCODE, BASE64-DECODE, HEX-ENCODE, and HEX-DECODE functions do not do any byte
+   ordering. However, the binary output of these functions may be a binary data type such as a MEMPTR or RAW. If the
+   target of these operation’s output is another system where the order of bytes (endianness) differs, you must first normalize
+   the data to what the receiving side is expecting. Otherwise, the results may not be as expected. For example, for a
+   MEMPTR value that you are building yourself, you can use the SET-BYTE-ORDER statement on page 947 to set the
+   byte order for the MEMPTR variable before you read or write the value.
+
+   Example
+   Following is an example using the BASE64-DECODE function:
+
+       DEFINE VARIABLE decdmptr AS MEMPTR   NO-UNDO.
+       DEFINE VARIABLE decdlngc AS LONGCHAR NO-UNDO.
+
+       COPY-LOB FROM FILE "C:\myicons\testencode" TO decdlngc.
+       decdmptr = BASE64-DECODE(decdlngc).
+       COPY-LOB FROM decdmptr TO FILE "C:\myicons\test.ico".
+
+
+
+
+BASE64-ENCODE function
+Converts binary data into a Base64 character string, and returns a LONGCHAR containing the character data. The resulting LONGCHAR is in the code page specified by -cpinternal.
+
+   Syntax
+
+       BASE64-ENCODE ( expression )
+
+
+   expression
+                A MEMPTR or RAW expression containing the binary data you want to convert.
+
+   Note: The BASE64-ENCODE and BASE64-DECODE functions:
+   •   Use the Base64 Alphabet table as found in RFC 4648.
+   •   Do not enforce line lengths with separators.
+   •   Require use of the ‘=’ padding character.
+   •   Do not implement the Filename Safe Alphabet needed for Base64URL encoding.
+
+   Note: The BASE64-ENCODE, BASE64-DECODE, HEX-ENCODE, and HEX-DECODE functions do not do any byte
+   ordering. However, the binary output of these functions may be a binary data type such as a MEMPTR or RAW. If the
+   target of these operation’s output is another system where the order of bytes (endianness) differs, you must first normalize
+   the data to what the receiving side is expecting. Otherwise, the results may not be as expected. For example, for a
+   MEMPTR value that you are building yourself, you can use the SET-BYTE-ORDER statement on page 947 to set the
+   byte order for the MEMPTR variable before you read or write the value.
+
+   Example
+   Following is an example using the BASE64-ENCODE function:
+
+       DEFINE VARIABLE encdmptr AS MEMPTR   NO-UNDO.
+       DEFINE VARIABLE encdlngc AS LONGCHAR NO-UNDO.
+
+       COPY-LOB FROM FILE "C:\myicons\test.ico" TO encdmptr.
+       encdlngc = BASE64-ENCODE(encdmptr).
+       COPY-LOB FROM encdlngc TO FILE "C:\myicons\testencode".
+   The following example shows encoded strings, with and without padding characters at the end of them:
+
+     define variable cleartext as longchar no-undo.
+     define variable encoded as longchar no-undo.
+     define variable rawdata as memptr no-undo.
+
+     // when encoded this string will require padding characters.
+     cleartext = "needs padding".
+     copy-lob from cleartext to rawdata convert target codepage "utf-8".
+     encoded = base64-encode(rawdata).
+     message string(encoded) view-as alert-box.
+
+
+     // when encoded, this string does not have padding character at the end of
+     it.
+     cleartext = ".no padding.".
+     copy-lob from cleartext to rawdata convert target codepage "utf-8".
+     encoded = base64-encode(rawdata).
+     message string(encoded) view-as alert-box.
+
+
+
+
+CAN-DO function
+
+Checks a user ID against a list of one or more user ID matching patterns that can be used to indicate what users have access to a given application function. The function returns TRUE if the specified user ID has access according to the list. Thus, you can implement run-time authorization checking for any procedure or class in your application.
+
+   Syntax
+
+     CAN-DO ( id-pattern-list [ , userid ] )
+
+
+   id-pattern-list
+               A constant, field name, variable name, or expression that evaluates to a list of one or more user ID
+               patterns. Each user ID pattern must be in the form of a table and field permission string that you might
+               specify when editing data security with database administration tools. If the expression contains
+               multiple user ID patterns, you must separate the patterns with commas. There can be no embedded
+               spaces within or between the patterns in the list.
+               The following table lists some basic user ID patterns that you can include in id-pattern-list, where
+               user-ID can be a fully qualified or non-qualified user ID, depending on your application and
+               authentication design, and string is a sequence of characters from any user ID. For more information
+               on fully qualified and non-qualified user ID's, see the reference entries for the QUALIFIED-USER-ID
+               attribute, USER-ID attribute, and USERID function on page 1034.
+               The patterns shown also support the use of a period (.) as a wildcard for a single character matches.
+               For example, CAN-DO("a.c","abc") evaluates to TRUE.
+               Table 10: Basic patterns to use in user ID pattern lists
+
+               Value               Meaning
+               *                   All users have access.
+               user-ID             This user has access.
+               !user-ID            This user does not have access.
+               string*             Users whose IDs begin with string have access.
+               !string*            Users whose IDs begin with string do not have access.
+
+
+               You can use any combination of patterns to define id-pattern-list. These patterns are fully consistent
+               with the permissions that you can define for OpenEdge database tables and fields using database administration tools.
+               The following table shows some examples of fully qualified user ID matches.
+
+               Table 11: Fully qualified user ID matches
+
+               This pattern...         Matches...
+                                       The blank user name in the blank domain
+               *                       All user ID's
+               mark@acme.com           The "mark" user name in the "acme.com" domain
+            This pattern...        Matches...
+            mark                   The "mark" user name in the blank domain
+            mark*                  All user names that begin with "mark" in the blank domain
+            *jones                 All user names that end with "jones" in the blank domain
+            db*user                All user names that begin with "db" and end with "user" in the blank
+                                   domain
+            @acme                  The blank user name in the "acme" domain
+            *@acme                 All user names in the "acme" domain
+            @                      The blank user name in the blank domain
+            mark@*                 The "mark" user name in any domain
+            *@*                    Any user name in any domain
+            mark*@acme.*           Any user name that begins with "mark" in any domain that begins
+                                   with "acme."
+            *@*.admins             Any user name in any domain that ends with ".admins"
+
+
+           Note: For a more complete description of the possible patterns and their meanings, see Introduction
+           to Identity Management and the Database Administration online help.
+userid
+           A character expression that evaluates to a user ID value that can be returned from the
+           QUALIFIED-USER-ID attribute, USER-ID attribute, or USERID function on page 1034. The userid is
+           checked against id-pattern-list. If you do not enter userid, the compiler inserts the USERID function
+           by default, which is evaluated each time you run the procedure or class. If the compiler inserts the
+           USERID function, the function does not reference a database name and therefore only works for an
+           ABL session with one database connection. If you explicitly use the USERID function and have more
+           than one database connected, be sure to include the database name with the function call, for example,
+           USERID("Sports2020").
+
+Examples
+The r-cando.p procedure is based on an activity permission table called permission. This permission table is not
+included in any of the installed sample databases. However, the records in this table contain two fields and might look
+something like the following:
+
+Activity                                                 Can-Run
+custedit                                                 manager,salesrep
+ordedit                                                  manager,salesrep
+itemedit                                                 manager,inventory
+reports                                                  manager,inventory,salesrep
+
+
+In r-cando.p the FIND statement reads the record for the activity "custedit" in the permission table. The
+CAN-DO function compares the value of USERID (the user ID of the single session database connection) with the list
+of users in the Can-Run field of the custedit record. If the user ID is "manager" or "salesrep", the procedure
+continues executing. Otherwise, the procedure displays a message and control returns to the calling procedure.
+
+r-cando.p
+
+    DO FOR permission:
+      FIND permission WHERE Activity = "custedit".
+      IF NOT CAN-DO(permission.Can-Run, USERID) THEN DO:
+         MESSAGE "You are not authorized to run this procedure".
+         RETURN.
+      END.
+    END.
+
+
+In this next example, the CAN-DO function compares the value of USERID against the list of user ID patterns passed
+as a constant string to the function. The values in the constant string include "manager" and any user IDs beginning
+with "acctg" except "acctg8". If there is no match between the two values, the procedure displays a message and
+then exits.
+r-cando2.p
+
+    IF NOT CAN-DO("manager,!acctg8,acctg@*", USERID) THEN DO:
+      MESSAGE "You are not authorized to run this procedure.".
+      RETURN.
+    END.
+
+
+
+Notes
+•   If id-pattern-list contains contradictory values, the first occurrence of a value in the list applies. For example,
+    CAN-DO("abc,!abc*") evaluates to TRUE, because the user ID, "abc", appears before "!abc" in id-pattern-list.
+•   If id-pattern-list is exhausted without a match, CAN-DO returns a value of FALSE. Therefore, "!abc" restricts
+    "abc" and everyone else, including the blank user ID (""). To restrict "abc" only and allow everyone else, use "!abc,*".
+•   A userid comparison against id-pattern-list is not case sensitive.
+•   If a user is logged into a UNIX system as root, the AVM allows access to the procedure even if access is denied by
+    the id-pattern-list. You must specifically deny root access by adding "!root" to the id-pattern-list.
+•   In addition to the examples shown above, you can use the CAN-DO function to compare a userid other than that of
+    the current user against the list of values in id-pattern-list. For example, to assign a department userid to users
+    "smith" and "jones" when they start the ABL session, you can prompt these users for a department userid and
+    password and check them against a table of department ID's.
+•   You can pass user IDs to the CAN-DO function, other than the default, that have been set using command-line
+    database connections, the CONNECT statement on page 199, the SECURITY-POLICY:SET-CLIENT( )
+    method, the SET-DB-CLIENT function on page 948, or the SETUSERID function on page 955.
+•   You can use the CAN-DO function to match a user ID against run-time table and field permissions stored in an
+    OpenEdge RDBMS by accessing the user ID patterns stored in the _Can-* fields of the _File metaschema table.
+•   ABL raises an error if you omit userid and one of the following conditions exists:
+    •   There is no database connected.
+    •   More than one database is currently connected.
+•   By default, CAN-DO treats "@" as a delimiter for the domain name in a fully qualified user ID. However, you can
+    change this functionality so that CAN-DO treats "@" as a regular character by using the CAN-DO-DOMAIN-SUPPORT
+    attribute of the SECURITY-POLICY handle or the -nocandodomain startup parameter. For more information
+    on the -nocandodomain startup parameter, see the Startup Command and Parameter Reference.
+•   Using the # character as an argument to the CAN-DO function may lead to incorrect results. # should only be used
+    to distinguish GRANTable versus non-GRANTable permissions in SQL89.
+
+
+
+
+CAPS function
+
+Converts any lowercase characters in a CHARACTER or LONGCHAR expression to uppercase characters, and returns the result. The data type of the returned value matches the data type of the expression passed to the function.
+
+   Syntax
+
+       CAPS ( expression )
+
+
+   expression
+                A constant, field name, variable name, or expression that results in a CHARACTER or LONGCHAR
+                value.
+
+   Example
+   In the following code example, the CAPS function converts the characters in the state field to uppercase:
+   r-caps.p
+
+       REPEAT:
+         PROMPT-FOR Customer.CustNum.
+         FIND Customer USING Customer.CustNum.
+         UPDATE Customer.Name Customer.Address Customer.City Customer.State.
+         Customer.State = CAPS(Customer.State).
+         DISPLAY Customer.State.
+       END.
+
+
+
+   Notes
+   •   The CAPS function returns uppercase characters relative to the settings of the Internal Code Page (-cpinternal)
+       and Case Table (-cpcase) startup parameters. 
+   •   The CAPS function is double-byte enabled. The specified expression can yield a string containing double-byte
+       characters; however, the CAPS function changes only single-byte characters in the string.
+
+
+
+
+CHR function
+
+Converts an integer value to its corresponding character value.
+
+   Syntax
+
+       CHR ( expression
+             [ ,target-codepage [ , source-codepage ] ]
+           )
+
+
+   expression
+                An expression that yields an integer value that you want to convert to a character value.
+                If the value of expression is in the range of 1 to 255, CHR returns a single character. This character
+                might not be printable or might not display on certain terminals. For a value greater than 255, the CHR
+                function checks whether the value represents a valid character within the source code page. For a
+                double-byte or Unicode source code page, it checks for a corresponding lead-byte value. If the integer
+                value corresponds to a valid lead-byte and the value represents a valid character in the source code
+                page, CHR returns the character. Otherwise, the character returns a null string.
+   target-codepage
+              A character-string expression that evaluates to the name of a code page. The name that you specify
+              must be a valid code page name available in the DLC/convmap.cp file (a binary file that contains
+              all of the tables that ABL uses for character management). If you supply a non-valid name, the CHR
+              function returns a null string. Before returning a character value, the CHR function converts expression
+              from source-codepage to target-codepage. The returned character value is relative to target-codepage.
+              If you do not specify target-codepage, no code page conversions occur.
+   source-codepage
+             A character-string expression that evaluates to the name of a code page. The name that you specify
+             must be a valid code page name available in the DLC/convmap.cp file. If you supply a non-valid
+             name, the CHR function returns a null string. The source-codepage specifies the name of the code
+             page to which expression is relative. The default value of source-codepage is the value of
+             SESSION:CHARSET.
+
+   Example
+   The r-chr.p procedure initializes the 26 elements of the letter array to the letters A through Z.
+   r-chr.p
+
+       DEFINE VARIABLE ix     AS INTEGER   NO-UNDO.
+       DEFINE VARIABLE letter AS CHARACTER NO-UNDO FORMAT "X(1)" EXTENT 26.
+
+       DO ix = 1 TO 26:
+         letter[ix] = CHR((ASC("A")) - 1 + ix).
+       END.
+
+       DISPLAY SKIP(1) letter WITH 2 COLUMNS NO-LABELS
+         TITLE "T H E A L P H A B E T".
+
+
+
+   Notes
+   •   The CHR function returns the corresponding character in the specified code page. By default, the value of
+       SESSION:CHARSET is iso8859-1. You can set a different internal code page by specifying the Internal Code Page
+       (-cpinternal) parameter. For more information, see Startup Command and Parameter Reference.
+   •   The CHR function is double-byte enabled. For a value greater than 255 and less than 65535, it checks for a lead-byte
+       value. If the lead-byte value is valid, the AVM creates and returns a double-byte character.
+
+
+
+
+CODEPAGE-CONVERT function
+
+Converts a string value from one code page to another.
+
+  Syntax
+
+      CODEPAGE-CONVERT
+        ( source-string
+          [ , target-codepage           [ ,source-codepage ] ]
+        )
+
+
+  source-string
+              A CHARACTER or LONGCHAR expression to be converted.
+  target-codepage
+             A character-string expression that evaluates to the name of a code page. The returned character value
+             is relative to target-codepage. The name that you specify must be a valid code page name available
+             in the DLC/convmap.cp file (a binary file that contains all of the tables that ABL uses for character
+             management). If you supply a non-valid name, the CODEPAGE-CONVERT function returns the
+             Unknown value (?). Before returning a character value, the CODEPAGE-CONVERT function converts
+             source-string from source-codepage to target-codepage. If you do not specify target-codepage, no
+             code page conversions occur.
+source-codepage
+          A character-string expression that evaluates to the name of a code page. The source-codepage specifies
+          the name of the code page to which source-string is relative. The name that you specify must be a
+          valid code page name available in the DLC/convmap.cp file. If you supply a non-valid name, the
+          CODEPAGE-CONVERT function returns the Unknown value (?). The default value of source-codepage
+          is the value of CHARSET attribute of the SESSION handle.
+             If source-string is a LONGCHAR variable, the source-codepage argument is not valid. In this case,
+             the code page of the LONGCHAR variable is used as the source code page.
+
+Example
+This example assumes that the native code page of r-codpag.p is ibm850. It is written so that its embedded text
+strings are always converted to the internal code page of the ABL session (SESSION:CHARSET).
+r-codpag.p
+
+    DEFINE VARIABLE cp850string   AS CHARACTER NO-UNDO
+      INITIAL "text with umlaut (ä)".
+    DEFINE VARIABLE charsetstring AS CHARACTER NO-UNDO.
+
+    charsetstring = CODEPAGE-CONVERT(cp850string, SESSION:CHARSET, "ibm850").
+
+    FOR EACH Item NO-LOCK:
+      IF LOOKUP(charsetstring, Item.CatDescription) > 0 THEN
+         DISPLAY Item.ItemName.
+    END.
+
+
+
+Notes
+•   The CODEPAGE-CONVERT function returns the corresponding character string in the specified code page. By
+    default, the value of SESSION:CHARSET is iso8859-1. You can set a different internal code page by specifying
+    the Internal Code Page (-cpinternal) parameter. For more information, see Internationalize ABL Applications and
+    Startup Command and Parameter Reference.
+•   This function is especially useful if you plan to run a procedure in an ABL session in which the SESSION:CHARSET
+    code page is different from the native code page of the procedure.
+•   When you write procedures with ABL, you must use 7-bit (that is, ASCII) characters for field names and variable
+    names. But you can use 8-bit and multi-byte characters, including Unicode, for data values such as character strings
+    and constants. Thus, a procedure written and compiled on a system using one code page can be run on a system using
+    another code page as long as you convert all embedded character strings to the internal code page. Using
+    CODEPAGE-CONVERT as shown in the example allows your procedures to be virtually code page independent.
+
+
+
+COMPARE function
+
+The COMPARE function compares two strings and lets you:
+   •   Perform a raw compare, if desired
+   •   Use a particular collation
+   •   Turn case sensitivity on and off
+
+COMPARE returns a LOGICAL value representing the result of the logical expression, where the comparison rules are defined by the combination of the operator, the comparison strength, and the collation.
+
+   Syntax
+
+       COMPARE ( string1 , relational-operator , string2 ,
+                 strength [ , collation ] )
+
+
+   string1
+               A CHARACTER or LONGCHAR expression that evaluates to the first string to be compared.
+   relational-operator
+               A CHARACTER expression that evaluates to one of the relational operators, which are: LT (or <),
+               LE (or <=), EQ (or =), GE (or >=), GT (or >), NE (or <>), "BEGINS", and "MATCHES".
+   string2
+               A CHARACTER or LONGCHAR expression that evaluates to the second string to be compared.
+   strength
+               A CHARACTER expression that evaluates to the ABL comparison strength or the International
+               Components for Unicode (ICU) comparison strength to apply.
+               The ABL comparison strengths include:
+               •   RAW — The AVM compares the two strings using the numeric values in the current code page.
+               •   CASE-SENSITIVE — The AVM performs a case-sensitive comparison of the two strings using
+                   the numeric values in either the collation table specified in collation, or the collation table of the
+                   client. If you specify this strength with an ICU collation, the AVM applies the ICU TERTIARY
+                   strength.
+               •   CASE-INSENSITIVE — The AVM performs a case-insensitive comparison of the two strings
+                   using the numeric values in either the collation table specified in collation, or the collation table
+                   of the client. If you specify this strength with an ICU collation, the AVM applies the ICU
+                   SECONDARY strength.
+            •    CAPS — The AVM converts any lowercase letters in the two strings to uppercase letters, based
+                 on the settings of the Internal Code Page (-cpinternal) and Case Table (-cpcase) startup
+                 parameters, and then performs a raw comparison of the resulting strings. When neither string
+                 contains a wildcard character, this option behaves the same as the MATCHES operator.
+            The ICU comparison strengths include:
+            •    PRIMARY — The AVM compares the base characters in the two strings.
+            •    SECONDARY — The AVM compares the base characters and any diacritical marks in the two
+                 strings.
+            •    TERTIARY — The AVM performs a case-sensitive comparison of the base characters and
+                 diacritical marks in the two strings.
+            •    QUATERNARY — The AVM performs a case-sensitive comparison of the base characters and
+                 any diacritical marks in the two strings, and distinguishes words with and without punctuation.
+                 ICU uses this strength to distinguish between Hiragana and Katakana when applied with the ICU-JA
+                 (Japanese) collation. Otherwise, it is the same as TERTIARY.
+            Note: Use ICU comparison strengths only with ICU collations.
+collation
+            A CHARACTER expression that evaluates to the name of an ABL collation table or ICU collation.
+            By default, the AVM uses the collation rules you specify to compare characters and sort records. The
+            collation rules specified with the Collation Table (-cpcoll) startup parameter take precedence over
+            a collation specified for any database the AVM accesses during the session, except when the AVM
+            uses or modifies pre-existing indexes. If you do not specify a collation with the -cpcoll startup
+            parameter, the AVM uses the language collation rules defined for the first database on the command
+            line. If you do not specify a database on the command line, the AVM uses the collation rules with the
+            default name "basic" (which might or might not exist in the convmap.cp file).
+            If strength is not RAW or CAPS, the collation must be either an ABL collation table in the
+            convmap.cp file or an ICU collation, and must be a valid collation table for the code page
+            corresponding to the -cpinternal startup parameter.
+
+Notes
+•   If either or both strings evaluate to the Unknown value (?), COMPARE returns the value indicated in the following
+    table.
+    Table 16: Relational operators and the Unknown value (?)
+
+    Relational operator                      Only one string evaluates to ?        Both strings evaluate to ?
+    LT (or <)                                FALSE                                 FALSE
+    LE (or <=)                               FALSE                                 TRUE
+    EQ (or =)                                FALSE                                 TRUE
+    GE (or >=)                               FALSE                                 TRUE
+    GT (or >)                                FALSE                                 FALSE
+    NE (or <>)                               TRUE                                  FALSE
+    BEGINS                                   FALSE                                 TRUE
+    MATCHES                                  FALSE                                 TRUE
+
+•   COMPARE returns the Unknown value (?) if one of the following occurs:
+    •   relational-operator does not evaluate to a valid value.
+    •   strength does not evaluate to a valid value.
+       •   collation does not evaluate to a collation table residing in the convmap.cp file.
+       •   collation evaluates to a collation table that is not defined for the code page corresponding to the -cpinternal
+           startup parameter.
+   •   LONGCHAR variable values are converted to -cpinternal for comparison and must convert without error, or
+       the AVM returns an error.
+   •   With BEGINS, the language-sensitive rules are used only when strength is not RAW or CAPS.
+   •   With MATCHES, CASE-SENSITIVE is treated as RAW, CASE-INSENSITIVE is treated as CAPS, and the collation
+       is never used.
+
+
+
+
+COPY-LOB statement
+
+Copies large object data between BLOBs, CLOBs, MEMPTRs, and LONGCHARs. It also copies large object data to and from the file system, and converts large object data to or from a specified code page.
+
+   Note: You cannot copy large object data between BLOBs and CLOBs directly. However, you can copy a BLOB or CLOB to a MEMPTR or LONGCHAR (which converts the data) and then copy the MEMPTR or LONGCHAR to the CLOB or BLOB, respectively.
+
+   Syntax
+
+       COPY-LOB
+         [ FROM ] { [ OBJECT ] source-lob | FILE source-filename }
+            [ STARTING AT n ] [ FOR length ]
+         TO { [ OBJECT ] target-lob [OVERLAY AT n [TRIM ] ] |
+            FILE target-filename [ APPEND ] }
+         [ NO-CONVERT | CONVERT convert-phrase ]
+         [ NO-ERROR ].
+[ OBJECT ]source-lob
+        The source object to be copied, which can be a MEMPTR or LONGCHAR variable, a BLOB or CLOB
+        database or temp-table field, or a dynamic expression that resolves to a BLOB or CLOB database or
+        temp-table field. The source object data at this location is copied to the specified target object or file.
+FILE source-filename
+          A character expression that specifies the name of a file containing the source object data to be copied.
+          The object data in this source file is copied to the specified target object or file. You can specify an
+          absolute or relative pathname. Any relative pathname is relative to the current working directory.
+            The AVM raises the ERROR condition if source-filename resolves to the Unknown value (?) or the
+            source file cannot be read. The filename can contain Unicode characters. See Internationalize ABL
+            Applications for more information about Unicode.
+            The AVM raises an error if both source-filename and target-filename are specified and they resolve
+            to the same file.
+STARTING AT n
+       An integer expression indicating a one-based offset position, in the source object or file, from which
+       to start copying. The copy begins at offset 1, by default. The AVM raises the ERROR condition if the
+       specified offset position is less than 1, greater than the size of the object or file, or the Unknown value
+       (?).
+            Note: Offsets are measured in bytes for binary data (BLOB or MEMPTR), and characters for character
+            data (CLOB or LONGCHAR).
+FOR length
+          An integer expression indicating the number of bytes or characters to copy from the source object or
+          file starting at the specified offset position. The AVM copies from the specified offset position to the
+          end of the object or file, by default. The AVM raises the ERROR condition if the specified length is
+          less than 0, greater than the size of the object or file, or the Unknown value (?).
+            Note: Offsets are measured in bytes for binary data (BLOB or MEMPTR), and characters for character
+            data (CLOB or LONGCHAR).
+[ OBJECT ]target-lob
+        The target object to receive the copy, which can be a MEMPTR or LONGCHAR variable, a BLOB
+        or CLOB database or temp-table field, or a dynamic expression that resolves to a BLOB or CLOB
+        database or temp-table field. The object data in the specified source object or file is copied to the target
+        object.
+            If the specified target object does not yet exist, the AVM either creates a BLOB or a CLOB, or allocates
+            memory for a MEMPTR or a LONGCHAR. If the specified target object already exists, the AVM
+            deletes the object before the copy operation begins, by default. You can specify the OVERLAY AT
+            n option to overlay some portion of an existing target object.
+            Note: Although the AVM allocates memory for a target MEMPTR, you are responsible for freeing
+            that memory.
+OVERLAY AT n[ TRIM ]
+       An overlay position in the target object. The AVM copies the source object or file to an existing BLOB,
+       CLOB, MEMPTR, or LONGCHAR target starting at the given position. If the operation results in
+       writing past the end of a target BLOB, CLOB, or LONGCHAR, the AVM extends the target object
+       as necessary. If the operation results in writing past the end of a target MEMPTR, the AVM raises the
+       ERROR condition.
+            If the target object does not yet exist, the AVM raises the ERROR condition. If the specified overlay
+            position is less than 1, greater than the size of the object, or the Unknown value (?), the AVM raises
+            the ERROR condition.
+            You can specify the TRIM option only if the target object is a BLOB or CLOB. In this case, the AVM
+            copies the source object or file to the existing target object and truncates any data remaining in the
+            target object. If the target object is a MEMPTR, the AVM ignores this option.
+FILE target-filename[ APPEND ]
+          A character expression that specifies the name of the target file to which the object data in the specified
+          source object or file is copied. You can specify an absolute or relative pathname. Any relative pathname
+          is relative to the current working directory.
+            If the target file does not exist, the AVM creates the file. If the target file exists, and you specify the
+            APPEND option, the AVM opens the file and appends the object data to the end of a file. If the target
+            file exists, but you do not specify the APPEND option, the AVM creates the target file anew (which
+            overwrites the original file).
+            If target-filename resolves to the Unknown value (?), or the target file cannot be created or written,
+            the AVM raises the ERROR condition. The filename can contain Unicode characters.
+            The AVM raises an error if both source-filename and target-filename are specified and they resolve
+            to the same file.
+NO-CONVERT | CONVERT convert-phrase
+       Lets you specify the character conversion behavior between the source and target objects.
+            The NO-CONVERT option specifies that no conversions occur. However, if the target is a LONGCHAR
+            or a CLOB, the AVM validates the character data based on the target object's code page. For a CLOB,
+            this is the code page of the CLOB. For a LONGCHAR, this is -cpinternal unless the
+            LONGCHAR's code page was set using the FIX-CODEPAGE statement. If the validation fails, the
+            AVM raises the ERROR condition.
+            The CONVERT option lets you specify how the AVM converts object data. Following is the syntax
+            for convert-phrase:
+
+              {
+                  [ SOURCE CODEPAGE codepage ]
+                  [ TARGET CODEPAGE codepage ]
+              }
+
+
+            Specify SOURCE CODEPAGE to indicate that a source object is in the specified code page. If you
+            specify TARGET CODEPAGE, the AVM converts the target object to the specified code page.
+            The following table lists the default character conversions the AVM performs when copying data
+            between the source and target objects. References to CLOBCP and CLOBDB represent CLOB data
+            in either the CLOB's defined code page or the database's defined code page, respectively. References
+            to the "fixed code page" represent the code page of a target LONGCHAR variable set using the
+            FIX-CODEPAGE statement.
+            Table 19: Default COPY-LOB statement character conversions
+
+             When the source        And the target         The AVM converts the source object . . .
+             object is a . . .      object is a . . .
+             MEMPTR                 LONGCHAR               From -cpinternal to -cpinternal or the
+                                                           fixed code page
+             MEMPTR                 CLOBDB                 From -cpinternal to the database's defined
+                                                           code page
+             MEMPTR                 CLOBCP                 From -cpinternal to the CLOB's defined code
+ 
+             When the source       And the target         The AVM converts the source object . . .
+             object is a . . .     object is a . . .
+             BLOB                  LONGCHAR               No conversion, the LONGCHAR is in
+                                                          -cpinternal or the fixed code page
+             LONGCHAR              MEMPTR                 From the LONGCHAR's code page to
+                                                          -cpinternal
+             LONGCHAR              BLOB                   No conversion, the BLOB's code page is unknown
+             LONGCHAR              CLOBDB                 From the LONGCHAR's code page to the
+                                                          database's defined code page
+             LONGCHAR              CLOBCP                 From the LONGCHAR's code page to the CLOB's
+                                                          defined code page
+             LONGCHAR              LONGCHAR               From the LONGCHAR's code page to
+                                                          -cpinternal or the target’s fixed code page
+             CLOBDB                MEMPTR                 From the database's defined code page to
+                                                          -cpinternal
+             CLOBDB                LONGCHAR               From the database's defined code page to
+                                                          -cpinternal or the fixed code page
+             CLOBCP                MEMPTR                 From the CLOB's defined code page to
+                                                          -cpinternal
+             CLOBCP                LONGCHAR               No conversion, or conversion to the fixed code
+                                                          page
+
+
+            Note:
+            If either the source or the target object is a file, the target's code page defaults to -cpstream.
+            The Byte Order Mark (BOM) or the encoding declaration is processed when a COPY-LOB operation
+            reads from or writes to a FILE. For example, when a COPY-LOB statement copies data from a FILE
+            (with a BOM) to a CLOB, the statement identifies and translates file content based on the BOM
+            character but ignores the BOM character as part of the copy operation. And, when a COPY-LOB
+            operation copies data from a CLOB to the beginning of a FILE, the statement prepends the BOM
+            character, except when the BOM can be assumed; that is, the code page of the FILE target is UTF-8.
+            Also, if the COPY-LOB operation is written to a STARTING-AT location embedded within the FILE,
+            the BOM character is not prepended to the written content. For more information on encoding
+            declarations, see the Use XML with ABL Applications guide.
+NO-ERROR
+       The NO-ERROR option on page 726 is used to prevent the statement from raising ERROR and displaying
+       error messages.
+
+Notes
+•   If a source or target object is stored in a database, its record must be available to copy. The lock mode of the record
+    containing the target object must be EXCLUSIVE-LOCK or SHARE-LOCK and upgradeable; otherwise, the
+    COPY-LOB statement raises the ERROR condition.
+•   You can also assign large object data from one BLOB or MEMPTR to another, and one CLOB or LONGCHAR to
+    another, using the Assignment (=) statement on page 74 or ASSIGN statement on page 77. You cannot use the
+    Assignment (=) statement or ASSIGN statement to assign large object data between BLOBs or MEMPTRs and
+    CLOBs or LONGCHARs.
+•   COPY-LOB file operations involving LONGCHAR variables are limited to 1GB - 1 byte.
+   •   When using COPY-LOB from a BLOB field to a LONGCHAR variable, if the BLOB field contains the Unknown
+       value (?) , the LONGCHAR variable is set to the empty string ("").
+
+
+
+
+ENTRY function
+
+Returns a character string (CHARACTER or LONGCHAR) entry from a list based on an integer position. The data type of the returned value matches the data type of the list element.
+
+   Syntax
+
+     ENTRY ( element , list[ , delimiter ] )
+
+
+   element
+                An integer value that corresponds to the position of a character string in a list of values. If the value
+                of element does not correspond to an entry in the list, the AVM raises the ERROR condition. If the
+                value of element is the Unknown value (?), ENTRY returns the Unknown value (?). If element is less
+                than or equal to 0, or is larger than the number of elements in list, ENTRY returns an error.
+   list
+                A list of character strings separated with a delimiter. The list can be a variable of type CHARACTER
+                or LONGCHAR. If the value of list is the Unknown value (?), ENTRY returns the Unknown value
+                (?).
+   delimiter
+                A single CHARACTER delimiter you define for the list. The default is a comma. This allows the
+                ENTRY function to operate on non-comma-separated lists. If you use an alphabetic character, this
+                delimiter is case sensitive.
+
+   Examples
+   This procedure returns the day of the week that corresponds to a date the user enters. The WEEKDAY function evaluates
+   the date and returns, as an integer, the day of the week for that date. The ENTRY function uses that integer to indicate
+   a position in a list of the days of the week.
+   r-entry.p
+
+     DEFINE VARIABLE datein AS DATE      NO-UNDO.
+     DEFINE VARIABLE daynum AS INTEGER   NO-UNDO.
+     DEFINE VARIABLE daynam AS CHARACTER NO-UNDO INITIAL "Sunday,
+       Monday, Tuesday, Wednesday, Thursday, Friday, Saturday".
+
+     SET datein LABEL "Enter a date (mm/dd/yy)".
+     daynum = WEEKDAY(datein).
+     DISPLAY ENTRY(daynum,daynam) FORMAT "x(9)" LABEL "is a" WITH SIDE-LABELS.
+
+
+   This is an example of a list separated by dashes instead of commas (the result is "helvetica"):
+   r-entry2.p
+
+     DEFINE VARIABLE typeface AS CHARACTER NO-UNDO.
+
+     typeface = "-adobe-helvetica-bold-r-normal--*-210-*-*-*-*-iso*-*".
+     DISPLAY ENTRY(3, typeface, "-") FORMAT "x(16)".
+
+
+   The next procedure looks up UNIX login IDs in a small password array and returns the name of the user:
+
+   r-entry3.p
+
+     DEFINE VARIABLE login-name AS CHARACTER NO-UNDO FORMAT "x(10)".
+     DEFINE VARIABLE real-name AS CHARACTER NO-UNDO FORMAT "x(20)".
+     DEFINE VARIABLE loop       AS INTEGER   NO-UNDO.
+     /* username:password:uid:gid:gcos-field:home-dir:login-shell */
+     DEFINE VARIABLE passwd     AS CHARACTER NO-UNDO EXTENT 5 INITIAL
+      ["kulig::201:120:Clyde Kulig:/users/kulig",
+       "gegetskas::202:120:Neal Gegetskas:/users/geget:",
+       "bertrand::203:120:Rich Bertrand:/users/bertr:",
+       "lepage::204:120:Gary Lepage:/users/lepag:",
+       "wnek::205:120:Jordyn Wnek:/users/wnekj:"].
+
+     REPEAT:
+       SET login-name.
+       real-name = ?.
+       DO loop = 1 TO 5:
+          IF ENTRY(1,passwd[loop],":") = login-name THEN LEAVE.
+       END.
+       IF loop > 5 THEN
+          MESSAGE "Sorry, but" login-name "is not in my password file.".
+       ELSE
+          real-name = ENTRY(5,passwd[loop],":").
+       DISPLAY real-name.
+     END.
+
+
+
+   Notes
+   The ENTRY function is double-byte enabled. It can return an entry that contains double-byte characters from a specified
+   list and the CHARACTER delimiter can be a double-byte character.
+
+ 
+
+
+
+ENTRY statement
+
+Used on the left-hand side of an assignment to set the nth element to some value.
+
+   Syntax
+
+     ENTRY ( element , list [ , character ] ) = expression
+
+
+   element
+                An integer value that corresponds to the position of a character string in a list of values. If the value
+                of element does not correspond to an entry in the list, the AVM raises the ERROR condition. If the
+                value of element is the Unknown value (?), ENTRY returns the Unknown value (?). If element is less
+                than or equal to 0, or is larger than the number of elements in list, ENTRY returns an error.
+   list
+                A list of character strings separated with a character delimiter. The list can be a variable of type
+                CHARACTER or LONGCHAR. If the value of list is the Unknown value (?), ENTRY returns the
+                Unknown value (?).
+   character
+             A delimiter you define for the list. The default is a comma. This allows functions to operate on
+             non-comma-separated lists. The delimiter must be only a single character. If you specify a string of
+             more than one character, only the first character is used. If you specify a null string (""), a space
+             character is used as the delimiter. If you use an alphabetic character, this delimiter is case sensitive.
+expression
+             A constant, field name, variable name, or expression that results in a character string whose value you
+             want to store in the nth element in a list. ABL does not pad or truncate expression.
+
+Note: The += Addition assignment operator on page 46 can be used with the ENTRY statement.
+
+Example
+This procedure uses three ENTRY statements:
+r-ent-eq.p
+
+    DEFINE VARIABLE num-recs AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE msg-txt AS CHARACTER NO-UNDO INITIAL
+      "There are <x> records in the table.".
+
+    /* Count the records. */
+    FOR EACH Customer NO-LOCK:
+      num-recs = num-recs + 1.
+    END.
+
+    /* If there is only one record, make the message singular. */
+    IF num-recs = 1 THEN
+      ASSIGN
+        ENTRY(2,msg-txt," ") = "is"
+        ENTRY(4,msg-txt," ") = "record".
+
+    /* Insert the record count into the string. */
+    ENTRY(3,msg-txt," ") = STRING(num-recs).
+
+    MESSAGE msg-txt.
+
+
+The following example code uses the addition assignment operator (+=) with the ENTRY statement.
+
+    VAR CHAR myList = "apples,oranges,blueberries".
+
+    ENTRY(2,myList) = "peaches".
+
+    MESSAGE myList.            //apples,peaches,blueberries
+
+    ENTRY(2,myList) += ",kiwi".
+
+    MESSAGE myList.            //apples,peaches,kiwi,blueberries
+
+
+Notes
+•   The ENTRY statement is double-byte enabled. It can insert an entry that contains double-byte characters into a
+    specified list and the character delimiter can be a double-byte character.
+
+
+
+
+EXP function
+
+Returns the result of raising a number to a power. The number is called the base and the power is called the exponent.
+
+   Syntax
+
+       EXP ( base , exponent )
+
+
+   base
+                A constant, field name, variable name, or expression that evaluates to a numeric value.
+   exponent
+                A numeric expression.
+
+   Example
+   This procedure calculates how much a principal amount invested at a given compounded annual interest rate grows over
+   a specified number of years:
+
+   r-exp.p
+
+       DEFINE VARIABLE principal AS DECIMAL NO-UNDO                       FORMAT "->>>,>>9.99"
+         LABEL "Amt Invested".
+       DEFINE VARIABLE rate       AS INTEGER NO-UNDO                      FORMAT "->9"
+         LABEL "Interest %".
+       DEFINE VARIABLE num-yrs    AS INTEGER NO-UNDO                      FORMAT ">>9"
+         LABEL "Number of Years".
+       DEFINE VARIABLE final-amt AS DECIMAL NO-UNDO                       FORMAT
+         "->>>,>>>,>>>,>>>,>>>,>>9.99" LABEL "Final                       Amount".
+
+       REPEAT:
+         UPDATE principal rate num-yrs.
+         final-amt = principal * EXP(1 + rate / 100,num-yrs).
+         DISPLAY final-amt.
+       END.
+
+   Notes
+   •   After converting the base and exponent to the floating-point format, the EXP function uses standard system library
+       routines. On some machines, these routines do not handle large numbers well and might cause your terminal to hang.
+       Also, because the calculations are done in floating-point arithmetic, full decimal precision is not possible beyond
+       1-12 significant digits on most machines.
+   •   The EXP function is precise to approximately 10 decimal points.
+
+
+
+
+
+FILL function
+
+Generates a character string made up of a character string that is repeated a specified number of times.
+
+   Syntax
+
+       FILL ( expression , repeats )
+
+
+   expression
+                An expression that yields a character value. This expression can contain double-byte characters.
+   repeats
+                A constant, field name, variable name, or expression with an integer value. The FILL function uses
+                this value to repeat the expression you specify. If the value of repeats is less than or equal to 0, FILL
+                produces a null string.
+
+   Example
+   This example procedure produces a bar chart that depicts each Customer's balance as a percentage of the total of all
+   outstanding balances. The first FOR EACH block accumulates the value of balance for each Customer, producing a
+   total balance value for all Customers. The next FOR EACH block goes through the Customer table again, figuring each
+   Customer's balance as a percentage of the total.
+   r-fill.p
+
+     DEFINE VARIABLE fillchar AS CHARACTER NO-UNDO FORMAT "x" INITIAL "*".
+     DEFINE VARIABLE percentg AS INTEGER   NO-UNDO FORMAT ">>9".
+
+     FOR EACH Customer NO-LOCK:
+       ACCUMULATE Customer.Balance (TOTAL).
+     END.
+
+     DISPLAY "Percentage of Outstanding Balance" WITH CENTERED NO-BOX.
+
+     FOR EACH Customer NO-LOCK WHERE Customer.Balance > 0:
+       percentg = Customer.Balance / (ACCUM TOTAL Customer.Balance) * 100.
+       FORM SKIP Customer.Name percentg LABEL "%" bar AS CHARACTER
+          LABEL " 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17"
+          FORMAT "x(50)" WITH NO-BOX NO-UNDERLINE USE-TEXT.
+       COLOR DISPLAY BRIGHT-RED bar.
+       DISPLAY Customer.Name percentg FILL(fillchar,percentg * 3) @ bar.
+     END.
+
+
+   The FORM statement describes the frame layout, including the name, the percentage of total balance, and a bar across
+   the top of the frame. (The bar variable is defined on-the-fly; it has no corresponding DEFINE VARIABLE statement
+   at the top of the procedure. It is defined in the FORM statement and has its own label and format.) The DISPLAY
+   statement following the FORM statement displays the bar variable. If the procedure is running on UNIX or on a
+   monochrome PC monitor, the AVM ignores the COLOR BRIGHT-RED. However, if the procedure is running on a PC
+   with a color monitor, the bar is displayed in BRIGHT-RED (a predefined color on the PC). The final DISPLAY statement
+   displays the bars.
+   The fillchar assignment statement sets the fill character to asterisk (*). The FILL function generates a string made
+   up of fill characters that is the percentage of total sales multiplied by three (each percentage point uses three fill characters).
+
+
+
+
+
+HEX-DECODE function
+
+Converts a string of type CHAR or LONGCHAR consisting of an even number of hexadecimal digits (0 through 9 and A through F) into a MEMPTR value.
+
+   Syntax
+
+       HEX-DECODE( expression )
+
+
+   expression
+                An expression of type CHAR or LONGCHAR containing the value you want to convert. If the
+                expression does not contain an even number of hexadecimal digits, or it is the Unknown value (?),
+                the result is the Unknown value (?). If the expression is a zero-length value, the result is a zero-length
+                value.
+
+   Note: The BASE64-ENCODE, BASE64-DECODE, HEX-ENCODE, and HEX-DECODE functions do not do any byte
+   ordering. However, the binary output of these functions may be a binary data type such as a MEMPTR or RAW. If the
+   target of these operation’s output is another system where the order of bytes (endianness) differs, you must first normalize
+   the data to what the receiving side is expecting. Otherwise, the results may not be as expected. For example, for a
+   MEMPTR value that you are building yourself, you can use the SET-BYTE-ORDER statement on page 947 to set the
+   byte order for the MEMPTR variable before you read or write the value.
+
+   Example
+   The following code fragment illustrates how to use the HEX-DECODE function:
+
+       DEFINE VARIABLE vMemptr as MEMPTR NO-UNDO.
+
+       vMemptr = HEX-DECODE(HEX-ENCODE(GENERATE-UUID)).
+
+
+
+
+HEX-ENCODE function
+
+Converts a RAW or MEMPTR value into a string of type LONGCHAR consisting of an even number of hexadecimal digits (0 through 9 and A through F).
+
+   Syntax
+
+     HEX-ENCODE( expression )
+
+
+   expression
+                A RAW or MEMPTR expression containing the value you want to convert. If the expression is the
+                Unknown value (?), the result is the Unknown value (?). If the expression is a zero-length value, the
+                result is a zero-length value.
+
+   Note: The BASE64-ENCODE, BASE64-DECODE, HEX-ENCODE, and HEX-DECODE functions do not do any byte
+   ordering. However, the binary output of these functions may be a binary data type such as a MEMPTR or RAW. If the
+   target of these operation’s output is another system where the order of bytes (endianness) differs, you must first normalize
+   the data to what the receiving side is expecting. Otherwise, the results may not be as expected. For example, for a
+   MEMPTR value that you are building yourself, you can use the SET-BYTE-ORDER statement on page 947 to set the
+   byte order for the MEMPTR variable before you read or write the value.
+
+   Example
+   The following code fragment illustrates how to use the HEX-ENCODE function:
+
+     DEFINE VARIABLE MyUUID AS RAW      NO-UNDO.
+     DEFINE VARIABLE vChar AS LONGCHAR NO-UNDO.
+
+     ASSIGN
+       MyUUID = GENERATE-UUID
+       vChar = HEX-ENCODE(MyUUID).
+
+
+
+
+
+
+INDEX function
+
+Returns an INTEGER value that indicates the position of a search string within a source string.
+
+   Syntax
+
+       INDEX ( source , searchString [ , starting ] )
+
+
+   source
+               A CHARACTER, LONGCHAR or MEMPTR expression.
+   searchString
+              A CHARACTER or LONGCHAR expression whose position you want to locate in source. If
+              searchString does not exist within source, INDEX returns 0.
+   starting
+               An integer that specifies at which left-most position in the string to start the search. For example,
+               INDEX("abcdefabcdef","abc",6) returns 7.
+               The starting position is in characters if source is a CHARACTER or LONGCHAR expression. The
+               starting position is in bytes if source is a MEMPTR.
+
+   Examples
+   For this example, you must enter 1, 2, 3, 4, or 5. The INDEX function checks if the digit exists in the string "12345".
+
+r-index.p
+
+  DEFINE VARIABLE x    AS CHARACTER NO-UNDO FORMAT "9"
+    LABEL "Enter a digit between 1 and 5".
+  DEFINE VARIABLE show AS CHARACTER NO-UNDO FORMAT "x(5)" EXTENT 5
+    LABEL "Literal" INITIAL ["One", "Two", "Three", "Four", "Five"].
+
+  REPEAT:
+    SET x AUTO-RETURN.
+    IF INDEX("12345",x) = 0 THEN DO:
+       MESSAGE "Digit must be 1,2,3,4, or 5. Try again.".
+       UNDO, RETRY.
+    END.
+    ELSE DISPLAY show[INTEGER(x)].
+  END.
+
+
+This procedure also uses the starting option:
+r-index2.p
+
+  DEFINE     VARIABLE     positions      AS     CHARACTER   NO-UNDO FORMAT "x(60)".
+  DEFINE     VARIABLE     sentence       AS     CHARACTER   NO-UNDO FORMAT "x(72)".
+  DEFINE     VARIABLE     vowel          AS     CHARACTER   NO-UNDO FORMAT "x".
+  DEFINE     VARIABLE     found          AS     INTEGER     NO-UNDO.
+  DEFINE     VARIABLE     loop           AS     INTEGER     NO-UNDO.
+  DEFINE     VARIABLE     start          AS     INTEGER     NO-UNDO.
+
+  FORM sentence LABEL "Type in a sentence"
+    WITH FRAME top
+    TITLE "This program will tell where the vowels are in a sentence.".
+
+  SET sentence WITH FRAME top.
+  DO loop = 1 TO 5:
+    ASSIGN
+      positions = ""
+      vowel     = SUBSTRING("aeiou",loop,1)
+      start     = 1
+      found     = INDEX(sentence,vowel,start).
+
+    DO WHILE found > 0:
+       ASSIGN
+         positions = positions + STRING(found) + " "
+         start      = found + 1
+         found      = INDEX(sentence,vowel,start).
+    END.
+    DISPLAY vowel LABEL "Vowel" positions LABEL "Is found at locations..."
+       WITH 5 DOWN.
+    DOWN.
+  END.
+
+   The following example demonstrates using the INDEX function on a MEMPTR variable:
+
+       DEFINE VARIABLE mptr AS MEMPTR NO-UNDO.
+       DEFINE VARIABLE str AS CHAR NO-UNDO.
+       DEFINE VARIABLE str1 AS CHAR CASE-SENSITIVE NO-UNDO.
+
+       str = "Using MEMPTR as source param. MEMPTR is an ABL data type" .
+       SET-SIZE(mptr) = LENGTH(str, "raw") + 1.
+       PUT-STRING(mptr, 1) = str.
+       MESSAGE INDEX(mptr, "memptr", 10). // returns 31
+
+       str1 = "memptr".
+       MESSAGE INDEX(mptr, str1, 10).                 // returns 0
+
+   Notes
+   •   If source is a CHARACTER or LONGCHAR expression and either operand is case sensitive, the search is case
+       sensitive.
+   •   If source is a MEMPTR, case sensitivity depends on the searchString. If searchString is case sensitive, the search
+       is case sensitive.
+   •   If searchString is an empty string ("") or a null string ("?"), the function returns 0.
+
+
+
+
+
+
+LC function
+
+Converts any uppercase characters in a CHARACTER or LONGCHAR expression to lowercase characters, and returns the result. The data type of the returned value matches the data type of the expression passed to the function.
+
+   Syntax
+
+     LC ( expression )
+
+
+   expression
+                A constant, field name, variable name, or expression that results in a CHARACTER or LONGCHAR
+                value.
+
+   Example
+   This procedure finds a Customer record. After the user updates the SalesRep field, the procedure converts the first
+   character of the SalesRep value to uppercase and the remaining characters to lowercase.
+   r-lc.p
+
+     REPEAT:
+       PROMPT-FOR Customer.CustNum.
+       FIND Customer USING Customer.CustNum.
+       DISPLAY Customer.Name.
+       UPDATE Customer.SalesRep.
+       Customer.SalesRep = CAPS(SUBSTRING(Customer.SalesRep, 1, 1) ) +
+          LC(SUBSTRING(Customer.SalesRep, 2) ).
+       DISPLAY Customer.SalesRep.
+     END.
+
+
+   The CAPS function uses the SUBSTRING function to extract the first character of the field, which it then converts to uppercase.
+
+   In the LC function, the result of the SUBSTRING function is the remaining characters in the SalesRep field, starting
+   with character position 2. (No length is specified, so the remainder of the string is assumed). The LC function converts
+   these characters to lowercase.
+
+   Notes
+   •    The LC function returns lowercase characters relative to the settings of the Internal Code Page (-cpinternal) and Case
+        Table (-cpcase) startup parameters. For more information on these parameters, see Startup Command and Parameter
+        Reference.
+   •    The LC function is double-byte enabled. The specified expression can yield a string containing double-byte characters;
+        however, the LC function changes only single-byte characters in the string.
+
+
+
+
+
+LEFT-TRIM function
+
+Removes leading white space, or other specified characters, from a CHARACTER or LONGCHAR expression. The data type of the returned value matches the data type of the expression passed to the function.
+
+   Syntax
+
+     LEFT-TRIM ( expression [ , trim-chars ] )
+
+
+   expression
+                An expression (a constant, field name, variable name, or expression) whose value is a CHARACTER
+                or LONGCHAR. If expression is a case-sensitive variable, the AVM performs a case-sensitive trim.
+                If expression is a LONGCHAR, the result is in the same code page.
+   trim-chars
+                A character expression that specifies the characters to be trimmed from expression. If you do not
+                specify trim-chars, the LEFT-TRIM function removes spaces, tabs, line feeds, and carriage returns.
+
+   Example
+   The following example shows the effect of the TRIM, LEFT-TRIM, and RIGHT-TRIM functions on a string value:
+
+   r-ltrim.p
+
+       DEFINE VARIABLE ix AS INTEGER    NO-UNDO.
+       DEFINE VARIABLE txt AS CHARACTER NO-UNDO FORMAT "X(26)"
+         INITIAL "***** This is a test *****".
+
+       DEFINE   BUTTON     b_left       LABEL    "Left Trim".
+       DEFINE   BUTTON     b_right      LABEL    "Right Trim".
+       DEFINE   BUTTON     b_trim       LABEL    "Trim".
+       DEFINE   BUTTON     b_quit       LABEL    "Quit" AUTO-ENDKEY.
+
+       DEFINE FRAME butt-frame
+         txt ix LABEL "String Length" SKIP(2)
+         b_left b_right b_trim b_quit
+       WITH CENTERED TITLE "Original Text String".
+
+       DEFINE FRAME trimed-frame
+         txt LABEL "Trimed Text"
+         ix LABEL "Length"
+       WITH CENTERED.
+
+       ON CHOOSE OF b_trim, b_right, b_left IN FRAME butt-frame DO:
+         FRAME trimed-frame:TITLE = "Data After " + SELF:LABEL.
+         DISPLAY TRIM(txt, "* ") WHEN SELF:LABEL = "Trim" @ txt
+            LENGTH(TRIM(txt, "* ")) WHEN SELF:LABEL = "Trim" @ ix
+            LEFT-TRIM(txt,"* ") WHEN SELF:LABEL = "Left Trim" @ txt
+            LENGTH(LEFT-TRIM(txt,"* ")) WHEN SELF:LABEL = "Left Trim" @ ix
+            RIGHT-TRIM(txt, "* ") WHEN SELF:LABEL = "Right Trim" @ txt
+            LENGTH(RIGHT-TRIM(txt, "* ")) WHEN SELF:LABEL = "Right Trim" @ ix
+         WITH FRAME trimed-frame.
+       END.
+
+       ENABLE b_left b_right b_trim b_quit WITH FRAME butt-frame.
+
+       ix = LENGTH(txt).
+       DISPLAY txt ix WITH FRAME butt-frame.
+
+       WAIT-FOR CHOOSE OF b_quit IN FRAME butt-frame.
+
+   Notes
+   •   The LEFT-TRIM function is similar to the TRIM function except that it trims characters only from the left end of
+       the string.
+   •   If expression is a case-sensitive field or variable, then trim-chars is also as case sensitive. Otherwise, trim-chars is
+       not case sensitive.
+   •   The LEFT-TRIM function is double-byte enabled. The specified expression and trim-chars arguments can contain
+       double-byte characters. LEFT-TRIM does not remove double-byte space characters by default.
+
+
+
+
+LENGTH function
+
+Returns, as an INTEGER value, the number of characters, bytes, or columns in a string, an expression of type RAW, or a BLOB field.
+
+Syntax
+
+  LENGTH ( { exp | raw-exp | blob-field } [ , type ] )
+
+
+exp
+             An expression that evaluates to a CHARACTER, LONGCHAR, INTEGER, LOGICAL, or CLOB
+             type. If exp evaluates to an INTEGER or LOGICAL, the STRING function is used to first convert it
+             to a character string before returning the length. For a LOGICAL, YES/TRUE returns 3 and NO/FALSE
+             returns 2.
+raw-exp
+             A function or variable name that returns a RAW value.
+blob-field
+             An expression that evaluates to a BLOB field.
+type
+             A character expression that indicates whether you want the length of exp in character units, bytes, or
+             columns. A double-byte character registers as one character unit. By default, the unit of measurement
+             is character units.
+             There are three valid types: "CHARACTER", "RAW", and "COLUMN". The expression "CHARACTER"
+             indicates that the length is measured in characters, including double-byte characters. The expression
+             "RAW" indicates that the length is measured in bytes. The expression "COLUMN" indicates that the
+             length is measured in display or print character-columns. If you specify the type as a constant expression,
+             ABL validates the type specification at compile time. If you specify the type as a non-constant
+             expression, the AVM validates the type specification at run time for a multi-byte codepage.
+
+             Note: The expression "COLUMN" is not valid for a LONGCHAR variable or a CLOB field.
+
+Examples
+This procedure produces a report that contains item information. Because the information on the report fills the entire
+width of the screen, this procedure shortens the information in the description field for each item. If the description of
+an item is longer than eight characters, the procedure converts the description to the first eight characters followed by
+ellipses.
+r-length.p
+
+  DEFINE VARIABLE short-name AS CHARACTER NO-UNDO FORMAT "x(11)" LABEL "Desc".
+
+  FOR EACH Item NO-LOCK:
+    IF LENGTH(Item.ItemName, "COLUMN") > 8 THEN
+       short-name = SUBSTRING(Item.ItemName,1,8, "COLUMN") + "..." .
+    ELSE
+       short-name = Item.ItemName.
+    DISPLAY Item.ItemNum short-name Item.OnHand Item.Allocated
+       Item.ReOrder Item.OnOrder Item.Price FORMAT "$>>>9.99".
+  END.
+
+
+In this procedure, the LENGTH function returns the number of bytes in the Name of number 29. The procedure returns
+a 15, the number of bytes in the Name, Bug in a Rug-by.
+
+    r-rawlen.p
+
+     DEFINE VARIABLE ix AS INTEGER NO-UNDO.
+
+     FIND Customer NO-LOCK WHERE Customer.CustNum = 29.
+     ix = LENGTH(Customer.Name, "RAW").
+     DISPLAY Customer.Name ix LABEL "Byte Length".
+
+   Note
+   If the value of the expression is the Unknown value (?), the LENGTH function returns the Unknown value (?).
+
+
+LENGTH statement
+
+Changes the number of bytes in a raw variable.
+
+   Syntax
+
+     LENGTH ( variable ) = expression
+
+
+   variable
+                A variable of type RAW.
+   expression
+                An expression that returns an integer.
+
+   Note: You can use compound assignment operators (+=, -=, *=, /=) with the LENGTH statement. For more information,
+   see += Addition assignment operator on page 46, -= Subtraction assignment operator on page 52, *= Multiplication
+   assignment operator on page 54, and /= Division assignment operator on page 57.
+
+   Example
+   This procedure takes the number of bytes in the name stored in the variable r1 and truncates it to 2 bytes:
+   r-rawln1.p
+
+     /* You must connect to a non-OpenEdge demo database to run this procedure */
+     DEFINE VARIABLE r1 as RAW NO-UNDO.
+
+     FIND Customer NO-LOCK WHERE Customer.CustNum = 29.
+     r1 = RAW(Customer.Name).
+     LENGTH(r1) = 2.
+
+
+   The following example code uses the *= assignment operator to double the number of bytes for the variable.
+
+     /* You must connect to a non-OpenEdge demo database to run this procedure */
+     VAR RAW r1.
+
+     FIND Customer NO-LOCK WHERE Customer.CustNum = 29.
+     r1 = RAW(Customer.Name).
+     LENGTH(r1) *= 2.
+
+   Notes
+   •   If variable is the Unknown value (?), it remains the Unknown value (?).
+   •   If expression is greater than the number of bytes in variable, the AVM appends null bytes so that the length of
+       variable equals the length of expression.
+
+
+
+
+LOOKUP function
+
+Returns an INTEGER value giving the position of an expression in a list. Returns a 0 if the expression is not in the list.
+
+   Syntax
+
+     LOOKUP ( expression , list [ , delimiter ] )
+
+
+   expression
+                A constant, field name, variable name, or expression that results in a character value that you want to
+                look up within a list of character expressions. If the value of expression is the Unknown value (?), the
+                result of the LOOKUP function is the Unknown value (?).
+   list
+                A character expression that contains the expression you name with the expression argument. Each
+                entry in the list is separated with a delimiter. The list can be a variable of type CHARACTER or
+                LONGCHAR. If list contains the Unknown value (?), LOOKUP returns the Unknown value (?).
+   delimiter
+                A single-character delimiter you define for the list. The delimiter is used as is, that is, it is case sensitive.
+                The default is a comma. This allows the LOOKUP function to operate on non-comma-separated lists.
+
+   Examples
+   This procedure prompts the user for a New England state. The LOOKUP function tests the value against the list of states
+   stored in the stlist variable. If there is no match (the result is 0), the procedure displays a message. Otherwise, the
+   procedure prompts the user for another New England state.
+
+   r-lookup.p
+
+       DEFINE VARIABLE stlist AS CHARACTER NO-UNDO
+         INITIAL "ME,MA,VT,RI,CT,NH".
+       DEFINE VARIABLE state AS CHARACTER NO-UNDO FORMAT "x(2)".
+
+       REPEAT:
+         SET state LABEL "Enter a New England state, 2 characters".
+         IF LOOKUP(state, stlist) = 0 THEN
+            MESSAGE "This is not a New England state".
+       END.
+
+
+   The following example uses a different delimiter, which list all fields that have "sls" or "sales" as words in their
+   standard Dictionary labels:
+   r-look2.p
+
+       FOR EACH _Field
+         WHERE LOOKUP("sls",_Field._Label," ") > 0
+            OR LOOKUP("sales",_Field._Label," ") > 0:
+
+         DISPLAY _Field._Field-Name _Field._Label.
+       END.
+
+
+
+   Notes
+   •   If expression contains a delimiter, LOOKUP returns the beginning of a series of entries in list. For example,
+       LOOKUP("a,b,c","x,a,b,c") returns a 2.
+   •   Most character comparisons are case insensitive in ABL. By default, upper-case and lower-case characters have the
+       same sort value. However, you can define fields and variables as case sensitive (although it is not advised, unless
+       strict ANSI SQL adherence is required). If the expression or list is defined as case sensitive, the comparison between
+       them is also case sensitive and "Smith" does not equal "smith".
+   •   The LOOKUP function is double-byte enabled. The specified expression can yield a string value that contains
+       double-byte characters and the delimiter can be a double-byte character.
+   •   The LOOKUP function always returns 0 if an expression is equal to a delimiter.
+
+
+
+
+NORMALIZE function
+
+Returns the normalized form of a character string based on the specified Unicode normalization form.
+
+   Syntax
+
+       NORMALIZE ( string , normalization-form )
+
+
+   string
+              The source string to normalize. The value may be of type CHARACTER or LONGCHAR.
+   If the string is a CHARACTER value, -cpinternal must be set to UTF-8. If the string is a LONGCHAR value, its
+   code page can be any form of Unicode (for example, UTF-8, UTF-16, or UTF-32). This function returns a value of the
+   same data type as the source string.
+   normalization-form
+              A character expression that evaluates to one of the following Unicode normalization forms:
+              •   NFD — Canonical Decomposition
+              •   NFC — Canonical Decomposition, followed by Canonical Composition
+              •   NFKD — Compatibility Decomposition
+              •   NFKC — Compatibility Decomposition, followed by Canonical Composition
+              •   NONE — Returns the source string unchanged
+
+
+
+NUM-ENTRIES function
+
+Returns the number of elements in a list of character strings as an INTEGER value.
+
+   Syntax
+
+     NUM-ENTRIES ( list[ , character ] )
+
+
+   list
+                A character expression containing a list of character strings separated with a character delimiter. The
+                list can be a variable of type CHARACTER or LONGCHAR. NUM-ENTRIES returns the number of
+                elements in the list. Specifically, NUM-ENTRIES returns the number of delimiters plus 1, and it
+                returns 0 if list equals the empty string ("").
+   character
+                A delimiter you define for the list. The default is a comma (,). This allows functions to operate on
+                non-comma-separated lists. If you use an alphabetic character, this delimiter is case sensitive.
+
+   Examples
+   This procedure uses NUM-ENTRIES and ENTRY to loop through a list of regions and display them, one per line. Since
+   there are obviously five regions, the REPEAT statement, REPEAT ix = 1 TO 5, works fine here.
+   r-n-ent1.p
+
+     DEFINE VARIABLE ix      AS INTEGER   NO-UNDO.
+     DEFINE VARIABLE regions AS CHARACTER NO-UNDO
+       INITIAL "Northeast,Southest,Midwest,Northwest,Southwest".
+
+     REPEAT ix = 1 TO NUM-ENTRIES(regions):
+       DISPLAY ENTRY(ix, regions) FORMAT "x(12)".
+     END.
+
+   In the following example, PROPATH is a comma-separated list of unknown length:
+   r-n-ent2.p
+
+     DEFINE VARIABLE ix AS INTEGER NO-UNDO.
+
+     REPEAT ix = 1 TO NUM-ENTRIES(PROPATH):
+       DISPLAY ENTRY(ix, PROPATH) FORMAT "x(64)".
+     END.
+
+
+   This procedure uses NUM-ENTRIES to loop through the PROPATH (a comma-separated list of directory paths) and
+   print the directories, one per line.
+   This example uses a list that does not use commas as a delimiter. This procedure returns a value of 13:
+   r-n-ent3.p
+
+     DEFINE VARIABLE sentence AS CHARACTER NO-UNDO INITIAL
+       "This sentence would be seven words long if it were six words shorter".
+
+     DISPLAY NUM-ENTRIES(sentence," ").
+
+
+
+   Note
+   The NUM-ENTRIES function is multi-byte enabled. The specified list can contain entries that have multi-byte characters
+   and the character delimiter can be a multi-byte character.
+
+
+
+
+OVERLAY statement
+
+Inserts content from a specified expression into a field or variable replacing existing characters, bytes, or columns.
+
+   Syntax
+
+       OVERLAY ( target , position[ , length[ , type ]] ) = expression
+
+
+   target
+                The name of a CHARACTER field or variable, or a LONGCHAR variable, that you want to overlay
+                with the expression.
+   position
+                An integer expression that indicates the first position in the target where you want to overlay the
+                expression. The value of the position must be positive. If the position is longer than the target, ABL
+                pads the target with blanks to match the position.
+   length
+                An integer expression that indicates the number of positions you want to allocate for the storage of
+                the expression. The expression is truncated or padded with blanks to match length. If you do not use
+                the length argument or specify -1 as the length, OVERLAY uses the entire expression.
+   type
+                A character expression that directs ABL to interpret the specified position and length values as character
+                units, bytes, or columns. A double-byte character registers as one character unit. By default, ABL
+                interprets the specified position and length values as character units.
+                There are three valid types: "CHARACTER", "RAW", and "COLUMN". The expression "CHARACTER"
+                specifies character units. The expression "RAW" specifies bytes. The expression "COLUMN" specifies
+                display or print character-columns. If you specify the type as a constant expression, ABL validates
+                the type specification at compile time. If you specify the type as a non-constant expression, the AVM
+                validates the type specification at run time for a multi-byte codepage.
+                Note: If the target is a LONGCHAR expression, "CHARACTER" is the only valid type.
+   expression
+                A CHARACTER or LONGCHAR expression that results in a character string you want to overlay on
+                the target. If you specify the length, the expression is truncated or padded with blanks to match the
+                length.
+
+Example
+The r-replc1.p procedure lets you search for, and replace text strings in a paragraph in a window. When you run
+the procedure, you see the paragraph, which is an array with an extent of five. You also see a prompt. Enter the text
+string you want the system to search for, and the new text you want in its place. The procedure searches the paragraph,
+one line at a time, for the text you entered. The procedure uses the OVERLAY statement to replace the string of old text
+with the string of new text. The procedure also determines the length of the old text and the new text.
+r-replc1.p
+
+    DEFINE VARIABLE chktext AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE ix       AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE chkndx   AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE ndx      AS INTEGER   NO-UNDO.
+    DEFINE VARIABLE old-text AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE new-text AS CHARACTER NO-UNDO.
+    DEFINE VARIABLE max-len AS INTEGER    NO-UNDO.
+    DEFINE VARIABLE comment AS CHARACTER NO-UNDO FORMAT "x(49)" EXTENT 5
+      INITIAL ["You are probably interested in OpenEdge because",
+        "you have a lot of information to organize. You",
+        "want to get at the information, add to it, and",
+        "change it, without a lot of work and aggravation.",
+        "You made the right choice with OpenEdge." ].
+
+    DISPLAY comment WITH CENTERED FRAME comm NO-LABELS
+      TITLE "Why You Chose OpenEdge" ROW 4.
+
+    REPEAT:
+      SET old-text LABEL "Enter text to search for"
+        new-text LABEL "Enter text to replace with"
+        WITH FRAME replace SIDE-LABELS CENTERED.
+
+      max-len = MAXIMUM(LENGTH(old-text), LENGTH(new-text)).
+      DO ix = 1 TO 5:
+         ndx = 1.
+         DO ndx = 1 TO LENGTH(comment[ix]):
+           chktext = SUBSTRING(comment[ix], ndx).
+           chkndx = INDEX(chktext, old-text).
+           IF chkndx <> 0 THEN DO:
+              ndx = ndx + chkndx - 1.
+              OVERLAY(comment[ix], ndx, max-len, "CHARACTER") = new-text.
+              ndx = max-len.
+           END.
+         END.
+         DISPLAY comment[ix] WITH FRAME comm.
+      END.
+    END.
+
+Notes
+•   The SUBSTRING and OVERLAY statements use the length option differently. For both, the length indicates how
+    much of the target to replace. However, SUBSTRING always inserts the full expression and never pads the expression
+    to match the length. By contrast, the length in OVERLAY determines how much ABL adds to the target, even if ABL
+    must truncate the expression or pad it with spaces. See the r-sub-over.p procedure for an illustration the differences
+    between these two statements.
+•   Do not split double-byte characters. This statement allows you to overlay either the lead or trail-byte of the target
+    string when you specify "RAW" as the type parameter.
+
+
+
+
+QUOTER function
+
+Converts the specified data type to CHARACTER and encloses the results in quotes when necessary. The QUOTER function is intended for use in QUERY-PREPARE where a character predicate must be created from a concatenated list of string variables to form a WHERE clause. In order to process variables, screen values, and input values so that they are suitable for a query WHERE clause, it is often necessary to enclose them in quotes. For example, European-format decimals and character variables must always be enclosed in quotes. You can use the QUOTER function to meet that requirement.
+
+Syntax
+
+    QUOTER ( expression [ , quote-char [ , null-string]] )
+
+
+expression
+              An expression in the data type that you want to convert to character and enclose with quotes.
+quote-char
+              Either a single or double quote, enclosed in the opposite: "'" or '"'. The default is double quote.
+              Passing ? for this argument results in double quotes.
+null-string
+              The string you want for an unknown value: the word NULL or "" for example. The default is an
+              unquoted question mark, which is the Unknown value (?).
+              For example, the following code:
+
+                DEFINE VARIABLE mychar As CHARACTER NO-UNDO
+                  INITIAL "Lift Line Skiing".
+                ...
+                qhandle:QUERY-PREPARE("FOR EACH Customer WHERE Customer.Name = "
+                  + QUOTER(mychar))
+
+
+              Would produce this prepare-string:
+
+                FOR EACH Customer WHERE Customer.Name = "Lift Line Skiing".
+
+
+Notes
+•   To address the situation where an Unknown value (?) in a list of concatenated strings could cause the entire string
+    to be unknown and the QUERY-PREPARE to fail, the QUOTER function does not return the Unknown value (?) if
+    the expression argument is unknown. Instead, it returns a known character value consisting of an unquoted
+    question-mark, by default, or the third argument, if it is present.
+•   Also, in this situation, a quoted question-mark is not used because it is interpreted as string data in a WHERE clause.
+    After the concatenation is complete, the AVM supplies a normal question mark.
+    For example, the following code:
+
+      DEFINE VARIABLE mychar As CHARACTER NO-UNDO.
+      ...
+      mychar = ?.
+      qhandle:QUERY-PREPARE("FOR EACH Customer WHERE Customer.Name = " +
+        QUOTER(mychar)).
+
+
+    Would produce this prepare-string:
+
+      FOR EACH Customer WHERE Customer.Name = ?.
+
+
+    However, giving the third parameter as "NULL" produces NULL rather than ?.
+•   For noncharacter data types, if expression is of type DECIMAL, INT64, INTEGER, DATE, DATETIME,
+    DATETIME-TZ, and so on, the following occurs:
+    •   The expression is converted to character and enclosed in quotes. The conversion is similar to the EXPORT format.
+        DATE types, however, always have the 4-digit year.
+    •   Data types with no DISPLAY format like MEMPTR and LVARBINARY return the Unknown value (?).
+    •   If a data type is of type RAW, it is converted to base 64.
+    For example, the following code:
+
+        DEFINE VARIABLE mydec As DECIMAL NO-UNDO INITIAL 12.34.
+        ...
+        qhandle:QUERY-PREPARE("FOR EACH Customer WHERE Customer.Balance = " +
+          QUOTER(mydec)).
+
+
+    Would produce this prepare-string:
+
+        FOR EACH Customer WHERE Customer.Balance = "12.34".
+
+
+    This is especially important for European format decimals that look like 12,34 and would not compile in the above
+    statement unless they are enclosed in quotes.
+•   If expression is of data type CHARACTER, quotes that are part of the string are doubled. However, if the first and
+    last characters are already quotes, then it is assumed that the quoting has already been done, and no further quotes
+    are applied. Since QUOTER allows you to define quote-char to either the single or the double quote character, you
+    can specify quote-char so it does not match the quotes in the character expression.
+    For example, if there is a record whose Name field is set to "Lift Line Skiing", including the quotes, the
+    string in the WHERE clause must also contain quotes or the record is not returned by the query.
+
+        VAR CHARACTER mychar.
+        ...
+        mychar = '"Lift Line Skiing"'.
+        qhandle:QUERY-PREPARE("FOR EACH Customer WHERE Customer.Name = " +
+          QUOTER(mychar)).
+
+
+    The following is the resulting query string which would not include the desired record:
+
+        FOR EACH Customer WHERE Customer.Name = "Lift Line Skiing".
+
+
+    To avoid this issue, specify a single quote for the quote-char parameter:
+
+        qhandle:QUERY-PREPARE("FOR EACH Customer WHERE Customer.Name = " +
+          QUOTER(mychar, "'")).
+
+
+    The resulting query string contains the proper value and matches the value in the record:
+
+        FOR EACH Customer WHERE Customer.Name = '"Lift Line Skiing"'.
+
+
+•   You can use the QUOTER function with an object reference for a class instance to obtain a unique object identifier
+    within the session as a quoted character string.
+•   When applied to an enum instance, QUOTER will return the enumeration member name as a string. If the enum
+    instance is a flag enum with multiple flags set, the string will be a comma-delimited list of the flags.
+
+
+
+
+R-INDEX function
+
+Returns an INTEGER value that indicates the position of the target string within the source string. In contrast to the INDEX function, R-INDEX performs the search from right to left.
+
+   Syntax
+
+     R-INDEX ( source , target [ , starting ] )
+
+
+   source
+               A constant, field name, variable name, or expression that results in a CHARACTER or LONGCHAR
+               value.
+   target
+               A CHARACTER or LONGCHAR expression whose position you want to locate in source. If target
+               does not exist within source, R-INDEX returns 0.
+               If a starting parameter is not specified, then the search for the target pattern begins at the right-most
+               character. Even though the search is started from the right, the target position is calculated from the
+               left. For example, this code returns a 3 rather than a 2:
+
+                 R-INDEX("abcd" , "c")
+
+
+   starting
+               An integer that specifies the begin point for the search. The search is right-to-left and starts from the
+               starting point. For example, this statement returns 1 R-INDEX("abcdefabcdef","abc",6).
+
+   Examples
+   This procedure prompts you to enter a character string and a pattern to match against the string. It then displays the
+   starting position of the string where the pattern was found.
+
+r-rindex.p
+
+  DEFINE VARIABLE rindx AS INTEGER    NO-UNDO.
+  DEFINE VARIABLE source AS CHARACTER NO-UNDO FORMAT "X(45)".
+  DEFINE VARIABLE target AS CHARACTER NO-UNDO FORMAT "X(45)".
+
+  REPEAT:
+    PROMPT-FOR source LABEL "Enter a character string to do pattern matching:"
+       WITH FRAME s1 CENTERED.
+    PROMPT-FOR target LABEL "Enter a pattern to match in the string:"
+       WITH FRAME t1 CENTERED.
+    rindx = R-INDEX(INPUT source, INPUT target).
+    IF rindx < > 0 THEN DO:
+       DISPLAY "The target pattern:" INPUT target NO-LABEL
+         "last appears in position" rindx NO-LABEL SKIP
+         WITH FRAME r1 ROW 12 CENTERED.
+       DISPLAY "in the source string:" INPUT source NO-LABEL
+         WITH FRAME r1 ROW 12 CENTERED.
+       HIDE FRAME r1.
+    END.
+    IF rindx = 0 THEN DO:
+       DISPLAY "The target pattern:" INPUT target NO-LABEL
+         "could not be found" SKIP
+         WITH FRAME r2 ROW 12 CENTERED.
+       DISPLAY "in the source string:" INPUT source NO-LABEL
+         WITH FRAME r2 ROW 12 CENTERED.
+       HIDE FRAME r2.
+    END.
+  END.
+
+
+This example also uses a starting value:
+
+   r-rndex.p
+
+       DEFINE VARIABLE mark       AS INTEGER  NO-UNDO.
+       DEFINE VARIABLE line-width AS INTEGER  NO-UNDO.
+       DEFINE VARIABLE paragraph AS CHARACTER NO-UNDO.
+
+       paragraph =     "The course centers around an existing small "
+                 +     "application that you modify to improve perfo"
+                 +     "rmance. Our highly-qualified instructors dem"
+                 +     "onstrate proven analysis and coding techniqu"
+                 +     "es and provide tips for making the most of y"
+                 +     "our ABL code. You are encouraged to bri"
+                 +     "ng your own application problems to class an"
+                 +     "d actively participate in class discussions "
+                 +     "and hands-on lab exercises.".
+
+       SET line-width LABEL "Justify with how many characters wide?"
+         VALIDATE(line-width >= 20 AND line-width <= 70,
+           "Must be between 20 and 70 for this example.")
+         WITH SIDE-LABELS FRAME ask.
+
+       FORM paragraph FORMAT "x(72)"
+         WITH DOWN NO-LABELS USE-TEXT.
+
+       DISPLAY "L" + FILL("-", line-width - 2) + "R" @ paragraph.
+       DOWN.
+
+       DO WHILE LENGTH(paragraph) > line-width:
+         mark = R-INDEX(paragraph, " ", line-width).
+         DISPLAY SUBSTRING(paragraph, 1, mark) @ paragraph.
+         DOWN.
+         paragraph = SUBSTRING(paragraph, mark + 1).
+       END.
+
+       IF paragraph <> "" THEN
+         DISPLAY paragraph.
+
+   Notes
+   •   If either operand is case sensitive, then the R-INDEX function is also case sensitive.
+   •   If either the source string or target pattern is null, the result is 0.
+   •   The R-INDEX function is double-byte enabled. You can specify target and source strings for the R-INDEX function
+       that contain double-byte characters.
+
+
+
+
+REPLACE function
+
+Returns a string with specified substring replacements. The data type of the returned value matches the data type of the expression passed to the function.
+
+   Syntax
+
+       REPLACE ( source-string , from-string , to-string )
+
+
+   source-string
+               Specifies the base string to make replacements in. The source-string parameter can be any expression
+               that evaluates to a string or a LONGCHAR. The REPLACE function does not change the value of
+               source-string itself; the function returns the string with replacements.
+   from-string
+              Specifies the substring to replace. The from-string parameter can be any expression that evaluates to
+              a string or a LONGCHAR. Each occurrence of from-string within source-string is replaced.
+   to-string
+               Specifies the replacement substring. The to-string parameter can be any expression that evaluates to
+               a string or a LONGCHAR. Each occurrence of from-string in source-string is replaced by to-string.
+
+   Example
+   The following example uses the REPLACE function to replace the string "user" with an actual user ID, if available:
+   r-repl.p
+
+       DEFINE VARIABLE greeting AS CHARACTER NO-UNDO FORMAT "x(40)"
+         INITIAL "Starting user's session . . . ".
+
+       IF USERID("DICTDB") < > "" THEN
+         greeting = REPLACE(greeting, "user", USERID("DICTDB")).
+       DISPLAY greeting WITH NO-LABELS.
+
+   Notes
+   •   The REPLACE function replaces all occurrences of from-string within source-string. After replacing a substring,
+       the REPLACE function resumes searching the string after the inserted text. Thus, the inserted text is not recursively
+       searched (in whole or in part) for from-string.
+   •   The search for occurrences of from-string within source-string is not case sensitive, unless one of the three values
+       used in the function (source-string, to-string, or from-string) is a case-sensitive field or variable.
+   •   If any of the arguments to the REPLACE function evaluate to the Unknown value (?), the function returns the
+       Unknown value (?).
+
+
+
+
+RIGHT-TRIM function
+
+Removes trailing white space, or other specified characters, from a CHARACTER or LONGCHAR expression. The data type of the returned value matches the data type of the expression passed to the function.
+
+   Syntax
+
+     RIGHT-TRIM ( expression[ , trim-chars] )
+
+
+   expression
+                An expression (a constant, field name, variable name, or expression) whose value is a CHARACTER
+                or LONGCHAR. If expression is a case-sensitive variable, the AVM performs a case-sensitive trim.
+                If expression is a LONGCHAR, the result is in the same code page.
+   trim-chars
+                A character expression that specifies the characters to trim from expression. If you do not specify
+                trim-chars, the RIGHT-TRIM function removes spaces, tabs, line feeds, and carriage returns.
+
+   Example
+   The following example shows the effects of the TRIM, RIGHT-TRIM, and LEFT-TRIM functions:
+
+   r-ltrim.p
+
+       DEFINE VARIABLE ix AS INTEGER    NO-UNDO.
+       DEFINE VARIABLE txt AS CHARACTER NO-UNDO FORMAT "X(26)"
+         INITIAL "***** This is a test *****".
+
+       DEFINE    BUTTON     b_left       LABEL     "Left Trim".
+       DEFINE    BUTTON     b_right      LABEL     "Right Trim".
+       DEFINE    BUTTON     b_trim       LABEL     "Trim".
+       DEFINE    BUTTON     b_quit       LABEL     "Quit" AUTO-ENDKEY.
+
+       DEFINE FRAME butt-frame
+         txt ix LABEL "String Length" SKIP(2)
+         b_left b_right b_trim b_quit
+       WITH CENTERED TITLE "Original Text String".
+
+       DEFINE FRAME trimed-frame
+         txt LABEL "Trimed Text"
+         ix LABEL "Length"
+         WITH CENTERED.
+
+       ON CHOOSE OF b_trim, b_right, b_left IN FRAME butt-frame DO:
+         FRAME trimed-frame:TITLE = "Data After " + SELF:LABEL.
+         DISPLAY TRIM(txt, "* ") WHEN SELF:LABEL = "Trim" @ txt
+            LENGTH(TRIM(txt, "* ")) WHEN SELF:LABEL = "Trim" @ ix
+            LEFT-TRIM(txt,"* ") WHEN SELF:LABEL = "Left Trim" @ txt
+            LENGTH(LEFT-TRIM(txt,"* ")) WHEN SELF:LABEL = "Left Trim" @ ix
+            RIGHT-TRIM(txt, "* ") WHEN SELF:LABEL = "Right Trim" @ txt
+            LENGTH(RIGHT-TRIM(txt, "* ")) WHEN SELF:LABEL = "Right Trim" @ ix
+         WITH FRAME trimed-frame.
+       END.
+
+       ENABLE b_left b_right b_trim b_quit WITH FRAME butt-frame.
+
+       ix = LENGTH(txt).
+       DISPLAY txt ix WITH FRAME butt-frame.
+
+       WAIT-FOR CHOOSE OF b_quit IN FRAME butt-frame.
+
+   Notes
+   •   The RIGHT-TRIM function is similar to the TRIM function except that it trims characters only from the right end
+       of the string.
+   •   If expression is a case-sensitive field or variable, then trim-chars is also treated as case sensitive. Otherwise, trim-chars is not case sensitive.
+   •   The RIGHT-TRIM function is double-byte enabled. The specified expression and trim-chars arguments can contain
+       double-byte characters. RIGHT-TRIM does not remove double-byte space characters by default.
+
+
+
+
+SEARCH function
+
+Searches the directories and libraries defined in the PROPATH environment variable for a file. The SEARCH function returns the full pathname of the file unless it is found in your current working directory. If SEARCH does not find the file, it returns the Unknown value (?).
+
+   Syntax
+
+     SEARCH ( opsys-file )
+
+
+   opsys-file
+                A character expression whose value is the name of the file you want to find. The name can include a
+                complete or partial directory path. If opsys-file is a constant string, you must enclose it in quotation
+                marks (" "). The value of opsys-file must be no more than 255 characters long. The filename can contain
+                Unicode characters. See Internationalize ABL Applications for more information about Unicode.
+
+Example
+In this procedure, the SEARCH function returns the fully qualified pathname of the filename entered if it is not in the
+current working directory. If SEARCH cannot find the file, it returns the Unknown value (?). The procedure displays
+the fully qualified pathname or a message indicating that the file could not be found.
+r-search.p
+
+    DEFINE VARIABLE fullname AS CHARACTER NO-UNDO FORMAT "x(55)".
+    DEFINE VARIABLE filename AS CHARACTER NO-UNDO FORMAT "x(20)".
+
+    REPEAT:
+      UPDATE filename HELP "Try entering 'help.r' or 'dict.r'"
+         WITH FRAME a SIDE-LABELS CENTERED.
+         fullname = SEARCH(filename).
+         IF fullname = ? THEN
+           DISPLAY "UNABLE TO FIND FILE " filename
+              WITH FRAME b ROW 6 CENTERED NO-LABELS.
+         ELSE
+           DISPLAY "Fully Qualified Path Name Of:" filename SKIP(2)
+              "is:" fullname WITH FRAME c ROW 6 NO-LABELS CENTERED.
+    END.
+
+Notes
+•   The SEARCH function is double-byte enabled. You can specify a filename with the opsys-file argument that contains
+    double-byte characters.
+•   Use the SEARCH function to ensure that procedures that get input from external data files are independent of specific
+    directory paths. The files must be in one of the directories or libraries defined in the PROPATH environment variable.
+•   Typically, the PROPATH includes a nil entry representing the current working directory. If the SEARCH function
+    finds the file when searching this entry, it returns only the simple name of the file rather than the full pathname. If
+    the PROPATH does not include a nil entry or another entry that specifies the current working directory, the SEARCH
+    function does not search the current working directory.
+•   If you provide a fully qualified pathname, SEARCH checks if the file exists. In this case, SEARCH does not search
+    directories on the PROPATH.
+•   When you search for a file that is in a library, SEARCH returns the file's pathname in the form
+    path-name<<member-name>>, where path-name is the pathname of the library and member-name is the name of
+    the file. The double angle brackets indicate that the file is a member of a library. For example, in the path
+    /usr/apps.pl<<proc1.r>>, proc1.r is the name of the file in the library apps.pl.
+    The LIBRARY function and MEMBER function use the special syntax to return, respectively, the library name and
+    member-name of the file in the library.
+•   If an application repeatedly runs a procedure, you can improve performance by using the SEARCH function once to
+    build a full pathname for that procedure. Use this value in the RUN statement to avoid repeated searches of the
+    PROPATH.
+•   In Windows, you can specify URL pathnames on the PROPATH. If the file is found in a directory specified by a
+    URL, SEARCH returns the full URL pathname of the file which includes the filename appended to the URL PROPATH
+    entry. If you provide a fully-qualified URL, SEARCH checks if the file exists. In this case, SEARCH does not search
+    URLs on the PROPATH. Valid URL protocols include HTTP and HTTPS.
+    Note: URL pathnames cannot contain the percent symbol (%). If an error exists in a URL specified on the PROPATH,
+    the SEARCH function continues searching with the next PROPATH entry.
+•   If you specify URL pathnames on the PROPATH and your application repeatedly uses the LOAD-ICON( ),
+    LOAD-SMALL-ICON( ), LOAD-IMAGE( ), LOAD-IMAGE-DOWN( ), LOAD-IMAGE-UP( ),
+    LOAD-IMAGE-INSENSITIVE( ), or LOAD-MOUSE-POINTER( ) methods with a URL pathname, you
+    can improve performance by using the SEARCH function once to determine the full URL pathname to the directory
+    containing the image files. Use this value with the load methods to avoid repeated searches of the PROPATH.
+
+
+
+
+
+STRING function
+
+Converts a value of any data type into a character value.
+
+   Syntax
+
+       STRING ( source[ , format ] )
+
+
+   source
+                An expression of any data type that you want to convert to a character value.
+   format
+                The format you want to use for the new character value. This format must be appropriate to the data
+                type of source. If you do not use this argument, ABL uses the EXPORT format for all data types
+                (except DATETIME and DATETIME-TZ, in which case it uses the default display format). This is
+                useful if you want to produce left-justified numbers. For information on data display formats, see
+                Develop ABL Applications.
+
+   Example
+   In the example procedure, the TIME function returns the number of seconds since midnight. The first DISPLAY statement
+   in this procedure uses the STRING function to convert that value into hours and minutes. TIME is the value and "HH:MM
+   AM" is the format used to display the result of the STRING function.
+   The second DISPLAY statement displays some Customer information. It uses the concatenation (+) operator to join
+   together the values of the City, State, and PostalCode fields. If these fields were not joined together, the spacing
+   would be different for each Customer address depending on the length of the city name.
+   r-string.p
+
+       DISPLAY SKIP(2) "The time is now" STRING(TIME,"HH:MM AM") SKIP(2)
+         WITH NO-BOX NO-LABELS CENTERED.
+       FOR EACH Customer NO-LOCK:
+         DISPLAY Customer.Name + " --" +
+            STRING(Customer.CustNum, ">>>9") FORMAT "x(30)" AT 1
+            Customer.Address AT 33
+            Customer.City + ", " + Customer.State + " " + Customer.PostalCode
+              FORMAT "x(22)" AT 33 SKIP(1)
+            WITH NO-BOX NO-LABELS CENTERED.
+       END.
+
+
+   When you concatenate character fields, the AVM creates a new character field, at least for the duration of the procedure.
+   The default display format for character expressions such as that resulting from the concatenation is x(8). This means
+   that the AVM allows only 8 spaces for displaying the concatenation of the City, State, and PostalCode fields.
+   The FORMAT x(22) option overrides that default x(8) format, telling the AVM to set aside 22 spaces for displaying
+   the concatenation of the City, State, and PostalCode fields.
+
+   Notes
+   •   The STRING function is double-byte enabled. The source argument can contain double-byte data.
+   •   If source is an integer and format begins HH:MM or HH:MM:SS, STRING formats the source as a time. If the hour
+       is greater than or equal to 12 and there is an A or an a in format, STRING subtracts 12 from the hour and converts
+       the A or the a to a P or p (for A.M. and P.M.). The hour 0 is treated as 12 a.m., and noon is treated as 12 p.m. If you
+       use AM/PM format, HH is replaced by a leading blank and a digit if the hour is between 0 and 9.
+       If seconds (SS) are not in the format, then the time is truncated to hours and minutes.
+   •   If source is a RAW value, you must specify an appropriate format to return the character string representation.
+   •   When source is a DATETIME or DATETIME-TZ expression, the STRING function converts the expression to a
+       character value in the specified format. If source is a DATETIME expression, and a time zone offset is present in
+       the format string, the character value contains the time zone offset of the session. If source is a DATETIME-TZ
+       expression, and time zone offset is not present in the format string, the character value contains the local date and
+       time relative to the time zone of the DATETIME-TZ value.
+   •   The STRING function converts a DATE, and the date part of a DATETIME or DATETIME-TZ, using the format
+       specified by the DATE-FORMAT attribute or the Date Format (-d) startup parameter.
+       For more information about the Date Format (-d) startup parameter, see Startup Command and Parameter Reference.
+   •   You can use the STRING function to convert an object reference for a class instance to a character value. The
+       STRING function implicitly calls the ToString( ) method (Object) of the class to convert the specified object reference.
+   •   When applied to an enum instance, the STRING function implicitly calls the ToString( ) method (Object), which
+       returns the name of the enumeration member, or a comma-delimited list of members in the case of a flag enum with
+       multiple flags set. If the flag enum instance has no flags set or an underlying numeric value of 0 and no specific
+       member defined for 0, the function returns the empty string ("").
+
+
+
+
+SUBSTITUTE function
+
+Returns a character string that is made up of a base string plus the substitution of arguments in the string. It allows you to use a single string in place of concatenated strings. The function is designed to simplify the task of translating an application from one language to another and is similar to the sprintf function in the C programming language. The data type returned reflects the data type used in its input parameter. For example, if the input parameter is a LONGCHAR, then the function returns a LONGCHAR; if the input parameter is a CHARACTER, then the function returns a CHARACTER.
+
+   Syntax
+
+       SUBSTITUTE ( base-string[ , arg ]... )
+
+
+   base-string
+                 A CHARACTER or LONGCHAR variable optionally containing substitution parameters of the form
+                 &n, where n is an integer between 1 and 9, inclusive.
+   arg
+                 A constant, field name, variable, or expression that results in a CHARACTER or LONGCHAR value.
+                 These argument values replace substitution parameters in base-string.
+
+   Example
+   These statements display the same message:
+
+       MESSAGE SUBSTITUTE("There were &1 records in &2 tables",
+         rec-count, table-count).
+
+
+
+       MESSAGE "There were" rec-count "records in"
+         table-count "tables".
+
+
+   You can alter the position of the substitution parameters, as in this statement:
+
+       SUBSTITUTE("&2 comes before &1", "Friday", "Monday").
+
+
+
+   Notes
+   •     The SUBSTITUTE function is double-byte enabled. The specified base-string and arg values can contain double-byte
+         characters.
+   •     To include an ampersand character in base-string, enter two ampersands (&&).
+   •     The character following the ampersand character must be a digit, or the AVM returns a run-time error.
+   •     To display the result of the SUBSTITUTE function in a frame, you must specify FORMAT or accept the default
+         format of X(8).
+   •     If you use a substitution parameter in base-string but do not specify a corresponding argument, the AVM replaces
+         the substitution parameter with an empty string.
+   •     The SUBSTITUTE function converts Unknown value (?) parameters into empty strings.
+   •     If the length of the resulting substitution exceeds the maximum length for the data type of the original string, an error
+         occurs.
+   •   Any substitution parameter can appear multiple times in base string. For example:
+
+          phrase = "finish on time".
+          DISPLAY SUBSTITUTE("When I say &1, I mean &1!", phrase) FORMAT "X(70)".
+
+
+       The previous code fragment displays the following line:
+
+          When I say finish on time, I mean finish on time!
+
+
+
+
+SUBSTRING function
+
+Extracts a portion of a character string from a field or variable.
+
+   Syntax
+
+       SUBSTRING ( source , position [ , length [ , type ] ] )
+
+
+   source
+               A CHARACTER or LONGCHAR expression from which you want to extract characters or bytes.
+   position
+               An integer expression that indicates the position of the first character you want to extract from source.
+   length
+               An integer expression that indicates the number of characters you want to extract from source. If you
+               do not use the length argument or specify -1 as the length, SUBSTRING uses the remainder of the
+               string from the specified position.
+               Note: If you specify 0 as the sub-string length to retrieve, the function does not throw an error and
+               returns an empty sub-string.
+   type
+               A CHARACTER expression that directs ABL to interpret the specified position and length values as
+               character units, bytes, or columns. A double-byte character registers as one character unit. By default,
+               ABL interprets the specified position and length values as character units.
+               There are four valid types: "CHARACTER", "FIXED", "COLUMN", and "RAW". The expression
+               "CHARACTER" specifies character units. The expression "FIXED" specifies that position is in
+               character units and the length is in bytes, but directs SUBSTRING to yield only whole characters. That
+               is, if the last byte or bytes represent part of, but not all of, a multi-byte character, these bytes are
+               excluded. The expression "COLUMN" specifies display or print character-columns. The expression
+               "RAW" specifies bytes. If you specify the type as a constant expression, ABL validates the type
+               specification at compile time. If you specify the type as a non-constant expression, the AVM validates
+               the type specification at run time for a multi-byte codepage.
+               Note: If source is a LONGCHAR expression, "CHARACTER" is the only valid type and the default
+               type.
+
+   Example
+   The r-substr.p procedure uses the SUBSTRING function to create invoice numbers. You supply a starting invoice
+   number. The first SUBSTRING function produces the first two characters of today's date; the second SUBSTRING
+   function produces the last two characters of today's date. The procedure concatenates these four characters to a hyphen
+   and the number you entered to produce an invoice number.
+   r-substr.p
+
+     DEFINE VARIABLE inv-num AS CHARACTER                       NO-UNDO FORMAT "x(11)"
+       LABEL "Invoice Number".
+     DEFINE VARIABLE snum    AS INTEGER                         NO-UNDO FORMAT "9999"
+       LABEL " Starting Order Number".
+     DEFINE VARIABLE enum    LIKE snum                          NO-UNDO
+       LABEL "    Ending Order Number".
+     DEFINE VARIABLE num     LIKE snum                          NO-UNDO
+       LABEL "Starting Invoice Number".
+
+     UPDATE "      Creating Invoices"
+       SKIP(2) snum SKIP(1) enum SKIP(2) num SKIP(2)
+       WITH SIDE-LABELS CENTERED NO-BOX.
+
+     FOR EACH Order WHERE Order.OrderNum >= snum AND Order.OrderNum <= enum:
+       inv-num = SUBSTRING(STRING(TODAY),1,2,"CHARACTER") +
+                 SUBSTRING(STRING(TODAY),7,2,"CHARACTER") + " - " +
+                 STRING(num,"9999").
+       DISPLAY Order.OrderNum inv-num WITH CENTERED.
+       /* Do creation and printing of invoice here */
+
+       num = num + 1.
+     END.
+
+
+
+
+
+SUBSTRING statement
+
+Inserts content from a specified expression into a field or variable, optionally replacing existing characters, bytes, or columns.
+
+   Syntax
+
+     SUBSTRING ( target , position [ , length [ , type ] ] ) = expression
+
+
+   target
+                A field or variable of type CHARACTER or LONGCHAR in which you want to store the specified
+                expression.
+   position
+                An integer expression that indicates the position in the target where you want to start storing the
+                expression. If the position is longer than the target, ABL pads the target with blanks to equal the length
+                of the position.
+   length
+             An integer expression that indicates the number of positions you want to replace in the target. If you
+             specify a length of 0, the entire expression is inserted at the position and everything else moves to the
+             right. If you do not use the length argument or specify -1 as the length, SUBSTRING puts the entire
+             expression into the target, replacing an equal amount of the target.
+type
+             A character expression that directs ABL to interpret the specified position and length values as character
+             units, bytes, or columns. A double-byte character registers as one character unit. By default, ABL
+             interprets the specified position and length values as character units.
+             There are three valid type values: "CHARACTER", "RAW", and "COLUMN". The value "CHARACTER"
+             specifies character units. The value "RAW" specifies bytes. The value "COLUMN" specifies display
+             or print character-columns. If you specify the type as a constant expression, ABL validates the type
+             specification at compile time. If you specify the type as a non-constant expression, the AVM validates
+             the type specification at run time for a multi-byte codepage.
+             Note: If the target is a LONGCHAR expression, "CHARACTER" is the only valid type value.
+expression
+             A constant, field name, variable name, or expression of CHARACTER or LONGCHAR data type that
+             results in a character string whose value you want to insert in the target. ABL does not pad or truncate
+             expression.
+
+Note: The += Addition assignment operator on page 46 can be used with the SUBSTRING statement.
+
+Examples
+The following procedure uses the SUBSTRING statement to replace a segment of text with the expression in the
+SUBSTRING statement XXXXXXXXX. The procedure first displays the text you can work with in the Original Text
+frame. Then the procedure prompts you for the start position of the replacement and the length of the replacement. Under
+the WORD heading, you see the revised text.
+r-sub.p
+
+  DEFINE      VARIABLE      rtext    AS   CHARACTER       NO-UNDO     FORMAT      "x(50)".
+  DEFINE      VARIABLE      orig     AS   CHARACTER       NO-UNDO     FORMAT      "x(31)".
+  DEFINE      VARIABLE      strt     AS   INTEGER         NO-UNDO     FORMAT      ">9".
+  DEFINE      VARIABLE      leng     AS   INTEGER         NO-UNDO     FORMAT      ">9".
+
+  orig = "Now is the time to use OpenEdge".
+  DISPLAY orig WITH CENTERED TITLE "Original Text" NO-LABEL.
+  REPEAT:
+    rtext = orig.
+    UPDATE strt LABEL "START" leng LABEL "LENGTH".
+    SUBSTRING(rtext, strt, leng, "CHARACTER") = "XXXXXXXXX".
+    DISPLAY rtext LABEL "WORD" WITH CENTERED.
+  END.
+
+
+The SUBSTRING and OVERLAY statements use the length option differently. For both, the length indicates how much
+of the target to replace. However, SUBSTRING always inserts the full expression and never pads the expression to
+match the length. By contrast, the length in OVERLAY determines how much ABL adds to the target, even if ABL must
+truncate the expression or pad it with spaces. The following procedure illustrates the differences between these two
+statements.
+r-sub-over.p
+
+  /* This procedure illustrates the differences between the SUBSTRING and
+     OVERLAY statements. */
+DEFINE   VARIABLE   cOriginal    AS   CHARACTER   NO-UNDO INITIAL "OpenEdge".
+DEFINE   VARIABLE   cSubstring   AS   CHARACTER   NO-UNDO.
+DEFINE   VARIABLE   cOverlay     AS   CHARACTER   NO-UNDO.
+DEFINE   VARIABLE   cResults     AS   CHARACTER   NO-UNDO.
+
+/* Default behavior without optional LENGTH. */
+ASSIGN
+ cSubstring               = cOriginal
+ SUBSTRING(cSubstring,2) = "***"
+ cOverlay                 = cOriginal
+ OVERLAY(cOverlay,2)      = "***"
+ cResults                 = "target = ~"OpenEdge~". ~n~n"
+  + "If you do not supply a length, SUBSTRING and OVERLAY default as follows:
+  ~n~n" + "SUBSTRING(target,2) = ~"***~" yields: " + cSubstring + ". ~n"
+  + "OVERLAY(target,2)      = ~"***~" yields: " + cOverlay + ".".
+
+/* Behavior with zero LENGTH. */
+ASSIGN
+ cSubstring                = cOriginal
+ SUBSTRING(cSubstring,2,0) = "***"
+ cOverlay                  = cOriginal
+ OVERLAY(cOverlay,2,0)     = "***"
+ cResults                  = cResults + "~n~n"
+  + "For a zero length, SUBSTRING and OVERLAY behave as follows: ~n~n"
+  + "SUBSTRING(target,2,0) = ~"***~" yields: " + cSubstring + ". ~n"
+  + "OVERLAY(target,2,0)     = ~"***~" yields: " + cOverlay + ".".
+
+/* Behavior with LENGTH < replacement. */
+ASSIGN
+ cSubstring                = cOriginal
+ SUBSTRING(cSubstring,2,1) = "***"
+ cOverlay                  = cOriginal
+ OVERLAY(cOverlay,2,1)     = "***"
+ cResults                  = cResults + "~n~n"
+  + "For a length shorter than the replacement, SUBSTRING and OVERLAY behave
+  as follows: ~n~n" + "SUBSTRING(target,2,1) = ~"***~" yields: "
+  + cSubstring + ". ~n" + "OVERLAY(target,2,1)     = ~"***~" yields: "
+  + cOverlay + ".".
+
+/* Behavior with LENGTH = replacement. */
+ASSIGN
+ cSubstring                = cOriginal
+ SUBSTRING(cSubstring,2,3) = "***"
+ cOverlay                  = cOriginal
+ OVERLAY(cOverlay,2,3)     = "***"
+ cResults                  = cResults + "~n~n"
+  + "For a length equal to the replacement, SUBSTRING and OVERLAY behave as
+  follows: ~n~n" + "SUBSTRING(target,2,3) = ~"***~" yields: "
+  + cSubstring + ". ~n" + "OVERLAY(target,2,3)     = ~"***~" yields: "
+  + cOverlay + ".".
+
+/* Behavior with LENGTH > replacement. */
+ASSIGN
+ cSubstring                = cOriginal
+ SUBSTRING(cSubstring,2,6) = "***"
+ cOverlay                  = cOriginal
+ OVERLAY(cOverlay,2,6)     = "***"
+ cResults                  = cResults + "~n~n"
+  + "For a length greater than the repalcement, SUBSTRING and OVERLAY behave
+  as follows: ~n~n" + "SUBSTRING(target,2,6) = ~"***~" yields: "
+  + cSubstring + ". ~n" + "OVERLAY(target,2,6)     = ~"***~" yields: "
+  + cOverlay + ".".
+       MESSAGE cResults VIEW-AS ALERT-BOX.
+
+
+   Notes
+   •   Do not split double-byte characters. This statement allows you to replace either the lead- or trail-byte of the target
+       string when you specify "RAW" for the type parameter.
+
+
+
+TRIM function
+
+Removes leading and trailing white space, or other specified characters, from a CHARACTER or LONGCHAR expression. The data type of the returned value matches the data type of the expression passed to the function.
+
+   Syntax
+
+       TRIM ( expression [ , trim-chars ] )
+
+
+   expression
+                An expression (a constant, field name, variable name, or expression) whose value is a CHARACTER
+                or LONGCHAR. If expression is a case-sensitive variable, the AVM performs a case-sensitive trim.
+                If expression is a LONGCHAR, the result is in the same code page.
+   trim-chars
+                A character expression that specifies the characters to trim from expression. If you do not specify
+                trim-chars, the TRIM function removes spaces, tabs, line feeds, and carriage returns.
+
+Examples
+The following procedure displays a menu that you can use to display Customer and Order information. The option
+numbers are displayed with leading spaces. The TRIM function removes the leading white space so the menu selection
+can be easily evaluated.
+r-trim.p
+
+  DEFINE VARIABLE menu AS CHARACTER NO-UNDO EXTENT 3.
+
+  DO WHILE TRUE:
+    DISPLAY
+       "    1.    Display Customer Data" @ menu[1] SKIP
+       "    2.    Order Data" @ menu[2] SKIP
+       "    3.    Exit" @ menu[3] SkIP
+       WITH FRAME choices NO-LABELS.
+    CHOOSE FIELD menu AUTO-RETURN WITH FRAME choices
+       TITLE "Demonstration Menu" CENTERED ROW 10.
+    HIDE FRAME choices.
+    IF TRIM(FRAME-VALUE) BEGINS "1" THEN RUN r-dblnkc.p.
+    IF TRIM(FRAME-VALUE) BEGINS "2" THEN RUN r-dblnko.p
+    IF TRIM(FRAME-VALUE) BEGINS "3" THEN LEAVE.
+  END.
+
+
+The following example reads a text file and breaks it into words. It assumes that all words are separated by at least one
+space character. It uses the TRIM function with one parameter to remove white space from the ends of each input line.
+It then uses the TRIM function with two parameters to remove any punctuation characters from each word.
+
+   r-trim2.p
+
+       DEFINE VARIABLE infile                   AS CHARACTER NO-UNDO FORMAT "x(60)"
+         LABEL "Input File".
+       DEFINE VARIABLE intext                   AS CHARACTER NO-UNDO.
+       DEFINE VARIABLE next-space               AS INTEGER   NO-UNDO.
+       DEFINE VARIABLE word                     AS CHARACTER NO-UNDO FORMAT "x(32)"
+         LABEL "Words".
+
+       /* Get the name of a text file and set input to that file. */.
+       SET infile.
+       INPUT FROM VALUE(infile).
+
+       DO WHILE TRUE:
+         /* Read the next line from the file. */
+         IMPORT UNFORMATTED intext.
+         intext = TRIM(intext).
+
+         DO WHILE TRUE:
+           /* Find the next space character. If none found, find the end of
+              string. */
+           next-space = INDEX(intext, " ").
+           IF next-space = 0 THEN
+             next-space = LENGTH(intext) + 1.
+
+           /* If the string contains no (more) words, then read the next line. */
+           IF next-space = 1 THEN LEAVE.
+
+           /* Pull the first word off the string. Remove any punctuation characters
+              around it. */
+           word   = SUBSTRING(intext, 1, next-space - 1).
+           word   = TRIM(word, ",.;:!? ~"~ '[]()").
+           intext = TRIM(SUBSTRING(intext, next-space + 1)).
+
+            /* Display the word. */
+            DISPLAY word WITH DOWN FRAME x.
+            DOWN WITH FRAME x.
+         END.
+       END.
+
+   Notes
+   •   The TRIM function is double-byte enabled. The specified expression and trim-chars arguments can contain double-byte
+       characters. TRIM does not remove double-byte space characters by default.
+   •   A character string displays with the default format of x(8), unless you specify a format or use a statement such as
+       DISPLAY @ literal.
+   •   You can use the DEBLANK option of the Format phrase to remove leading spaces for fields in the input buffer.
+   •   If expression is a case-sensitive field or variable, then trim-chars is also case sensitive. Otherwise, trim-chars is not
+       case sensitive.
+
+
+
+
+TRUNCATE function
+
+Truncates a decimal expression to a specified number of decimal places, returning a decimal value.
+
+
+   Syntax
+
+     TRUNCATE ( expression , decimal-places )
+
+
+   expression
+                A decimal expression that you want to truncate.
+   decimal-places
+                A non-negative integer expression that indicates the number of decimal places for a truncated expression.
+
+   Example
+   This procedure doubles each Customer's CreditLimit and then truncates that value before rounding it to the nearest
+   $1000:
+   r-trunc.p
+
+     FOR EACH Customer:
+       FORM Customer.CustNum Customer.Name Customer.CreditLimit
+          new-max LIKE Customer.CreditLimit LABEL "New Credit limit".
+       DISPLAY Customer.CustNum Customer.Name Customer.CreditLimit.
+       Customer.CreditLimit =
+          TRUNCATE((Customer.CreditLimit * 2) / 1000 ,0) * 1000.
+       IF Customer.CreditLimit < 15000 THEN
+          Customer.CreditLimit = 15000.
+       DISPLAY Customer.CreditLimit @ new-max.
+     END.
+
+   Notes
+   You can use the TRUNCATE function to treat division as integer division. For example, i = TRUNCATE (x / y, 0).
+
+

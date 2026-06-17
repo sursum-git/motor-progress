@@ -1,0 +1,45 @@
+{
+  "version": 4,
+  "paths": {
+    "metadataRoot": "sursum-conf/metadata",
+    "relationsRoot": "sursum-conf/relations",
+    "pasoeRoot": "sursum-conf/pasoe",
+    "databaseCatalog": "sursum-conf/metadata/database-catalog.json",
+    "aliasesFile": "sursum-conf/pasoe/datasul-prod-aliases.p"
+  },
+  "clients": [
+    {
+      "id": "cliente-padrao",
+      "name": "Cliente padrao"
+    }
+  ],
+  "environments": [
+    {
+      "id": "ambiente-local",
+      "clientId": "cliente-padrao",
+      "name": "Ambiente local",
+      "pasoeBaseUrl": "http://localhost:8890/{empresa}/web/SursumDynamicQuery",
+      "authMode": "none",
+      "authorization": "",
+      "companyIdMode": "query",
+      "extraQueryParams": ""
+    }
+  ],
+  "companies": [
+    {
+      "id": "empresa-padrao",
+      "clientId": "cliente-padrao",
+      "environmentId": "ambiente-local",
+      "name": "Empresa padrao",
+      "code": "1",
+      "pathParam": "empresa-padrao"
+    }
+  ],
+  "physicalDatabases": [],
+  "aliases": [],
+  "selected": {
+    "clientId": "cliente-padrao",
+    "environmentId": "ambiente-local",
+    "companyId": "empresa-padrao"
+  }
+}
