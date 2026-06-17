@@ -8,6 +8,7 @@ URLs esperadas:
   GET  /web/SursumDynamicQuery/jobs/{jobId}
   GET  /web/SursumDynamicQuery/jobs/{jobId}/result
   POST /web/SursumDynamicQuery/jobs/drain
+  GET  /web/SursumDynamicQuery/diagnostics/runtime
   GET  /web/SursumDynamicQuery/count
   GET  /web/SursumDynamicQuery/benchmarks/customer-count
 */
@@ -106,6 +107,9 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                     END.
                     ELSE IF cPath MATCHES "*/metadata/relations/*/*" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleGetRelation(cPath).
+                    END.
+                    ELSE IF cPath MATCHES "*/diagnostics/runtime" OR cPath MATCHES "*/diagnostics/agent" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleRuntimeDiagnostics(cMethod, cPath).
                     END.
                     ELSE IF THIS-OBJECT:isRootPath(cPath) THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleIndex().
@@ -308,6 +312,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         joEndpoints:Add("metadataViewAsResolve", "POST /web/SursumDynamicQuery/metadata/view-as/resolve").
         joEndpoints:Add("metadataSaveRelation", "POST /web/SursumDynamicQuery/metadata/relations").
         joEndpoints:Add("metadataGetRelation", "GET /web/SursumDynamicQuery/metadata/relations/:left/:right").
+        joEndpoints:Add("diagnosticsRuntime", "GET /web/SursumDynamicQuery/diagnostics/runtime?waitSeconds=:seconds&label=:label").
         joEndpoints:Add("drain", "POST /web/SursumDynamicQuery/jobs/drain").
         joEndpoints:Add("jobStatus", "GET /web/SursumDynamicQuery/jobs/:jobId").
         joEndpoints:Add("jobResult", "GET /web/SursumDynamicQuery/jobs/:jobId/result").
@@ -319,6 +324,110 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         joRet:Add("runtime", "PASOE-WEB").
         joRet:Add("endpoints", joEndpoints).
 
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleRuntimeDiagnostics(INPUT pcMethod AS CHARACTER, INPUT pcPath AS CHARACTER):
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joRequest AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joSession AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joContext AS JsonObject NO-UNDO.
+        DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
+        DEFINE VARIABLE cQuery AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cWait AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cLabel AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cServerConnectionId AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cServerOperatingMode AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE lRemote AS LOGICAL NO-UNDO.
+        DEFINE VARIABLE lServerConnectionBound AS LOGICAL NO-UNDO.
+        DEFINE VARIABLE iWaitSeconds AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iElapsedMs AS INTEGER NO-UNDO.
+        DEFINE VARIABLE dtStartedAt AS DATETIME NO-UNDO.
+        DEFINE VARIABLE dtFinishedAt AS DATETIME NO-UNDO.
+
+        ASSIGN cQuery = WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "QUERY_STRING":U) NO-ERROR.
+        ASSIGN cWait = THIS-OBJECT:getQueryValue(cQuery, "waitSeconds").
+        IF cWait = "" THEN
+            ASSIGN cWait = THIS-OBJECT:getQueryValue(cQuery, "wait").
+        ASSIGN cLabel = THIS-OBJECT:getQueryValue(cQuery, "label").
+
+        ASSIGN iWaitSeconds = INTEGER(cWait) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            ASSIGN iWaitSeconds = 0.
+        END.
+        IF iWaitSeconds < 0 THEN
+            ASSIGN iWaitSeconds = 0.
+        IF iWaitSeconds > 30 THEN
+            ASSIGN iWaitSeconds = 30.
+
+        ASSIGN oContext = NEW PasoeExecutionContext()
+               dtStartedAt = NOW.
+
+        ETIME(TRUE).
+        IF iWaitSeconds > 0 THEN
+            PAUSE iWaitSeconds NO-MESSAGE.
+        ASSIGN iElapsedMs = ETIME
+               dtFinishedAt = NOW.
+
+        ASSIGN lRemote = SESSION:REMOTE NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            ASSIGN lRemote = FALSE.
+        END.
+
+        IF lRemote THEN DO:
+            ASSIGN cServerConnectionId = SESSION:SERVER-CONNECTION-ID NO-ERROR.
+            IF ERROR-STATUS:ERROR THEN DO:
+                ERROR-STATUS:ERROR = FALSE.
+                ASSIGN cServerConnectionId = "".
+            END.
+
+            ASSIGN cServerOperatingMode = SESSION:SERVER-OPERATING-MODE NO-ERROR.
+            IF ERROR-STATUS:ERROR THEN DO:
+                ERROR-STATUS:ERROR = FALSE.
+                ASSIGN cServerOperatingMode = "".
+            END.
+
+            ASSIGN lServerConnectionBound = SESSION:SERVER-CONNECTION-BOUND NO-ERROR.
+            IF ERROR-STATUS:ERROR THEN DO:
+                ERROR-STATUS:ERROR = FALSE.
+                ASSIGN lServerConnectionBound = FALSE.
+            END.
+        END.
+
+        ASSIGN joRequest = NEW JsonObject()
+               joSession = NEW JsonObject()
+               joRet = NEW JsonObject().
+
+        joRequest:Add("method", pcMethod).
+        joRequest:Add("path", pcPath).
+        joRequest:Add("queryString", IF cQuery = ? THEN "" ELSE cQuery).
+        joRequest:Add("label", cLabel).
+        joRequest:Add("waitSecondsRequested", cWait).
+        joRequest:Add("waitSecondsApplied", iWaitSeconds).
+        joRequest:Add("maxWaitSeconds", 30).
+
+        joSession:Add("remote", lRemote).
+        joSession:Add("serverConnectionId", cServerConnectionId).
+        joSession:Add("serverOperatingMode", cServerOperatingMode).
+        joSession:Add("serverConnectionBound", lServerConnectionBound).
+        joSession:Add("tempDirectory", SESSION:TEMP-DIRECTORY).
+        joSession:Add("startupParameters", SESSION:STARTUP-PARAMETERS).
+
+        ASSIGN joContext = oContext:toJson().
+
+        joRet:Add("success", TRUE).
+        joRet:Add("service", "SursumDynamicQuery").
+        joRet:Add("runtime", "PASOE-WEB").
+        joRet:Add("startedAt", STRING(dtStartedAt)).
+        joRet:Add("finishedAt", STRING(dtFinishedAt)).
+        joRet:Add("elapsedMs", iElapsedMs).
+        joRet:Add("request", joRequest).
+        joRet:Add("session", joSession).
+        joRet:Add("context", joContext).
+
+        DELETE OBJECT oContext NO-ERROR.
         RETURN joRet.
     END METHOD.
 
