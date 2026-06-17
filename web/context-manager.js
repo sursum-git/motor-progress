@@ -57,7 +57,12 @@
     }
   };
 
-  const state = { config: null, configUrl: "" };
+  const state = {
+    config: null,
+    configUrl: "",
+    remoteContextLoaded: false,
+    remoteContextPromise: null
+  };
 
   init();
 
@@ -70,7 +75,7 @@
     );
     syncLegacySelection();
     installAjaxHook();
-    loadRemoteContext();
+    state.remoteContextPromise = loadRemoteContext();
   }
 
   function safeParse(value) {
@@ -482,14 +487,57 @@
   function loadRemoteContext() {
     const url = contextConfigUrl();
     if (url) state.configUrl = url;
-    if (!url || !global.jQuery) return;
-    global.jQuery.getJSON(url)
-      .done(function (response) {
-        if (!response || response.success === false) return;
-        state.config = normalizeConfig(response.data || response);
-        persistLocal(state.config);
-        notifyContextChanged(state.config);
-      });
+    state.remoteContextLoaded = false;
+    if (!url || !global.jQuery) {
+      state.remoteContextLoaded = true;
+      notifyContextReady(state.config);
+      state.remoteContextPromise = Promise.resolve(state.config);
+      return state.remoteContextPromise;
+    }
+
+    state.remoteContextPromise = new Promise(function (resolve) {
+      global.jQuery.getJSON(url)
+        .done(function (response) {
+          if (!response || response.success === false) return;
+          state.config = normalizeConfig(response.data || response);
+          persistLocal(state.config);
+          notifyContextChanged(state.config);
+        })
+        .always(function () {
+          state.remoteContextLoaded = true;
+          notifyContextReady(state.config);
+          resolve(state.config);
+        });
+    });
+    return state.remoteContextPromise;
+  }
+
+  function whenReady() {
+    return state.remoteContextPromise || Promise.resolve(state.config);
+  }
+
+  function isReady() {
+    return state.remoteContextLoaded;
+  }
+
+  function notifyContextReady(config) {
+    const detail = {
+      config,
+      client: getSelectedClient(config),
+      environment: getSelectedEnvironment(config),
+      company: getSelectedCompany(config)
+    };
+
+    try {
+      global.dispatchEvent(new CustomEvent("sursum:context-ready", { detail }));
+    } catch (_) {}
+
+    try {
+      if (global.parent && global.parent !== global) {
+        const targetOrigin = global.location.protocol === "file:" ? "*" : global.location.origin;
+        global.parent.postMessage({ type: "sursum:context-ready", detail }, targetOrigin);
+      }
+    } catch (_) {}
   }
 
   function isDefaultOnlyConfig(payload) {
@@ -921,6 +969,8 @@
     getCurrentClient,
     getCurrentEnvironment,
     getCurrentCompany,
+    whenReady,
+    isReady,
     getCompaniesForClient,
     getCompaniesForEnvironment,
     getEnvironmentsForClient,

@@ -15,8 +15,9 @@
     finishingJob: false,
     editingViewAs: null,
     editingRelation: null,
-    contextInitialized: false,
-    contextFallbackTimer: null,
+    contextKey: "",
+    databaseRequestSeq: 0,
+    waitingForInitialContext: true,
     selectedCompanyId: localStorage.getItem("sursumSelectedQueryCompany") || ""
   };
 
@@ -27,7 +28,8 @@
     initWidgets();
     bindEvents();
     refreshContext();
-    loadDatabasesAfterContextReady();
+    state.contextKey = metadataContextKey();
+    loadDatabasesWhenContextReady();
     loadLastJob();
   });
 
@@ -206,9 +208,15 @@
 
   function bindEvents() {
     window.addEventListener("sursum:context-changed", function () {
+      const previousKey = state.contextKey;
       refreshContext();
-      loadDatabasesForCurrentContext(state.contextInitialized);
-      state.contextInitialized = true;
+      const nextKey = metadataContextKey();
+      if (nextKey !== previousKey) {
+        state.contextKey = nextKey;
+        if (!state.waitingForInitialContext) {
+          loadDatabases(false);
+        }
+      }
     });
     $("#reloadTables").on("click", function () { loadTables(true); });
     $("#openTableBrowser").on("click", function () { window.location.href = "table-browser.html"; });
@@ -249,26 +257,22 @@
     });
   }
 
-  function loadDatabasesAfterContextReady() {
-    if (state.contextFallbackTimer) {
-      window.clearTimeout(state.contextFallbackTimer);
-    }
-    state.contextFallbackTimer = window.setTimeout(function () {
-      if (state.contextInitialized) {
-        return;
-      }
-      refreshContext();
-      loadDatabasesForCurrentContext(false);
-      state.contextInitialized = true;
-    }, 800);
-  }
+  function loadDatabasesWhenContextReady() {
+    const contextApi = window.SursumContext || null;
+    setStatus("Carregando contexto...", "");
 
-  function loadDatabasesForCurrentContext(forceReload) {
-    if (state.contextFallbackTimer) {
-      window.clearTimeout(state.contextFallbackTimer);
-      state.contextFallbackTimer = null;
+    if (contextApi && typeof contextApi.whenReady === "function") {
+      contextApi.whenReady().then(function () {
+        state.waitingForInitialContext = false;
+        refreshContext();
+        state.contextKey = metadataContextKey();
+        loadDatabases(false);
+      });
+      return;
     }
-    loadDatabases(Boolean(forceReload));
+
+    state.waitingForInitialContext = false;
+    loadDatabases(false);
   }
 
   function refreshContext() {
@@ -287,25 +291,55 @@
     $("#apiBaseUrl").val(state.apiBase);
   }
 
+  function metadataContextKey() {
+    const environment = currentEnvironment();
+    const company = selectedCompany();
+    return [
+      environment && environment.id ? environment.id : "",
+      company && company.id ? company.id : "",
+      state.apiBase || ""
+    ].join("|");
+  }
+
   function loadDatabases(forceReload) {
+    const requestId = ++state.databaseRequestSeq;
+    const requestContextKey = metadataContextKey();
     setStatus("Carregando bancos...", "");
     $.getJSON(pasoeUrl(forceReload ? "/metadata/databases/sync" : "/metadata/database-catalog"))
       .done(function (response) {
+        if (!isCurrentDatabaseRequest(requestId, requestContextKey)) return;
         if (!response || response.success === false) throw new Error(apiError(response));
         const rows = Array.isArray(response.data) ? response.data : [];
         state.databases = [{ name: TODOS_DATABASE }].concat(rows.map(function (item) {
           return { name: item.name || item.logicalName || item.displayName || "" };
         }).filter(function (item) { return item.name; }));
         const combo = $("#dbCombo").data("kendoComboBox");
+        const currentValue = combo.value();
         combo.setDataSource(new kendo.data.DataSource({ data: state.databases }));
-        if (!combo.value()) combo.value(state.databases[0] ? state.databases[0].name : TODOS_DATABASE);
+        if (databaseExists(currentValue)) {
+          combo.value(currentValue);
+        } else {
+          combo.value(state.databases[0] ? state.databases[0].name : TODOS_DATABASE);
+        }
         state.tables = [];
         refreshTableCombo();
         setStatus("Bancos carregados. Selecione um banco para carregar tabelas.", "ok");
       })
       .fail(function (xhr) {
+        if (!isCurrentDatabaseRequest(requestId, requestContextKey)) return;
         setStatus("Falha ao carregar bancos: " + ajaxErrorMessage(xhr), "error");
       });
+  }
+
+  function isCurrentDatabaseRequest(requestId, contextKey) {
+    return requestId === state.databaseRequestSeq && contextKey === state.contextKey;
+  }
+
+  function databaseExists(name) {
+    const normalized = String(name || "");
+    return state.databases.some(function (item) {
+      return item && item.name === normalized;
+    });
   }
 
   function loadTables(forceReload) {
@@ -1162,6 +1196,7 @@
       SursumContext.setSelection(company.clientId || "", company.environmentId || "", company.id);
     } else {
       refreshContext();
+      state.contextKey = metadataContextKey();
       loadDatabases(true);
     }
   }

@@ -39,6 +39,9 @@ body.sursum-ui-ready {
 
 .k-grid .k-loading-mask {
   z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .k-grid .k-loading-mask .k-loading-color {
@@ -51,9 +54,12 @@ body.sursum-ui-ready {
 }
 
 .k-grid .k-loading-mask .k-loading-image {
+  position: static;
+  top: auto;
+  left: auto;
   width: 42px;
   height: 42px;
-  margin: -21px 0 0 -21px;
+  margin: 0;
   border-radius: 50%;
   border: 4px solid #d8dee8;
   border-top-color: #0f766e;
