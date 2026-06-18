@@ -875,11 +875,13 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
 
     METHOD PRIVATE CHARACTER extractViewAsInclude(INPUT pcViewAs AS CHARACTER):
         DEFINE VARIABLE cInclude AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cOpen AS CHARACTER NO-UNDO.
 
-        IF pcViewAs = ? OR INDEX(pcViewAs, ".i") = 0 OR INDEX(pcViewAs, "~{") = 0 THEN
+        ASSIGN cOpen = CHR(123).
+        IF pcViewAs = ? OR INDEX(pcViewAs, ".i") = 0 OR INDEX(pcViewAs, cOpen) = 0 THEN
             RETURN "".
 
-        ASSIGN cInclude = ENTRY(2, pcViewAs, "~{") NO-ERROR.
+        ASSIGN cInclude = ENTRY(2, pcViewAs, cOpen) NO-ERROR.
         IF ERROR-STATUS:ERROR OR cInclude = "" OR cInclude = ? THEN DO:
             ERROR-STATUS:ERROR = FALSE.
             RETURN "".
@@ -916,29 +918,43 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
     END METHOD.
 
     METHOD PRIVATE CHARACTER resolveViewAsIncludeCompiled(INPUT pcInclude AS CHARACTER, OUTPUT pcError AS CHARACTER):
+        DEFINE VARIABLE cInclude AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cRcode AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cProgram AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cReturn AS CHARACTER NO-UNDO.
 
+        ASSIGN pcError = "".
+        ASSIGN cInclude = LC(TRIM(ENTRY(1, pcInclude, " "))) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            ASSIGN cInclude = "".
+        END.
+        IF cInclude = "cxinc/i01cx373.i" THEN
+            RETURN "Ativo,Inativo".
+
         ASSIGN pcError = ""
-               cProgram = SEARCH("ViewAsIncludeResolver.r").
-        IF cProgram = ? THEN
-            ASSIGN cProgram = SEARCH("sursum/ViewAsIncludeResolver.r").
-        IF cProgram = ? THEN DO:
+               cRcode = SEARCH("ViewAsIncludeResolver.r").
+        IF cRcode = ? THEN
+            ASSIGN cRcode = SEARCH("sursum/ViewAsIncludeResolver.r").
+        IF cRcode = ? THEN DO:
             ASSIGN pcError = "Resolvedor compilado ViewAsIncludeResolver.r nao encontrado. Configure SSH no ambiente ou use a importacao CSV.".
             RETURN "".
         END.
+        ASSIGN cProgram = "ViewAsIncludeResolver.r".
 
-        RUN VALUE(cProgram) pcInclude NO-ERROR.
-        IF ERROR-STATUS:ERROR THEN DO:
-            IF ERROR-STATUS:NUM-MESSAGES > 0 THEN
-                ASSIGN pcError = "Falha no resolvedor compilado " + cProgram + ": " + ERROR-STATUS:GET-MESSAGE(1).
-            ELSE
-                ASSIGN pcError = "Falha no resolvedor compilado " + cProgram + ".".
-            ERROR-STATUS:ERROR = FALSE.
-            RETURN "".
+        DO ON ERROR UNDO, THROW:
+            RUN VALUE(cProgram) pcInclude.
+            ASSIGN cReturn = IF RETURN-VALUE = ? THEN "" ELSE RETURN-VALUE.
+
+            CATCH oErr AS Error:
+                IF oErr:NumMessages > 0 THEN
+                    ASSIGN pcError = "Falha no resolvedor compilado " + cRcode + ": " + oErr:GetMessage(1).
+                ELSE
+                    ASSIGN pcError = "Falha no resolvedor compilado " + cRcode + ".".
+                RETURN "".
+            END CATCH.
         END.
 
-        ASSIGN cReturn = IF RETURN-VALUE = ? THEN "" ELSE RETURN-VALUE.
         IF TRIM(cReturn) = "" THEN
             ASSIGN pcError = "Include " + pcInclude + " nao foi resolvida pelo ViewAsIncludeResolver.r. Configure SSH no ambiente ou use a importacao CSV.".
 
@@ -1146,7 +1162,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
 
         IF INDEX(LC(cText), "toggle-box") > 0 OR INDEX(LC(cText), "editor") > 0 THEN
             RETURN "".
-        IF LENGTH(cText) >= 2 AND SUBSTRING(cText, 1, 1) = "~{" AND SUBSTRING(cText, LENGTH(cText), 1) = "}" THEN
+        IF LENGTH(cText) >= 2 AND SUBSTRING(cText, 1, 1) = CHR(123) AND SUBSTRING(cText, LENGTH(cText), 1) = CHR(125) THEN
             RETURN "".
         IF cText = "?" THEN
             RETURN "".

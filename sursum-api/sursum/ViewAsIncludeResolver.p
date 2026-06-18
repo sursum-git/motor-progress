@@ -31,6 +31,7 @@ CASE cInclude:
     WHEN "adinc/i28ad098.i" THEN RETURN {adinc/i28ad098.i 3}.
     WHEN "adinc/i29ad098.i" THEN RETURN {adinc/i29ad098.i 3}.
     WHEN "adinc/i03ad209.i" THEN RETURN {adinc/i03ad209.i 3}.
+    WHEN "cxinc/i01cx373.i" THEN RETURN "Ativo,Inativo".
     WHEN "diinc/i04di072.i" THEN RETURN {diinc/i04di072.i 3}.
     WHEN "ininc/i04in176.i" THEN RETURN {ininc/i04in176.i 3}.
 END CASE.

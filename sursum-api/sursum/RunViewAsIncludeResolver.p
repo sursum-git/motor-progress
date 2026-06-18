@@ -7,7 +7,7 @@ DEFINE VARIABLE cInclude AS CHARACTER NO-UNDO.
 DEFINE VARIABLE cReturn AS CHARACTER NO-UNDO.
 DEFINE VARIABLE cError AS CHARACTER NO-UNDO.
 
-PROPATH = "C:\opencode\motor-progress\sursum-api\sursum,C:\opencode\motor-progress\sursum-api\rest,C:\opencode\motor-progress\sursum-api\workers,C:\opencode\motor-progress\sursum-api\runners,C:\opencode\motor-progress\sursum-api\sursum\esp,C:\opencode\motor-progress,C:\Progress_12\OE\tty\netlib\OpenEdge.Net.pl," + PROPATH.
+PROPATH = "C:\opencode\motor-progress\sursum-api\sursum,C:\opencode\motor-progress\sursum-api\rest,C:\opencode\motor-progress\sursum-api\workers,C:\opencode\motor-progress\sursum-api\runners,C:\opencode\motor-progress\sursum-api\sursum\esp,C:\opencode\motor-progress\ems2,C:\opencode\motor-progress,C:\Progress_12\OE\tty\netlib\OpenEdge.Net.pl," + PROPATH.
 
 ASSIGN cParam = SESSION:PARAMETER
        cInputFile = ENTRY(1, cParam, "|")

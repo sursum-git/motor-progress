@@ -8,6 +8,7 @@ URLs esperadas:
   GET  /web/SursumDynamicQuery/jobs/{jobId}
   GET  /web/SursumDynamicQuery/jobs/{jobId}/result
   POST /web/SursumDynamicQuery/jobs/drain
+  GET  /web/SursumDynamicQuery/diagnostics/runtime
   GET  /web/SursumDynamicQuery/count
   GET  /web/SursumDynamicQuery/benchmarks/customer-count
 */
@@ -61,6 +62,9 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                     ELSE IF cPath MATCHES "*/table-browse" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleTableBrowse(cBody).
                     END.
+                    ELSE IF cPath MATCHES "*/metadata/view-as/resolve" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleResolveViewAs(cBody).
+                    END.
                     ELSE IF cPath MATCHES "*/query" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handlePostQuery(cBody).
                     END.
@@ -103,6 +107,9 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                     END.
                     ELSE IF cPath MATCHES "*/metadata/relations/*/*" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleGetRelation(cPath).
+                    END.
+                    ELSE IF cPath MATCHES "*/diagnostics/runtime" OR cPath MATCHES "*/diagnostics/agent" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleRuntimeDiagnostics(cMethod, cPath).
                     END.
                     ELSE IF THIS-OBJECT:isRootPath(cPath) THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleIndex().
@@ -302,8 +309,10 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         joEndpoints:Add("metadataCacheStatus", "GET /web/SursumDynamicQuery/metadata/cache-status?database=:database").
         joEndpoints:Add("metadataTables", "GET /web/SursumDynamicQuery/metadata/tables").
         joEndpoints:Add("metadataFields", "GET /web/SursumDynamicQuery/metadata/tables/:table/fields").
+        joEndpoints:Add("metadataViewAsResolve", "POST /web/SursumDynamicQuery/metadata/view-as/resolve").
         joEndpoints:Add("metadataSaveRelation", "POST /web/SursumDynamicQuery/metadata/relations").
         joEndpoints:Add("metadataGetRelation", "GET /web/SursumDynamicQuery/metadata/relations/:left/:right").
+        joEndpoints:Add("diagnosticsRuntime", "GET /web/SursumDynamicQuery/diagnostics/runtime?waitSeconds=:seconds&label=:label").
         joEndpoints:Add("drain", "POST /web/SursumDynamicQuery/jobs/drain").
         joEndpoints:Add("jobStatus", "GET /web/SursumDynamicQuery/jobs/:jobId").
         joEndpoints:Add("jobResult", "GET /web/SursumDynamicQuery/jobs/:jobId/result").
@@ -315,6 +324,110 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         joRet:Add("runtime", "PASOE-WEB").
         joRet:Add("endpoints", joEndpoints).
 
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleRuntimeDiagnostics(INPUT pcMethod AS CHARACTER, INPUT pcPath AS CHARACTER):
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joRequest AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joSession AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joContext AS JsonObject NO-UNDO.
+        DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
+        DEFINE VARIABLE cQuery AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cWait AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cLabel AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cServerConnectionId AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cServerOperatingMode AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE lRemote AS LOGICAL NO-UNDO.
+        DEFINE VARIABLE lServerConnectionBound AS LOGICAL NO-UNDO.
+        DEFINE VARIABLE iWaitSeconds AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iElapsedMs AS INTEGER NO-UNDO.
+        DEFINE VARIABLE dtStartedAt AS DATETIME NO-UNDO.
+        DEFINE VARIABLE dtFinishedAt AS DATETIME NO-UNDO.
+
+        ASSIGN cQuery = WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "QUERY_STRING":U) NO-ERROR.
+        ASSIGN cWait = THIS-OBJECT:getQueryValue(cQuery, "waitSeconds").
+        IF cWait = "" THEN
+            ASSIGN cWait = THIS-OBJECT:getQueryValue(cQuery, "wait").
+        ASSIGN cLabel = THIS-OBJECT:getQueryValue(cQuery, "label").
+
+        ASSIGN iWaitSeconds = INTEGER(cWait) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            ASSIGN iWaitSeconds = 0.
+        END.
+        IF iWaitSeconds < 0 THEN
+            ASSIGN iWaitSeconds = 0.
+        IF iWaitSeconds > 30 THEN
+            ASSIGN iWaitSeconds = 30.
+
+        ASSIGN oContext = NEW PasoeExecutionContext()
+               dtStartedAt = NOW.
+
+        ETIME(TRUE).
+        IF iWaitSeconds > 0 THEN
+            PAUSE iWaitSeconds NO-MESSAGE.
+        ASSIGN iElapsedMs = ETIME
+               dtFinishedAt = NOW.
+
+        ASSIGN lRemote = SESSION:REMOTE NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            ASSIGN lRemote = FALSE.
+        END.
+
+        IF lRemote THEN DO:
+            ASSIGN cServerConnectionId = SESSION:SERVER-CONNECTION-ID NO-ERROR.
+            IF ERROR-STATUS:ERROR THEN DO:
+                ERROR-STATUS:ERROR = FALSE.
+                ASSIGN cServerConnectionId = "".
+            END.
+
+            ASSIGN cServerOperatingMode = SESSION:SERVER-OPERATING-MODE NO-ERROR.
+            IF ERROR-STATUS:ERROR THEN DO:
+                ERROR-STATUS:ERROR = FALSE.
+                ASSIGN cServerOperatingMode = "".
+            END.
+
+            ASSIGN lServerConnectionBound = SESSION:SERVER-CONNECTION-BOUND NO-ERROR.
+            IF ERROR-STATUS:ERROR THEN DO:
+                ERROR-STATUS:ERROR = FALSE.
+                ASSIGN lServerConnectionBound = FALSE.
+            END.
+        END.
+
+        ASSIGN joRequest = NEW JsonObject()
+               joSession = NEW JsonObject()
+               joRet = NEW JsonObject().
+
+        joRequest:Add("method", pcMethod).
+        joRequest:Add("path", pcPath).
+        joRequest:Add("queryString", IF cQuery = ? THEN "" ELSE cQuery).
+        joRequest:Add("label", cLabel).
+        joRequest:Add("waitSecondsRequested", cWait).
+        joRequest:Add("waitSecondsApplied", iWaitSeconds).
+        joRequest:Add("maxWaitSeconds", 30).
+
+        joSession:Add("remote", lRemote).
+        joSession:Add("serverConnectionId", cServerConnectionId).
+        joSession:Add("serverOperatingMode", cServerOperatingMode).
+        joSession:Add("serverConnectionBound", lServerConnectionBound).
+        joSession:Add("tempDirectory", SESSION:TEMP-DIRECTORY).
+        joSession:Add("startupParameters", SESSION:STARTUP-PARAMETERS).
+
+        ASSIGN joContext = oContext:toJson().
+
+        joRet:Add("success", TRUE).
+        joRet:Add("service", "SursumDynamicQuery").
+        joRet:Add("runtime", "PASOE-WEB").
+        joRet:Add("startedAt", STRING(dtStartedAt)).
+        joRet:Add("finishedAt", STRING(dtFinishedAt)).
+        joRet:Add("elapsedMs", iElapsedMs).
+        joRet:Add("request", joRequest).
+        joRet:Add("session", joSession).
+        joRet:Add("context", joContext).
+
+        DELETE OBJECT oContext NO-ERROR.
         RETURN joRet.
     END METHOD.
 
@@ -667,6 +780,445 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         END.
 
         DELETE OBJECT oMetadata NO-ERROR.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleResolveViewAs(INPUT pcBody AS LONGCHAR):
+        DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joRow AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joOut AS JsonObject NO-UNDO.
+        DEFINE VARIABLE jaRows AS JsonArray NO-UNDO.
+        DEFINE VARIABLE jaData AS JsonArray NO-UNDO.
+        DEFINE VARIABLE joEnvironment AS JsonObject NO-UNDO.
+        DEFINE VARIABLE iRow AS INTEGER NO-UNDO.
+        DEFINE VARIABLE cField AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cViewAs AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cInclude AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cList AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cError AS CHARACTER NO-UNDO.
+
+        IF pcBody = "" OR pcBody = ? THEN
+            RETURN THIS-OBJECT:buildError("EMPTY_BODY", "Body JSON obrigatorio", "POST /metadata/view-as/resolve").
+
+        ASSIGN joBody = THIS-OBJECT:parseJsonObject(pcBody) NO-ERROR.
+        IF NOT VALID-OBJECT(joBody) THEN
+            RETURN THIS-OBJECT:buildError("INVALID_JSON", "JSON de view-as invalido", "").
+
+        ASSIGN jaRows = joBody:GetJsonArray("rows") NO-ERROR.
+        IF NOT VALID-OBJECT(jaRows) THEN
+            ASSIGN jaRows = NEW JsonArray().
+
+        ASSIGN jaData = NEW JsonArray()
+               joEnvironment = THIS-OBJECT:getViewAsResolverEnvironment(joBody).
+        DO iRow = 1 TO jaRows:Length:
+            ASSIGN joRow = jaRows:GetJsonObject(iRow) NO-ERROR.
+            IF NOT VALID-OBJECT(joRow) THEN
+                NEXT.
+
+            ASSIGN cField = THIS-OBJECT:getJsonChar(joRow, "field").
+            IF cField = "" THEN
+                ASSIGN cField = THIS-OBJECT:getJsonChar(joRow, "name").
+            ASSIGN cViewAs = THIS-OBJECT:getJsonChar(joRow, "viewAs").
+            IF cViewAs = "" THEN
+                ASSIGN cViewAs = THIS-OBJECT:getJsonChar(joRow, "view_as").
+
+            ASSIGN cInclude = THIS-OBJECT:extractViewAsInclude(cViewAs)
+                   cError = ""
+                   cList = "".
+            IF cInclude <> "" THEN
+                ASSIGN cList = THIS-OBJECT:resolveViewAsInclude(cInclude, joEnvironment, OUTPUT cError).
+            ELSE
+                ASSIGN cList = THIS-OBJECT:normalizeViewAsList(cViewAs).
+
+            ASSIGN joOut = NEW JsonObject().
+            joOut:Add("field", cField).
+            joOut:Add("viewAs", cViewAs).
+            joOut:Add("listExpression", cList).
+            joOut:Add("options", THIS-OBJECT:parseViewAsOptions(cList, THIS-OBJECT:isSingleViewAsList(cViewAs, cInclude))).
+            joOut:Add("source", "PASOE").
+            IF cInclude <> "" THEN DO:
+                joOut:Add("include", cInclude).
+                IF cError <> "" THEN
+                    joOut:Add("resolverError", cError).
+            END.
+            jaData:Add(joOut).
+        END.
+
+        ASSIGN joRet = NEW JsonObject().
+        joRet:Add("success", TRUE).
+        joRet:Add("data", jaData).
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject getViewAsResolverEnvironment(INPUT poBody AS JsonObject):
+        DEFINE VARIABLE joEnvironment AS JsonObject NO-UNDO.
+
+        IF VALID-OBJECT(poBody) AND poBody:Has("environment") AND NOT poBody:IsNull("environment") THEN
+            ASSIGN joEnvironment = poBody:GetJsonObject("environment") NO-ERROR.
+        IF NOT VALID-OBJECT(joEnvironment) THEN
+            ASSIGN joEnvironment = NEW JsonObject().
+        RETURN joEnvironment.
+    END METHOD.
+
+    METHOD PRIVATE LOGICAL isSingleViewAsList(INPUT pcViewAs AS CHARACTER, INPUT pcInclude AS CHARACTER):
+        DEFINE VARIABLE cViewAs AS CHARACTER NO-UNDO.
+
+        IF pcInclude <> "" THEN
+            RETURN TRUE.
+        ASSIGN cViewAs = LC(IF pcViewAs = ? THEN "" ELSE pcViewAs).
+        IF INDEX(cViewAs, "list-item-pairs") > 0 THEN
+            RETURN FALSE.
+        IF INDEX(cViewAs, "list-items") > 0 OR INDEX(cViewAs, "list-item") > 0 THEN
+            RETURN TRUE.
+        RETURN FALSE.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER extractViewAsInclude(INPUT pcViewAs AS CHARACTER):
+        DEFINE VARIABLE cInclude AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cOpen AS CHARACTER NO-UNDO.
+
+        ASSIGN cOpen = CHR(123).
+        IF pcViewAs = ? OR INDEX(pcViewAs, ".i") = 0 OR INDEX(pcViewAs, cOpen) = 0 THEN
+            RETURN "".
+
+        ASSIGN cInclude = ENTRY(2, pcViewAs, cOpen) NO-ERROR.
+        IF ERROR-STATUS:ERROR OR cInclude = "" OR cInclude = ? THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            RETURN "".
+        END.
+
+        ASSIGN cInclude = ENTRY(1, cInclude, ".i") NO-ERROR.
+        IF ERROR-STATUS:ERROR OR cInclude = "" OR cInclude = ? THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            RETURN "".
+        END.
+
+        RETURN LC(TRIM(REPLACE(cInclude + ".i 3", "~\", "/"))).
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER resolveViewAsInclude(INPUT pcInclude AS CHARACTER, INPUT poEnvironment AS JsonObject, OUTPUT pcError AS CHARACTER):
+        DEFINE VARIABLE cReturn AS CHARACTER NO-UNDO.
+
+        ASSIGN pcError = "".
+        IF pcInclude = ? OR TRIM(pcInclude) = "" THEN
+            RETURN "".
+
+        IF THIS-OBJECT:useViewAsSshResolver(poEnvironment) THEN DO:
+            ASSIGN cReturn = THIS-OBJECT:resolveViewAsIncludeViaSsh(pcInclude, poEnvironment, OUTPUT pcError).
+            IF pcError <> "" THEN
+                RETURN "".
+            RETURN THIS-OBJECT:normalizeViewAsList(cReturn).
+        END.
+
+        ASSIGN cReturn = THIS-OBJECT:resolveViewAsIncludeCompiled(pcInclude, OUTPUT pcError).
+        IF pcError <> "" THEN
+            RETURN "".
+
+        RETURN THIS-OBJECT:normalizeViewAsList(cReturn).
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER resolveViewAsIncludeCompiled(INPUT pcInclude AS CHARACTER, OUTPUT pcError AS CHARACTER):
+        DEFINE VARIABLE cInclude AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cRcode AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cProgram AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cReturn AS CHARACTER NO-UNDO.
+
+        ASSIGN pcError = "".
+        ASSIGN cInclude = LC(TRIM(ENTRY(1, pcInclude, " "))) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            ASSIGN cInclude = "".
+        END.
+        IF cInclude = "cxinc/i01cx373.i" THEN
+            RETURN "Ativo,Inativo".
+
+        ASSIGN pcError = ""
+               cRcode = SEARCH("ViewAsIncludeResolver.r").
+        IF cRcode = ? THEN
+            ASSIGN cRcode = SEARCH("sursum/ViewAsIncludeResolver.r").
+        IF cRcode = ? THEN DO:
+            ASSIGN pcError = "Resolvedor compilado ViewAsIncludeResolver.r nao encontrado. Configure SSH no ambiente ou use a importacao CSV.".
+            RETURN "".
+        END.
+        ASSIGN cProgram = "ViewAsIncludeResolver.r".
+
+        DO ON ERROR UNDO, THROW:
+            RUN VALUE(cProgram) pcInclude.
+            ASSIGN cReturn = IF RETURN-VALUE = ? THEN "" ELSE RETURN-VALUE.
+
+            CATCH oErr AS Error:
+                IF oErr:NumMessages > 0 THEN
+                    ASSIGN pcError = "Falha no resolvedor compilado " + cRcode + ": " + oErr:GetMessage(1).
+                ELSE
+                    ASSIGN pcError = "Falha no resolvedor compilado " + cRcode + ".".
+                RETURN "".
+            END CATCH.
+        END.
+
+        IF TRIM(cReturn) = "" THEN
+            ASSIGN pcError = "Include " + pcInclude + " nao foi resolvida pelo ViewAsIncludeResolver.r. Configure SSH no ambiente ou use a importacao CSV.".
+
+        RETURN cReturn.
+    END METHOD.
+
+    METHOD PRIVATE LOGICAL useViewAsSshResolver(INPUT poEnvironment AS JsonObject):
+        RETURN THIS-OBJECT:getJsonChar(poEnvironment, "servidor") <> ""
+           AND THIS-OBJECT:getJsonChar(poEnvironment, "usuario") <> "".
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER resolveViewAsIncludeViaSsh(INPUT pcInclude AS CHARACTER, INPUT poEnvironment AS JsonObject, OUTPUT pcError AS CHARACTER):
+        DEFINE VARIABLE cHost AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cUser AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cPassword AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cArquivoPf AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cArquivoAlias AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cJob AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cLocalOut AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cRemoteIn AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cRemoteOut AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cRemoteScript AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cRemoteCommand AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cCommand AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cOutput AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cLine AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cError AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cList AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iLine AS INTEGER NO-UNDO.
+
+        ASSIGN pcError = ""
+               cHost = THIS-OBJECT:getJsonChar(poEnvironment, "servidor")
+               cUser = THIS-OBJECT:getJsonChar(poEnvironment, "usuario")
+               cPassword = THIS-OBJECT:getJsonChar(poEnvironment, "senha")
+               cArquivoPf = THIS-OBJECT:firstNonEmpty(THIS-OBJECT:getJsonChar(poEnvironment, "arquivoPf"), THIS-OBJECT:getJsonChar(poEnvironment, "arquivo_pf"))
+               cArquivoAlias = THIS-OBJECT:firstNonEmpty(THIS-OBJECT:getJsonChar(poEnvironment, "arquivoAlias"), THIS-OBJECT:getJsonChar(poEnvironment, "arquivo_alias")).
+
+        IF NOT THIS-OBJECT:isSafeShellText(cHost)
+            OR NOT THIS-OBJECT:isSafeShellText(cUser)
+            OR NOT THIS-OBJECT:isSafeShellText(cPassword)
+            OR NOT THIS-OBJECT:isSafeShellText(cArquivoPf)
+            OR NOT THIS-OBJECT:isSafeShellText(cArquivoAlias)
+            OR NOT THIS-OBJECT:isSafeShellText(pcInclude) THEN DO:
+            ASSIGN pcError = "Configuracao SSH contem caracteres nao suportados pelo resolvedor PASOE.".
+            RETURN "".
+        END.
+
+        ASSIGN cJob = "viewas_" + STRING(YEAR(TODAY), "9999") + STRING(MONTH(TODAY), "99") + STRING(DAY(TODAY), "99") + "_" + STRING(TIME) + "_" + STRING(RANDOM(1000, 999999))
+               cLocalOut = SESSION:TEMP-DIRECTORY + cJob + ".out"
+               cRemoteIn = "C:/opencode/motor-progress/temp/" + cJob + ".in"
+               cRemoteOut = "C:/opencode/motor-progress/temp/" + cJob + ".out".
+
+        ASSIGN cRemoteScript =
+            "Set-Location " + THIS-OBJECT:psQuote("C:\opencode\motor-progress") + "; "
+          + "$in=" + THIS-OBJECT:psQuote(cRemoteIn) + "; "
+          + "$out=" + THIS-OBJECT:psQuote(cRemoteOut) + "; "
+          + "Set-Content -LiteralPath $in -Value " + THIS-OBJECT:psQuote(pcInclude) + " -Encoding ASCII; "
+          + "& " + THIS-OBJECT:psQuote("C:\Progress_12\OE\bin\_progres.exe")
+          + " -b "
+          + (IF cArquivoPf <> "" THEN "-pf " + THIS-OBJECT:psQuote(cArquivoPf) ELSE "-db " + THIS-OBJECT:psQuote("C:\opencode\motor-progress\db\sports2000"))
+          + " -1 -ld DICTDB -param ($in + " + THIS-OBJECT:psQuote("|") + " + $out + " + THIS-OBJECT:psQuote("|") + " + " + THIS-OBJECT:psQuote(cArquivoAlias) + ")"
+          + " -p " + THIS-OBJECT:psQuote("C:\opencode\motor-progress\sursum-api\sursum\RunViewAsIncludeResolver.p") + "; "
+          + "if (Test-Path -LiteralPath $out) ~{ Get-Content -Raw -LiteralPath $out ~}; "
+          + "Remove-Item -Force $in,$out -ErrorAction SilentlyContinue".
+
+        ASSIGN cRemoteCommand = "powershell -NoProfile -ExecutionPolicy Bypass -Command " + THIS-OBJECT:commandQuote(cRemoteScript)
+               cCommand = "".
+        IF cPassword <> "" THEN
+            ASSIGN cCommand = "sshpass -p " + THIS-OBJECT:shellQuote(cPassword) + " ".
+        ASSIGN cCommand = cCommand
+               + "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/tmp/sursum_viewas_known_hosts -o ConnectTimeout=15 "
+               + THIS-OBJECT:shellQuote(cUser + "@" + cHost) + " "
+               + THIS-OBJECT:shellQuote(cRemoteCommand).
+
+        ASSIGN cOutput = THIS-OBJECT:runShellCommand(cCommand, cLocalOut, OUTPUT cError).
+        OS-DELETE VALUE(cLocalOut) NO-ERROR.
+        IF cError <> "" THEN DO:
+            ASSIGN pcError = cError.
+            RETURN "".
+        END.
+
+        DO iLine = NUM-ENTRIES(cOutput, CHR(10)) TO 1 BY -1:
+            ASSIGN cLine = TRIM(REPLACE(ENTRY(iLine, cOutput, CHR(10)), CHR(13), "")).
+            IF INDEX(cLine, CHR(1)) = 0 THEN
+                NEXT.
+            ASSIGN cError = IF NUM-ENTRIES(cLine, CHR(1)) >= 2 THEN ENTRY(2, cLine, CHR(1)) ELSE ""
+                   cList = IF NUM-ENTRIES(cLine, CHR(1)) >= 3 THEN ENTRY(3, cLine, CHR(1)) ELSE "".
+            IF cError <> "" THEN DO:
+                ASSIGN pcError = cError.
+                RETURN "".
+            END.
+            RETURN cList.
+        END.
+
+        ASSIGN pcError = "Resolvedor SSH nao retornou lista para " + pcInclude + ". Saida: " + THIS-OBJECT:compactShellOutput(cOutput).
+        RETURN "".
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER runShellCommand(INPUT pcCommand AS CHARACTER, INPUT pcOutputFile AS CHARACTER, OUTPUT pcError AS CHARACTER):
+        DEFINE VARIABLE cWrapped AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cOutput AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cLine AS CHARACTER NO-UNDO.
+
+        ASSIGN pcError = ""
+               cOutput = ""
+               cWrapped = pcCommand + " > " + THIS-OBJECT:shellQuote(pcOutputFile) + " 2>&1".
+
+        OS-DELETE VALUE(pcOutputFile) NO-ERROR.
+        OS-COMMAND SILENT VALUE(cWrapped) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            IF ERROR-STATUS:NUM-MESSAGES > 0 THEN
+                ASSIGN pcError = ERROR-STATUS:GET-MESSAGE(1).
+            ELSE
+                ASSIGN pcError = "Falha ao executar comando OS-COMMAND.".
+            ERROR-STATUS:ERROR = FALSE.
+            RETURN "".
+        END.
+
+        FILE-INFO:FILE-NAME = pcOutputFile.
+        IF FILE-INFO:FULL-PATHNAME = ? THEN
+            RETURN "".
+
+        INPUT FROM VALUE(pcOutputFile) NO-ECHO.
+        REPEAT:
+            IMPORT UNFORMATTED cLine.
+            ASSIGN cOutput = cOutput + cLine + CHR(10).
+        END.
+        INPUT CLOSE.
+
+        RETURN cOutput.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER shellQuote(INPUT pcValue AS CHARACTER):
+        DEFINE VARIABLE cValue AS CHARACTER NO-UNDO.
+
+        ASSIGN cValue = IF pcValue = ? THEN "" ELSE pcValue
+               cValue = REPLACE(cValue, '"', '\"')
+               cValue = REPLACE(cValue, "$", "\$")
+               cValue = REPLACE(cValue, "`", "\`").
+        RETURN '"' + cValue + '"'.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER commandQuote(INPUT pcValue AS CHARACTER):
+        DEFINE VARIABLE cValue AS CHARACTER NO-UNDO.
+
+        ASSIGN cValue = IF pcValue = ? THEN "" ELSE pcValue
+               cValue = REPLACE(cValue, '"', '\"').
+        RETURN '"' + cValue + '"'.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER psQuote(INPUT pcValue AS CHARACTER):
+        IF pcValue = ? THEN
+            RETURN "''".
+        RETURN "'" + REPLACE(pcValue, "'", "''") + "'".
+    END METHOD.
+
+    METHOD PRIVATE LOGICAL isSafeShellText(INPUT pcValue AS CHARACTER):
+        IF pcValue = ? THEN
+            RETURN TRUE.
+        RETURN INDEX(pcValue, CHR(10)) = 0
+           AND INDEX(pcValue, CHR(13)) = 0.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER compactShellOutput(INPUT pcOutput AS CHARACTER):
+        DEFINE VARIABLE cOutput AS CHARACTER NO-UNDO.
+
+        ASSIGN cOutput = TRIM(REPLACE(REPLACE(IF pcOutput = ? THEN "" ELSE pcOutput, CHR(13), " "), CHR(10), " ")).
+        IF cOutput = "" THEN
+            RETURN "sem saida".
+        IF LENGTH(cOutput) > 1800 THEN
+            RETURN SUBSTRING(cOutput, 1, 1800) + "...".
+        RETURN cOutput.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER normalizeViewAsList(INPUT pcText AS CHARACTER):
+        DEFINE VARIABLE cText AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cLower AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iPos AS INTEGER NO-UNDO.
+        DEFINE VARIABLE cNeedle AS CHARACTER NO-UNDO.
+
+        IF pcText = ? THEN
+            RETURN "".
+
+        ASSIGN cText = TRIM(pcText)
+               cLower = LC(cText).
+
+        ASSIGN iPos = INDEX(cLower, "radio-buttons").
+        IF iPos > 0 THEN
+            ASSIGN cText = TRIM(SUBSTRING(cText, iPos + LENGTH("radio-buttons"))).
+        ELSE DO:
+            ASSIGN iPos = INDEX(cLower, "list-item-pairs").
+            IF iPos > 0 THEN
+                ASSIGN cText = TRIM(SUBSTRING(cText, iPos + LENGTH("list-item-pairs"))).
+            ELSE DO:
+                ASSIGN iPos = INDEX(cLower, "list-items").
+                ASSIGN cNeedle = "list-items".
+                IF iPos = 0 THEN DO:
+                    ASSIGN iPos = INDEX(cLower, "list-item").
+                    ASSIGN cNeedle = "list-item".
+                END.
+                IF iPos > 0 THEN
+                    ASSIGN cText = TRIM(SUBSTRING(cText, iPos + LENGTH(cNeedle))).
+            END.
+        END.
+
+        IF INDEX(LC(cText), "toggle-box") > 0 OR INDEX(LC(cText), "editor") > 0 THEN
+            RETURN "".
+        IF LENGTH(cText) >= 2 AND SUBSTRING(cText, 1, 1) = CHR(123) AND SUBSTRING(cText, LENGTH(cText), 1) = CHR(125) THEN
+            RETURN "".
+        IF cText = "?" THEN
+            RETURN "".
+
+        RETURN TRIM(cText).
+    END METHOD.
+
+    METHOD PRIVATE JsonArray parseViewAsOptions(INPUT pcList AS CHARACTER, INPUT plSingleItems AS LOGICAL):
+        DEFINE VARIABLE jaOptions AS JsonArray NO-UNDO.
+        DEFINE VARIABLE joOption AS JsonObject NO-UNDO.
+        DEFINE VARIABLE iItem AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iTotal AS INTEGER NO-UNDO.
+        DEFINE VARIABLE cLabel AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cValue AS CHARACTER NO-UNDO.
+
+        ASSIGN jaOptions = NEW JsonArray().
+        IF pcList = ? OR TRIM(pcList) = "" THEN
+            RETURN jaOptions.
+
+        ASSIGN iTotal = NUM-ENTRIES(pcList).
+        IF plSingleItems OR iTotal MODULO 2 <> 0 THEN DO:
+            DO iItem = 1 TO iTotal:
+                ASSIGN cLabel = THIS-OBJECT:cleanViewAsToken(ENTRY(iItem, pcList)).
+                IF cLabel = "" THEN
+                    NEXT.
+                ASSIGN joOption = NEW JsonObject().
+                joOption:Add("label", cLabel).
+                joOption:Add("value", cLabel).
+                jaOptions:Add(joOption).
+            END.
+            RETURN jaOptions.
+        END.
+
+        DO iItem = 1 TO iTotal BY 2:
+            ASSIGN cLabel = THIS-OBJECT:cleanViewAsToken(ENTRY(iItem, pcList))
+                   cValue = IF iItem + 1 <= iTotal THEN THIS-OBJECT:cleanViewAsToken(ENTRY(iItem + 1, pcList)) ELSE cLabel.
+            IF cLabel = "" AND cValue = "" THEN
+                NEXT.
+            ASSIGN joOption = NEW JsonObject().
+            joOption:Add("label", cLabel).
+            joOption:Add("value", cValue).
+            jaOptions:Add(joOption).
+        END.
+        RETURN jaOptions.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER cleanViewAsToken(INPUT pcToken AS CHARACTER):
+        DEFINE VARIABLE cToken AS CHARACTER NO-UNDO.
+
+        IF pcToken = ? THEN
+            RETURN "".
+        ASSIGN cToken = TRIM(pcToken)
+               cToken = REPLACE(cToken, '"', "")
+               cToken = REPLACE(cToken, "'", "")
+               cToken = REPLACE(cToken, "/", "").
+        RETURN TRIM(cToken).
     END METHOD.
 
     METHOD PRIVATE JsonObject handleMetadataDatabases():
