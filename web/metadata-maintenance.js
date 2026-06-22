@@ -736,7 +736,12 @@
   }
 
   function processTable(table) {
-    const database = selectedDatabase();
+    const database = jobDatabase();
+    if (!database || database === TODOS_DATABASE) {
+      return $.Deferred()
+        .reject(new Error("Banco da fila nao definido. Crie a fila novamente selecionando um banco especifico."))
+        .promise();
+    }
     setStatus(`Processando ${database}.${table}...`, "");
     const result = { relationCount: 0, viewAsCount: 0, relationsSkipped: false, viewAsSkipped: false, message: "" };
     return updateJobItem(table, "running", "Processando", 0, 0)
@@ -1266,6 +1271,11 @@
   function selectedDatabase() {
     const combo = $("#dbCombo").data("kendoComboBox");
     return combo ? String(combo.value() || "") : "";
+  }
+
+  function jobDatabase() {
+    const jobValue = state.currentJob && state.currentJob.database ? String(state.currentJob.database || "").trim() : "";
+    return jobValue || selectedDatabase();
   }
 
   function tableValue() {
