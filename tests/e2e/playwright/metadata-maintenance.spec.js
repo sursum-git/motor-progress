@@ -30,9 +30,12 @@ test.beforeEach(async ({ page, request }) => {
   }, sampleConfig);
 });
 
-test('metadata maintenance creates and runs all-table job and saves manual metadata', async ({ page }) => {
+test('metadata maintenance creates and runs all-table job without manual tabs', async ({ page }) => {
   await page.goto('/metadata-maintenance.html');
   await expect(page.locator('#createJob')).toBeVisible();
+  await expect(page.locator('#metadataTabs')).toHaveCount(0);
+  await expect(page.locator('#viewAsGrid')).toHaveCount(0);
+  await expect(page.locator('#relationsGrid')).toHaveCount(0);
   await expect(page.locator('#statusBox')).toContainText('Selecione um banco');
 
   await page.evaluate(() => {
@@ -47,8 +50,14 @@ test('metadata maintenance creates and runs all-table job and saves manual metad
   await page.locator('#runJob').click();
   await expect(page.locator('#statusBox')).toContainText('Fila concluida');
   await expect(page.locator('#jobSummary')).toContainText('Processadas: 2/2');
+});
 
-  await page.locator('#metadataTabs li').filter({ hasText: 'View-as manual' }).click();
+test('view-as maintenance saves manual view-as and imports CSV', async ({ page }) => {
+  await page.goto('/view-as-maintenance.html');
+  await expect(page.locator('#addViewAs')).toBeVisible();
+  await expect(page.locator('#viewAsGrid')).toBeVisible();
+  await expect(page.locator('#metadataTabs')).toHaveCount(0);
+
   await page.locator('#addViewAs').click();
   await expect(page.locator('#viewAsWindow')).toBeVisible();
   await page.locator('#viewAsTable').fill('Customer');
@@ -67,8 +76,18 @@ test('metadata maintenance creates and runs all-table job and saves manual metad
   await expect(page.locator('#statusBox')).toContainText('CSV de view-as importado');
   await expect(page.locator('#viewAsGrid')).toContainText('Order');
   await expect(page.locator('#viewAsGrid')).toContainText('CSV');
+});
 
-  await page.locator('#metadataTabs li').filter({ hasText: 'Join manual' }).click();
+test('relation maintenance saves manual join', async ({ page }) => {
+  await page.goto('/relation-maintenance.html');
+  await expect(page.locator('#addRelation')).toBeVisible();
+  await expect(page.locator('#relationsGrid')).toBeVisible();
+  await expect(page.locator('#metadataTabs')).toHaveCount(0);
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+  });
   await page.locator('#addRelation').click();
   await expect(page.locator('#relationWindow')).toBeVisible();
   await page.locator('#leftTable').fill('Customer');
@@ -78,6 +97,13 @@ test('metadata maintenance creates and runs all-table job and saves manual metad
   await page.locator('#saveRelation').click();
   await expect(page.locator('#relationsGrid')).toContainText('Order');
   await expect(page.locator('#relationsGrid')).toContainText('manual');
+});
+
+test('metadata menu exposes batch, view-as and join pages separately', async ({ page }) => {
+  await page.goto('/index.html');
+  await expect(page.locator('#menuTree')).toContainText('Atualizacao em lote');
+  await expect(page.locator('#menuTree')).toContainText('View-as manual');
+  await expect(page.locator('#menuTree')).toContainText('Join manual');
 });
 
 test('metadata maintenance reprocesses all error job items', async ({ page, request }) => {

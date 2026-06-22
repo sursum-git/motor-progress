@@ -30,13 +30,15 @@
     refreshContext();
     state.contextKey = metadataContextKey();
     loadDatabasesWhenContextReady();
-    loadLastJob();
+    if (hasElement("#jobGrid")) loadLastJob();
   });
 
   function initWidgets() {
     ensureBatchControls();
-    $("#metadataTabs").kendoTabStrip({ animation: false }).data("kendoTabStrip").select(0);
-    $("#apiCompany").kendoComboBox({
+    if (hasElement("#metadataTabs")) {
+      $("#metadataTabs").kendoTabStrip({ animation: false }).data("kendoTabStrip").select(0);
+    }
+    if (hasElement("#apiCompany")) $("#apiCompany").kendoComboBox({
       dataTextField: "name",
       dataValueField: "id",
       select: function (event) {
@@ -47,7 +49,7 @@
         applyCompanySelection(this.value());
       }
     });
-    $("#dbCombo").kendoComboBox({
+    if (hasElement("#dbCombo")) $("#dbCombo").kendoComboBox({
       dataTextField: "name",
       dataValueField: "name",
       filter: "contains",
@@ -57,11 +59,11 @@
         loadRelationsRows();
       }
     });
-    $("#tableName").kendoComboBox({
+    if (hasElement("#tableName")) $("#tableName").kendoComboBox({
       dataSource: [],
       filter: "contains",
       suggest: true,
-      placeholder: "Opcional para manutencao manual",
+      placeholder: $("#tableName").attr("placeholder") || "Opcional",
       change: function () {
         const table = tableValue();
         $("#viewAsTable,#leftTable").val(table);
@@ -69,23 +71,27 @@
         loadRelationsRows();
       }
     });
-    $("#relationType").kendoDropDownList({ dataSource: ["INNER", "LEFT"], value: "INNER" });
-    $("#viewAsTable,#viewAsField,#leftTable,#leftField,#rightTable,#rightField").kendoTextBox();
-    viewAsWindow = $("#viewAsWindow").kendoWindow({
+    if (hasElement("#relationType")) {
+      $("#relationType").kendoDropDownList({ dataSource: ["INNER", "LEFT"], value: "INNER" });
+    }
+    $("#viewAsTable,#viewAsField,#leftTable,#leftField,#rightTable,#rightField").filter(function () {
+      return this && this.id;
+    }).kendoTextBox();
+    if (hasElement("#viewAsWindow")) viewAsWindow = $("#viewAsWindow").kendoWindow({
       width: "720px",
       title: "View-as",
       visible: false,
       modal: true,
       actions: ["Close"]
     }).data("kendoWindow");
-    relationWindow = $("#relationWindow").kendoWindow({
+    if (hasElement("#relationWindow")) relationWindow = $("#relationWindow").kendoWindow({
       width: "820px",
       title: "Join",
       visible: false,
       modal: true,
       actions: ["Close"]
     }).data("kendoWindow");
-    $("#parallelExecutions").kendoNumericTextBox({
+    if (hasElement("#parallelExecutions")) $("#parallelExecutions").kendoNumericTextBox({
       format: "n0",
       decimals: 0,
       min: 1,
@@ -96,7 +102,7 @@
         if (state.running) scheduleJob();
       }
     });
-    $("#existingMetadataBehavior").kendoDropDownList({
+    if (hasElement("#existingMetadataBehavior")) $("#existingMetadataBehavior").kendoDropDownList({
       dataTextField: "text",
       dataValueField: "value",
       dataSource: [
@@ -106,7 +112,7 @@
       value: "skip"
     });
     $("#createJob,#runJob,#pauseJob,#cancelJob,#reprocessAllJob,#reloadTables,#openTableBrowser,#addViewAs,#importViewAsCsv,#saveViewAs,#cancelViewAs,#loadViewAs,#addRelation,#saveRelation,#cancelRelation,#loadRelations").kendoButton();
-    $("#jobGrid").kendoGrid({
+    if (hasElement("#jobGrid")) $("#jobGrid").kendoGrid({
       dataSource: [],
       height: 390,
       sortable: true,
@@ -153,7 +159,7 @@
         }
       ]
     });
-    $("#viewAsGrid").kendoGrid({
+    if (hasElement("#viewAsGrid")) $("#viewAsGrid").kendoGrid({
       dataSource: [],
       height: 390,
       sortable: true,
@@ -180,7 +186,7 @@
         }
       ]
     });
-    $("#relationsGrid").kendoGrid({
+    if (hasElement("#relationsGrid")) $("#relationsGrid").kendoGrid({
       dataSource: [],
       height: 390,
       sortable: true,
@@ -203,6 +209,10 @@
       ]
     });
     if (window.SursumUiReady) window.SursumUiReady();
+  }
+
+  function hasElement(selector) {
+    return $(selector).length > 0;
   }
 
   function ensureBatchControls() {
@@ -1067,6 +1077,7 @@
   }
 
   function loadViewAsRows(table) {
+    if (!hasElement("#viewAsGrid")) return;
     const database = selectedDatabase();
     const targetTable = table || tableValue();
     const params = Object.assign(scope(targetTable, database), { resource: "view-as" });
@@ -1228,6 +1239,7 @@
   }
 
   function loadRelationsRows(table) {
+    if (!hasElement("#relationsGrid")) return;
     const database = selectedDatabase();
     const targetTable = table || tableValue();
     if (!database || !targetTable) {
@@ -1245,6 +1257,7 @@
   }
 
   function renderJob() {
+    if (!hasElement("#jobGrid")) return;
     const job = state.currentJob;
     let rows = job && Array.isArray(job.items) ? job.items : [];
     const visibleStatuses = [];

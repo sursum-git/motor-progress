@@ -51,9 +51,19 @@
         "description": "Busca de campos, indices e joins por banco e tabela."
       },
       {
-        "text": "Manutencao de metadados",
+        "text": "Atualizacao em lote",
         "url": "metadata-maintenance.html",
-        "description": "Atualizacao em lote e cadastro manual de joins e view-as."
+        "description": "Criacao e execucao da fila de atualizacao de joins OF e view-as."
+      },
+      {
+        "text": "View-as manual",
+        "url": "view-as-maintenance.html",
+        "description": "Cadastro manual e importacao CSV de view-as."
+      },
+      {
+        "text": "Join manual",
+        "url": "relation-maintenance.html",
+        "description": "Cadastro manual de joins preservados pela atualizacao OF."
       },
       {
         "text": "Configuracao de campos",

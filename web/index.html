@@ -342,7 +342,9 @@
         ] },
         { text: "Metadados", expanded: true, items: [
           { text: "Navegador de tabelas", url: "table-browser.html", description: "Busca de campos, indices e joins por banco e tabela." },
-          { text: "Manutencao de metadados", url: "metadata-maintenance.html", description: "Atualizacao em lote e cadastro manual de joins e view-as." },
+          { text: "Atualizacao em lote", url: "metadata-maintenance.html", description: "Criacao e execucao da fila de atualizacao de joins OF e view-as." },
+          { text: "View-as manual", url: "view-as-maintenance.html", description: "Cadastro manual e importacao CSV de view-as." },
+          { text: "Join manual", url: "relation-maintenance.html", description: "Cadastro manual de joins preservados pela atualizacao OF." },
           { text: "Configuracao de campos", url: "field-metadata-config.html", description: "Ajustes manuais dos metadados de campos." },
           { text: "Armazenamento de metadados", url: "metadata-storage-config.html", description: "Configuracao do local de cache dos metadados." },
           { text: "Aliases de bancos", url: "database-alias-config.html", description: "Edicao visual dos aliases de bancos conectados." }
@@ -489,8 +491,8 @@
       }
 
       function frameUrl(url) {
-        if (url === "metadata-maintenance.html") {
-          return url + "?v=20260617-context-sync";
+        if (url === "metadata-maintenance.html" || url === "view-as-maintenance.html" || url === "relation-maintenance.html") {
+          return url + "?v=20260622-manual-pages";
         }
         return url;
       }

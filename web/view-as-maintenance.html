@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Atualizacao em lote de metadados</title>
+  <title>View-as manual</title>
   <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
   <link rel="stylesheet" href="ui-ready.css?v=20260617-grid-center">
   <link rel="stylesheet" href="query-builder.css">
@@ -13,7 +13,7 @@
   <div class="shell">
     <header class="hero">
       <div>
-        <p class="eyebrow">Sursum Dynamic Query - Atualizacao em lote de metadados</p>
+        <p class="eyebrow">Sursum Dynamic Query - View-as manual</p>
       </div>
       <div class="endpoint-card metadata-context-card">
         <div class="endpoint-field">
@@ -27,7 +27,7 @@
         </div>
         <div class="endpoint-field">
           <label for="tableName">Tabela</label>
-          <input id="tableName" placeholder="Opcional para criar fila de uma tabela">
+          <input id="tableName" placeholder="Opcional para filtrar">
         </div>
         <div class="action-row tight">
           <button id="reloadTables">Carregar tabelas</button>
@@ -39,33 +39,16 @@
     <main class="wizard-workspace metadata-maintenance">
       <section class="panel is-active">
         <div class="panel-title">
-          <h2>Atualizacao em lote</h2>
-          <span id="resultSummary">Crie uma fila para atualizar joins OF e view-as.</span>
+          <h2>View-as manual</h2>
+          <span id="resultSummary">Cadastre listas e editores de view-as mantidos manualmente.</span>
         </div>
-        <div class="metadata-batch-grid">
-          <div class="metadata-batch-options">
-            <label class="metadata-batch-switch"><span class="switch-label">Atualizar joins OF</span><input id="includeRelations" type="checkbox" checked><span class="switch-control"></span></label>
-            <label class="metadata-batch-switch"><span class="switch-label">Atualizar view-as</span><input id="includeViewAs" type="checkbox" checked><span class="switch-control"></span></label>
-            <label class="metadata-batch-switch"><span class="switch-label">Apenas tabela informada</span><input id="onlyCurrentTable" type="checkbox"><span class="switch-control"></span></label>
-            <div class="endpoint-field batch-parallel-field">
-              <label for="parallelExecutions">Execucoes simultaneas</label>
-              <input id="parallelExecutions" type="number" min="1" value="1">
-            </div>
-            <div class="endpoint-field batch-existing-field">
-              <label for="existingMetadataBehavior">Metadado existente</label>
-              <input id="existingMetadataBehavior">
-            </div>
-            <div class="action-row tight">
-              <button id="cancelJob">Cancelar pendentes</button>
-              <button id="reprocessAllJob">Reprocessar tudo</button>
-              <button id="createJob">Criar fila</button>
-              <button id="runJob">Executar</button>
-              <button id="pauseJob">Pausar</button>
-            </div>
-            <div id="jobSummary" class="job-summary">Nenhuma fila criada.</div>
-          </div>
-          <div id="jobGrid"></div>
+        <div class="metadata-grid-toolbar action-row tight">
+          <button id="addViewAs">Incluir view-as</button>
+          <button id="importViewAsCsv">Importar CSV</button>
+          <button id="loadViewAs">Recarregar</button>
+          <input id="viewAsCsvFile" type="file" accept=".csv,text/csv" style="display:none">
         </div>
+        <div id="viewAsGrid"></div>
       </section>
     </main>
 
@@ -74,6 +57,27 @@
       <div id="statusBox" class="status-box">Pronto.</div>
       <div></div>
     </footer>
+  </div>
+
+  <div id="viewAsWindow" class="metadata-editor-window" style="display:none">
+    <div class="metadata-window-form">
+      <div class="endpoint-field">
+        <label for="viewAsTable">Tabela</label>
+        <input id="viewAsTable" placeholder="Ex.: emitente">
+      </div>
+      <div class="endpoint-field">
+        <label for="viewAsField">Campo</label>
+        <input id="viewAsField" placeholder="Ex.: cod-emitente">
+      </div>
+      <div class="endpoint-field metadata-wide-field">
+        <label for="viewAsValue">View-as</label>
+        <textarea id="viewAsValue" rows="5" placeholder="Ex.: view-as fill-in"></textarea>
+      </div>
+      <div class="action-row tight metadata-window-actions">
+        <button id="saveViewAs">Salvar</button>
+        <button id="cancelViewAs">Cancelar</button>
+      </div>
+    </div>
   </div>
 
   <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
