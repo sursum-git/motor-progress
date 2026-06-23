@@ -659,7 +659,7 @@
     state.runningTables[table] = true;
     state.activeExecutions += 1;
     markLocalJobItem(table, "running", "Processando", 0, 0);
-    renderJob();
+    renderJobItem(table);
 
     const work = processTable(table)
       .then(function (result) {
@@ -669,7 +669,7 @@
       })
       .then(null, function (error) {
         markLocalJobItem(table, "error", normalizeErrorMessage(error), 0, 0);
-        renderJob();
+        renderJobItem(table);
         setStatus(`Falha ao atualizar item ${table}: ${normalizeErrorMessage(error)}`, "error");
       });
 
@@ -836,7 +836,7 @@
     }).then(function (response) {
       if (!response || response.success === false) throw new Error(apiError(response));
       state.currentJob = response.data;
-      renderJob();
+      renderJobItem(table);
     });
   }
 
@@ -1296,15 +1296,43 @@
 
   function renderJobNow() {
     if (!hasElement("#jobGrid")) return;
+    syncJobGridRows(filteredJobRows());
+    renderJobSummary();
+  }
+
+  function renderJobItem(table) {
+    if (!hasElement("#jobGrid")) return;
+    if (!table || jobGridFiltersActive()) {
+      renderJob({ immediate: true });
+      return;
+    }
+    syncJobGridRow(table);
+    renderJobSummary();
+  }
+
+  function filteredJobRows() {
     const job = state.currentJob;
     let rows = job && Array.isArray(job.items) ? job.items : [];
-    const visibleStatuses = [];
-    if ($("#showPendingOnly").is(":checked")) visibleStatuses.push("pending");
-    if ($("#showErrorOnly").is(":checked")) visibleStatuses.push("error");
+    const visibleStatuses = selectedJobGridStatuses();
     if (visibleStatuses.length) {
       rows = rows.filter(function (item) { return item && visibleStatuses.indexOf(item.status) >= 0; });
     }
-    syncJobGridRows(rows);
+    return rows;
+  }
+
+  function selectedJobGridStatuses() {
+    const visibleStatuses = [];
+    if ($("#showPendingOnly").is(":checked")) visibleStatuses.push("pending");
+    if ($("#showErrorOnly").is(":checked")) visibleStatuses.push("error");
+    return visibleStatuses;
+  }
+
+  function jobGridFiltersActive() {
+    return selectedJobGridStatuses().length > 0;
+  }
+
+  function renderJobSummary() {
+    const job = state.currentJob;
     if (!job) {
       $("#jobSummary").text("Nenhuma fila criada.");
       return;
@@ -1317,6 +1345,30 @@
       `Canceladas: ${job.cancelledTables || 0}<br>` +
       `Erros: ${job.failedTables}`
     );
+  }
+
+  function syncJobGridRow(table) {
+    const grid = $("#jobGrid").data("kendoGrid");
+    const job = state.currentJob;
+    const rows = job && Array.isArray(job.items) ? job.items : [];
+    const row = rows.find(function (item) { return item && item.table === table; });
+    if (!grid || !row) {
+      renderJob({ immediate: true });
+      return;
+    }
+    const current = grid.dataSource.data();
+    let model = null;
+    for (let index = 0; index < current.length; index += 1) {
+      if (current[index] && current[index].table === table) {
+        model = current[index];
+        break;
+      }
+    }
+    if (!model) {
+      renderJob({ immediate: true });
+      return;
+    }
+    updateJobGridModel(model, row);
   }
 
   function syncJobGridRows(rows) {
@@ -1333,13 +1385,17 @@
     }
 
     rows.forEach(function (row, index) {
-      const model = current[index];
-      updateGridModel(model, "status", row.status);
-      updateGridModel(model, "message", row.message);
-      updateGridModel(model, "relationCount", row.relationCount);
-      updateGridModel(model, "viewAsCount", row.viewAsCount);
-      updateGridModel(model, "updatedAt", row.updatedAt);
+      updateJobGridModel(current[index], row);
     });
+  }
+
+  function updateJobGridModel(model, row) {
+    if (!model || !row) return;
+    updateGridModel(model, "status", row.status);
+    updateGridModel(model, "message", row.message);
+    updateGridModel(model, "relationCount", row.relationCount);
+    updateGridModel(model, "viewAsCount", row.viewAsCount);
+    updateGridModel(model, "updatedAt", row.updatedAt);
   }
 
   function updateGridModel(model, field, value) {

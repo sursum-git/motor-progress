@@ -83,6 +83,57 @@ test('metadata batch keeps grid controls interactive while requests are running'
   await expect(page.locator('#pauseJob')).toBeEnabled();
 });
 
+test('metadata batch updates only the changed grid row while running', async ({ page }) => {
+  await page.goto('/metadata-maintenance.html');
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+  });
+  await page.locator('#createJob').click();
+  await expect(page.locator('#jobGrid')).toContainText('Customer');
+  await expect(page.locator('#jobGrid')).toContainText('Order');
+
+  await page.route('**/metadata-pasoe.php**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json; charset=utf-8',
+      body: JSON.stringify({ success: true, data: [] })
+    });
+  });
+
+  await page.evaluate(() => {
+    const widget = window.$('#parallelExecutions').data('kendoNumericTextBox');
+    widget.value(1);
+    widget.trigger('change');
+    const grid = window.$('#jobGrid').data('kendoGrid');
+    window.__jobGridTouches = [];
+    grid.dataSource.data().forEach((model) => {
+      const table = model.table || (typeof model.get === 'function' ? model.get('table') : '');
+      const originalGet = model.get ? model.get.bind(model) : null;
+      const originalSet = model.set ? model.set.bind(model) : null;
+      if (originalGet) {
+        model.get = function (field) {
+          window.__jobGridTouches.push({ table, type: 'get', field });
+          return originalGet(field);
+        };
+      }
+      if (originalSet) {
+        model.set = function (field, value) {
+          window.__jobGridTouches.push({ table, type: 'set', field });
+          return originalSet(field, value);
+        };
+      }
+    });
+  });
+
+  await page.locator('#runJob').click();
+  await page.waitForTimeout(300);
+  const touchedTables = await page.evaluate(() => Array.from(new Set(window.__jobGridTouches.map((item) => item.table))));
+  expect(touchedTables).toEqual(['Customer']);
+});
+
 test('view-as maintenance saves manual view-as and imports CSV', async ({ page }) => {
   await page.goto('/view-as-maintenance.html');
   await expect(page.locator('#addViewAs')).toBeVisible();
