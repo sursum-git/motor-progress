@@ -215,6 +215,19 @@ test('metadata menu exposes batch, view-as and join pages separately', async ({ 
   await expect(page.locator('#menuTree')).toContainText('Join manual');
 });
 
+test('index menu collapses after selecting a page and can be shown again', async ({ page }) => {
+  await page.goto('/index.html');
+  await expect(page.locator('#appSidebar')).toBeVisible();
+
+  await page.getByText('Atualizacao em lote', { exact: true }).click();
+  await expect(page.locator('#appShell')).toHaveClass(/menu-collapsed/);
+  await expect(page.locator('#appSidebar')).not.toBeVisible();
+
+  await page.locator('#toggleMenu').click();
+  await expect(page.locator('#appShell')).not.toHaveClass(/menu-collapsed/);
+  await expect(page.locator('#appSidebar')).toBeVisible();
+});
+
 test('metadata maintenance reprocesses all error job items', async ({ page, request }) => {
   await page.goto('/metadata-maintenance.html');
   await expect(page.locator('#reprocessAllJob')).toBeVisible();
