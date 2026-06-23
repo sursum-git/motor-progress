@@ -80,6 +80,9 @@ function requireSursumAuth(): void
         http_response_code(401);
         authJsonResponse(['success' => false, 'authenticated' => false, 'error' => 'Login obrigatorio.']);
     }
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_write_close();
+    }
 }
 
 function loadAuthConfig(): array
