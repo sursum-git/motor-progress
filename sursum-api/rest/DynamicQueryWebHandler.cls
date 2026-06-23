@@ -1025,7 +1025,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         IF cPassword <> "" THEN
             ASSIGN cCommand = "sshpass -p " + THIS-OBJECT:shellQuote(cPassword) + " ".
         ASSIGN cCommand = cCommand
-               + "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/tmp/sursum_viewas_known_hosts -o ConnectTimeout=15 "
+               + "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=15 "
                + THIS-OBJECT:shellQuote(cUser + "@" + cHost) + " "
                + THIS-OBJECT:shellQuote(cRemoteCommand).
 
@@ -1063,7 +1063,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                cWrapped = pcCommand + " > " + THIS-OBJECT:shellQuote(pcOutputFile) + " 2>&1".
 
         OS-DELETE VALUE(pcOutputFile) NO-ERROR.
-        OS-COMMAND SILENT VALUE(cWrapped) NO-ERROR.
+        OS-COMMAND SILENT VALUE(cWrapped).
         IF ERROR-STATUS:ERROR THEN DO:
             IF ERROR-STATUS:NUM-MESSAGES > 0 THEN
                 ASSIGN pcError = ERROR-STATUS:GET-MESSAGE(1).
