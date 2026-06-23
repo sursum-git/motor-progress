@@ -1014,8 +1014,8 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
           + "Set-Content -LiteralPath $in -Value " + THIS-OBJECT:psQuote(pcInclude) + " -Encoding ASCII; "
           + "& " + THIS-OBJECT:psQuote("C:\Progress_12\OE\bin\_progres.exe")
           + " -b "
-          + (IF cArquivoPf <> "" THEN "-pf " + THIS-OBJECT:psQuote(cArquivoPf) ELSE "-db " + THIS-OBJECT:psQuote("C:\opencode\motor-progress\db\sports2000"))
-          + " -1 -ld DICTDB -param ($in + " + THIS-OBJECT:psQuote("|") + " + $out + " + THIS-OBJECT:psQuote("|") + " + " + THIS-OBJECT:psQuote(cArquivoAlias) + ")"
+          + (IF cArquivoPf <> "" THEN "-pf " + THIS-OBJECT:psQuote(cArquivoPf) ELSE "-db " + THIS-OBJECT:psQuote("C:\opencode\motor-progress\db\sports2000") + " -1 -ld DICTDB")
+          + " -param ($in + " + THIS-OBJECT:psQuote("|") + " + $out + " + THIS-OBJECT:psQuote("|") + " + " + THIS-OBJECT:psQuote(cArquivoAlias) + ")"
           + " -p " + THIS-OBJECT:psQuote("C:\opencode\motor-progress\sursum-api\sursum\RunViewAsIncludeResolver.p") + "; "
           + "if (Test-Path -LiteralPath $out) ~{ Get-Content -Raw -LiteralPath $out ~}; "
           + "Remove-Item -Force $in,$out -ErrorAction SilentlyContinue".
