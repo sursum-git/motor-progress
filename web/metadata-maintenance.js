@@ -13,6 +13,8 @@
     activeExecutions: 0,
     runningTables: Object.create(null),
     finishingJob: false,
+    jobRenderTimer: null,
+    jobRenderPending: false,
     editingViewAs: null,
     editingRelation: null,
     contextKey: "",
@@ -484,6 +486,7 @@
     if (state.running) return;
     state.running = true;
     state.finishingJob = false;
+    setBatchRunningUi(true);
     scheduleJob();
   }
 
@@ -500,6 +503,8 @@
 
   function pauseJob() {
     state.running = false;
+    setBatchRunningUi(false);
+    renderJob({ immediate: true });
     setStatus("Execucao pausada. Itens em andamento serao concluidos.", "");
   }
 
@@ -509,6 +514,7 @@
       return;
     }
     state.running = false;
+    setBatchRunningUi(false);
     withGridLoading("#jobGrid", cancelJobRequest(""))
       .done(function (response) {
         if (!response || response.success === false) {
@@ -838,6 +844,8 @@
     if (state.finishingJob) return;
     state.finishingJob = true;
     state.running = false;
+    setBatchRunningUi(false);
+    flushJobRender();
     withGridLoading("#jobGrid", $.ajax({
       url: "metadata-store.php",
       method: "POST",
@@ -854,6 +862,7 @@
       state.finishingJob = false;
       state.activeExecutions = 0;
       state.runningTables = Object.create(null);
+      setBatchRunningUi(false);
     });
   }
 
@@ -1257,6 +1266,35 @@
   }
 
   function renderJob() {
+    const options = arguments.length ? arguments[0] || {} : {};
+    if (state.running && !options.immediate) {
+      scheduleJobRender();
+      return;
+    }
+    renderJobNow();
+  }
+
+  function scheduleJobRender() {
+    state.jobRenderPending = true;
+    if (state.jobRenderTimer) return;
+    state.jobRenderTimer = window.setTimeout(function () {
+      state.jobRenderTimer = null;
+      if (!state.jobRenderPending) return;
+      state.jobRenderPending = false;
+      renderJobNow();
+    }, 160);
+  }
+
+  function flushJobRender() {
+    if (state.jobRenderTimer) {
+      window.clearTimeout(state.jobRenderTimer);
+      state.jobRenderTimer = null;
+    }
+    state.jobRenderPending = false;
+    renderJobNow();
+  }
+
+  function renderJobNow() {
     if (!hasElement("#jobGrid")) return;
     const job = state.currentJob;
     let rows = job && Array.isArray(job.items) ? job.items : [];
@@ -1266,7 +1304,7 @@
     if (visibleStatuses.length) {
       rows = rows.filter(function (item) { return item && visibleStatuses.indexOf(item.status) >= 0; });
     }
-    $("#jobGrid").data("kendoGrid").dataSource.data(rows);
+    syncJobGridRows(rows);
     if (!job) {
       $("#jobSummary").text("Nenhuma fila criada.");
       return;
@@ -1279,6 +1317,40 @@
       `Canceladas: ${job.cancelledTables || 0}<br>` +
       `Erros: ${job.failedTables}`
     );
+  }
+
+  function syncJobGridRows(rows) {
+    const grid = $("#jobGrid").data("kendoGrid");
+    if (!grid) return;
+    const dataSource = grid.dataSource;
+    const current = dataSource.data();
+    const sameShape = current.length === rows.length && rows.every(function (row, index) {
+      return current[index] && current[index].table === row.table;
+    });
+    if (!sameShape) {
+      dataSource.data(rows);
+      return;
+    }
+
+    rows.forEach(function (row, index) {
+      const model = current[index];
+      updateGridModel(model, "status", row.status);
+      updateGridModel(model, "message", row.message);
+      updateGridModel(model, "relationCount", row.relationCount);
+      updateGridModel(model, "viewAsCount", row.viewAsCount);
+      updateGridModel(model, "updatedAt", row.updatedAt);
+    });
+  }
+
+  function updateGridModel(model, field, value) {
+    if (!model) return;
+    const current = typeof model.get === "function" ? model.get(field) : model[field];
+    if (current === value) return;
+    if (typeof model.set === "function") {
+      model.set(field, value);
+    } else {
+      model[field] = value;
+    }
   }
 
   function selectedDatabase() {
@@ -1534,6 +1606,11 @@
     if (window.SursumGridLoading && typeof window.SursumGridLoading.set === "function") {
       window.SursumGridLoading.set(selector, loading);
     }
+  }
+
+  function setBatchRunningUi(running) {
+    if (!document.body) return;
+    document.body.classList.toggle("sursum-silent-grid-ajax", Boolean(running));
   }
 
   function withGridLoading(selector, request) {

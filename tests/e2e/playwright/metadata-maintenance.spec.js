@@ -52,6 +52,37 @@ test('metadata maintenance creates and runs all-table job without manual tabs', 
   await expect(page.locator('#jobSummary')).toContainText('Processadas: 2/2');
 });
 
+test('metadata batch keeps grid controls interactive while requests are running', async ({ page }) => {
+  await page.goto('/metadata-maintenance.html');
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+  });
+  await page.locator('#createJob').click();
+  await expect(page.locator('#jobGrid')).toContainText('Customer');
+
+  await page.route('**/metadata-pasoe.php**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json; charset=utf-8',
+      body: JSON.stringify({ success: true, data: [] })
+    });
+  });
+
+  await page.evaluate(() => {
+    const widget = window.$('#parallelExecutions').data('kendoNumericTextBox');
+    widget.value(2);
+    widget.trigger('change');
+  });
+  await page.locator('#runJob').click();
+  await expect(page.locator('body')).toHaveClass(/sursum-silent-grid-ajax/);
+  await page.waitForTimeout(150);
+  await expect(page.locator('#jobGrid .k-loading-mask')).toHaveCount(0);
+  await expect(page.locator('#pauseJob')).toBeEnabled();
+});
+
 test('view-as maintenance saves manual view-as and imports CSV', async ({ page }) => {
   await page.goto('/view-as-maintenance.html');
   await expect(page.locator('#addViewAs')).toBeVisible();

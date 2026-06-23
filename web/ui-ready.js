@@ -37,6 +37,9 @@
     if (!window.jQuery || !window.kendo || !window.kendo.ui || typeof window.kendo.ui.progress !== "function") {
       return;
     }
+    if (loading && document.body && document.body.classList.contains("sursum-silent-grid-ajax")) {
+      return;
+    }
 
     const element = getJQueryTarget(target);
     if (!element || !element.length) {
@@ -48,6 +51,9 @@
 
   function setVisibleGridsLoading(loading) {
     if (!window.jQuery) {
+      return;
+    }
+    if (loading && document.body && document.body.classList.contains("sursum-silent-grid-ajax")) {
       return;
     }
 
