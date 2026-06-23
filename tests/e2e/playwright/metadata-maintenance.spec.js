@@ -134,6 +134,33 @@ test('metadata batch updates only the changed grid row while running', async ({ 
   expect(touchedTables).toEqual(['Customer']);
 });
 
+test('metadata batch grid paginates large pending jobs', async ({ page, request }) => {
+  const tables = Array.from({ length: 500 }, (_, index) => `table-${String(index + 1).padStart(3, '0')}`);
+  await request.post('/metadata-store.php', {
+    data: {
+      resource: 'job',
+      action: 'create',
+      environmentId: 'ambiente-a',
+      companyId: 'empresa-a',
+      database: 'DICTDB',
+      tables,
+      includeRelations: false,
+      includeViewAs: true,
+      existingMetadataBehavior: 'skip'
+    }
+  });
+  await page.addInitScript(() => {
+    localStorage.setItem('sursumMetadataMaintenanceLastJob', 'job-1');
+  });
+
+  await page.goto('/metadata-maintenance.html');
+  await expect(page.locator('#jobSummary')).toContainText('Processadas: 0/500');
+  await expect(page.locator('#jobGrid')).toContainText('table-001');
+
+  const renderedRows = await page.locator('#jobGrid .k-grid-content tbody tr').count();
+  expect(renderedRows).toBeLessThanOrEqual(120);
+});
+
 test('view-as maintenance saves manual view-as and imports CSV', async ({ page }) => {
   await page.goto('/view-as-maintenance.html');
   await expect(page.locator('#addViewAs')).toBeVisible();

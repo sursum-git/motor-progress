@@ -96,6 +96,7 @@ function findAllowedPasoeTarget(string $target): ?array
     }
 
     $db = new SQLite3($dbFile, SQLITE3_OPEN_READONLY);
+    $db->busyTimeout(30000);
     $envs = sqliteRows($db, 'SELECT id, pasoe_base_url, auth_mode, authorization FROM environments');
     $companies = sqliteRows($db, 'SELECT environment_id, name, code, path_param FROM companies');
     $db->close();

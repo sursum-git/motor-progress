@@ -9,35 +9,38 @@ header('Cache-Control: no-store');
 
 try {
     $pdo = relationDb();
-    initializeRelationSchema($pdo);
+    [$payload, $status] = withSursumSqliteLock(static function () use ($pdo): array {
+        initializeRelationSchema($pdo);
 
-    $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
-    if ($method === 'GET') {
-        jsonOut(['success' => true, 'data' => loadRelations($pdo, requestScope())]);
-    }
+        $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+        if ($method === 'GET') {
+            return [['success' => true, 'data' => loadRelations($pdo, requestScope())], 200];
+        }
 
-    if ($method === 'POST') {
-        $payload = json_decode((string) file_get_contents('php://input'), true);
-        if (!is_array($payload)) {
-            throw new InvalidArgumentException('JSON invalido.');
+        if ($method === 'POST') {
+            $requestPayload = json_decode((string) file_get_contents('php://input'), true);
+            if (!is_array($requestPayload)) {
+                throw new InvalidArgumentException('JSON invalido.');
+            }
+            $scope = requestScope($requestPayload);
+            $action = text($requestPayload['action'] ?? 'save');
+            if ($action === 'delete') {
+                deleteRelation($pdo, $scope, text($requestPayload['id'] ?? ''));
+                return [['success' => true, 'data' => loadRelations($pdo, $scope)], 200];
+            }
+            $relations = $requestPayload['relations'] ?? $requestPayload['data'] ?? [];
+            if (!is_array($relations)) {
+                throw new InvalidArgumentException('Campo relations deve ser uma lista.');
+            }
+            $source = text($requestPayload['source'] ?? 'manual') ?: 'manual';
+            $replaceId = text($requestPayload['replaceId'] ?? '');
+            saveRelations($pdo, $scope, $relations, $source, strcasecmp($source, 'manual') !== 0, $replaceId);
+            return [['success' => true, 'data' => loadRelations($pdo, $scope)], 200];
         }
-        $scope = requestScope($payload);
-        $action = text($payload['action'] ?? 'save');
-        if ($action === 'delete') {
-            deleteRelation($pdo, $scope, text($payload['id'] ?? ''));
-            jsonOut(['success' => true, 'data' => loadRelations($pdo, $scope)]);
-        }
-        $relations = $payload['relations'] ?? $payload['data'] ?? [];
-        if (!is_array($relations)) {
-            throw new InvalidArgumentException('Campo relations deve ser uma lista.');
-        }
-        $source = text($payload['source'] ?? 'manual') ?: 'manual';
-        $replaceId = text($payload['replaceId'] ?? '');
-        saveRelations($pdo, $scope, $relations, $source, strcasecmp($source, 'manual') !== 0, $replaceId);
-        jsonOut(['success' => true, 'data' => loadRelations($pdo, $scope)]);
-    }
 
-    jsonOut(['success' => false, 'error' => 'Metodo nao suportado.'], 405);
+        return [['success' => false, 'error' => 'Metodo nao suportado.'], 405];
+    });
+    jsonOut($payload, $status);
 } catch (Throwable $error) {
     jsonOut(['success' => false, 'error' => $error->getMessage()], 500);
 }
@@ -50,9 +53,30 @@ function relationDb(): PDO
     }
     $pdo = new PDO('sqlite:' . $baseDir . DIRECTORY_SEPARATOR . 'sursum.sqlite');
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_TIMEOUT, 30);
     $pdo->exec('PRAGMA foreign_keys = ON');
+    $pdo->exec('PRAGMA busy_timeout = 30000');
     $pdo->exec('PRAGMA journal_mode = WAL');
     return $pdo;
+}
+
+function withSursumSqliteLock(callable $callback): array
+{
+    $lockPath = __DIR__ . DIRECTORY_SEPARATOR . 'sursum-conf' . DIRECTORY_SEPARATOR . 'sursum.sqlite.lock';
+    $handle = fopen($lockPath, 'c');
+    if ($handle === false) {
+        throw new RuntimeException('Nao foi possivel abrir o lock do SQLite.');
+    }
+
+    try {
+        if (!flock($handle, LOCK_EX)) {
+            throw new RuntimeException('Nao foi possivel bloquear o SQLite.');
+        }
+        return $callback();
+    } finally {
+        flock($handle, LOCK_UN);
+        fclose($handle);
+    }
 }
 
 function initializeRelationSchema(PDO $pdo): void

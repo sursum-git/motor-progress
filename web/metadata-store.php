@@ -9,30 +9,33 @@ header('Cache-Control: no-store');
 
 try {
     $pdo = metadataDb();
-    initializeMetadataSchema($pdo);
+    [$payload, $status] = withSursumSqliteLock(static function () use ($pdo): array {
+        initializeMetadataSchema($pdo);
 
-    $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
-    if ($method === 'GET') {
-        $resource = text($_GET['resource'] ?? 'view-as');
-        if ($resource === 'job') {
-            jsonOut(['success' => true, 'data' => loadJob($pdo, text($_GET['id'] ?? ''))]);
+        $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+        if ($method === 'GET') {
+            $resource = text($_GET['resource'] ?? 'view-as');
+            if ($resource === 'job') {
+                return [['success' => true, 'data' => loadJob($pdo, text($_GET['id'] ?? ''))], 200];
+            }
+            return [['success' => true, 'data' => loadViewAsRows($pdo, requestScope())], 200];
         }
-        jsonOut(['success' => true, 'data' => loadViewAsRows($pdo, requestScope())]);
-    }
 
-    if ($method === 'POST') {
-        $payload = json_decode((string) file_get_contents('php://input'), true);
-        if (!is_array($payload)) {
-            throw new InvalidArgumentException('JSON invalido.');
+        if ($method === 'POST') {
+            $requestPayload = json_decode((string) file_get_contents('php://input'), true);
+            if (!is_array($requestPayload)) {
+                throw new InvalidArgumentException('JSON invalido.');
+            }
+            $resource = text($requestPayload['resource'] ?? 'view-as');
+            if ($resource === 'job') {
+                return [handleJobPost($pdo, $requestPayload), 200];
+            }
+            return [handleViewAsPost($pdo, $requestPayload), 200];
         }
-        $resource = text($payload['resource'] ?? 'view-as');
-        if ($resource === 'job') {
-            jsonOut(handleJobPost($pdo, $payload));
-        }
-        jsonOut(handleViewAsPost($pdo, $payload));
-    }
 
-    jsonOut(['success' => false, 'error' => 'Metodo nao suportado.'], 405);
+        return [['success' => false, 'error' => 'Metodo nao suportado.'], 405];
+    });
+    jsonOut($payload, $status);
 } catch (Throwable $error) {
     jsonOut(['success' => false, 'error' => $error->getMessage()], 500);
 }
@@ -45,9 +48,30 @@ function metadataDb(): PDO
     }
     $pdo = new PDO('sqlite:' . $baseDir . DIRECTORY_SEPARATOR . 'sursum.sqlite');
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_TIMEOUT, 30);
     $pdo->exec('PRAGMA foreign_keys = ON');
+    $pdo->exec('PRAGMA busy_timeout = 30000');
     $pdo->exec('PRAGMA journal_mode = WAL');
     return $pdo;
+}
+
+function withSursumSqliteLock(callable $callback): array
+{
+    $lockPath = __DIR__ . DIRECTORY_SEPARATOR . 'sursum-conf' . DIRECTORY_SEPARATOR . 'sursum.sqlite.lock';
+    $handle = fopen($lockPath, 'c');
+    if ($handle === false) {
+        throw new RuntimeException('Nao foi possivel abrir o lock do SQLite.');
+    }
+
+    try {
+        if (!flock($handle, LOCK_EX)) {
+            throw new RuntimeException('Nao foi possivel bloquear o SQLite.');
+        }
+        return $callback();
+    } finally {
+        flock($handle, LOCK_UN);
+        fclose($handle);
+    }
 }
 
 function initializeMetadataSchema(PDO $pdo): void

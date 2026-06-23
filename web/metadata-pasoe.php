@@ -34,6 +34,8 @@ function loadEnvironmentCompany(string $environmentId, string $companyId): array
     }
     $pdo = new PDO('sqlite:' . $dbFile);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    $pdo->setAttribute(PDO::ATTR_TIMEOUT, 30);
+    $pdo->exec('PRAGMA busy_timeout = 30000');
 
     $envStmt = $pdo->prepare('SELECT * FROM environments WHERE id = :id');
     $envStmt->execute([':id' => $environmentId]);

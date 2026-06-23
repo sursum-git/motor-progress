@@ -115,8 +115,15 @@
     });
     $("#createJob,#runJob,#pauseJob,#cancelJob,#reprocessAllJob,#reloadTables,#openTableBrowser,#addViewAs,#importViewAsCsv,#saveViewAs,#cancelViewAs,#loadViewAs,#addRelation,#saveRelation,#cancelRelation,#loadRelations").kendoButton();
     if (hasElement("#jobGrid")) $("#jobGrid").kendoGrid({
-      dataSource: [],
+      dataSource: {
+        data: [],
+        pageSize: 100
+      },
       height: 390,
+      pageable: {
+        pageSizes: [50, 100, 200],
+        buttonCount: 5
+      },
       sortable: true,
       dataBound: function () {
         this.tbody.find(".cancel-job-item,.reprocess-job-item").each(function () {
