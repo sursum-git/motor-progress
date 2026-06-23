@@ -1002,7 +1002,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
             RETURN "".
         END.
 
-        ASSIGN cJob = "viewas_" + STRING(YEAR(TODAY), "9999") + STRING(MONTH(TODAY), "99") + STRING(DAY(TODAY), "99") + "_" + STRING(TIME) + "_" + STRING(RANDOM(1000, 999999))
+        ASSIGN cJob = "viewas_" + REPLACE(GUID(GENERATE-UUID), "-", "")
                cLocalOut = SESSION:TEMP-DIRECTORY + cJob + ".out"
                cRemoteIn = "C:/opencode/motor-progress/temp/" + cJob + ".in"
                cRemoteOut = "C:/opencode/motor-progress/temp/" + cJob + ".out".

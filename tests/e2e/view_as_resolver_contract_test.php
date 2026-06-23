@@ -15,6 +15,16 @@ assertContains(
     'ELSE "-db " + THIS-OBJECT:psQuote("C:\opencode\motor-progress\db\sports2000")',
     'Fallback sem PF deve continuar usando sports2000.'
 );
+assertContains(
+    $handler,
+    'GUID(GENERATE-UUID)',
+    'Resolvedor SSH deve gerar nomes temporarios com UUID para evitar colisao entre agentes PASOE.'
+);
+assertNotContains(
+    $handler,
+    'STRING(RANDOM(1000, 999999))',
+    'Resolvedor SSH nao deve usar TIME + RANDOM como unicidade de arquivos temporarios.'
+);
 
 echo "View-as resolver contract OK\n";
 
