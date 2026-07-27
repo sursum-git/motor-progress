@@ -65,3 +65,12 @@ SSH_COMMAND="ssh -p ${DEST_PORT} -o StrictHostKeyChecking=${STRICT_HOST_KEY_CHEC
 
 echo "Sincronizando ${SOURCE_DIR} -> ${DEST_USER}@${DEST_HOST}:${DEST_PATH}"
 sshpass -p "${DEPLOY_PASSWORD}" rsync "${RSYNC_ARGS[@]}" -e "${SSH_COMMAND}" "${SOURCE_DIR}" "${DEST_USER}@${DEST_HOST}:${DEST_PATH}"
+
+if [[ "$DRY_RUN" -eq 0 ]]; then
+    echo "Ajustando permissoes do SQLite no destino"
+    REMOTE_CONF_DIR="${DEST_PATH%/}/sursum-conf"
+    PERM_COMMAND=$(printf "mkdir -p %q && chgrp -R www-data %q && chmod 2775 %q && find %q -maxdepth 1 -type f \\( -name '*.sqlite' -o -name '*.sqlite-wal' -o -name '*.sqlite-shm' -o -name '*.sqlite.lock' \\) -exec chmod 0664 {} +" \
+        "${REMOTE_CONF_DIR}" "${REMOTE_CONF_DIR}" "${REMOTE_CONF_DIR}" "${REMOTE_CONF_DIR}")
+    SUDO_COMMAND=$(printf "sudo -S sh -c %q" "${PERM_COMMAND}")
+    printf '%s\n' "${DEPLOY_PASSWORD}" | sshpass -p "${DEPLOY_PASSWORD}" ssh -p "${DEST_PORT}" -o "StrictHostKeyChecking=${STRICT_HOST_KEY_CHECKING}" "${DEST_USER}@${DEST_HOST}" "${SUDO_COMMAND}"
+fi
