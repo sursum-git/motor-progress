@@ -72,6 +72,16 @@
       $("#username, #password").kendoTextBox();
       if (window.SursumUiReady) window.SursumUiReady();
 
+      function readJsonResponse(response) {
+        return response.text().then((text) => {
+          try {
+            return JSON.parse(text);
+          } catch (error) {
+            throw new Error("Resposta nao JSON do servidor. HTTP " + response.status + ". " + text);
+          }
+        });
+      }
+
       $("#loginForm").on("submit", function (event) {
         event.preventDefault();
         $("#loginStatus").text("");
@@ -85,7 +95,7 @@
             password: $("#password").val()
           })
         })
-          .then((response) => response.json())
+          .then(readJsonResponse)
           .then((payload) => {
             if (!payload || !payload.success) {
               throw new Error((payload && payload.error) || "Login invalido.");

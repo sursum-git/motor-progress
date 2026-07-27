@@ -6,11 +6,24 @@
   if (publicPages.has(pageName)) return;
   window.SursumAuthPending = true;
 
+  function readJsonOrUnauthenticated(response) {
+    if (!response.ok) {
+      return { authenticated: false };
+    }
+    return response.text().then((text) => {
+      try {
+        return JSON.parse(text);
+      } catch (error) {
+        return { authenticated: false };
+      }
+    });
+  }
+
   fetch("auth.php?action=status", {
     credentials: "same-origin",
     cache: "no-store"
   })
-    .then((response) => response.ok ? response.json() : { authenticated: false })
+    .then(readJsonOrUnauthenticated)
     .then((payload) => {
       if (!payload || !payload.authenticated) {
         const target = encodeURIComponent(location.pathname.split("/").pop() + location.search + location.hash);

@@ -175,6 +175,24 @@
         return JSON.stringify(value, null, 2);
       }
 
+      async function readResponsePayload(response) {
+        const text = await response.text();
+        try {
+          return { isJson: true, payload: JSON.parse(text), raw: text };
+        } catch (error) {
+          return { isJson: false, payload: null, raw: text };
+        }
+      }
+
+      function renderResponse(response, result) {
+        responseBox.textContent = result.isJson ? pretty(result.payload) : result.raw;
+        if (!result.isJson) {
+          setStatus("Resposta nao JSON do servidor. HTTP " + response.status + ". Veja o corpo retornado.");
+          return;
+        }
+        setStatus(response.ok ? "Consulta concluida." : "Consulta retornou erro HTTP " + response.status + ".");
+      }
+
       function currentApiBase() {
         if (window.SursumContext && typeof SursumContext.getCurrentApiBase === "function") {
           return String(SursumContext.getCurrentApiBase() || DEFAULT_API_BASE).replace(/\/+$/, "");
@@ -239,9 +257,8 @@
             },
             body: JSON.stringify(request)
           });
-          const payload = await response.json();
-          responseBox.textContent = pretty(payload);
-          setStatus(response.ok ? "Consulta concluida." : "Consulta retornou erro HTTP " + response.status + ".");
+          const result = await readResponsePayload(response);
+          renderResponse(response, result);
         } catch (error) {
           responseBox.textContent = error && error.stack ? error.stack : String(error);
           setStatus("Falha ao executar consulta.");
