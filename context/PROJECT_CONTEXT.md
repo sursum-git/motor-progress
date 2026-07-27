@@ -132,7 +132,8 @@ https://192.168.0.111:9911/med/web/SursumDynamicQuery
 - O endpoint `POST /metadata/view-as/resolve` foi validado em 2026-06-17 para `cxinc/i01cx373.i`, retornando `Ativo,Inativo`.
 - O runner SSH de view-as inclui `C:\opencode\motor-progress\ems2` no PROPATH.
 - O fallback sem SSH resolve diretamente `cxinc/i01cx373.i` para evitar erro Progress 471 no PASOE.
-- Remote GitHub configurado: `https://github.com/sursum-git/motor-progress.git`. Para push com token, desabilitar credencial antiga com `git -c credential.helper= ...` quando necessario.
+- Remote GitHub configurado: `https://github.com/sursum-git/motor-progress.git`; `master` acompanha `origin/master`.
+- Para push, a credencial global antiga pode interferir (`credential.helper=store`). Quando usar token informado na conversa, executar Git com `git -c credential.helper= ...` e `GIT_ASKPASS` temporario. Nunca gravar token em arquivo do projeto, `.git/config` ou URL do remote.
 
 ## Backlog registrado
 

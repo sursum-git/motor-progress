@@ -39,3 +39,51 @@ git -c credential.helper= push --force-with-lease origin master
 ```
 
 Tokens GitHub nao devem ser gravados em arquivos do projeto nem no remote URL.
+
+## Procedimento de push para novas conversas
+
+Estado esperado:
+
+```bash
+git remote -v
+git status --short --branch
+```
+
+O remote deve ser:
+
+```text
+origin https://github.com/sursum-git/motor-progress.git
+```
+
+Se a branch local estiver alinhada e o objetivo for apenas enviar commits novos:
+
+```bash
+git -c credential.helper= push
+```
+
+Se for necessario usar token informado pelo usuario, usar `GIT_ASKPASS` temporario em `/tmp`, remover o arquivo ao final e manter `credential.helper` desabilitado apenas nesse comando. Exemplo de formato, substituindo `TOKEN_INFORMADO_PELO_USUARIO` em memoria somente durante a execucao:
+
+```bash
+GIT_ASKPASS=/tmp/motor-progress-git-askpass \
+GIT_TERMINAL_PROMPT=0 \
+git -c credential.helper= push
+```
+
+O arquivo temporario de askpass deve responder:
+
+```bash
+Username: x-access-token
+Password: TOKEN_INFORMADO_PELO_USUARIO
+```
+
+Depois do comando:
+
+```bash
+rm -f /tmp/motor-progress-git-askpass
+```
+
+Se o remoto rejeitar por historico divergente e houver decisao explicita para substituir o remoto pelo local, usar:
+
+```bash
+git -c credential.helper= push --force-with-lease origin master
+```
