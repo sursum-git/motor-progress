@@ -1,10 +1,12 @@
 # Contexto do Projeto - Sursum Dynamic Query
 
-Atualizado em 2026-06-18.
+Atualizado em 2026-07-27.
 
 ## Objetivo
 
 O projeto implementa um motor de consultas dinamicas para Progress/OpenEdge, exposto por PASOE WEB Handler e operado por uma interface web Kendo. O objetivo e permitir que o usuario monte consultas, navegue metadados, cadastre relacoes e mantenha view-as sem executar ABL/SQL livre informado pelo usuario.
+
+O estado local deste repositorio e a linha canonica atual. O `master` remoto historico tinha estrutura anterior sem base comum com o repositorio local e deve ser substituido pelo local quando for necessario alinhar GitHub.
 
 ## Entrada da aplicacao
 
@@ -29,6 +31,7 @@ http://php81.imatextil.com.br/motor-progress/web/index.html?page=metadata-mainte
 ## Decisoes de arquitetura
 
 - O fluxo novo usa classes OOABL em `sursum-api/sursum`.
+- A estrutura canonica atual usa `sursum-api/` para Progress/OOABL, `web/` para PHP/HTML/JS, `sursum-conf/` para configuracao operacional, `tests/` para contratos e `scripts/` para deploy.
 - `boMetaDados.p` e `boConsDin.p` ficam apenas como referencia historica.
 - O motor nao deve executar ABL livre nem WHERE livre informado pelo usuario.
 - A consulta e estruturada por JSON/DSL.
@@ -58,6 +61,10 @@ http://php81.imatextil.com.br/motor-progress/web/index.html?page=metadata-mainte
 - `web/metadata-store.php`: view-as manual/CSV e fila de atualizacao de metadados.
 - `web/relation-store.php`: joins manuais e joins OF salvos em SQLite.
 - `web/metadata-pasoe.php` e `web/pasoe-proxy.php`: proxy seguro para PASOE a partir do servidor web.
+- `web/container-client.html`: exemplo especifico para consulta salva de container por `nr-container`.
+- `web/saved-query-client.html`: cliente generico para executar consulta salva por `queryId`.
+- `sursum-api/querys/pp-it-container-por-container.json`: consulta salva que filtra `espec.pp-it-container` por `nr-container`.
+- `scripts/deploy_query_progress_192_168_0_39.sh`: deploy de `web/` para homologacao `query-progress`.
 
 ## Paginas principais
 
@@ -70,6 +77,8 @@ http://php81.imatextil.com.br/motor-progress/web/index.html?page=metadata-mainte
 - `web/query-wizard-3steps.html`: consulta por tabela.
 - `web/query-list.html`: consultas salvas.
 - `web/query-result.html`: visualizacao de resultado.
+- `web/container-client.html`: executa `pp-it-container-por-container` com `nr-container` vindo da URL.
+- `web/saved-query-client.html`: executa consulta salva por id e repassa os demais parametros da URL em `parameters.querystring`.
 
 ## Contexto cliente/ambiente/empresa
 
@@ -115,11 +124,15 @@ https://192.168.0.111:9911/med/web/SursumDynamicQuery
 ## Estado recente importante
 
 - PASOE `sursum-api` esta no servidor `192.168.0.111`.
+- Paginas PHP/HTML de homologacao estao em `http://iol.imatextil.com.br/query-progress/`, publicadas no servidor `192.168.0.39` em `/var/www/clients/client1/web7/web/query-progress/`.
+- O deploy de homologacao deve usar `scripts/deploy_query_progress_192_168_0_39.sh`; o script tambem corrige permissoes SQLite para grupo `www-data`.
+- Exemplo validado: `saved-query-client.html?queryId=pp-it-container-por-container&nr-container=1650`.
 - Runtime publicado em `/mnt/datasul/ERP/sursum` e via share Windows `\\192.168.0.137\erp\sursum`.
 - Host Windows de compilacao: `192.168.0.42`, workspace `C:\opencode\motor-progress`, OpenEdge `C:\Progress_12\OE`.
 - O endpoint `POST /metadata/view-as/resolve` foi validado em 2026-06-17 para `cxinc/i01cx373.i`, retornando `Ativo,Inativo`.
 - O runner SSH de view-as inclui `C:\opencode\motor-progress\ems2` no PROPATH.
 - O fallback sem SSH resolve diretamente `cxinc/i01cx373.i` para evitar erro Progress 471 no PASOE.
+- Remote GitHub configurado: `https://github.com/sursum-git/motor-progress.git`. Para push com token, desabilitar credencial antiga com `git -c credential.helper= ...` quando necessario.
 
 ## Backlog registrado
 

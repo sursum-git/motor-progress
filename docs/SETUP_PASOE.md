@@ -3,6 +3,8 @@
 ## Pre-requisitos
 
 - Progress/OpenEdge instalado.
+- PHP com SQLite e LDAP habilitados para a parte web autenticada.
+- Node.js somente para testes Playwright e tooling local.
 - Caminho usado no ambiente local:
 
 ```text
@@ -48,6 +50,8 @@ db/LoadSursumAsyncQueue.p
 db/LoadSursumAsyncQueueJobStatusDelta.p
 db/LoadSursumAsyncQueueJsonFieldsDelta.p
 ```
+
+Os arquivos `db/*.df` e loaders continuam versionados como referencia para a fila async. Bancos fisicos locais continuam ignorados.
 
 Exemplo:
 
@@ -171,6 +175,56 @@ OpenEdge.Web.WebResponseWriter
 | `GET /web/SursumDynamicQuery/jobs/{jobId}` | Status do job |
 | `GET /web/SursumDynamicQuery/jobs/{jobId}/result` | Resultado JSON |
 | `GET /web/SursumDynamicQuery/benchmarks/customer-count` | Benchmark de contagem |
+
+## Web PHP/SQLite
+
+A camada web usa arquivos estaticos, PHP e SQLite:
+
+```text
+web/
+web/sursum-conf/sursum.sqlite
+```
+
+Principais endpoints PHP:
+
+| Arquivo | Finalidade |
+|---|---|
+| `web/auth.php` | Login LDAP e sessao |
+| `web/context-store.php` | Contexto cliente/ambiente/empresa |
+| `web/metadata-store.php` | Metadados, view-as e fila de carga |
+| `web/relation-store.php` | Relacoes manuais e relacoes OF |
+| `web/metadata-pasoe.php` | Proxy controlado para metadados PASOE |
+| `web/pasoe-proxy.php` | Proxy controlado para execucao PASOE |
+
+Em producao/homologacao, `web/sursum-conf` e o arquivo SQLite precisam ser gravaveis pelo usuario/grupo do PHP-FPM.
+
+## Deploy homologacao query-progress
+
+Servidor:
+
+```text
+192.168.0.39
+```
+
+Destino:
+
+```text
+/var/www/clients/client1/web7/web/query-progress/
+```
+
+URL via vhost ISPConfig:
+
+```text
+http://iol.imatextil.com.br/query-progress/
+```
+
+Script:
+
+```bash
+DEPLOY_PASSWORD='...' ./scripts/deploy_query_progress_192_168_0_39.sh
+```
+
+O script sincroniza `web/` e ajusta `web/sursum-conf` no destino para grupo `www-data`, modo `2775` na pasta e `0664` nos arquivos SQLite.
 
 ## APSV / ON SERVER
 

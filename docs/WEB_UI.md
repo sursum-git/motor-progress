@@ -1,6 +1,6 @@
 # Interfaces web Kendo UI
 
-O projeto possui paginas HTML estaticas para facilitar o uso por analistas.
+O projeto possui paginas HTML estaticas e endpoints PHP para facilitar o uso por analistas e para publicar exemplos operacionais.
 
 Assets locais:
 
@@ -47,6 +47,14 @@ Endpoint base padrao:
 http://localhost:8890/web/SursumDynamicQuery
 ```
 
+Em ambiente publicado, a UI usa o contexto ativo e os proxies PHP:
+
+```text
+web/context-store.php
+web/metadata-pasoe.php
+web/pasoe-proxy.php
+```
+
 Endpoints usados pelo designer:
 
 ```text
@@ -58,7 +66,7 @@ POST /web/SursumDynamicQuery/metadata/relations
 GET  /web/SursumDynamicQuery/metadata/relations/{left}/{right}?database=DICTDB
 ```
 
-As relacoes sao salvas no servidor em:
+As relacoes sao salvas no servidor em SQLite por `web/relation-store.php`. Arquivos JSON em `conf/relations` sao legado/fallback:
 
 ```text
 conf/relations/bancoA__tabelaA__bancoB__tabelaB.json
@@ -66,7 +74,7 @@ conf/relations/bancoA__tabelaA__bancoB__tabelaB.json
 
 O nome dos bancos fica junto das tabelas para evitar colisao quando bancos diferentes possuem tabelas com o mesmo nome. Banco, tabelas e arquivo sao normalizados em minusculo. A ordem das pontas da relacao no nome do arquivo e alfabetica para permitir reutilizacao independente da ordem em que a relacao foi pesquisada.
 
-Metadados carregados tambem sao salvos no servidor:
+Metadados carregados sao persistidos por `web/metadata-store.php` em `web/sursum-conf/sursum.sqlite`. Arquivos JSON em `conf/metadata` sao legado/fallback:
 
 ```text
 conf/metadata/banco__tables.json
@@ -116,6 +124,38 @@ Observacao importante:
 
 O navegador nao envia o caminho fisico real do arquivo por seguranca. A pagina envia o conteudo do arquivo JSON como body HTTP.
 
+## Consultas salvas por HTML
+
+Arquivos:
+
+```text
+web/container-client.html
+web/saved-query-client.html
+```
+
+`container-client.html` e um exemplo especifico para a consulta salva `pp-it-container-por-container`. Ele le `nr-container` da URL e monta:
+
+```json
+{
+  "code": "pp-it-container-por-container",
+  "parameters": {
+    "querystring": {
+      "nr-container": "1650"
+    }
+  }
+}
+```
+
+`saved-query-client.html` e generico: le `queryId`, `id` ou `code` da URL e envia todos os demais parametros em `parameters.querystring`.
+
+Exemplo publicado:
+
+```text
+http://iol.imatextil.com.br/query-progress/saved-query-client.html?queryId=pp-it-container-por-container&nr-container=1650
+```
+
+As duas paginas leem respostas HTTP como texto antes de tentar JSON. Se o PHP retornar HTML de erro, a resposta bruta aparece na tela em vez de quebrar com `Unexpected token '<'`.
+
 ## Fluxo recomendado para analistas
 
 1. Abrir `web/query-builder.html`.
@@ -126,6 +166,7 @@ O navegador nao envia o caminho fisico real do arquivo por seguranca. A pagina e
 6. Clicar em `Abrir resultado` para enviar o JSON atual para `web/query-result.html`.
 7. Executar contra PASOE pela pagina de resultado.
 8. Se a extracao precisar rodar em batch, usar o mesmo JSON com `sursum-api/runners/RunDynamicQueryFromJson.p`.
+9. Para consulta salva por link, usar `saved-query-client.html?queryId=<codigo>&parametro=valor`.
 
 ## Relacao com runner batch
 
@@ -143,3 +184,4 @@ O mesmo JSON usado na pagina pode ser executado via batch:
 - A pagina depende do endpoint PASOE estar publicado e respondendo.
 - Para abrir direto via `file://`, alguns navegadores podem restringir CORS dependendo da configuracao do PASOE.
 - Se houver CORS, sirva a pasta `web/` por um servidor local simples ou publique os arquivos como conteudo estatico no PASOE.
+- Em homologacao `query-progress`, o SQLite precisa estar gravavel pelo grupo do PHP-FPM (`www-data`); o script de deploy aplica essa permissao.
