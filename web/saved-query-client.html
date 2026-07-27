@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Executar Consulta Salva</title>
+  <style>
+    :root {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #17202a;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+    }
+    p {
+      margin: 0 0 18px;
+      color: #52616f;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) minmax(280px, 2fr) auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 16px;
+      padding: 16px;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #344150;
+    }
+    input {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 1px solid #b8c2cc;
+      border-radius: 6px;
+      font: inherit;
+    }
+    button {
+      min-height: 38px;
+      padding: 8px 14px;
+      border: 0;
+      border-radius: 6px;
+      background: #1d4ed8;
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #8fa4cf;
+      cursor: wait;
+    }
+    .status {
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-left: 4px solid #1d4ed8;
+      border-radius: 6px;
+      color: #344150;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    section {
+      min-width: 0;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    h2 {
+      margin: 0;
+      padding: 12px 14px;
+      border-bottom: 1px solid #d8dee4;
+      font-size: 16px;
+    }
+    pre {
+      min-height: 360px;
+      max-height: 640px;
+      margin: 0;
+      padding: 14px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 13px;
+      line-height: 1.45;
+      background: #fbfcfd;
+    }
+    @media (max-width: 900px) {
+      body {
+        padding: 14px;
+      }
+      .toolbar,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Executar Consulta Salva</h1>
+    <p>Informe o id da consulta salva. Todos os outros parametros da URL serao enviados como filtros externos de query string.</p>
+
+    <div class="toolbar">
+      <label>
+        Query ID
+        <input id="queryIdInput" value="pp-it-container-por-container">
+      </label>
+      <label>
+        Parametros detectados
+        <input id="parametersInput" readonly>
+      </label>
+      <button id="runButton" type="button">Executar</button>
+    </div>
+
+    <div id="statusBox" class="status">Pronto.</div>
+
+    <div class="grid">
+      <section>
+        <h2>JSON enviado</h2>
+        <pre id="requestBox"></pre>
+      </section>
+      <section>
+        <h2>Resposta</h2>
+        <pre id="responseBox"></pre>
+      </section>
+    </div>
+  </main>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="context-manager.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      const DEFAULT_API_BASE = "https://192.168.0.111:9911/med/web/SursumDynamicQuery";
+      const DEFAULT_QUERY_ID = "pp-it-container-por-container";
+      const RESERVED_PARAMS = new Set(["queryId", "id", "code"]);
+
+      const queryIdInput = document.getElementById("queryIdInput");
+      const parametersInput = document.getElementById("parametersInput");
+      const requestBox = document.getElementById("requestBox");
+      const responseBox = document.getElementById("responseBox");
+      const runButton = document.getElementById("runButton");
+      const statusBox = document.getElementById("statusBox");
+
+      function setStatus(message) {
+        statusBox.textContent = message;
+      }
+
+      function pretty(value) {
+        return JSON.stringify(value, null, 2);
+      }
+
+      function currentApiBase() {
+        if (window.SursumContext && typeof SursumContext.getCurrentApiBase === "function") {
+          return String(SursumContext.getCurrentApiBase() || DEFAULT_API_BASE).replace(/\/+$/, "");
+        }
+        return DEFAULT_API_BASE;
+      }
+
+      function pasoeProxyUrl(path) {
+        return "pasoe-proxy.php?target=" + encodeURIComponent(currentApiBase() + path);
+      }
+
+      function selectedQueryId() {
+        const params = new URLSearchParams(window.location.search);
+        return String(params.get("queryId") || params.get("id") || params.get("code") || queryIdInput.value || DEFAULT_QUERY_ID).trim();
+      }
+
+      function collectQuerystringParameters() {
+        const params = new URLSearchParams(window.location.search);
+        const parameters = {};
+        params.forEach((value, key) => {
+          if (!RESERVED_PARAMS.has(key)) {
+            parameters[key] = value;
+          }
+        });
+        return parameters;
+      }
+
+      function buildRequest() {
+        const queryId = selectedQueryId();
+        const parameters = collectQuerystringParameters();
+        return {
+          code: queryId,
+          parameters: { querystring: parameters }
+        };
+      }
+
+      function refreshPreview() {
+        const request = buildRequest();
+        queryIdInput.value = request.code;
+        parametersInput.value = Object.keys(request.parameters.querystring)
+          .map(key => key + "=" + request.parameters.querystring[key])
+          .join("&");
+        requestBox.textContent = pretty(request);
+      }
+
+      async function run() {
+        const request = buildRequest();
+        if (!request.code) {
+          setStatus("Informe queryId na URL ou no campo Query ID.");
+          return;
+        }
+        runButton.disabled = true;
+        responseBox.textContent = "";
+        requestBox.textContent = pretty(request);
+        try {
+          setStatus("Executando consulta salva no PASOE...");
+          const response = await fetch(pasoeProxyUrl("/query"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify(request)
+          });
+          const payload = await response.json();
+          responseBox.textContent = pretty(payload);
+          setStatus(response.ok ? "Consulta concluida." : "Consulta retornou erro HTTP " + response.status + ".");
+        } catch (error) {
+          responseBox.textContent = error && error.stack ? error.stack : String(error);
+          setStatus("Falha ao executar consulta.");
+        } finally {
+          runButton.disabled = false;
+        }
+      }
+
+      queryIdInput.addEventListener("input", refreshPreview);
+      runButton.addEventListener("click", run);
+      refreshPreview();
+
+      const ready = window.SursumContext && typeof SursumContext.whenReady === "function"
+        ? SursumContext.whenReady()
+        : Promise.resolve();
+      ready.then(run).catch(run);
+    })();
+  </script>
+</body>
+</html>

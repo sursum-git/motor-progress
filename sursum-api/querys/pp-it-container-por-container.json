@@ -1,0 +1,194 @@
+{
+  "code": "pp-it-container-por-container",
+  "status": "ready",
+  "query": {
+    "execution": "sync",
+    "page": 1,
+    "pageSize": 100,
+    "defaultBanco": "espec",
+    "sources": [
+      {
+        "nome": "pp-it-container",
+        "alias": "pp-it-container",
+        "banco": "espec",
+        "campos": "nr-container,it-comprado,desc-item,ref-comprada,qt-pedida,qt-vendida,qt-recebida,preco-compra,it-codigo,cod-refer,char-1,dec-1,int-1,log-1,data-1,preco-venda,narrativa,class-fiscal,perc-dsp-venda,mo-codigo,preco-vd-real,preco-vd-dolar,qt_faturada,vl_preco_medio,qt_prazo_medio,dt_hr_atu_fat,transacao_id_qt_fat,qt_devolvida,preco_medio_atu,preco_medio_meta,item_proc_compra_id,cod_estab_definido"
+      }
+    ],
+    "joins": [],
+    "select": [
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "nr-container",
+        "outputAlias": "nr-container"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "it-comprado",
+        "outputAlias": "it-comprado"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "desc-item",
+        "outputAlias": "desc-item"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "ref-comprada",
+        "outputAlias": "ref-comprada"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "qt-pedida",
+        "outputAlias": "qt-pedida"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "qt-vendida",
+        "outputAlias": "qt-vendida"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "qt-recebida",
+        "outputAlias": "qt-recebida"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "preco-compra",
+        "outputAlias": "preco-compra"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "it-codigo",
+        "outputAlias": "it-codigo"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "cod-refer",
+        "outputAlias": "cod-refer"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "char-1",
+        "outputAlias": "char-1"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "dec-1",
+        "outputAlias": "dec-1"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "int-1",
+        "outputAlias": "int-1"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "log-1",
+        "outputAlias": "log-1"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "data-1",
+        "outputAlias": "data-1"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "preco-venda",
+        "outputAlias": "preco-venda"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "narrativa",
+        "outputAlias": "narrativa"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "class-fiscal",
+        "outputAlias": "class-fiscal"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "perc-dsp-venda",
+        "outputAlias": "perc-dsp-venda"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "mo-codigo",
+        "outputAlias": "mo-codigo"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "preco-vd-real",
+        "outputAlias": "preco-vd-real"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "preco-vd-dolar",
+        "outputAlias": "preco-vd-dolar"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "qt_faturada",
+        "outputAlias": "qt_faturada"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "vl_preco_medio",
+        "outputAlias": "vl_preco_medio"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "qt_prazo_medio",
+        "outputAlias": "qt_prazo_medio"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "dt_hr_atu_fat",
+        "outputAlias": "dt_hr_atu_fat"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "transacao_id_qt_fat",
+        "outputAlias": "transacao_id_qt_fat"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "qt_devolvida",
+        "outputAlias": "qt_devolvida"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "preco_medio_atu",
+        "outputAlias": "preco_medio_atu"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "preco_medio_meta",
+        "outputAlias": "preco_medio_meta"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "item_proc_compra_id",
+        "outputAlias": "item_proc_compra_id"
+      },
+      {
+        "sourceAlias": "pp-it-container",
+        "field": "cod_estab_definido",
+        "outputAlias": "cod_estab_definido"
+      }
+    ],
+    "filters": [],
+    "orderBy": [],
+    "pipeline": []
+  },
+  "externalFilters": [
+    {
+      "name": "nr-container",
+      "source": "querystring",
+      "sourceAlias": "pp-it-container",
+      "field": "nr-container",
+      "operator": "=",
+      "required": true
+    }
+  ]
+}

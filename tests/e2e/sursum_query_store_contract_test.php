@@ -40,6 +40,26 @@ if (!is_dir($root . "/sursum-api/querys")) {
     throw new RuntimeException("Diretorio sursum-api/querys nao existe.");
 }
 
+$containerSavedQueryPath = $root . "/sursum-api/querys/pp-it-container-por-container.json";
+assertFileContains($containerSavedQueryPath, [
+    '"code": "pp-it-container-por-container"',
+    '"defaultBanco": "espec"',
+    '"nome": "pp-it-container"',
+    '"name": "nr-container"',
+    '"source": "querystring"',
+]);
+
+$containerClient = (string) file_get_contents($root . "/web/container-client.html");
+assertContains($containerClient, 'const DEFAULT_QUERY_ID = "pp-it-container-por-container"', "queryId padrao container");
+assertContains($containerClient, 'code: queryId', "execucao por code no client container");
+assertContains($containerClient, 'querystring: { "nr-container": container }', "parametro querystring container");
+
+$savedQueryClient = (string) file_get_contents($root . "/web/saved-query-client.html");
+assertContains($savedQueryClient, 'function collectQuerystringParameters', "coleta parametros querystring");
+assertContains($savedQueryClient, 'code: queryId', "execucao por code no client generico");
+assertContains($savedQueryClient, 'parameters: { querystring: parameters }', "parametros querystring no client generico");
+assertContains($savedQueryClient, 'pasoe-proxy.php?target=', "proxy PASOE no client generico");
+
 echo "Query store contract OK
 ";
 

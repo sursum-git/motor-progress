@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Consulta de Container</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #17202a;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    p {
+      margin: 0 0 18px;
+      color: #52616f;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr)) auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 16px;
+      padding: 16px;
+      background: #ffffff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #344150;
+    }
+    input {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 1px solid #b8c2cc;
+      border-radius: 6px;
+      font: inherit;
+    }
+    button {
+      min-height: 38px;
+      padding: 8px 14px;
+      border: 0;
+      border-radius: 6px;
+      background: #1d4ed8;
+      color: #ffffff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #8fa4cf;
+      cursor: wait;
+    }
+    .status {
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      background: #ffffff;
+      border: 1px solid #d8dee4;
+      border-left: 4px solid #1d4ed8;
+      border-radius: 6px;
+      color: #344150;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    section {
+      min-width: 0;
+      background: #ffffff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    h2 {
+      margin: 0;
+      padding: 12px 14px;
+      border-bottom: 1px solid #d8dee4;
+      font-size: 16px;
+    }
+    pre {
+      min-height: 360px;
+      max-height: 640px;
+      margin: 0;
+      padding: 14px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 13px;
+      line-height: 1.45;
+      background: #fbfcfd;
+    }
+    @media (max-width: 900px) {
+      body {
+        padding: 14px;
+      }
+      .toolbar,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Consulta de Container</h1>
+    <p>Le <strong>queryId</strong> e <strong>nr-container</strong> da query string e executa a consulta salva no PASOE.</p>
+
+    <div class="toolbar">
+      <label>
+        Query ID
+        <input id="queryIdInput" value="pp-it-container-por-container">
+      </label>
+      <label>
+        Container
+        <input id="containerInput" value="1650">
+      </label>
+      <label>
+        Banco
+        <input id="databaseInput" value="espec">
+      </label>
+      <label>
+        Tabela
+        <input id="tableInput" value="pp-it-container">
+      </label>
+      <label>
+        Page size
+        <input id="pageSizeInput" type="number" min="1" max="500" value="100">
+      </label>
+      <button id="runButton" type="button">Executar</button>
+    </div>
+
+    <div id="statusBox" class="status">Pronto.</div>
+
+    <div class="grid">
+      <section>
+        <h2>JSON enviado</h2>
+        <pre id="requestBox"></pre>
+      </section>
+      <section>
+        <h2>Resposta</h2>
+        <pre id="responseBox"></pre>
+      </section>
+    </div>
+  </main>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="context-manager.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      const DEFAULT_API_BASE = "https://192.168.0.111:9911/med/web/SursumDynamicQuery";
+      const DEFAULT_QUERY_ID = "pp-it-container-por-container";
+      const statusBox = document.getElementById("statusBox");
+      const requestBox = document.getElementById("requestBox");
+      const responseBox = document.getElementById("responseBox");
+      const runButton = document.getElementById("runButton");
+      const queryIdInput = document.getElementById("queryIdInput");
+      const containerInput = document.getElementById("containerInput");
+      const databaseInput = document.getElementById("databaseInput");
+      const tableInput = document.getElementById("tableInput");
+      const pageSizeInput = document.getElementById("pageSizeInput");
+
+      function qs(name) {
+        return new URLSearchParams(window.location.search).get(name);
+      }
+
+      function setStatus(message) {
+        statusBox.textContent = message;
+      }
+
+      function pretty(value) {
+        return JSON.stringify(value, null, 2);
+      }
+
+      function currentApiBase() {
+        if (window.SursumContext && typeof SursumContext.getCurrentApiBase === "function") {
+          return String(SursumContext.getCurrentApiBase() || DEFAULT_API_BASE).replace(/\/+$/, "");
+        }
+        return DEFAULT_API_BASE;
+      }
+
+      function pasoeProxyUrl(path) {
+        return "pasoe-proxy.php?target=" + encodeURIComponent(currentApiBase() + path);
+      }
+
+      function metadataProxyUrl(path, params) {
+        const environment = window.SursumContext && typeof SursumContext.getCurrentEnvironment === "function"
+          ? SursumContext.getCurrentEnvironment()
+          : null;
+        const company = window.SursumContext && typeof SursumContext.getCurrentCompany === "function"
+          ? SursumContext.getCurrentCompany()
+          : null;
+        if (!environment || !company) {
+          return "";
+        }
+        const query = new URLSearchParams(Object.assign({
+          environmentId: environment.id,
+          companyId: company.id,
+          path
+        }, params || {}));
+        return "metadata-pasoe.php?" + query.toString();
+      }
+
+      function normalizeFieldList(payload) {
+        const rows = Array.isArray(payload && payload.data) ? payload.data : [];
+        return rows
+          .map(row => row && (row.name || row.field || row.fieldName))
+          .filter(Boolean)
+          .filter(name => !String(name).startsWith("_"));
+      }
+
+      async function loadFields(database, table) {
+        const url = metadataProxyUrl("/metadata/tables/" + encodeURIComponent(table) + "/fields", { database });
+        if (!url) return ["nr-container"];
+        const response = await fetch(url, { headers: { "Accept": "application/json" } });
+        const payload = await response.json();
+        const fields = normalizeFieldList(payload);
+        return fields.length ? fields : ["nr-container"];
+      }
+
+      function buildRequest(container, database, table, fields) {
+        return {
+          execution: "sync",
+          page: 1,
+          pageSize: Math.max(1, Math.min(500, Number(pageSizeInput.value || 100))),
+          defaultBanco: database,
+          sources: [{
+            nome: table,
+            alias: table,
+            banco: database,
+            campos: fields.join(",")
+          }],
+          joins: [],
+          select: fields.map(field => ({
+            sourceAlias: table,
+            field,
+            outputAlias: field
+          })),
+          filters: [{
+            sourceAlias: table,
+            field: "nr-container",
+            operator: "=",
+            value: String(container)
+          }],
+          orderBy: [],
+          pipeline: []
+        };
+      }
+
+      function buildStoredQueryRunRequest(queryId, container) {
+        return {
+          code: queryId,
+          parameters: {
+            querystring: { "nr-container": container }
+          }
+        };
+      }
+
+      async function run() {
+        const queryId = String(queryIdInput.value || "").trim() || DEFAULT_QUERY_ID;
+        const container = String(containerInput.value || "").trim();
+        const database = String(databaseInput.value || "").trim() || "espec";
+        const table = String(tableInput.value || "").trim() || "pp-it-container";
+        const directMode = qs("modo") === "direct";
+        if (!queryId) {
+          setStatus("Informe queryId na URL ou no campo Query ID.");
+          return;
+        }
+        if (!container) {
+          setStatus("Informe nr-container na URL ou no campo Container.");
+          return;
+        }
+
+        runButton.disabled = true;
+        responseBox.textContent = "";
+        try {
+          let request;
+          if (directMode) {
+            setStatus("Buscando campos da tabela para execucao direta...");
+            const fields = await loadFields(database, table);
+            request = buildRequest(container, database, table, fields);
+          } else {
+            request = buildStoredQueryRunRequest(queryId, container);
+          }
+          requestBox.textContent = pretty(request);
+
+          setStatus(directMode ? "Executando consulta direta no PASOE..." : "Executando consulta salva no PASOE...");
+          const response = await fetch(pasoeProxyUrl("/query"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify(request)
+          });
+          const payload = await response.json();
+          responseBox.textContent = pretty(payload);
+          setStatus(response.ok ? "Consulta concluida." : "Consulta retornou erro HTTP " + response.status + ".");
+        } catch (error) {
+          responseBox.textContent = error && error.stack ? error.stack : String(error);
+          setStatus("Falha ao executar consulta.");
+        } finally {
+          runButton.disabled = false;
+        }
+      }
+
+      const containerFromUrl = qs("nr-container");
+      if (containerFromUrl) {
+        containerInput.value = containerFromUrl;
+      }
+      const queryIdFromUrl = qs("queryId") || qs("id") || qs("code");
+      if (queryIdFromUrl) {
+        queryIdInput.value = queryIdFromUrl;
+      }
+      const databaseFromUrl = qs("banco") || qs("database");
+      if (databaseFromUrl) {
+        databaseInput.value = databaseFromUrl;
+      }
+      requestBox.textContent = pretty(buildStoredQueryRunRequest(queryIdInput.value, containerInput.value));
+      runButton.addEventListener("click", run);
+
+      const ready = window.SursumContext && typeof SursumContext.whenReady === "function"
+        ? SursumContext.whenReady()
+        : Promise.resolve();
+      ready.then(run).catch(run);
+    })();
+  </script>
+</body>
+</html>
