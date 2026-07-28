@@ -132,7 +132,6 @@ function proxyPasoe(string $target, array $environment): never
         jsonOut(200, [
             'success' => true,
             'data' => [],
-            'warning' => 'PASOE respondeu HTTP ' . $status . ' com corpo vazio.',
             'target' => $target,
         ]);
     }
