@@ -10,13 +10,18 @@
     body {
       margin: 0;
       padding: 16px;
+      height: 100vh;
+      overflow: hidden;
       background: #f4f6f8;
       color: #1f2933;
       font-family: Arial, Helvetica, sans-serif;
     }
     main {
       display: grid;
+      grid-template-rows: auto auto auto auto minmax(0, 1fr);
       gap: 14px;
+      height: 100%;
+      min-height: 0;
     }
     .toolbar,
     .grid-toolbar,
@@ -111,6 +116,14 @@
       color: #5f6b7a;
       font-size: 12px;
     }
+    .grid-shell {
+      min-height: 0;
+      overflow: hidden;
+    }
+    #resultGrid {
+      height: 100%;
+      min-height: 0;
+    }
     @media (max-width: 720px) {
       .toolbar,
       .grid-toolbar {
@@ -145,7 +158,9 @@
       <button id="unfreezeColumnButton" type="button">Liberar</button>
       <p class="muted">O grid usa rolagem interna e nao aumenta a pagina ao renderizar os dados.</p>
     </div>
-    <div id="resultGrid"></div>
+    <div class="grid-shell">
+      <div id="resultGrid"></div>
+    </div>
   </main>
 
   <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
@@ -292,10 +307,11 @@
         });
         const kendoGrid = grid();
         kendoGrid.setOptions({
-          height: 560,
+          height: "100%",
           scrollable: true,
           columns: columns.length ? columns : [{ field: "mensagem", title: "Mensagem", width: 220, lockable: true }]
         });
+        kendoGrid.dataSource.pageSize(25);
         kendoGrid.dataSource.data(records.length ? records : [{ mensagem: "Nenhum registro retornado." }]);
         refreshFreezeColumns(columns.length ? columns : [{ field: "mensagem", title: "Mensagem" }]);
       }
@@ -410,8 +426,8 @@
           suggest: true
         });
         $("#resultGrid").kendoGrid({
-          dataSource: [],
-          height: 560,
+          dataSource: { data: [], pageSize: 25 },
+          height: "100%",
           scrollable: true,
           sortable: true,
           filterable: true,
