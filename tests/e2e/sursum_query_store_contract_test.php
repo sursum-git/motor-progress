@@ -55,6 +55,9 @@ assertFileContains($controlePrecoSavedQueryPath, [
     '"defaultBanco": "espec"',
     '"nome": "controle_preco"',
     '"field": "nr_container"',
+    '"name": "nr_container"',
+]);
+assertFileNotContains($controlePrecoSavedQueryPath, [
     '"name": "pedido"',
     '"name": "container"',
 ]);
@@ -81,6 +84,19 @@ function assertFileContains(string $path, array $needles): void
     $content = (string) file_get_contents($path);
     foreach ($needles as $needle) {
         assertContains($content, $needle, $path);
+    }
+}
+
+function assertFileNotContains(string $path, array $needles): void
+{
+    if (!is_file($path)) {
+        throw new RuntimeException("Arquivo esperado nao existe: " . $path);
+    }
+    $content = (string) file_get_contents($path);
+    foreach ($needles as $needle) {
+        if (strpos($content, $needle) !== false) {
+            throw new RuntimeException($path . ": trecho nao deveria existir: " . $needle);
+        }
     }
 }
 

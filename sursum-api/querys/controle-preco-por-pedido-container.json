@@ -134,15 +134,7 @@
   },
   "externalFilters": [
     {
-      "name": "pedido",
-      "source": "querystring",
-      "sourceAlias": "controle_preco",
-      "field": "nr_container",
-      "operator": "=",
-      "required": true
-    },
-    {
-      "name": "container",
+      "name": "nr_container",
       "source": "querystring",
       "sourceAlias": "controle_preco",
       "field": "nr_container",
