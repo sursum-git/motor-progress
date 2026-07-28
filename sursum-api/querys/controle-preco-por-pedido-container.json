@@ -1,0 +1,153 @@
+{
+  "code": "controle-preco-por-pedido-container",
+  "status": "ready",
+  "query": {
+    "execution": "sync",
+    "page": 1,
+    "pageSize": 100,
+    "defaultBanco": "espec",
+    "sources": [
+      {
+        "nome": "controle_preco",
+        "alias": "controle_preco",
+        "banco": "espec",
+        "campos": "cod_controle_preco,tp_preco,dt_inicial,dt_final,it_codigo,cod_refer,nr_container,vl_dolar,vl_real,cod_usuario_criacao,cod_usuario_alteracao,dt_hr_criacao,dt_hr_alteracao,log_vencido,tb_preco_id,num_nivel,campanha_id,qtd_max_venda,classe_comissao_id,teste"
+      }
+    ],
+    "joins": [],
+    "select": [
+      {
+        "sourceAlias": "controle_preco",
+        "field": "cod_controle_preco",
+        "outputAlias": "cod_controle_preco"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "tp_preco",
+        "outputAlias": "tp_preco"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "dt_inicial",
+        "outputAlias": "dt_inicial"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "dt_final",
+        "outputAlias": "dt_final"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "it_codigo",
+        "outputAlias": "it_codigo"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "cod_refer",
+        "outputAlias": "cod_refer"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "nr_container",
+        "outputAlias": "nr_container"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "vl_dolar",
+        "outputAlias": "vl_dolar"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "vl_real",
+        "outputAlias": "vl_real"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "cod_usuario_criacao",
+        "outputAlias": "cod_usuario_criacao"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "cod_usuario_alteracao",
+        "outputAlias": "cod_usuario_alteracao"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "dt_hr_criacao",
+        "outputAlias": "dt_hr_criacao"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "dt_hr_alteracao",
+        "outputAlias": "dt_hr_alteracao"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "log_vencido",
+        "outputAlias": "log_vencido"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "tb_preco_id",
+        "outputAlias": "tb_preco_id"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "num_nivel",
+        "outputAlias": "num_nivel"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "campanha_id",
+        "outputAlias": "campanha_id"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "qtd_max_venda",
+        "outputAlias": "qtd_max_venda"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "classe_comissao_id",
+        "outputAlias": "classe_comissao_id"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "teste",
+        "outputAlias": "teste"
+      }
+    ],
+    "filters": [],
+    "orderBy": [
+      {
+        "sourceAlias": "controle_preco",
+        "field": "dt_inicial",
+        "direction": "desc"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "cod_controle_preco",
+        "direction": "desc"
+      }
+    ],
+    "pipeline": []
+  },
+  "externalFilters": [
+    {
+      "name": "pedido",
+      "source": "querystring",
+      "sourceAlias": "controle_preco",
+      "field": "nr_container",
+      "operator": "=",
+      "required": true
+    },
+    {
+      "name": "container",
+      "source": "querystring",
+      "sourceAlias": "controle_preco",
+      "field": "nr_container",
+      "operator": "=",
+      "required": true
+    }
+  ]
+}

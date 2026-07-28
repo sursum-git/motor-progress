@@ -49,6 +49,16 @@ assertFileContains($containerSavedQueryPath, [
     '"source": "querystring"',
 ]);
 
+$controlePrecoSavedQueryPath = $root . "/sursum-api/querys/controle-preco-por-pedido-container.json";
+assertFileContains($controlePrecoSavedQueryPath, [
+    '"code": "controle-preco-por-pedido-container"',
+    '"defaultBanco": "espec"',
+    '"nome": "controle_preco"',
+    '"field": "nr_container"',
+    '"name": "pedido"',
+    '"name": "container"',
+]);
+
 $containerClient = (string) file_get_contents($root . "/web/container-client.html");
 assertContains($containerClient, 'const DEFAULT_QUERY_ID = "pp-it-container-por-container"', "queryId padrao container");
 assertContains($containerClient, 'code: queryId', "execucao por code no client container");
