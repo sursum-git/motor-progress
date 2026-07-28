@@ -131,6 +131,7 @@ Arquivos:
 ```text
 web/container-client.html
 web/saved-query-client.html
+web/saved-query-runner.html
 ```
 
 `container-client.html` e um exemplo especifico para a consulta salva `pp-it-container-por-container`. Ele le `nr-container` da URL e monta:
@@ -148,10 +149,13 @@ web/saved-query-client.html
 
 `saved-query-client.html` e generico: le `queryId`, `id` ou `code` da URL e envia todos os demais parametros em `parameters.querystring`.
 
+`saved-query-runner.html` e a tela operacional: lista consultas salvas em um combo Kendo, cria os campos de parametros a partir de `externalFilters`, executa pelo proxy PHP e mostra o retorno em um grid Kendo. O endpoint `web/saved-query-store.php` le os JSONs de `sursum-api/querys` no repositorio local e de `web/sursum-querys` no servidor publicado.
+
 Exemplo publicado:
 
 ```text
 http://iol.imatextil.com.br/query-progress/saved-query-client.html?queryId=pp-it-container-por-container&nr-container=1650
+http://iol.imatextil.com.br/query-progress/saved-query-runner.html
 ```
 
 As duas paginas leem respostas HTTP como texto antes de tentar JSON. Se o PHP retornar HTML de erro, a resposta bruta aparece na tela em vez de quebrar com `Unexpected token '<'`.
@@ -183,8 +187,9 @@ Os dados sao lidos por `web/request-log-store.php` a partir da tabela SQLite `re
 6. Clicar em `Abrir resultado` para enviar o JSON atual para `web/query-result.html`.
 7. Executar contra PASOE pela pagina de resultado.
 8. Se a extracao precisar rodar em batch, usar o mesmo JSON com `sursum-api/runners/RunDynamicQueryFromJson.p`.
-9. Para consulta salva por link, usar `saved-query-client.html?queryId=<codigo>&parametro=valor`.
-10. Para auditar chamadas feitas pelo proxy PHP, abrir `request-log.html`.
+9. Para consulta salva por tela operacional, abrir `saved-query-runner.html`.
+10. Para consulta salva por link, usar `saved-query-client.html?queryId=<codigo>&parametro=valor`.
+11. Para auditar chamadas feitas pelo proxy PHP, abrir `request-log.html`.
 
 ## Relacao com runner batch
 

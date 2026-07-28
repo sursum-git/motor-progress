@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Executor de Consultas Salvas</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="ui-ready.css?v=20260617-grid-center">
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #f4f6f8;
+      color: #1f2933;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    main {
+      display: grid;
+      gap: 14px;
+    }
+    .toolbar,
+    .parameters,
+    .status {
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+      padding: 12px;
+    }
+    .parameters {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+    .parameter-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 10px;
+    }
+    label {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+      font-size: 12px;
+      font-weight: 700;
+      color: #344150;
+    }
+    label span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    input {
+      box-sizing: border-box;
+      min-height: 34px;
+      width: 100%;
+      padding: 7px 9px;
+      border: 1px solid #b8c2cc;
+      border-radius: 6px;
+      font: inherit;
+    }
+    button {
+      min-height: 34px;
+      padding: 7px 12px;
+      border: 0;
+      border-radius: 6px;
+      background: #1d4ed8;
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #8fa4cf;
+      cursor: wait;
+    }
+    .status {
+      padding: 10px 12px;
+      border-left: 4px solid #1d4ed8;
+      color: #344150;
+    }
+    .request-preview {
+      min-height: 110px;
+      max-height: 220px;
+      margin: 0;
+      padding: 10px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid #d8dee4;
+      border-radius: 6px;
+      background: #fbfcfd;
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .muted {
+      margin: 0;
+      color: #5f6b7a;
+      font-size: 12px;
+    }
+    @media (max-width: 720px) {
+      .toolbar {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="sursum-ui-pending">
+  <main>
+    <div class="toolbar">
+      <label>
+        <span>Consulta salva</span>
+        <input id="savedQueryCombo">
+      </label>
+      <button id="runButton" type="button">Executar</button>
+    </div>
+
+    <div class="parameters">
+      <p id="queryInfo" class="muted">Selecione uma consulta salva.</p>
+      <div id="parameterFields" class="parameter-grid"></div>
+      <pre id="requestPreview" class="request-preview"></pre>
+    </div>
+
+    <div id="statusBox" class="status">Carregando consultas salvas.</div>
+    <div id="resultGrid"></div>
+  </main>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="context-manager.js"></script>
+  <script src="ui-ready.js?v=20260616-grid-loading"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      const DEFAULT_API_BASE = "https://192.168.0.111:9911/med/web/SursumDynamicQuery";
+      let selectedQuery = null;
+
+      const statusBox = document.getElementById("statusBox");
+      const queryInfo = document.getElementById("queryInfo");
+      const parameterFields = document.getElementById("parameterFields");
+      const requestPreview = document.getElementById("requestPreview");
+      const runButton = document.getElementById("runButton");
+
+      function setStatus(message) {
+        statusBox.textContent = message;
+      }
+
+      function pretty(value) {
+        return JSON.stringify(value, null, 2);
+      }
+
+      function currentApiBase() {
+        if (window.SursumContext && typeof SursumContext.getCurrentApiBase === "function") {
+          return String(SursumContext.getCurrentApiBase() || DEFAULT_API_BASE).replace(/\/+$/, "");
+        }
+        return DEFAULT_API_BASE;
+      }
+
+      function pasoeProxyUrl(path) {
+        return "pasoe-proxy.php?target=" + encodeURIComponent(currentApiBase() + path);
+      }
+
+      async function getJson(url) {
+        const response = await fetch(url, { credentials: "same-origin", cache: "no-store" });
+        const text = await response.text();
+        try {
+          return JSON.parse(text);
+        } catch (error) {
+          throw new Error(text || error.message);
+        }
+      }
+
+      async function postJson(url, body) {
+        const response = await fetch(url, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const text = await response.text();
+        try {
+          return { status: response.status, payload: JSON.parse(text), raw: text };
+        } catch (error) {
+          return { status: response.status, payload: null, raw: text };
+        }
+      }
+
+      function combo() {
+        return $("#savedQueryCombo").data("kendoComboBox");
+      }
+
+      function grid() {
+        return $("#resultGrid").data("kendoGrid");
+      }
+
+      function normalizeFieldName(filter) {
+        return String(filter && filter.name || "").trim();
+      }
+
+      function renderParameterFields(filters) {
+        parameterFields.innerHTML = "";
+        if (!filters.length) {
+          const message = document.createElement("p");
+          message.className = "muted";
+          message.textContent = "A consulta selecionada nao declara parametros externos.";
+          parameterFields.appendChild(message);
+          return;
+        }
+        filters.forEach(function (filter) {
+          const name = normalizeFieldName(filter);
+          const label = document.createElement("label");
+          const title = document.createElement("span");
+          const input = document.createElement("input");
+          input.dataset.parameterName = name;
+          input.dataset.parameterSource = filter.source || "querystring";
+          input.placeholder = [filter.sourceAlias, filter.field, filter.operator].filter(Boolean).join(" ");
+          input.required = !!filter.required;
+          title.textContent = name + (filter.required ? " *" : "");
+          label.appendChild(title);
+          label.appendChild(input);
+          parameterFields.appendChild(label);
+        });
+        parameterFields.querySelectorAll("input").forEach(function (input) {
+          input.addEventListener("input", refreshPreview);
+        });
+      }
+
+      function buildRequest() {
+        const request = { code: selectedQuery ? selectedQuery.code : "", parameters: {} };
+        parameterFields.querySelectorAll("input[data-parameter-name]").forEach(function (input) {
+          const name = input.dataset.parameterName;
+          const source = input.dataset.parameterSource || "querystring";
+          const value = input.value;
+          if (!name || value === "") return;
+          if (!request.parameters[source]) request.parameters[source] = {};
+          request.parameters[source][name] = value;
+        });
+        if (!Object.keys(request.parameters).length) {
+          request.parameters.querystring = {};
+        }
+        return request;
+      }
+
+      function refreshPreview() {
+        requestPreview.textContent = pretty(buildRequest());
+      }
+
+      function recordsFromPayload(payload) {
+        if (Array.isArray(payload)) return payload;
+        if (!payload || typeof payload !== "object") return [];
+        if (Array.isArray(payload.data)) return payload.data;
+        if (Array.isArray(payload.records)) return payload.records;
+        if (payload.data && Array.isArray(payload.data.records)) return payload.data.records;
+        if (payload.result && Array.isArray(payload.result)) return payload.result;
+        return [];
+      }
+
+      function renderResultGrid(records) {
+        const first = records[0] || {};
+        const columns = Object.keys(first).map(function (field) {
+          return { field, title: field, width: 160 };
+        });
+        const kendoGrid = grid();
+        kendoGrid.setOptions({
+          columns: columns.length ? columns : [{ field: "mensagem", title: "Mensagem" }]
+        });
+        kendoGrid.dataSource.data(records.length ? records : [{ mensagem: "Nenhum registro retornado." }]);
+      }
+
+      function validateRequiredParameters() {
+        const missing = [];
+        parameterFields.querySelectorAll("input[required]").forEach(function (input) {
+          if (!input.value) missing.push(input.dataset.parameterName);
+        });
+        return missing;
+      }
+
+      async function loadSavedQueries() {
+        const payload = await getJson("saved-query-store.php");
+        if (!payload || !payload.success) {
+          throw new Error((payload && payload.error) || "Falha ao listar consultas salvas.");
+        }
+        combo().setDataSource(new kendo.data.DataSource({ data: payload.data || [] }));
+        if ((payload.data || []).length) {
+          combo().value(payload.data[0].code);
+          await loadSelectedQuery(payload.data[0].code);
+        } else {
+          setStatus("Nenhuma consulta salva encontrada.");
+        }
+      }
+
+      async function loadSelectedQuery(code) {
+        if (!code) return;
+        const payload = await getJson("saved-query-store.php?action=detail&code=" + encodeURIComponent(code));
+        if (!payload || !payload.success) {
+          throw new Error((payload && payload.error) || "Falha ao carregar consulta salva.");
+        }
+        selectedQuery = payload.data;
+        const filters = selectedQuery.externalFilters || [];
+        queryInfo.textContent = selectedQuery.code + " | filtros externos: " + filters.length;
+        renderParameterFields(filters);
+        refreshPreview();
+        setStatus("Consulta carregada: " + selectedQuery.code + ".");
+      }
+
+      async function runQuery() {
+        if (!selectedQuery || !selectedQuery.code) {
+          setStatus("Selecione uma consulta salva.");
+          return;
+        }
+        const missing = validateRequiredParameters();
+        if (missing.length) {
+          setStatus("Preencha os parametros obrigatorios: " + missing.join(", ") + ".");
+          return;
+        }
+        const request = buildRequest();
+        runButton.disabled = true;
+        try {
+          setStatus("Executando consulta salva...");
+          const response = await postJson(pasoeProxyUrl("/query"), request);
+          if (!response.payload) {
+            renderResultGrid([{ erro: response.raw || "Resposta nao JSON.", http: response.status }]);
+            setStatus("Resposta nao JSON. HTTP " + response.status + ".");
+            return;
+          }
+          const records = recordsFromPayload(response.payload);
+          renderResultGrid(records);
+          setStatus("Consulta concluida. Registros: " + records.length + ". HTTP " + response.status + ".");
+        } catch (error) {
+          renderResultGrid([{ erro: error.message || String(error) }]);
+          setStatus("Falha ao executar consulta.");
+        } finally {
+          runButton.disabled = false;
+        }
+      }
+
+      function initWidgets() {
+        $("button").kendoButton();
+        $("#savedQueryCombo").kendoComboBox({
+          dataTextField: "name",
+          dataValueField: "code",
+          filter: "contains",
+          suggest: true,
+          change: function () {
+            loadSelectedQuery(this.value()).catch(function (error) { setStatus(error.message); });
+          }
+        });
+        $("#resultGrid").kendoGrid({
+          dataSource: [],
+          height: 560,
+          sortable: true,
+          filterable: true,
+          resizable: true,
+          pageable: { pageSize: 25, pageSizes: [25, 50, 100, 500] },
+          noRecords: { template: "Nenhum registro retornado." },
+          columns: [{ field: "mensagem", title: "Mensagem" }]
+        });
+        runButton.addEventListener("click", runQuery);
+      }
+
+      $(function () {
+        initWidgets();
+        if (window.SursumUiReady) window.SursumUiReady();
+        const ready = window.SursumContext && typeof SursumContext.whenReady === "function"
+          ? SursumContext.whenReady()
+          : Promise.resolve();
+        ready.then(loadSavedQueries).catch(function (error) { setStatus(error.message); });
+      });
+    })();
+  </script>
+</body>
+</html>

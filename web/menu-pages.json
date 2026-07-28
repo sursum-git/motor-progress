@@ -36,6 +36,11 @@
       },
       {
         "text": "Executar consulta salva",
+        "url": "saved-query-runner.html",
+        "description": "Execucao de consultas salvas com parametros dinamicos e resultado em grid."
+      },
+      {
+        "text": "Cliente consulta salva",
         "url": "saved-query-client.html",
         "description": "Exemplo de cliente HTML para executar uma consulta salva por codigo."
       },
