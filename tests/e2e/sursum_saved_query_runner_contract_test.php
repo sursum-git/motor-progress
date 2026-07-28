@@ -24,8 +24,11 @@ assertContains($page, 'overflow: hidden', 'container bloqueia crescimento da pag
 assertContains($page, 'grid-shell', 'grid fica dentro de shell com altura controlada');
 assertContains($page, 'pageSize: 25', 'datasource pagina registros sem renderizar tudo de uma vez');
 assertContains($page, 'freezeColumnCombo', 'combo para escolher coluna a congelar');
-assertContains($page, 'lockColumn', 'acao para congelar coluna');
-assertContains($page, 'unlockColumn', 'acao para liberar coluna congelada');
+assertContains($page, 'lockedColumns', 'estado das colunas congeladas');
+assertContains($page, 'locked: lockedColumns.has(field)', 'colunas renderizadas como locked');
+assertContains($page, 'rerenderCurrentGrid', 'congelamento recria grid com configuracao locked');
+assertContains($page, 'lockedColumns.add(field)', 'acao para congelar coluna');
+assertContains($page, 'lockedColumns.delete(field)', 'acao para liberar coluna congelada');
 
 $menu = (string) file_get_contents($root . '/web/menu-pages.json');
 assertContains($menu, 'saved-query-runner.html', 'menu inclui executor de consultas salvas');

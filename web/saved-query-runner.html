@@ -175,6 +175,8 @@
 
       const DEFAULT_API_BASE = "https://192.168.0.111:9911/med/web/SursumDynamicQuery";
       let selectedQuery = null;
+      let currentRecords = [];
+      const lockedColumns = new Set();
 
       const statusBox = document.getElementById("statusBox");
       const queryInfo = document.getElementById("queryInfo");
@@ -301,9 +303,12 @@
       }
 
       function renderResultGrid(records) {
+        currentRecords = records.slice();
         const first = records[0] || {};
         const columns = Object.keys(first).map(function (field) {
-          return { field, title: field, width: 160, lockable: true };
+          return { field, title: field, width: 160, lockable: true, locked: lockedColumns.has(field) };
+        }).sort(function (left, right) {
+          return Number(!!right.locked) - Number(!!left.locked);
         });
         const kendoGrid = grid();
         kendoGrid.setOptions({
@@ -314,6 +319,10 @@
         kendoGrid.dataSource.pageSize(25);
         kendoGrid.dataSource.data(records.length ? records : [{ mensagem: "Nenhum registro retornado." }]);
         refreshFreezeColumns(columns.length ? columns : [{ field: "mensagem", title: "Mensagem" }]);
+      }
+
+      function rerenderCurrentGrid() {
+        renderResultGrid(currentRecords);
       }
 
       function refreshFreezeColumns(columns) {
@@ -332,13 +341,15 @@
       function lockColumn() {
         const field = selectedFreezeColumn();
         if (!field) return;
-        grid().lockColumn(field);
+        lockedColumns.add(field);
+        rerenderCurrentGrid();
       }
 
       function unlockColumn() {
         const field = selectedFreezeColumn();
         if (!field) return;
-        grid().unlockColumn(field);
+        lockedColumns.delete(field);
+        rerenderCurrentGrid();
       }
 
       function validateRequiredParameters() {
