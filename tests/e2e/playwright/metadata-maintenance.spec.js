@@ -200,6 +200,65 @@ test('metadata batch treats empty PASOE 200 field response as empty metadata', a
   await expect(page.locator('#jobSummary')).toContainText('Erros: 0');
 });
 
+test('metadata batch replaces resolved view-as include before saving', async ({ page, request }) => {
+  await page.goto('/metadata-maintenance.html');
+  await page.route('**/metadata-pasoe.php**', async (route) => {
+    const path = new URL(route.request().url()).searchParams.get('path') || '';
+    if (!path.includes('/metadata/tables/Customer/fields')) {
+      return route.continue();
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json; charset=utf-8',
+      body: JSON.stringify({
+        success: true,
+        data: [{
+          name: 'modalidade',
+          viewAs: 'view-as radio-set radio-buttons {adinc/i03ad209.i 2}'
+        }]
+      })
+    });
+  });
+  await page.route('**/metadata/view-as/resolve**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json; charset=utf-8',
+      body: JSON.stringify({
+        success: true,
+        data: [{
+          field: 'modalidade',
+          viewAs: 'view-as radio-set radio-buttons {adinc/i03ad209.i 2}',
+          include: 'adinc/i03ad209.i',
+          listExpression: '"Aberto",1,"Fechado",2',
+          options: [
+            { label: 'Aberto', value: '1' },
+            { label: 'Fechado', value: '2' }
+          ],
+          source: 'PASOE'
+        }]
+      })
+    });
+  });
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+    window.$('#tableName').data('kendoComboBox').value('Customer');
+    window.$('#onlyCurrentTable').prop('checked', true);
+    window.$('#includeRelations').prop('checked', false);
+  });
+
+  await page.locator('#createJob').click();
+  await page.locator('#runJob').click();
+  await expect(page.locator('#statusBox')).toContainText('Fila concluida');
+
+  const stored = await request.get('/metadata-store.php?resource=view-as&database=DICTDB&table=Customer');
+  const payload = await stored.json();
+  const modalidade = payload.data.find((row) => row.field === 'modalidade');
+  expect(modalidade.viewAs).toBe('view-as radio-set radio-buttons "Aberto",1,"Fechado",2');
+  expect(modalidade.viewAs).not.toContain('{adinc/i03ad209.i 2}');
+});
+
 test('view-as maintenance saves manual view-as and imports CSV', async ({ page }) => {
   await page.goto('/view-as-maintenance.html');
   await expect(page.locator('#addViewAs')).toBeVisible();
@@ -224,6 +283,40 @@ test('view-as maintenance saves manual view-as and imports CSV', async ({ page }
   await expect(page.locator('#statusBox')).toContainText('CSV de view-as importado');
   await expect(page.locator('#viewAsGrid')).toContainText('Order');
   await expect(page.locator('#viewAsGrid')).toContainText('CSV');
+});
+
+test('view-as maintenance displays and edits option values', async ({ page, request }) => {
+  await request.post('/metadata-store.php', {
+    data: {
+      resource: 'view-as',
+      database: 'DICTDB',
+      table: 'Customer',
+      rows: [{
+        field: 'Status',
+        viewAs: 'view-as radio-set radio-buttons "Aberto",A,"Fechado",F',
+        listExpression: '"Aberto",A,"Fechado",F',
+        options: [
+          { label: 'Aberto', value: 'A' },
+          { label: 'Fechado', value: 'F' }
+        ]
+      }]
+    }
+  });
+  await page.goto('/view-as-maintenance.html');
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+    window.$('#tableName').data('kendoComboBox').value('Customer');
+    window.$('#tableName').data('kendoComboBox').trigger('change');
+  });
+  await expect(page.locator('#viewAsGrid')).toContainText('Aberto');
+
+  await page.locator('#viewAsGrid .edit-view-as').first().click();
+  await expect(page.locator('#viewAsOptions')).toHaveValue('"Aberto",A,"Fechado",F');
+  await page.locator('#viewAsOptions').fill('"Pendente",P,"Finalizado",F');
+  await page.locator('#saveViewAs').click();
+  await expect(page.locator('#viewAsGrid')).toContainText('Pendente');
 });
 
 test('view-as maintenance combines PASOE tables and local view-as tables without counting fields as tables', async ({ page, request }) => {

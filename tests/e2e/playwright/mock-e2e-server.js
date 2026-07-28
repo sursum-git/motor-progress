@@ -186,13 +186,21 @@ async function handleApi(req, res, pathname) {
         }
         return sendJson(res, 200, { success: true, data: viewAsRows });
       }
-      const rows = Array.isArray(body.rows) ? body.rows : [{ field: body.field, viewAs: body.viewAs, source: body.source || 'manual' }];
+      const rows = Array.isArray(body.rows) ? body.rows : [{
+        field: body.field,
+        viewAs: body.viewAs,
+        listExpression: body.listExpression || '',
+        options: Array.isArray(body.options) ? body.options : [],
+        source: body.source || 'manual'
+      }];
       for (const row of rows) {
         viewAsRows = viewAsRows.filter(item => !(item.table === body.table && item.field === (row.field || row.name)));
         viewAsRows.push({
           table: body.table,
           field: row.field || row.name,
           viewAs: row.viewAs || row.view_as || '',
+          listExpression: row.listExpression || '',
+          options: Array.isArray(row.options) ? row.options : [],
           source: row.source || body.source || 'manual',
           updatedAt: '2026-06-12T18:00:00-03:00'
         });

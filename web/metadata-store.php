@@ -272,12 +272,18 @@ function loadViewAsRows(PDO $pdo, array $scope): array
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     return array_map(static function (array $row): array {
+        $raw = json_decode((string) ($row['raw_json'] ?? '{}'), true);
+        if (!is_array($raw)) {
+            $raw = [];
+        }
         return [
             'id' => $row['id'],
             'database' => $row['database_name'],
             'table' => $row['table_name'],
             'field' => $row['field_name'],
             'viewAs' => $row['view_as'],
+            'listExpression' => text($raw['listExpression'] ?? ''),
+            'options' => is_array($raw['options'] ?? null) ? $raw['options'] : [],
             'source' => $row['source'],
             'updatedAt' => $row['updated_at'],
         ];

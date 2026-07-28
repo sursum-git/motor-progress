@@ -193,6 +193,14 @@
         { field: "table", title: "Tabela", width: 180 },
         { field: "field", title: "Campo", width: 180 },
         { field: "viewAs", title: "View-as" },
+        {
+          field: "listExpression",
+          title: "Opcoes",
+          width: 260,
+          template: function (item) {
+            return '<span class="job-message-cell" title="' + escapeHtml(viewAsOptionsText(item)) + '">' + escapeHtml(viewAsOptionsText(item)) + '</span>';
+          }
+        },
         { field: "source", title: "Origem", width: 110 },
         {
           field: "updatedAt",
@@ -962,7 +970,15 @@
 
   function normalizeResolvedViewAsRows(database, table, rows, source) {
     const resolvedRows = rows.map(function (row) {
-      return Object.assign({ source }, row || {});
+      const next = Object.assign({ source }, row || {});
+      next.listExpression = String(next.listExpression || "").trim();
+      if (next.listExpression) {
+        next.viewAs = materializeViewAsExpression(next.viewAs || next.view_as || "", next.listExpression);
+      }
+      if (!Array.isArray(next.options)) {
+        next.options = parseViewAsOptionsText(next.listExpression);
+      }
+      return next;
     });
     const resolverErrors = resolvedRows.filter(function (row) {
       return row && row.resolverError;
@@ -998,6 +1014,7 @@
     setInputValue("#viewAsTable", tableValue());
     setInputValue("#viewAsField", "");
     $("#viewAsValue").val("");
+    $("#viewAsOptions").val("");
     if (viewAsWindow) {
       viewAsWindow.title("Incluir view-as");
       viewAsWindow.center().open();
@@ -1013,6 +1030,7 @@
     setInputValue("#viewAsTable", item.table || tableValue());
     setInputValue("#viewAsField", item.field || "");
     $("#viewAsValue").val(item.viewAs || "");
+    $("#viewAsOptions").val(viewAsOptionsText(item));
     if (viewAsWindow) {
       viewAsWindow.title("Alterar view-as");
       viewAsWindow.center().open();
@@ -1022,7 +1040,8 @@
   function saveManualViewAs() {
     const table = inputValue("#viewAsTable") || tableValue();
     const field = inputValue("#viewAsField");
-    const viewAs = String($("#viewAsValue").val() || "").trim();
+    const listExpression = String($("#viewAsOptions").val() || "").trim();
+    const viewAs = materializeViewAsExpression(String($("#viewAsValue").val() || "").trim(), listExpression);
     if (!table || !field) {
       setStatus("Informe tabela e campo para salvar view-as.", "error");
       return;
@@ -1042,10 +1061,12 @@
         data: JSON.stringify(Object.assign(scope(table, selectedDatabase()), {
           resource: "view-as",
           action: "save",
-          source: "manual",
-          field,
-          viewAs
-        }))
+	          source: "manual",
+	          field,
+	          viewAs,
+	          listExpression,
+	          options: parseViewAsOptionsText(listExpression)
+	        }))
       });
     };
 
@@ -1143,6 +1164,77 @@
       return `View-as carregado: ${rows.length} registro(s) da tabela ${table}.`;
     }
     return `View-as carregado: ${rows.length} registro(s), ${tableCount} tabela(s) distinta(s).`;
+  }
+
+  function viewAsOptionsText(item) {
+    if (!item) return "";
+    const expression = String(item.listExpression || "").trim();
+    if (expression) return expression;
+    if (Array.isArray(item.options) && item.options.length) {
+      return item.options.map(function (option) {
+        if (!option || typeof option !== "object") return "";
+        const label = option.label != null ? option.label : option.text;
+        const value = option.value != null ? option.value : label;
+        return quoteOptionToken(label) + "," + quoteOptionToken(value);
+      }).filter(Boolean).join(",");
+    }
+    return "";
+  }
+
+  function materializeViewAsExpression(viewAs, listExpression) {
+    const expression = String(listExpression || "").trim();
+    if (!expression) return viewAs;
+    return String(viewAs || "").replace(/\{\s*[^}\s]+\.i\s+[^}]*\}/i, expression);
+  }
+
+  function parseViewAsOptionsText(listExpression) {
+    const expression = String(listExpression || "").trim();
+    if (!expression) return [];
+    const tokens = csvTokens(expression);
+    if (!tokens.length) return [];
+    const options = [];
+    for (let index = 0; index < tokens.length; index += 2) {
+      const label = tokens[index] || "";
+      const value = tokens[index + 1] != null ? tokens[index + 1] : label;
+      if (label !== "") {
+        options.push({ label, value });
+      }
+    }
+    return options;
+  }
+
+  function csvTokens(value) {
+    const tokens = [];
+    let token = "";
+    let quoted = false;
+    const text = String(value || "");
+    for (let index = 0; index < text.length; index += 1) {
+      const char = text.charAt(index);
+      if (char === '"') {
+        if (quoted && text.charAt(index + 1) === '"') {
+          token += '"';
+          index += 1;
+        } else {
+          quoted = !quoted;
+        }
+      } else if (char === "," && !quoted) {
+        tokens.push(cleanOptionToken(token));
+        token = "";
+      } else {
+        token += char;
+      }
+    }
+    tokens.push(cleanOptionToken(token));
+    return tokens.filter(function (item) { return item !== ""; });
+  }
+
+  function cleanOptionToken(value) {
+    return String(value || "").trim().replace(/^['"]|['"]$/g, "");
+  }
+
+  function quoteOptionToken(value) {
+    const text = String(value == null ? "" : value);
+    return '"' + text.replace(/"/g, '""') + '"';
   }
 
   function filterViewAsRowsForSelectedDatabase(rows, database, table) {
