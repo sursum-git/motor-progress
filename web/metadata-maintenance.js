@@ -8,6 +8,7 @@
     apiBase: DEFAULT_API,
     databases: [],
     tables: [],
+    viewAsTables: [],
     currentJob: null,
     running: false,
     activeExecutions: 0,
@@ -175,7 +176,14 @@
       ]
     });
     if (hasElement("#viewAsGrid")) $("#viewAsGrid").kendoGrid({
-      dataSource: [],
+      dataSource: {
+        data: [],
+        pageSize: 100
+      },
+      pageable: {
+        pageSizes: [50, 100, 200],
+        buttonCount: 5
+      },
       height: 390,
       sortable: true,
       dataBound: function () {
@@ -367,6 +375,7 @@
           combo.value(state.databases[0] ? state.databases[0].name : TODOS_DATABASE);
         }
         state.tables = [];
+        state.viewAsTables = [];
         refreshTableCombo();
         setStatus("Bancos carregados. Selecione um banco para carregar tabelas.", "ok");
       })
@@ -400,16 +409,14 @@
     getPasoeJson(path)
       .done(function (response) {
         if (!response || response.success === false) throw new Error(apiError(response));
-        state.tables = (Array.isArray(response.data) ? response.data : []).map(function (item) {
-          return item.name || item.table || item.tableName || "";
-        }).filter(Boolean);
+        state.tables = uniqueTableNames((Array.isArray(response.data) ? response.data : []).map(tableNameFromMetadataItem));
         refreshTableCombo();
         setStatus(`Tabelas carregadas: ${state.tables.length}.`, "ok");
       })
       .fail(function (xhr) {
         loadTablesBySync(database)
           .done(function (rows) {
-            state.tables = rows;
+            state.tables = uniqueTableNames(rows);
             refreshTableCombo();
             setStatus(`Tabelas carregadas: ${state.tables.length}.`, "ok");
           })
@@ -429,9 +436,7 @@
         }
         const steps = Array.isArray(response.steps) ? response.steps : [];
         const tableStep = steps.find(function (step) { return step && step.step === "tables"; });
-        const rows = (tableStep && Array.isArray(tableStep.data) ? tableStep.data : [])
-          .map(function (item) { return item.name || item.table || item.tableName || ""; })
-          .filter(Boolean);
+        const rows = uniqueTableNames((tableStep && Array.isArray(tableStep.data) ? tableStep.data : []).map(tableNameFromMetadataItem));
         if (!rows.length) {
           deferred.reject({ error: "Sincronizacao nao retornou lista de tabelas." });
           return;
@@ -1103,14 +1108,39 @@
     const database = selectedDatabase();
     const targetTable = table || tableValue();
     const params = Object.assign(scope(targetTable, database), { resource: "view-as" });
+    setStatus(targetTable ? `Carregando view-as de ${targetTable}...` : "Carregando registros de view-as...", "");
     withGridLoading("#viewAsGrid", $.getJSON("metadata-store.php?" + $.param(params)))
       .done(function (response) {
         const rows = response && response.success ? response.data || [] : [];
-        $("#viewAsGrid").data("kendoGrid").dataSource.data(rows);
+        const loadedTables = uniqueTableNames(rows.map(function (row) { return row && row.table; }));
+        state.viewAsTables = targetTable ? uniqueTableNames([].concat(state.viewAsTables || [], loadedTables, targetTable)) : loadedTables;
+        refreshTableCombo();
+        const grid = $("#viewAsGrid").data("kendoGrid");
+        grid.dataSource.data(rows);
+        grid.dataSource.page(1);
+        updateViewAsSummary(rows, targetTable);
+        setStatus(viewAsLoadMessage(rows, targetTable), "ok");
       })
       .fail(function (xhr) {
         setStatus("Falha ao carregar view-as: " + ajaxErrorMessage(xhr), "error");
       });
+  }
+
+  function updateViewAsSummary(rows, table) {
+    if (!hasElement("#resultSummary")) return;
+    const tableCount = uniqueTableNames(rows.map(function (row) { return row && row.table; })).length;
+    const tableText = table ? ` da tabela ${escapeHtml(table)}` : "";
+    $("#resultSummary").html(
+      `${rows.length} registro(s) de view-as${tableText}; ${tableCount} tabela(s) distinta(s).`
+    );
+  }
+
+  function viewAsLoadMessage(rows, table) {
+    const tableCount = uniqueTableNames(rows.map(function (row) { return row && row.table; })).length;
+    if (table) {
+      return `View-as carregado: ${rows.length} registro(s) da tabela ${table}.`;
+    }
+    return `View-as carregado: ${rows.length} registro(s), ${tableCount} tabela(s) distinta(s).`;
   }
 
   function importViewAsCsvFile() {
@@ -1441,8 +1471,33 @@
     const combo = $("#tableName").data("kendoComboBox");
     if (!combo) return;
     const current = combo.value();
-    combo.setDataSource(new kendo.data.DataSource({ data: state.tables }));
+    combo.setDataSource(new kendo.data.DataSource({ data: combinedTableNames() }));
     if (current) combo.value(current);
+  }
+
+  function combinedTableNames() {
+    return uniqueTableNames([].concat(state.tables || [], state.viewAsTables || []));
+  }
+
+  function tableNameFromMetadataItem(item) {
+    if (!item || typeof item !== "object") {
+      return String(item || "").trim();
+    }
+    return String(item.table || item.tableName || item.name || "").trim();
+  }
+
+  function uniqueTableNames(rows) {
+    const seen = Object.create(null);
+    return rows.map(function (item) {
+      return String(item || "").trim();
+    }).filter(function (name) {
+      const key = name.toLowerCase();
+      if (!name || seen[key]) return false;
+      seen[key] = true;
+      return true;
+    }).sort(function (left, right) {
+      return left.localeCompare(right, "pt-BR", { sensitivity: "base" });
+    });
   }
 
   function scope(table, database) {
@@ -1680,6 +1735,10 @@
   }
 
   function setGridLoading(selector, loading) {
+    const target = $(selector);
+    const grid = target.data("kendoGrid");
+    const wrapper = grid && grid.wrapper ? grid.wrapper : target;
+    wrapper.toggleClass("metadata-grid-loading", Boolean(loading));
     if (window.SursumGridLoading && typeof window.SursumGridLoading.set === "function") {
       window.SursumGridLoading.set(selector, loading);
     }

@@ -226,6 +226,51 @@ test('view-as maintenance saves manual view-as and imports CSV', async ({ page }
   await expect(page.locator('#viewAsGrid')).toContainText('CSV');
 });
 
+test('view-as maintenance combines PASOE tables and local view-as tables without counting fields as tables', async ({ page, request }) => {
+  await request.post('/metadata-store.php', {
+    data: {
+      resource: 'view-as',
+      database: 'ems2cad',
+      table: 'wt-ped-venda',
+      rows: [{ field: 'nr-ped-venda', viewAs: 'FILL-IN' }]
+    }
+  });
+  await page.route('**/metadata-pasoe.php**', async (route) => {
+    const target = new URL(route.request().url()).searchParams.get('path') || '';
+    if (target.includes('/metadata/tables')) {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json; charset=utf-8',
+        body: JSON.stringify({
+          success: true,
+          data: [
+            { table: 'emitente', name: 'cod-emitente' },
+            { table: 'emitente', name: 'nome-emit' }
+          ]
+        })
+      });
+    }
+    return route.continue();
+  });
+
+  await page.goto('/view-as-maintenance.html');
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('ems2cad');
+    combo.trigger('change');
+  });
+
+  await expect(page.locator('#statusBox')).toContainText('Tabelas carregadas: 1');
+  await expect(page.locator('#resultSummary')).toContainText('1 registro');
+  await expect(page.locator('#resultSummary')).toContainText('1 tabela');
+  const tableNames = await page.evaluate(() => {
+    const combo = window.$('#tableName').data('kendoComboBox');
+    return combo.dataSource.data().map((item) => String(item));
+  });
+  expect(tableNames).toContain('emitente');
+  expect(tableNames).toContain('wt-ped-venda');
+});
+
 test('relation maintenance saves manual join', async ({ page }) => {
   await page.goto('/relation-maintenance.html');
   await expect(page.locator('#addRelation')).toBeVisible();
