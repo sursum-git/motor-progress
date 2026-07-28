@@ -74,7 +74,7 @@ conf/relations/bancoA__tabelaA__bancoB__tabelaB.json
 
 O nome dos bancos fica junto das tabelas para evitar colisao quando bancos diferentes possuem tabelas com o mesmo nome. Banco, tabelas e arquivo sao normalizados em minusculo. A ordem das pontas da relacao no nome do arquivo e alfabetica para permitir reutilizacao independente da ordem em que a relacao foi pesquisada.
 
-Metadados carregados sao persistidos por `web/metadata-store.php` em `web/sursum-conf/sursum.sqlite`. Arquivos JSON em `conf/metadata` sao legado/fallback:
+Metadados carregados sao persistidos por `web/metadata-store.php` em `web/sursum-conf/sursum.sqlite`. O texto original do `view-as` fica em `field_view_as`, preservando includes como `{adinc/i03ad209.i 2}`. As opcoes resolvidas/editadas ficam separadas em `field_view_as_options`, permitindo reprocessar novamente a partir da include original quando necessario. Arquivos JSON em `conf/metadata` sao legado/fallback:
 
 ```text
 conf/metadata/banco__tables.json

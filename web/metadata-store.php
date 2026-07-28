@@ -98,6 +98,25 @@ function initializeMetadataSchema(PDO $pdo): void
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_field_view_as_lookup ON field_view_as(environment_id, company_id, database_name, table_name)');
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_field_view_as_table_field ON field_view_as(table_name, field_name)');
     canonicalizeViewAsRows($pdo);
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS field_view_as_options (
+            id TEXT PRIMARY KEY,
+            view_as_id TEXT NOT NULL,
+            environment_id TEXT NOT NULL DEFAULT "",
+            company_id TEXT NOT NULL DEFAULT "",
+            database_name TEXT NOT NULL DEFAULT "",
+            table_name TEXT NOT NULL,
+            field_name TEXT NOT NULL,
+            option_order INTEGER NOT NULL DEFAULT 0,
+            label TEXT NOT NULL DEFAULT "",
+            value TEXT NOT NULL DEFAULT "",
+            source TEXT NOT NULL DEFAULT "manual",
+            updated_at TEXT NOT NULL,
+            UNIQUE(view_as_id, option_order)
+        )'
+    );
+    $pdo->exec('CREATE INDEX IF NOT EXISTS idx_field_view_as_options_lookup ON field_view_as_options(environment_id, company_id, database_name, table_name, field_name)');
+    migrateViewAsOptionsFromRawJson($pdo);
 
     $pdo->exec(
         'CREATE TABLE IF NOT EXISTS metadata_sync_jobs (
@@ -170,6 +189,8 @@ function handleViewAsPost(PDO $pdo, array $payload): array
         $rows[] = [
             'field' => $payload['field'] ?? '',
             'viewAs' => $payload['viewAs'] ?? '',
+            'listExpression' => $payload['listExpression'] ?? '',
+            'options' => is_array($payload['options'] ?? null) ? $payload['options'] : [],
             'source' => $payload['source'] ?? 'manual',
         ];
     }
@@ -271,23 +292,29 @@ function loadViewAsRows(PDO $pdo, array $scope): array
     $sql .= ' ORDER BY table_name, field_name';
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
-    return array_map(static function (array $row): array {
+    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $optionsByViewAs = loadViewAsOptions($pdo, array_map(static function (array $row): string {
+        return (string) $row['id'];
+    }, $rows));
+    return array_map(static function (array $row) use ($optionsByViewAs): array {
         $raw = json_decode((string) ($row['raw_json'] ?? '{}'), true);
         if (!is_array($raw)) {
             $raw = [];
         }
+        $options = $optionsByViewAs[(string) $row['id']] ?? [];
+        $listExpression = $options ? viewAsListExpression($options) : text($raw['listExpression'] ?? '');
         return [
             'id' => $row['id'],
             'database' => $row['database_name'],
             'table' => $row['table_name'],
             'field' => $row['field_name'],
             'viewAs' => $row['view_as'],
-            'listExpression' => text($raw['listExpression'] ?? ''),
-            'options' => is_array($raw['options'] ?? null) ? $raw['options'] : [],
+            'listExpression' => $listExpression,
+            'options' => $options,
             'source' => $row['source'],
             'updatedAt' => $row['updated_at'],
         ];
-    }, $stmt->fetchAll(PDO::FETCH_ASSOC));
+    }, $rows);
 }
 
 function saveViewAsRows(PDO $pdo, array $scope, array $rows, string $defaultSource): void
@@ -306,18 +333,27 @@ function saveViewAsRows(PDO $pdo, array $scope, array $rows, string $defaultSour
         if ($field === '') {
             continue;
         }
+        $source = text($row['source'] ?? $defaultSource) ?: $defaultSource;
+        $id = viewAsId($scope, $field);
         $stmt->execute([
-            ':id' => viewAsId($scope, $field),
+            ':id' => $id,
             ':environment_id' => '',
             ':company_id' => '',
             ':database_name' => $scope['database'],
             ':table_name' => $scope['table'],
             ':field_name' => $field,
             ':view_as' => $viewAs,
-            ':source' => text($row['source'] ?? $defaultSource) ?: $defaultSource,
+            ':source' => $source,
             ':raw_json' => json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             ':updated_at' => date(DATE_ATOM),
         ]);
+        $hasOptionPayload = array_key_exists('options', $row) || array_key_exists('listExpression', $row);
+        $options = text($row['listExpression'] ?? '') !== ''
+            ? parseViewAsOptionsText((string) $row['listExpression'])
+            : normalizeViewAsOptions($row['options'] ?? []);
+        if ($hasOptionPayload || $options) {
+            saveViewAsOptions($pdo, $scope, $id, $field, $options, $source);
+        }
     }
 }
 
@@ -326,6 +362,17 @@ function deleteViewAsRow(PDO $pdo, array $scope, string $field): void
     if ($field === '') {
         throw new InvalidArgumentException('Campo obrigatorio.');
     }
+        $deleteOptions = $pdo->prepare(
+            'DELETE FROM field_view_as_options
+             WHERE lower(database_name) = lower(:database_name)
+               AND lower(table_name) = lower(:table_name)
+               AND lower(field_name) = lower(:field_name)'
+        );
+        $deleteOptions->execute([
+            ':database_name' => $scope['database'],
+            ':table_name' => $scope['table'],
+            ':field_name' => $field,
+        ]);
 	    $stmt = $pdo->prepare(
 	        'DELETE FROM field_view_as
 	         WHERE lower(database_name) = lower(:database_name)
@@ -337,6 +384,150 @@ function deleteViewAsRow(PDO $pdo, array $scope, string $field): void
 	        ':table_name' => $scope['table'],
 	        ':field_name' => $field,
 	    ]);
+}
+
+function loadViewAsOptions(PDO $pdo, array $viewAsIds): array
+{
+    $viewAsIds = array_values(array_filter(array_unique($viewAsIds), static function (string $id): bool {
+        return $id !== '';
+    }));
+    if (!$viewAsIds) {
+        return [];
+    }
+    $placeholders = implode(',', array_fill(0, count($viewAsIds), '?'));
+    $stmt = $pdo->prepare(
+        'SELECT view_as_id, label, value
+         FROM field_view_as_options
+         WHERE view_as_id IN (' . $placeholders . ')
+         ORDER BY view_as_id, option_order'
+    );
+    $stmt->execute($viewAsIds);
+    $grouped = [];
+    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+        $grouped[(string) $row['view_as_id']][] = [
+            'label' => (string) $row['label'],
+            'value' => (string) $row['value'],
+        ];
+    }
+    return $grouped;
+}
+
+function saveViewAsOptions(PDO $pdo, array $scope, string $viewAsId, string $field, array $options, string $source): void
+{
+    $delete = $pdo->prepare('DELETE FROM field_view_as_options WHERE view_as_id = :view_as_id');
+    $delete->execute([':view_as_id' => $viewAsId]);
+
+    $stmt = $pdo->prepare(
+        'INSERT OR REPLACE INTO field_view_as_options
+         (id, view_as_id, environment_id, company_id, database_name, table_name, field_name, option_order, label, value, source, updated_at)
+         VALUES (:id, :view_as_id, "", "", :database_name, :table_name, :field_name, :option_order, :label, :value, :source, :updated_at)'
+    );
+    foreach (array_values($options) as $index => $option) {
+        $label = text($option['label'] ?? $option['text'] ?? '');
+        $value = text($option['value'] ?? $label);
+        if ($label === '') {
+            continue;
+        }
+        $stmt->execute([
+            ':id' => sha1($viewAsId . '|' . $index),
+            ':view_as_id' => $viewAsId,
+            ':database_name' => $scope['database'],
+            ':table_name' => $scope['table'],
+            ':field_name' => $field,
+            ':option_order' => $index,
+            ':label' => cleanViewAsOptionToken($label),
+            ':value' => cleanViewAsOptionToken($value),
+            ':source' => $source,
+            ':updated_at' => date(DATE_ATOM),
+        ]);
+    }
+}
+
+function migrateViewAsOptionsFromRawJson(PDO $pdo): void
+{
+    $rows = $pdo->query(
+        'SELECT id, database_name, table_name, field_name, source, raw_json
+         FROM field_view_as
+         WHERE raw_json <> "" AND raw_json <> "{}"'
+    )->fetchAll(PDO::FETCH_ASSOC);
+    $countStmt = $pdo->prepare('SELECT COUNT(*) FROM field_view_as_options WHERE view_as_id = :view_as_id');
+    foreach ($rows as $row) {
+        $countStmt->execute([':view_as_id' => $row['id']]);
+        if ((int) $countStmt->fetchColumn() > 0) {
+            continue;
+        }
+        $raw = json_decode((string) ($row['raw_json'] ?? '{}'), true);
+        if (!is_array($raw)) {
+            continue;
+        }
+        $options = text($raw['listExpression'] ?? '') !== ''
+            ? parseViewAsOptionsText((string) $raw['listExpression'])
+            : normalizeViewAsOptions($raw['options'] ?? []);
+        if (!$options) {
+            continue;
+        }
+        saveViewAsOptions($pdo, [
+            'database' => text($row['database_name'] ?? ''),
+            'table' => text($row['table_name'] ?? ''),
+        ], (string) $row['id'], text($row['field_name'] ?? ''), $options, text($row['source'] ?? 'migration') ?: 'migration');
+    }
+}
+
+function normalizeViewAsOptions($options): array
+{
+    if (!is_array($options)) {
+        return [];
+    }
+    $normalized = [];
+    foreach ($options as $option) {
+        if (!is_array($option)) {
+            continue;
+        }
+        $label = text($option['label'] ?? $option['text'] ?? '');
+        $value = text($option['value'] ?? $label);
+        if ($label !== '') {
+            $normalized[] = ['label' => $label, 'value' => $value];
+        }
+    }
+    return $normalized;
+}
+
+function parseViewAsOptionsText(string $listExpression): array
+{
+    $tokens = str_getcsv($listExpression);
+    $options = [];
+    for ($index = 0; $index < count($tokens); $index += 2) {
+        $label = cleanViewAsOptionToken((string) ($tokens[$index] ?? ''));
+        $value = cleanViewAsOptionToken((string) ($tokens[$index + 1] ?? $label));
+        if ($label !== '') {
+            $options[] = ['label' => $label, 'value' => $value];
+        }
+    }
+    return $options;
+}
+
+function cleanViewAsOptionToken(string $value): string
+{
+    $text = text(str_replace(['"', "'", '/'], '', $value));
+    $text = preg_replace('/\s+(?:HORIZONTAL|VERTICAL|SIZE|FONT|FORMAT|NO-UNDO|HELP|TOOLTIP)\b.*$/i', '', $text) ?? $text;
+    return text($text);
+}
+
+function viewAsListExpression(array $options): string
+{
+    return implode(',', array_map(static function (array $option): string {
+        $label = viewAsOptionToken((string) ($option['label'] ?? ''));
+        $value = viewAsOptionToken((string) ($option['value'] ?? ''), false);
+        return $label . ',' . $value;
+    }, $options));
+}
+
+function viewAsOptionToken(string $value, bool $preferQuoted = true): string
+{
+    if ($preferQuoted || $value === '' || preg_match('/[,"\s]/', $value)) {
+        return '"' . str_replace('"', '""', $value) . '"';
+    }
+    return $value;
 }
 
 function canonicalizeViewAsRows(PDO $pdo): void

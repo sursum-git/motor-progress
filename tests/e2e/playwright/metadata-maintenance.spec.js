@@ -200,7 +200,7 @@ test('metadata batch treats empty PASOE 200 field response as empty metadata', a
   await expect(page.locator('#jobSummary')).toContainText('Erros: 0');
 });
 
-test('metadata batch replaces resolved view-as include before saving', async ({ page, request }) => {
+test('metadata batch saves resolved view-as options without replacing the include', async ({ page, request }) => {
   await page.goto('/metadata-maintenance.html');
   await page.route('**/metadata-pasoe.php**', async (route) => {
     const path = new URL(route.request().url()).searchParams.get('path') || '';
@@ -255,8 +255,12 @@ test('metadata batch replaces resolved view-as include before saving', async ({ 
   const stored = await request.get('/metadata-store.php?resource=view-as&database=DICTDB&table=Customer');
   const payload = await stored.json();
   const modalidade = payload.data.find((row) => row.field === 'modalidade');
-  expect(modalidade.viewAs).toBe('view-as radio-set radio-buttons "Aberto",1,"Fechado",2');
-  expect(modalidade.viewAs).not.toContain('{adinc/i03ad209.i 2}');
+  expect(modalidade.viewAs).toBe('view-as radio-set radio-buttons {adinc/i03ad209.i 2}');
+  expect(modalidade.listExpression).toBe('"Aberto",1,"Fechado",2');
+  expect(modalidade.options).toEqual([
+    { label: 'Aberto', value: '1' },
+    { label: 'Fechado', value: '2' }
+  ]);
 });
 
 test('view-as maintenance saves manual view-as and imports CSV', async ({ page }) => {
@@ -317,6 +321,16 @@ test('view-as maintenance displays and edits option values', async ({ page, requ
   await page.locator('#viewAsOptions').fill('"Pendente",P,"Finalizado",F');
   await page.locator('#saveViewAs').click();
   await expect(page.locator('#viewAsGrid')).toContainText('Pendente');
+
+  const stored = await request.get('/metadata-store.php?resource=view-as&database=DICTDB&table=Customer');
+  const payload = await stored.json();
+  const status = payload.data.find((row) => row.field === 'Status');
+  expect(status.viewAs).toBe('view-as radio-set radio-buttons "Aberto",A,"Fechado",F');
+  expect(status.listExpression).toBe('"Pendente",P,"Finalizado",F');
+  expect(status.options).toEqual([
+    { label: 'Pendente', value: 'P' },
+    { label: 'Finalizado', value: 'F' }
+  ]);
 });
 
 test('view-as maintenance combines PASOE tables and local view-as tables without counting fields as tables', async ({ page, request }) => {

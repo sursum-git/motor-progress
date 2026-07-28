@@ -54,6 +54,7 @@ RSYNC_ARGS=(
     --exclude=.git/
     --exclude=.codex/
     --exclude=.agents/
+    --exclude='sursum-conf/*.sqlite'
     --exclude='sursum-conf/*.sqlite-shm'
     --exclude='sursum-conf/*.sqlite-wal'
     --exclude='sursum-conf/*.sqlite.lock'

@@ -972,11 +972,11 @@
     const resolvedRows = rows.map(function (row) {
       const next = Object.assign({ source }, row || {});
       next.listExpression = String(next.listExpression || "").trim();
+      next.viewAs = next.viewAs || next.view_as || "";
       if (next.listExpression) {
-        next.viewAs = materializeViewAsExpression(next.viewAs || next.view_as || "", next.listExpression);
-      }
-      if (!Array.isArray(next.options)) {
         next.options = parseViewAsOptionsText(next.listExpression);
+      } else if (!Array.isArray(next.options)) {
+        next.options = [];
       }
       return next;
     });
@@ -1041,7 +1041,7 @@
     const table = inputValue("#viewAsTable") || tableValue();
     const field = inputValue("#viewAsField");
     const listExpression = String($("#viewAsOptions").val() || "").trim();
-    const viewAs = materializeViewAsExpression(String($("#viewAsValue").val() || "").trim(), listExpression);
+    const viewAs = String($("#viewAsValue").val() || "").trim();
     if (!table || !field) {
       setStatus("Informe tabela e campo para salvar view-as.", "error");
       return;
@@ -1181,12 +1181,6 @@
     return "";
   }
 
-  function materializeViewAsExpression(viewAs, listExpression) {
-    const expression = String(listExpression || "").trim();
-    if (!expression) return viewAs;
-    return String(viewAs || "").replace(/\{\s*[^}\s]+\.i\s+[^}]*\}/i, expression);
-  }
-
   function parseViewAsOptionsText(listExpression) {
     const expression = String(listExpression || "").trim();
     if (!expression) return [];
@@ -1229,7 +1223,11 @@
   }
 
   function cleanOptionToken(value) {
-    return String(value || "").trim().replace(/^['"]|['"]$/g, "");
+    return String(value || "")
+      .trim()
+      .replace(/^['"]|['"]$/g, "")
+      .replace(/\s+(HORIZONTAL|VERTICAL|SIZE|FONT|FORMAT|NO-UNDO|HELP|TOOLTIP)\b.*$/i, "")
+      .trim();
   }
 
   function quoteOptionToken(value) {
