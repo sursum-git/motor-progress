@@ -8,6 +8,7 @@ DEST_HOST="${DEPLOY_HOST:-192.168.0.39}"
 DEST_PORT="${DEPLOY_PORT:-22}"
 DEST_USER="${DEPLOY_USER:-suporte_ima}"
 DEST_PATH="${DEPLOY_PATH:-/var/www/clients/client1/web7/web/query-progress/}"
+DEST_WEB_GROUP="${DEPLOY_WEB_GROUP:-client1}"
 STRICT_HOST_KEY_CHECKING="${STRICT_HOST_KEY_CHECKING:-accept-new}"
 DRY_RUN=0
 
@@ -80,8 +81,8 @@ if [[ "$DRY_RUN" -eq 0 ]]; then
     echo "Ajustando permissoes do SQLite no destino"
     REMOTE_CONF_DIR="${DEST_PATH%/}/sursum-conf"
     REMOTE_QUERY_DIR="${DEST_PATH%/}/sursum-querys"
-    PERM_COMMAND=$(printf "mkdir -p %q %q && chgrp -R www-data %q && chmod 2775 %q && find %q -maxdepth 1 -type f \\( -name '*.sqlite' -o -name '*.sqlite-wal' -o -name '*.sqlite-shm' -o -name '*.sqlite.lock' \\) -exec chmod 0664 {} + && printf 'Require all denied\\n' > %q" \
-        "${REMOTE_CONF_DIR}" "${REMOTE_QUERY_DIR}" "${REMOTE_CONF_DIR}" "${REMOTE_CONF_DIR}" "${REMOTE_CONF_DIR}" "${REMOTE_QUERY_DIR}/.htaccess")
+    PERM_COMMAND=$(printf "mkdir -p %q %q && chgrp -R %q %q && chmod 2775 %q && find %q -maxdepth 1 -type f \\( -name '*.sqlite' -o -name '*.sqlite-wal' -o -name '*.sqlite-shm' -o -name '*.sqlite.lock' \\) -exec chmod 0664 {} + && printf 'Require all denied\\n' > %q" \
+        "${REMOTE_CONF_DIR}" "${REMOTE_QUERY_DIR}" "${DEST_WEB_GROUP}" "${REMOTE_CONF_DIR}" "${REMOTE_CONF_DIR}" "${REMOTE_CONF_DIR}" "${REMOTE_QUERY_DIR}/.htaccess")
     SUDO_COMMAND=$(printf "sudo -S sh -c %q" "${PERM_COMMAND}")
     printf '%s\n' "${DEPLOY_PASSWORD}" | sshpass -p "${DEPLOY_PASSWORD}" ssh -p "${DEST_PORT}" -o "StrictHostKeyChecking=${STRICT_HOST_KEY_CHECKING}" "${DEST_USER}@${DEST_HOST}" "${SUDO_COMMAND}"
 fi

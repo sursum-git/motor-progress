@@ -55,6 +55,8 @@ $deploy = (string) file_get_contents($root . '/scripts/deploy_query_progress_192
 assertContains($deploy, 'sursum-api/querys', 'deploy copia consultas salvas');
 assertContains($deploy, 'sursum-querys', 'deploy publica consultas salvas para o PHP');
 assertContains($deploy, 'Require all denied', 'deploy bloqueia acesso HTTP direto aos JSONs publicados');
+assertContains($deploy, 'DEPLOY_WEB_GROUP:-client1', 'deploy usa grupo do pool PHP do web7 para SQLite');
+assertContains($deploy, 'chgrp -R %q %q', 'deploy ajusta grupo do sursum-conf');
 
 $containerQuery = $root . '/sursum-api/querys/pp-it-container-por-container.json';
 $controlePrecoQuery = $root . '/sursum-api/querys/controle-preco-por-pedido-container.json';
