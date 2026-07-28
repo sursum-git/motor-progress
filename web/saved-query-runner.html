@@ -195,6 +195,7 @@
   </main>
 
   <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/examples/content/shared/js/jszip.min.js"></script>
   <script src="vendor/kendo/js/kendo.all.min.js"></script>
   <script src="vendor/kendo/js/cultures/kendo.culture.pt-BR.min.js"></script>
   <script src="vendor/kendo/js/messages/kendo.messages.pt-BR.min.js"></script>
@@ -346,6 +347,12 @@
         kendoGrid.setOptions({
           height: "100%",
           scrollable: true,
+          toolbar: ["excel"],
+          excel: {
+            fileName: "sursum-consulta-salva.xlsx",
+            allPages: true,
+            filterable: true
+          },
           columnMenu: true,
           columnMenuOpen: appendColumnLockActions,
           columns: columns.length ? columns : [{ field: "mensagem", title: "Mensagem", width: 220, lockable: true }]
@@ -499,6 +506,12 @@
           dataSource: { data: [], pageSize: 50 },
           height: "100%",
           scrollable: true,
+          toolbar: ["excel"],
+          excel: {
+            fileName: "sursum-consulta-salva.xlsx",
+            allPages: true,
+            filterable: true
+          },
           sortable: true,
           filterable: true,
           resizable: true,
