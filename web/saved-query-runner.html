@@ -113,6 +113,7 @@
       font-size: 12px;
     }
     .grid-shell {
+      position: relative;
       min-height: 0;
       overflow: hidden;
     }
@@ -129,6 +130,36 @@
     #resultGrid {
       height: 100%;
       min-height: 0;
+    }
+    .grid-close {
+      display: none;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1002;
+    }
+    .grid-shell.grid-maximized .grid-close {
+      display: inline-flex;
+    }
+    .sursum-column-lock-actions {
+      display: grid;
+      gap: 2px;
+      padding: 4px 0;
+      border-top: 1px solid #d8dee4;
+    }
+    .sursum-column-menu-action {
+      width: 100%;
+      padding: 8px 12px;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: #1f2933;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .sursum-column-menu-action:hover {
+      background: #eef2f7;
     }
     @media (max-width: 720px) {
       .toolbar {
@@ -162,6 +193,7 @@
       <button id="maximizeGridButton" type="button">Maximizar grid</button>
     </div>
     <div id="gridShell" class="grid-shell">
+      <button id="closeMaximizedGridButton" class="grid-close" type="button">Fechar</button>
       <div id="resultGrid"></div>
     </div>
   </main>
@@ -180,6 +212,8 @@
 
       const DEFAULT_API_BASE = "https://192.168.0.111:9911/med/web/SursumDynamicQuery";
       let selectedQuery = null;
+      let currentRecords = [];
+      const lockedColumns = new Set();
 
       const statusBox = document.getElementById("statusBox");
       const queryInfo = document.getElementById("queryInfo");
@@ -188,6 +222,7 @@
       const runButton = document.getElementById("runButton");
       const gridShell = document.getElementById("gridShell");
       const maximizeGridButton = document.getElementById("maximizeGridButton");
+      const closeMaximizedGridButton = document.getElementById("closeMaximizedGridButton");
 
       function setStatus(message) {
         statusBox.textContent = message;
@@ -304,19 +339,27 @@
       }
 
       function renderResultGrid(records) {
+        currentRecords = records.slice();
         const first = records[0] || {};
         const columns = Object.keys(first).map(function (field) {
-          return { field, title: field, width: 160, lockable: true };
+          return { field, title: field, width: 160, lockable: true, locked: lockedColumns.has(field) };
+        }).sort(function (left, right) {
+          return Number(!!right.locked) - Number(!!left.locked);
         });
         const kendoGrid = grid();
         kendoGrid.setOptions({
           height: "100%",
           scrollable: true,
           columnMenu: true,
+          columnMenuOpen: appendColumnLockActions,
           columns: columns.length ? columns : [{ field: "mensagem", title: "Mensagem", width: 220, lockable: true }]
         });
         kendoGrid.dataSource.pageSize(50);
         kendoGrid.dataSource.data(records.length ? records : [{ mensagem: "Nenhum registro retornado." }]);
+      }
+
+      function rerenderCurrentGrid() {
+        renderResultGrid(currentRecords);
       }
 
       function toggleGridMaximized() {
@@ -325,6 +368,44 @@
         setTimeout(function () {
           grid().resize(true);
         }, 0);
+      }
+
+      function closeGridMaximized() {
+        if (!gridShell.classList.contains("grid-maximized")) return;
+        gridShell.classList.remove("grid-maximized");
+        maximizeGridButton.textContent = "Maximizar grid";
+        setTimeout(function () {
+          grid().resize(true);
+        }, 0);
+      }
+
+      function appendColumnLockActions(event) {
+        const field = event.field;
+        const container = $(event.container);
+        if (!field || container.find(".sursum-column-lock-actions").length) return;
+        const actions = $(
+          "<div class='sursum-column-lock-actions'>" +
+            "<button type='button' class='sursum-column-menu-action sursum-lock-column'>Congelar coluna</button>" +
+            "<button type='button' class='sursum-column-menu-action sursum-unlock-column'>Liberar coluna</button>" +
+          "</div>"
+        );
+        actions.find(".sursum-lock-column").on("click", function () {
+          lockedColumns.add(field);
+          grid().thead.find(".k-grid-column-menu").each(function () {
+            const menu = $(this).data("kendoColumnMenu");
+            if (menu) menu.close();
+          });
+          rerenderCurrentGrid();
+        });
+        actions.find(".sursum-unlock-column").on("click", function () {
+          lockedColumns.delete(field);
+          grid().thead.find(".k-grid-column-menu").each(function () {
+            const menu = $(this).data("kendoColumnMenu");
+            if (menu) menu.close();
+          });
+          rerenderCurrentGrid();
+        });
+        container.append(actions);
       }
 
       function validateRequiredParameters() {
@@ -415,12 +496,14 @@
           resizable: true,
           reorderable: true,
           columnMenu: true,
+          columnMenuOpen: appendColumnLockActions,
           pageable: { pageSize: 50, pageSizes: [50, 100, 200, 500] },
           noRecords: { template: "Nenhum registro retornado." },
           columns: [{ field: "mensagem", title: "Mensagem", width: 220, lockable: true }]
         });
         runButton.addEventListener("click", runQuery);
         maximizeGridButton.addEventListener("click", toggleGridMaximized);
+        closeMaximizedGridButton.addEventListener("click", closeGridMaximized);
       }
 
       $(function () {

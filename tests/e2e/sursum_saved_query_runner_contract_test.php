@@ -26,10 +26,17 @@ assertContains($page, 'pageSize: 50', 'datasource pagina 50 registros por padrao
 assertContains($page, 'pageSizes: [50, 100, 200, 500]', 'opcoes de paginacao a partir de 50 registros');
 assertContains($page, 'kendo.culture("pt-BR")', 'grid usa culture pt-BR');
 assertContains($page, 'maximizeGridButton', 'botao para maximizar a div do grid');
+assertContains($page, 'closeMaximizedGridButton', 'botao para fechar janela maximizada');
 assertContains($page, 'grid-maximized', 'classe de maximizacao do grid');
 assertContains($page, 'toggleGridMaximized', 'acao de maximizar/restaurar grid');
+assertContains($page, 'closeGridMaximized', 'acao de fechar janela maximizada');
 assertContains($page, 'columnMenu', 'congelamento fica no menu da coluna do grid');
 assertContains($page, 'lockable: true', 'colunas permitem congelar pelo menu da coluna');
+assertContains($page, 'columnMenuOpen', 'customiza menu da coluna quando aberto');
+assertContains($page, 'sursum-lock-column', 'opcao de congelar dentro do menu da coluna');
+assertContains($page, 'sursum-unlock-column', 'opcao de liberar dentro do menu da coluna');
+assertContains($page, 'lockedColumns.add(field)', 'menu da coluna congela campo selecionado');
+assertContains($page, 'lockedColumns.delete(field)', 'menu da coluna libera campo selecionado');
 assertNotContains($page, 'freezeColumnCombo', 'sem combo externo para congelar coluna');
 assertNotContains($page, 'freezeColumnButton', 'sem botao externo para congelar coluna');
 assertNotContains($page, 'unfreezeColumnButton', 'sem botao externo para liberar coluna');
