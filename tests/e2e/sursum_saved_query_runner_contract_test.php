@@ -22,13 +22,17 @@ assertContains($page, 'height: "100%"', 'grid ocupa a area fixa disponivel');
 assertContains($page, 'height: 100vh', 'pagina limitada a altura da viewport');
 assertContains($page, 'overflow: hidden', 'container bloqueia crescimento da pagina');
 assertContains($page, 'grid-shell', 'grid fica dentro de shell com altura controlada');
-assertContains($page, 'pageSize: 25', 'datasource pagina registros sem renderizar tudo de uma vez');
-assertContains($page, 'freezeColumnCombo', 'combo para escolher coluna a congelar');
-assertContains($page, 'lockedColumns', 'estado das colunas congeladas');
-assertContains($page, 'locked: lockedColumns.has(field)', 'colunas renderizadas como locked');
-assertContains($page, 'rerenderCurrentGrid', 'congelamento recria grid com configuracao locked');
-assertContains($page, 'lockedColumns.add(field)', 'acao para congelar coluna');
-assertContains($page, 'lockedColumns.delete(field)', 'acao para liberar coluna congelada');
+assertContains($page, 'pageSize: 50', 'datasource pagina 50 registros por padrao');
+assertContains($page, 'pageSizes: [50, 100, 200, 500]', 'opcoes de paginacao a partir de 50 registros');
+assertContains($page, 'kendo.culture("pt-BR")', 'grid usa culture pt-BR');
+assertContains($page, 'maximizeGridButton', 'botao para maximizar a div do grid');
+assertContains($page, 'grid-maximized', 'classe de maximizacao do grid');
+assertContains($page, 'toggleGridMaximized', 'acao de maximizar/restaurar grid');
+assertContains($page, 'columnMenu', 'congelamento fica no menu da coluna do grid');
+assertContains($page, 'lockable: true', 'colunas permitem congelar pelo menu da coluna');
+assertNotContains($page, 'freezeColumnCombo', 'sem combo externo para congelar coluna');
+assertNotContains($page, 'freezeColumnButton', 'sem botao externo para congelar coluna');
+assertNotContains($page, 'unfreezeColumnButton', 'sem botao externo para liberar coluna');
 
 $menu = (string) file_get_contents($root . '/web/menu-pages.json');
 assertContains($menu, 'saved-query-runner.html', 'menu inclui executor de consultas salvas');
@@ -50,5 +54,12 @@ function assertContains(string $content, string $needle, string $label): void
 {
     if (strpos($content, $needle) === false) {
         throw new RuntimeException($label . ': trecho nao encontrado: ' . $needle);
+    }
+}
+
+function assertNotContains(string $content, string $needle, string $label): void
+{
+    if (strpos($content, $needle) !== false) {
+        throw new RuntimeException($label . ': trecho nao deveria existir: ' . $needle);
     }
 }

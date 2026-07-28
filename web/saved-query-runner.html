@@ -18,13 +18,12 @@
     }
     main {
       display: grid;
-      grid-template-rows: auto auto auto auto minmax(0, 1fr);
+      grid-template-rows: auto auto auto minmax(0, 1fr);
       gap: 14px;
       height: 100%;
       min-height: 0;
     }
     .toolbar,
-    .grid-toolbar,
     .parameters,
     .status {
       background: #fff;
@@ -35,13 +34,6 @@
       display: grid;
       grid-template-columns: minmax(260px, 1fr) auto;
       gap: 12px;
-      align-items: end;
-      padding: 12px;
-    }
-    .grid-toolbar {
-      display: grid;
-      grid-template-columns: minmax(220px, 320px) auto auto 1fr;
-      gap: 10px;
       align-items: end;
       padding: 12px;
     }
@@ -93,6 +85,10 @@
       cursor: wait;
     }
     .status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
       padding: 10px 12px;
       border-left: 4px solid #1d4ed8;
       color: #344150;
@@ -120,14 +116,27 @@
       min-height: 0;
       overflow: hidden;
     }
+    .grid-shell.grid-maximized {
+      position: fixed;
+      inset: 16px;
+      z-index: 1000;
+      padding: 0;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+      box-shadow: 0 16px 44px rgba(15, 23, 42, 0.25);
+    }
     #resultGrid {
       height: 100%;
       min-height: 0;
     }
     @media (max-width: 720px) {
-      .toolbar,
-      .grid-toolbar {
+      .toolbar {
         grid-template-columns: 1fr;
+      }
+      .status {
+        align-items: stretch;
+        flex-direction: column;
       }
     }
   </style>
@@ -148,23 +157,19 @@
       <pre id="requestPreview" class="request-preview"></pre>
     </div>
 
-    <div id="statusBox" class="status">Carregando consultas salvas.</div>
-    <div class="grid-toolbar">
-      <label>
-        <span>Coluna</span>
-        <input id="freezeColumnCombo">
-      </label>
-      <button id="freezeColumnButton" type="button">Congelar</button>
-      <button id="unfreezeColumnButton" type="button">Liberar</button>
-      <p class="muted">O grid usa rolagem interna e nao aumenta a pagina ao renderizar os dados.</p>
+    <div class="status">
+      <span id="statusBox">Carregando consultas salvas.</span>
+      <button id="maximizeGridButton" type="button">Maximizar grid</button>
     </div>
-    <div class="grid-shell">
+    <div id="gridShell" class="grid-shell">
       <div id="resultGrid"></div>
     </div>
   </main>
 
   <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
   <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/js/cultures/kendo.culture.pt-BR.min.js"></script>
+  <script src="vendor/kendo/js/messages/kendo.messages.pt-BR.min.js"></script>
   <script src="vendor/kendo/kendo-license.js"></script>
   <script src="auth-guard.js"></script>
   <script src="context-manager.js"></script>
@@ -175,14 +180,14 @@
 
       const DEFAULT_API_BASE = "https://192.168.0.111:9911/med/web/SursumDynamicQuery";
       let selectedQuery = null;
-      let currentRecords = [];
-      const lockedColumns = new Set();
 
       const statusBox = document.getElementById("statusBox");
       const queryInfo = document.getElementById("queryInfo");
       const parameterFields = document.getElementById("parameterFields");
       const requestPreview = document.getElementById("requestPreview");
       const runButton = document.getElementById("runButton");
+      const gridShell = document.getElementById("gridShell");
+      const maximizeGridButton = document.getElementById("maximizeGridButton");
 
       function setStatus(message) {
         statusBox.textContent = message;
@@ -234,10 +239,6 @@
 
       function grid() {
         return $("#resultGrid").data("kendoGrid");
-      }
-
-      function freezeCombo() {
-        return $("#freezeColumnCombo").data("kendoComboBox");
       }
 
       function normalizeFieldName(filter) {
@@ -303,53 +304,27 @@
       }
 
       function renderResultGrid(records) {
-        currentRecords = records.slice();
         const first = records[0] || {};
         const columns = Object.keys(first).map(function (field) {
-          return { field, title: field, width: 160, lockable: true, locked: lockedColumns.has(field) };
-        }).sort(function (left, right) {
-          return Number(!!right.locked) - Number(!!left.locked);
+          return { field, title: field, width: 160, lockable: true };
         });
         const kendoGrid = grid();
         kendoGrid.setOptions({
           height: "100%",
           scrollable: true,
+          columnMenu: true,
           columns: columns.length ? columns : [{ field: "mensagem", title: "Mensagem", width: 220, lockable: true }]
         });
-        kendoGrid.dataSource.pageSize(25);
+        kendoGrid.dataSource.pageSize(50);
         kendoGrid.dataSource.data(records.length ? records : [{ mensagem: "Nenhum registro retornado." }]);
-        refreshFreezeColumns(columns.length ? columns : [{ field: "mensagem", title: "Mensagem" }]);
       }
 
-      function rerenderCurrentGrid() {
-        renderResultGrid(currentRecords);
-      }
-
-      function refreshFreezeColumns(columns) {
-        const items = columns.map(function (column) {
-          return { field: column.field, title: column.title || column.field };
-        });
-        freezeCombo().setDataSource(new kendo.data.DataSource({ data: items }));
-        freezeCombo().value(items[0] ? items[0].field : "");
-      }
-
-      function selectedFreezeColumn() {
-        const selected = freezeCombo();
-        return selected ? selected.value() : "";
-      }
-
-      function lockColumn() {
-        const field = selectedFreezeColumn();
-        if (!field) return;
-        lockedColumns.add(field);
-        rerenderCurrentGrid();
-      }
-
-      function unlockColumn() {
-        const field = selectedFreezeColumn();
-        if (!field) return;
-        lockedColumns.delete(field);
-        rerenderCurrentGrid();
+      function toggleGridMaximized() {
+        gridShell.classList.toggle("grid-maximized");
+        maximizeGridButton.textContent = gridShell.classList.contains("grid-maximized") ? "Restaurar grid" : "Maximizar grid";
+        setTimeout(function () {
+          grid().resize(true);
+        }, 0);
       }
 
       function validateRequiredParameters() {
@@ -420,6 +395,7 @@
       }
 
       function initWidgets() {
+        kendo.culture("pt-BR");
         $("button").kendoButton();
         $("#savedQueryCombo").kendoComboBox({
           dataTextField: "name",
@@ -430,28 +406,21 @@
             loadSelectedQuery(this.value()).catch(function (error) { setStatus(error.message); });
           }
         });
-        $("#freezeColumnCombo").kendoComboBox({
-          dataTextField: "title",
-          dataValueField: "field",
-          filter: "contains",
-          suggest: true
-        });
         $("#resultGrid").kendoGrid({
-          dataSource: { data: [], pageSize: 25 },
+          dataSource: { data: [], pageSize: 50 },
           height: "100%",
           scrollable: true,
           sortable: true,
           filterable: true,
           resizable: true,
           reorderable: true,
-          pageable: { pageSize: 25, pageSizes: [25, 50, 100, 500] },
+          columnMenu: true,
+          pageable: { pageSize: 50, pageSizes: [50, 100, 200, 500] },
           noRecords: { template: "Nenhum registro retornado." },
           columns: [{ field: "mensagem", title: "Mensagem", width: 220, lockable: true }]
         });
         runButton.addEventListener("click", runQuery);
-        document.getElementById("freezeColumnButton").addEventListener("click", lockColumn);
-        document.getElementById("unfreezeColumnButton").addEventListener("click", unlockColumn);
-        refreshFreezeColumns([{ field: "mensagem", title: "Mensagem" }]);
+        maximizeGridButton.addEventListener("click", toggleGridMaximized);
       }
 
       $(function () {
