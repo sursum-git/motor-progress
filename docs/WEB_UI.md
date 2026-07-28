@@ -156,6 +156,23 @@ http://iol.imatextil.com.br/query-progress/saved-query-client.html?queryId=pp-it
 
 As duas paginas leem respostas HTTP como texto antes de tentar JSON. Se o PHP retornar HTML de erro, a resposta bruta aparece na tela em vez de quebrar com `Unexpected token '<'`.
 
+## Log de requisicoes
+
+Arquivo:
+
+```text
+web/request-log.html
+```
+
+Finalidade:
+
+- listar requisicoes enviadas pelo `web/pasoe-proxy.php`;
+- filtrar por texto no destino, JSON enviado, JSON retornado ou erro;
+- abrir o detalhe de uma requisicao;
+- exibir o corpo original enviado e o corpo original retornado pelo PASOE.
+
+Os dados sao lidos por `web/request-log-store.php` a partir da tabela SQLite `request_logs`.
+
 ## Fluxo recomendado para analistas
 
 1. Abrir `web/query-builder.html`.
@@ -167,6 +184,7 @@ As duas paginas leem respostas HTTP como texto antes de tentar JSON. Se o PHP re
 7. Executar contra PASOE pela pagina de resultado.
 8. Se a extracao precisar rodar em batch, usar o mesmo JSON com `sursum-api/runners/RunDynamicQueryFromJson.p`.
 9. Para consulta salva por link, usar `saved-query-client.html?queryId=<codigo>&parametro=valor`.
+10. Para auditar chamadas feitas pelo proxy PHP, abrir `request-log.html`.
 
 ## Relacao com runner batch
 

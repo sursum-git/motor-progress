@@ -35,6 +35,11 @@
         "description": "Visualizacao direta de resultados."
       },
       {
+        "text": "Log de requisicoes",
+        "url": "request-log.html",
+        "description": "Consulta das requisicoes enviadas ao PASOE pelo proxy PHP."
+      },
+      {
         "text": "Runner de arquivo",
         "url": "query-file-runner.html",
         "description": "Execucao de consultas a partir de arquivo."

@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log de Requisicoes</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="ui-ready.css?v=20260617-grid-center">
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #f4f6f8;
+      color: #1f2933;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    main {
+      display: grid;
+      gap: 14px;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 120px auto;
+      gap: 10px;
+      align-items: end;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+    }
+    label {
+      display: grid;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #344150;
+    }
+    input {
+      box-sizing: border-box;
+      min-height: 34px;
+      padding: 7px 9px;
+      border: 1px solid #b8c2cc;
+      border-radius: 6px;
+      font: inherit;
+    }
+    button {
+      min-height: 34px;
+      padding: 7px 12px;
+      border: 0;
+      border-radius: 6px;
+      background: #1d4ed8;
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .status {
+      padding: 10px 12px;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-left: 4px solid #1d4ed8;
+      border-radius: 6px;
+      color: #344150;
+    }
+    .detail {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    section {
+      min-width: 0;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    h2 {
+      margin: 0;
+      padding: 10px 12px;
+      border-bottom: 1px solid #d8dee4;
+      font-size: 15px;
+    }
+    pre {
+      min-height: 260px;
+      max-height: 460px;
+      margin: 0;
+      padding: 12px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 12px;
+      line-height: 1.45;
+      background: #fbfcfd;
+    }
+    @media (max-width: 900px) {
+      .toolbar,
+      .detail {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body class="sursum-ui-pending">
+  <main>
+    <div class="toolbar">
+      <label>
+        Busca
+        <input id="searchInput" placeholder="target, request, response ou erro">
+      </label>
+      <label>
+        Limite
+        <input id="limitInput" type="number" min="1" max="500" value="100">
+      </label>
+      <button id="refreshButton" type="button">Atualizar</button>
+    </div>
+    <div id="statusBox" class="status">Carregando.</div>
+    <div id="requestLogGrid"></div>
+    <div class="detail">
+      <section>
+        <h2>Query string</h2>
+        <pre id="requestQueryJson"></pre>
+      </section>
+      <section>
+        <h2>JSON enviado</h2>
+        <pre id="requestBodyJson"></pre>
+      </section>
+      <section>
+        <h2>JSON retornado</h2>
+        <pre id="responseBodyJson"></pre>
+      </section>
+    </div>
+  </main>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="ui-ready.js?v=20260616-grid-loading"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      const statusBox = document.getElementById("statusBox");
+      const requestQueryJson = document.getElementById("requestQueryJson");
+      const requestBodyJson = document.getElementById("requestBodyJson");
+      const responseBodyJson = document.getElementById("responseBodyJson");
+
+      function setStatus(message) {
+        statusBox.textContent = message;
+      }
+
+      function prettyJson(text) {
+        if (!text) return "";
+        try {
+          return JSON.stringify(JSON.parse(text), null, 2);
+        } catch (error) {
+          return text;
+        }
+      }
+
+      async function getJson(url) {
+        const response = await fetch(url, { credentials: "same-origin", cache: "no-store" });
+        const text = await response.text();
+        try {
+          return JSON.parse(text);
+        } catch (error) {
+          throw new Error(text || error.message);
+        }
+      }
+
+      function endpoint(params) {
+        const query = new URLSearchParams(params || {});
+        return "request-log-store.php" + (query.toString() ? "?" + query.toString() : "");
+      }
+
+      function grid() {
+        return $("#requestLogGrid").data("kendoGrid");
+      }
+
+      async function loadList() {
+        setStatus("Carregando logs...");
+        const payload = await getJson(endpoint({
+          limit: $("#limitInput").val() || "100",
+          search: $("#searchInput").val() || ""
+        }));
+        if (!payload || !payload.success) {
+          throw new Error((payload && payload.error) || "Falha ao carregar logs.");
+        }
+        grid().dataSource.data(payload.data || []);
+        setStatus("Logs carregados: " + (payload.data || []).length + ".");
+      }
+
+      async function loadDetail(id) {
+        if (!id) return;
+        const payload = await getJson(endpoint({ action: "detail", id }));
+        if (!payload || !payload.success) {
+          throw new Error((payload && payload.error) || "Falha ao carregar detalhe.");
+        }
+        requestQueryJson.textContent = prettyJson(payload.data.requestQueryJson);
+        requestBodyJson.textContent = prettyJson(payload.data.requestBodyJson);
+        responseBodyJson.textContent = prettyJson(payload.data.responseBodyJson);
+      }
+
+      function initGrid() {
+        $("#requestLogGrid").kendoGrid({
+          dataSource: { data: [], pageSize: 25 },
+          height: 430,
+          selectable: "row",
+          sortable: true,
+          pageable: true,
+          columns: [
+            { field: "startedAt", title: "Inicio", width: 180 },
+            { field: "finishedAt", title: "Fim", width: 180 },
+            { field: "durationMs", title: "ms", width: 80 },
+            { field: "method", title: "Metodo", width: 90 },
+            { field: "responseStatus", title: "HTTP", width: 90 },
+            { field: "target", title: "Destino" },
+            { field: "errorMessage", title: "Erro", width: 220 }
+          ],
+          change: function () {
+            const item = this.dataItem(this.select());
+            loadDetail(item && item.id).catch((error) => setStatus(error.message));
+          }
+        });
+      }
+
+      $("#refreshButton").on("click", function () {
+        loadList().catch((error) => setStatus(error.message));
+      });
+      $("#searchInput").on("keydown", function (event) {
+        if (event.key === "Enter") {
+          loadList().catch((error) => setStatus(error.message));
+        }
+      });
+
+      $(function () {
+        $("button").kendoButton();
+        $("#searchInput, #limitInput").kendoTextBox();
+        initGrid();
+        if (window.SursumUiReady) window.SursumUiReady();
+        const ready = window.SursumContext && typeof SursumContext.whenReady === "function"
+          ? SursumContext.whenReady()
+          : Promise.resolve();
+        ready.then(loadList).catch((error) => setStatus(error.message));
+      });
+    })();
+  </script>
+</body>
+</html>

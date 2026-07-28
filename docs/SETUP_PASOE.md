@@ -195,8 +195,11 @@ Principais endpoints PHP:
 | `web/relation-store.php` | Relacoes manuais e relacoes OF |
 | `web/metadata-pasoe.php` | Proxy controlado para metadados PASOE |
 | `web/pasoe-proxy.php` | Proxy controlado para execucao PASOE |
+| `web/request-log-store.php` | Consulta dos logs de requisicoes gravados pelo proxy |
 
 Em producao/homologacao, `web/sursum-conf` e o arquivo SQLite precisam ser gravaveis pelo usuario/grupo do PHP-FPM.
+
+O `pasoe-proxy.php` grava uma linha em `request_logs` para cada requisicao encaminhada ao PASOE, com inicio, fim, metodo, destino, parametros de entrada, status HTTP e corpo original retornado.
 
 ## Deploy homologacao query-progress
 
