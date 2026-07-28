@@ -554,6 +554,19 @@ function finishJob(PDO $pdo, string $jobId): void
     if ($jobId === '') {
         throw new InvalidArgumentException('Job obrigatorio.');
     }
+    $stmt = $pdo->prepare(
+        'UPDATE metadata_sync_items
+         SET status = "error",
+             message = :message,
+             updated_at = :updated_at
+         WHERE job_id = :job_id AND status = "running"'
+    );
+    $stmt->execute([
+        ':message' => 'Finalizado sem retorno do processamento.',
+        ':updated_at' => date(DATE_ATOM),
+        ':job_id' => $jobId,
+    ]);
+
     refreshJobCounters($pdo, $jobId);
     $job = loadJob($pdo, $jobId);
     $status = ((int) ($job['failedTables'] ?? 0)) > 0 ? 'done_with_errors' : 'done';
@@ -579,6 +592,7 @@ function refreshJobCounters(PDO $pdo, string $jobId): void
     $stmt->execute([':job_id' => $jobId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
     $processed = (int) ($row['processed'] ?? 0);
+    $failed = (int) ($row['failed'] ?? 0);
     $cancelled = (int) ($row['cancelled'] ?? 0);
     $pending = (int) ($row['pending'] ?? 0);
     $running = (int) ($row['running'] ?? 0);
@@ -588,6 +602,8 @@ function refreshJobCounters(PDO $pdo, string $jobId): void
         $status = ($processed > 0 || $cancelled > 0) ? 'running' : 'pending';
     } elseif ($cancelled > 0 && $processed === 0) {
         $status = 'cancelled';
+    } elseif ($failed > 0) {
+        $status = 'done_with_errors';
     } else {
         $status = 'done';
     }
@@ -599,7 +615,7 @@ function refreshJobCounters(PDO $pdo, string $jobId): void
     $update->execute([
         ':status' => $status,
         ':processed' => $processed,
-        ':failed' => (int) ($row['failed'] ?? 0),
+        ':failed' => $failed,
         ':current_table' => text($row['current_table'] ?? ''),
         ':updated_at' => date(DATE_ATOM),
         ':id' => $jobId,
