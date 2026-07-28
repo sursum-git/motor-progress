@@ -411,6 +411,7 @@
         if (!response || response.success === false) throw new Error(apiError(response));
         state.tables = uniqueTableNames((Array.isArray(response.data) ? response.data : []).map(tableNameFromMetadataItem));
         refreshTableCombo();
+        if (hasElement("#viewAsGrid") && !tableValue()) loadViewAsRows();
         setStatus(`Tabelas carregadas: ${state.tables.length}.`, "ok");
       })
       .fail(function (xhr) {
@@ -418,6 +419,7 @@
           .done(function (rows) {
             state.tables = uniqueTableNames(rows);
             refreshTableCombo();
+            if (hasElement("#viewAsGrid") && !tableValue()) loadViewAsRows();
             setStatus(`Tabelas carregadas: ${state.tables.length}.`, "ok");
           })
           .fail(function (syncError) {
@@ -1107,11 +1109,11 @@
     if (!hasElement("#viewAsGrid")) return;
     const database = selectedDatabase();
     const targetTable = table || tableValue();
-    const params = Object.assign(scope(targetTable, database), { resource: "view-as" });
+    const params = Object.assign(scope(targetTable, database), { resource: "view-as", includeLegacy: "1" });
     setStatus(targetTable ? `Carregando view-as de ${targetTable}...` : "Carregando registros de view-as...", "");
     withGridLoading("#viewAsGrid", $.getJSON("metadata-store.php?" + $.param(params)))
       .done(function (response) {
-        const rows = response && response.success ? response.data || [] : [];
+        const rows = filterViewAsRowsForSelectedDatabase(response && response.success ? response.data || [] : [], database, targetTable);
         const loadedTables = uniqueTableNames(rows.map(function (row) { return row && row.table; }));
         state.viewAsTables = targetTable ? uniqueTableNames([].concat(state.viewAsTables || [], loadedTables, targetTable)) : loadedTables;
         refreshTableCombo();
@@ -1141,6 +1143,28 @@
       return `View-as carregado: ${rows.length} registro(s) da tabela ${table}.`;
     }
     return `View-as carregado: ${rows.length} registro(s), ${tableCount} tabela(s) distinta(s).`;
+  }
+
+  function filterViewAsRowsForSelectedDatabase(rows, database, table) {
+    const selected = String(database || "").trim().toLowerCase();
+    if (!selected || selected === TODOS_DATABASE.toLowerCase()) {
+      return rows;
+    }
+    const selectedTables = Object.create(null);
+    (state.tables || []).forEach(function (name) {
+      selectedTables[String(name || "").trim().toLowerCase()] = true;
+    });
+    return rows.filter(function (row) {
+      const rowDatabase = String(row && row.database || "").trim().toLowerCase();
+      if (rowDatabase) {
+        return rowDatabase === selected;
+      }
+      if (table) {
+        return true;
+      }
+      const rowTable = String(row && row.table || "").trim().toLowerCase();
+      return Boolean(selectedTables[rowTable]);
+    });
   }
 
   function importViewAsCsvFile() {

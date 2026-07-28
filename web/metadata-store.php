@@ -250,6 +250,7 @@ function requestScope(?array $payload = null): array
         'companyId' => text($source['companyId'] ?? $source['company_id'] ?? ''),
         'database' => text($source['database'] ?? $source['databaseName'] ?? ''),
         'table' => text($source['table'] ?? ''),
+        'includeLegacy' => text($source['includeLegacy'] ?? $source['include_legacy'] ?? '') === '1',
     ];
 }
 
@@ -258,7 +259,9 @@ function loadViewAsRows(PDO $pdo, array $scope): array
     $sql = 'SELECT * FROM field_view_as WHERE environment_id = "" AND company_id = ""';
     $params = [];
     if ($scope['database'] !== '') {
-        $sql .= ' AND lower(database_name) = lower(:database_name)';
+        $sql .= !empty($scope['includeLegacy'])
+            ? ' AND (lower(database_name) = lower(:database_name) OR database_name = "")'
+            : ' AND lower(database_name) = lower(:database_name)';
         $params[':database_name'] = $scope['database'];
     }
     if ($scope['table'] !== '') {

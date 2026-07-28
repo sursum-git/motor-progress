@@ -245,7 +245,8 @@ test('view-as maintenance combines PASOE tables and local view-as tables without
           success: true,
           data: [
             { table: 'emitente', name: 'cod-emitente' },
-            { table: 'emitente', name: 'nome-emit' }
+            { table: 'emitente', name: 'nome-emit' },
+            { table: 'wt-ped-venda', name: 'nr-ped-venda' }
           ]
         })
       });
