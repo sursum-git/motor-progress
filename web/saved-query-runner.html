@@ -133,13 +133,9 @@
     }
     .grid-close {
       display: none;
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 1002;
-    }
-    .grid-shell.grid-maximized .grid-close {
-      display: inline-flex;
+      margin-left: auto;
+      min-height: 30px;
+      padding: 5px 10px;
     }
     .sursum-column-lock-actions {
       display: grid;
@@ -356,6 +352,7 @@
         });
         kendoGrid.dataSource.pageSize(50);
         kendoGrid.dataSource.data(records.length ? records : [{ mensagem: "Nenhum registro retornado." }]);
+        appendCloseButtonToGridNavigation();
       }
 
       function rerenderCurrentGrid() {
@@ -365,6 +362,7 @@
       function toggleGridMaximized() {
         gridShell.classList.toggle("grid-maximized");
         maximizeGridButton.textContent = gridShell.classList.contains("grid-maximized") ? "Restaurar grid" : "Maximizar grid";
+        appendCloseButtonToGridNavigation();
         setTimeout(function () {
           grid().resize(true);
         }, 0);
@@ -374,9 +372,19 @@
         if (!gridShell.classList.contains("grid-maximized")) return;
         gridShell.classList.remove("grid-maximized");
         maximizeGridButton.textContent = "Maximizar grid";
+        closeMaximizedGridButton.style.display = "none";
         setTimeout(function () {
           grid().resize(true);
         }, 0);
+      }
+
+      function appendCloseButtonToGridNavigation() {
+        const pager = grid().wrapper.find(".k-grid-pager");
+        if (!pager.length) return;
+        if (!pager.find("#closeMaximizedGridButton").length) {
+          pager.append(closeMaximizedGridButton);
+        }
+        closeMaximizedGridButton.style.display = gridShell.classList.contains("grid-maximized") ? "inline-flex" : "none";
       }
 
       function appendColumnLockActions(event) {

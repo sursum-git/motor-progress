@@ -27,6 +27,8 @@ assertContains($page, 'pageSizes: [50, 100, 200, 500]', 'opcoes de paginacao a p
 assertContains($page, 'kendo.culture("pt-BR")', 'grid usa culture pt-BR');
 assertContains($page, 'maximizeGridButton', 'botao para maximizar a div do grid');
 assertContains($page, 'closeMaximizedGridButton', 'botao para fechar janela maximizada');
+assertContains($page, 'appendCloseButtonToGridNavigation', 'botao fechar fica na navegacao do grid');
+assertContains($page, 'k-grid-pager', 'botao fechar usa a barra de navegacao do grid');
 assertContains($page, 'grid-maximized', 'classe de maximizacao do grid');
 assertContains($page, 'toggleGridMaximized', 'acao de maximizar/restaurar grid');
 assertContains($page, 'closeGridMaximized', 'acao de fechar janela maximizada');
