@@ -255,8 +255,12 @@ function requestScope(?array $payload = null): array
 
 function loadViewAsRows(PDO $pdo, array $scope): array
 {
-    $sql = 'SELECT * FROM field_view_as WHERE environment_id = "" AND company_id = "" AND database_name = ""';
+    $sql = 'SELECT * FROM field_view_as WHERE environment_id = "" AND company_id = ""';
     $params = [];
+    if ($scope['database'] !== '') {
+        $sql .= ' AND lower(database_name) = lower(:database_name)';
+        $params[':database_name'] = $scope['database'];
+    }
     if ($scope['table'] !== '') {
         $sql .= ' AND lower(table_name) = lower(:table_name)';
         $params[':table_name'] = $scope['table'];
@@ -297,7 +301,7 @@ function saveViewAsRows(PDO $pdo, array $scope, array $rows, string $defaultSour
             ':id' => viewAsId($scope, $field),
             ':environment_id' => '',
             ':company_id' => '',
-            ':database_name' => '',
+            ':database_name' => $scope['database'],
             ':table_name' => $scope['table'],
             ':field_name' => $field,
             ':view_as' => $viewAs,
@@ -313,20 +317,22 @@ function deleteViewAsRow(PDO $pdo, array $scope, string $field): void
     if ($field === '') {
         throw new InvalidArgumentException('Campo obrigatorio.');
     }
-    $stmt = $pdo->prepare(
-        'DELETE FROM field_view_as
-         WHERE lower(table_name) = lower(:table_name)
-           AND lower(field_name) = lower(:field_name)'
-    );
-    $stmt->execute([
-        ':table_name' => $scope['table'],
-        ':field_name' => $field,
-    ]);
+	    $stmt = $pdo->prepare(
+	        'DELETE FROM field_view_as
+	         WHERE lower(database_name) = lower(:database_name)
+	           AND lower(table_name) = lower(:table_name)
+	           AND lower(field_name) = lower(:field_name)'
+	    );
+	    $stmt->execute([
+	        ':database_name' => $scope['database'],
+	        ':table_name' => $scope['table'],
+	        ':field_name' => $field,
+	    ]);
 }
 
 function canonicalizeViewAsRows(PDO $pdo): void
 {
-    $count = (int) $pdo->query('SELECT COUNT(*) FROM field_view_as WHERE environment_id <> "" OR company_id <> "" OR database_name <> ""')->fetchColumn();
+    $count = (int) $pdo->query('SELECT COUNT(*) FROM field_view_as WHERE environment_id <> "" OR company_id <> ""')->fetchColumn();
     if ($count === 0) {
         return;
     }
@@ -343,7 +349,8 @@ function canonicalizeViewAsRows(PDO $pdo): void
         if ($table === '' || $field === '') {
             continue;
         }
-        $latest[strtolower($table) . '|' . strtolower($field)] = $row;
+        $database = text($row['database_name'] ?? '');
+        $latest[strtolower($database) . '|' . strtolower($table) . '|' . strtolower($field)] = $row;
     }
 
     $pdo->beginTransaction();
@@ -352,13 +359,15 @@ function canonicalizeViewAsRows(PDO $pdo): void
         $stmt = $pdo->prepare(
             'INSERT OR REPLACE INTO field_view_as
              (id, environment_id, company_id, database_name, table_name, field_name, view_as, source, raw_json, updated_at)
-             VALUES (:id, "", "", "", :table_name, :field_name, :view_as, :source, :raw_json, :updated_at)'
+             VALUES (:id, "", "", :database_name, :table_name, :field_name, :view_as, :source, :raw_json, :updated_at)'
         );
         foreach ($latest as $row) {
+            $database = text($row['database_name'] ?? '');
             $table = text($row['table_name'] ?? '');
             $field = text($row['field_name'] ?? '');
             $stmt->execute([
-                ':id' => viewAsId(['table' => $table], $field),
+                ':id' => viewAsId(['database' => $database, 'table' => $table], $field),
+                ':database_name' => $database,
                 ':table_name' => $table,
                 ':field_name' => $field,
                 ':view_as' => text($row['view_as'] ?? ''),
@@ -386,14 +395,15 @@ function importViewAsCsv(PDO $pdo, array $payload): void
         throw new InvalidArgumentException('Nenhum view-as valido encontrado no CSV.');
     }
 
-    $stmt = $pdo->prepare(
-        'INSERT OR REPLACE INTO field_view_as
-         (id, environment_id, company_id, database_name, table_name, field_name, view_as, source, raw_json, updated_at)
-         VALUES (:id, "", "", "", :table_name, :field_name, :view_as, "CSV", :raw_json, :updated_at)'
-    );
+	    $stmt = $pdo->prepare(
+	        'INSERT OR REPLACE INTO field_view_as
+	         (id, environment_id, company_id, database_name, table_name, field_name, view_as, source, raw_json, updated_at)
+	         VALUES (:id, "", "", :database_name, :table_name, :field_name, :view_as, "CSV", :raw_json, :updated_at)'
+	    );
     foreach ($rows as $row) {
         $stmt->execute([
-            ':id' => viewAsId(['table' => $row['table']], $row['field']),
+            ':id' => viewAsId(['database' => text($payload['database'] ?? ''), 'table' => $row['table']], $row['field']),
+            ':database_name' => text($payload['database'] ?? ''),
             ':table_name' => $row['table'],
             ':field_name' => $row['field'],
             ':view_as' => $row['viewAs'],
@@ -670,6 +680,7 @@ function loadJob(PDO $pdo, string $id): ?array
 function viewAsId(array $scope, string $field): string
 {
     return sha1(implode('|', [
+        strtolower(text($scope['database'] ?? '')),
         strtolower($scope['table']),
         strtolower($field),
     ]));

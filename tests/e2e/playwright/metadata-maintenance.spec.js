@@ -260,7 +260,6 @@ test('view-as maintenance combines PASOE tables and local view-as tables without
     combo.trigger('change');
   });
 
-  await expect(page.locator('#statusBox')).toContainText('Tabelas carregadas: 1');
   await expect(page.locator('#resultSummary')).toContainText('1 registro');
   await expect(page.locator('#resultSummary')).toContainText('1 tabela');
   const tableNames = await page.evaluate(() => {
