@@ -17,6 +17,11 @@ assertContains($page, 'externalFilters', 'campos por externalFilters');
 assertContains($page, 'parameters', 'montagem de parametros');
 assertContains($page, 'pasoe-proxy.php?target=', 'execucao via proxy PHP');
 assertContains($page, 'kendoGrid', 'retorno em grid kendo');
+assertContains($page, 'scrollable: true', 'grid com rolagem interna sem expandir pagina');
+assertContains($page, 'height: 560', 'grid com altura fixa');
+assertContains($page, 'freezeColumnCombo', 'combo para escolher coluna a congelar');
+assertContains($page, 'lockColumn', 'acao para congelar coluna');
+assertContains($page, 'unlockColumn', 'acao para liberar coluna congelada');
 
 $menu = (string) file_get_contents($root . '/web/menu-pages.json');
 assertContains($menu, 'saved-query-runner.html', 'menu inclui executor de consultas salvas');

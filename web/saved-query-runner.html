@@ -19,6 +19,7 @@
       gap: 14px;
     }
     .toolbar,
+    .grid-toolbar,
     .parameters,
     .status {
       background: #fff;
@@ -29,6 +30,13 @@
       display: grid;
       grid-template-columns: minmax(260px, 1fr) auto;
       gap: 12px;
+      align-items: end;
+      padding: 12px;
+    }
+    .grid-toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 320px) auto auto 1fr;
+      gap: 10px;
       align-items: end;
       padding: 12px;
     }
@@ -104,7 +112,8 @@
       font-size: 12px;
     }
     @media (max-width: 720px) {
-      .toolbar {
+      .toolbar,
+      .grid-toolbar {
         grid-template-columns: 1fr;
       }
     }
@@ -127,6 +136,15 @@
     </div>
 
     <div id="statusBox" class="status">Carregando consultas salvas.</div>
+    <div class="grid-toolbar">
+      <label>
+        <span>Coluna</span>
+        <input id="freezeColumnCombo">
+      </label>
+      <button id="freezeColumnButton" type="button">Congelar</button>
+      <button id="unfreezeColumnButton" type="button">Liberar</button>
+      <p class="muted">O grid usa rolagem interna e nao aumenta a pagina ao renderizar os dados.</p>
+    </div>
     <div id="resultGrid"></div>
   </main>
 
@@ -201,6 +219,10 @@
         return $("#resultGrid").data("kendoGrid");
       }
 
+      function freezeCombo() {
+        return $("#freezeColumnCombo").data("kendoComboBox");
+      }
+
       function normalizeFieldName(filter) {
         return String(filter && filter.name || "").trim();
       }
@@ -266,13 +288,41 @@
       function renderResultGrid(records) {
         const first = records[0] || {};
         const columns = Object.keys(first).map(function (field) {
-          return { field, title: field, width: 160 };
+          return { field, title: field, width: 160, lockable: true };
         });
         const kendoGrid = grid();
         kendoGrid.setOptions({
-          columns: columns.length ? columns : [{ field: "mensagem", title: "Mensagem" }]
+          height: 560,
+          scrollable: true,
+          columns: columns.length ? columns : [{ field: "mensagem", title: "Mensagem", width: 220, lockable: true }]
         });
         kendoGrid.dataSource.data(records.length ? records : [{ mensagem: "Nenhum registro retornado." }]);
+        refreshFreezeColumns(columns.length ? columns : [{ field: "mensagem", title: "Mensagem" }]);
+      }
+
+      function refreshFreezeColumns(columns) {
+        const items = columns.map(function (column) {
+          return { field: column.field, title: column.title || column.field };
+        });
+        freezeCombo().setDataSource(new kendo.data.DataSource({ data: items }));
+        freezeCombo().value(items[0] ? items[0].field : "");
+      }
+
+      function selectedFreezeColumn() {
+        const selected = freezeCombo();
+        return selected ? selected.value() : "";
+      }
+
+      function lockColumn() {
+        const field = selectedFreezeColumn();
+        if (!field) return;
+        grid().lockColumn(field);
+      }
+
+      function unlockColumn() {
+        const field = selectedFreezeColumn();
+        if (!field) return;
+        grid().unlockColumn(field);
       }
 
       function validateRequiredParameters() {
@@ -353,17 +403,28 @@
             loadSelectedQuery(this.value()).catch(function (error) { setStatus(error.message); });
           }
         });
+        $("#freezeColumnCombo").kendoComboBox({
+          dataTextField: "title",
+          dataValueField: "field",
+          filter: "contains",
+          suggest: true
+        });
         $("#resultGrid").kendoGrid({
           dataSource: [],
           height: 560,
+          scrollable: true,
           sortable: true,
           filterable: true,
           resizable: true,
+          reorderable: true,
           pageable: { pageSize: 25, pageSizes: [25, 50, 100, 500] },
           noRecords: { template: "Nenhum registro retornado." },
-          columns: [{ field: "mensagem", title: "Mensagem" }]
+          columns: [{ field: "mensagem", title: "Mensagem", width: 220, lockable: true }]
         });
         runButton.addEventListener("click", runQuery);
+        document.getElementById("freezeColumnButton").addEventListener("click", lockColumn);
+        document.getElementById("unfreezeColumnButton").addEventListener("click", unlockColumn);
+        refreshFreezeColumns([{ field: "mensagem", title: "Mensagem" }]);
       }
 
       $(function () {
