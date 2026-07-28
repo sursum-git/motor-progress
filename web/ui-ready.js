@@ -68,6 +68,59 @@
     });
   }
 
+  let gridExcelDefaultsBound = false;
+
+  function bindGridExcelDefaults() {
+    if (gridExcelDefaultsBound || !window.jQuery || !window.jQuery.fn || typeof window.jQuery.fn.kendoGrid !== "function") {
+      return;
+    }
+
+    gridExcelDefaultsBound = true;
+    const originalKendoGrid = window.jQuery.fn.kendoGrid;
+    window.jQuery.fn.kendoGrid = function (options) {
+      if (options && typeof options === "object" && !Array.isArray(options)) {
+        options = ensureGridExcelToolbar(options, this);
+      }
+      return originalKendoGrid.call(this, options);
+    };
+  }
+
+  function ensureGridExcelToolbar(options, target) {
+    const nextOptions = window.jQuery.extend({}, options);
+    const toolbar = normalizeGridToolbar(nextOptions.toolbar);
+    if (!gridToolbarHasExcel(toolbar)) {
+      toolbar.unshift("excel");
+    }
+    nextOptions.toolbar = toolbar;
+    nextOptions.excel = window.jQuery.extend({}, {
+      fileName: gridExcelFileName(target),
+      allPages: true,
+      filterable: true
+    }, nextOptions.excel || {});
+    return nextOptions;
+  }
+
+  function normalizeGridToolbar(toolbar) {
+    if (Array.isArray(toolbar)) {
+      return toolbar.slice();
+    }
+    if (toolbar) {
+      return [toolbar];
+    }
+    return [];
+  }
+
+  function gridToolbarHasExcel(toolbar) {
+    return toolbar.some(function (item) {
+      return item === "excel" || (item && item.name === "excel");
+    });
+  }
+
+  function gridExcelFileName(target) {
+    const id = target && target.length && target[0] && target[0].id ? target[0].id : "grid";
+    return "sursum-" + String(id).replace(/[^a-z0-9_-]+/gi, "-").toLowerCase() + ".xlsx";
+  }
+
   let ajaxGridLoadingBound = false;
 
   function bindGridAjaxLoading() {
@@ -91,6 +144,7 @@
   };
 
   applyPtBrCulture();
+  bindGridExcelDefaults();
   bindGridAjaxLoading();
 
   window.SursumUiReady = markReady;
@@ -107,4 +161,5 @@
   }, 5000);
 
   window.addEventListener("load", bindGridAjaxLoading);
+  window.addEventListener("load", bindGridExcelDefaults);
 }());

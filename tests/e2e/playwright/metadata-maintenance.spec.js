@@ -161,6 +161,45 @@ test('metadata batch grid paginates large pending jobs', async ({ page, request 
   expect(renderedRows).toBeLessThanOrEqual(120);
 });
 
+test('metadata grids expose Excel export action', async ({ page }) => {
+  await page.goto('/metadata-maintenance.html');
+  await expect(page.locator('#jobGrid .k-grid-excel')).toBeVisible();
+  await expect(page.locator('#jobGrid .k-grid-excel')).toContainText(/Excel/i);
+  const downloadPromise = page.waitForEvent('download');
+  await page.locator('#jobGrid .k-grid-excel').click();
+  const download = await downloadPromise;
+  expect(download.suggestedFilename()).toBe('sursum-atualizacao-lote-metadados.xlsx');
+
+  await page.goto('/view-as-maintenance.html');
+  await expect(page.locator('#viewAsGrid .k-grid-excel')).toBeVisible();
+});
+
+test('metadata batch treats empty PASOE 200 field response as empty metadata', async ({ page }) => {
+  await page.goto('/metadata-maintenance.html');
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+    window.$('#includeRelations').prop('checked', false);
+  });
+  await page.route('**/metadata-pasoe.php**', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json; charset=utf-8',
+      body: JSON.stringify({
+        success: true,
+        data: [],
+        warning: 'PASOE respondeu HTTP 200 com corpo vazio.'
+      })
+    });
+  });
+
+  await page.locator('#createJob').click();
+  await page.locator('#runJob').click();
+  await expect(page.locator('#statusBox')).toContainText('Fila concluida');
+  await expect(page.locator('#jobSummary')).toContainText('Erros: 0');
+});
+
 test('view-as maintenance saves manual view-as and imports CSV', async ({ page }) => {
   await page.goto('/view-as-maintenance.html');
   await expect(page.locator('#addViewAs')).toBeVisible();

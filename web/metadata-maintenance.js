@@ -132,6 +132,7 @@
         });
       },
       toolbar: [
+        "excel",
         {
           template: '<div class="job-grid-filters">'
             + '<label class="job-grid-switch"><input id="showPendingOnly" type="checkbox"><span class="switch-control"></span><span class="switch-label">Mostrar apenas pendentes</span></label>'
@@ -139,6 +140,11 @@
             + '</div>'
         }
       ],
+      excel: {
+        fileName: "sursum-atualizacao-lote-metadados.xlsx",
+        allPages: true,
+        filterable: true
+      },
       columns: [
         { field: "table", title: "Tabela", width: 210 },
         { field: "status", title: "Status", width: 110 },
@@ -1556,13 +1562,21 @@
         if (!response || response.success === false) {
           throw new Error(`${label}. Endpoint: ${endpoint}. Detalhe: ${apiError(response)}`);
         }
-        if (response.warning) {
+        if (response.warning && !isEmptyPasoeSuccess(response)) {
           throw new Error(`${label}. Endpoint: ${endpoint}. Detalhe: ${response.warning}`);
         }
         return response;
       }, function (xhr) {
         throw new Error(`${label}. Endpoint: ${endpoint}. Detalhe: ${ajaxErrorMessage(xhr)}`);
       });
+  }
+
+  function isEmptyPasoeSuccess(response) {
+    return response
+      && response.success !== false
+      && Array.isArray(response.data)
+      && response.data.length === 0
+      && /corpo vazio/i.test(String(response.warning || ""));
   }
 
   function getPasoeJsonFallback(path, options) {
