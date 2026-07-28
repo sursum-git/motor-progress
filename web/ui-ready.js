@@ -3,6 +3,12 @@
 
   let readyRequested = false;
 
+  function applyPtBrCulture() {
+    if (window.kendo && typeof window.kendo.culture === "function") {
+      window.kendo.culture("pt-BR");
+    }
+  }
+
   function reveal() {
     if (!document.body) {
       return;
@@ -84,6 +90,7 @@
     visible: setVisibleGridsLoading
   };
 
+  applyPtBrCulture();
   bindGridAjaxLoading();
 
   window.SursumUiReady = markReady;

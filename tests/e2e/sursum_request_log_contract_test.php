@@ -28,6 +28,11 @@ assertContains($page, 'responseBodyJson', 'pagina exibe responseBodyJson');
 $menu = (string) file_get_contents($root . '/web/menu-pages.json');
 assertContains($menu, 'request-log.html', 'menu inclui log de requisicoes');
 
+$metadataStore = (string) file_get_contents($root . '/web/metadata-store.php');
+assertContains($metadataStore, '@fopen($lockPath, \'c\')', 'lock SQLite nao emite warning HTML');
+assertContains($metadataStore, 'sys_get_temp_dir()', 'lock SQLite tem fallback em diretorio temporario');
+assertContains($metadataStore, 'sha1(__DIR__)', 'lock temporario e especifico da instalacao');
+
 echo "Request log contract OK\n";
 
 function assertContains(string $content, string $needle, string $label): void

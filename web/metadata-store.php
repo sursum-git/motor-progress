@@ -58,7 +58,11 @@ function metadataDb(): PDO
 function withSursumSqliteLock(callable $callback): array
 {
     $lockPath = __DIR__ . DIRECTORY_SEPARATOR . 'sursum-conf' . DIRECTORY_SEPARATOR . 'sursum.sqlite.lock';
-    $handle = fopen($lockPath, 'c');
+    $handle = @fopen($lockPath, 'c');
+    if ($handle === false) {
+        $lockPath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'sursum-sqlite-' . sha1(__DIR__) . '.lock';
+        $handle = @fopen($lockPath, 'c');
+    }
     if ($handle === false) {
         throw new RuntimeException('Nao foi possivel abrir o lock do SQLite.');
     }
