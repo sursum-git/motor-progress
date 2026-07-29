@@ -71,6 +71,17 @@ test('table browser opens available table selector from table search icon', asyn
   await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
 });
 
+test('table browser searches typed table across all databases when database combo is blank', async ({ page }) => {
+  await page.goto('/table-browser.html');
+  await page.evaluate(() => {
+    $("#dbCombo").data("kendoComboBox").value("");
+  });
+  await page.locator('#tableName').fill('Customer');
+  await page.locator('#findTableBtn').click();
+
+  await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
+});
+
 test('table browser find metadata loads fields indexes view-as and refreshes joins by OF', async ({ page }) => {
   await page.goto('/table-browser.html');
   await page.locator('#tableName').fill('Customer');

@@ -1106,7 +1106,8 @@
 
   function selectedDatabase() {
     const combo = $("#dbCombo").data("kendoComboBox");
-    return combo ? combo.value() : TODOS_DATABASE;
+    const value = combo ? String(combo.value() || "").trim() : "";
+    return value || TODOS_DATABASE;
   }
 
   function getSelectedTableCandidate() {
