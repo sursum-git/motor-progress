@@ -273,8 +273,8 @@ function requestScope(?array $payload = null): array
     return [
         'environmentId' => text($source['environmentId'] ?? $source['environment_id'] ?? ''),
         'companyId' => text($source['companyId'] ?? $source['company_id'] ?? ''),
-        'database' => text($source['database'] ?? $source['databaseName'] ?? ''),
-        'table' => text($source['table'] ?? ''),
+        'database' => text($source['database'] ?? $source['databaseName'] ?? $source['database_name'] ?? $source['banco'] ?? ''),
+        'table' => text($source['table'] ?? $source['tableName'] ?? $source['table_name'] ?? ''),
         'includeLegacy' => text($source['includeLegacy'] ?? $source['include_legacy'] ?? '') === '1',
         'tableNames' => requestTableNames($source),
     ];
@@ -381,13 +381,22 @@ function saveViewAsRows(PDO $pdo, array $scope, array $rows, string $defaultSour
             continue;
         }
         $source = text($row['source'] ?? $defaultSource) ?: $defaultSource;
-        $id = viewAsId($scope, $field);
+        $rowScope = $scope;
+        $rowScope['database'] = text($row['database'] ?? $row['databaseName'] ?? $row['database_name'] ?? $scope['database']);
+        $rowScope['table'] = text($row['table'] ?? $row['tableName'] ?? $row['table_name'] ?? $scope['table']);
+        if ($rowScope['table'] === '') {
+            throw new InvalidArgumentException('Tabela obrigatoria para gravar view-as.');
+        }
+        if ($rowScope['database'] === '' && in_array(strtoupper($source), ['PASOE', 'COMPILER'], true)) {
+            throw new InvalidArgumentException('Banco obrigatorio para gravar view-as retornado pelo PASOE.');
+        }
+        $id = viewAsId($rowScope, $field);
         $stmt->execute([
             ':id' => $id,
             ':environment_id' => '',
             ':company_id' => '',
-            ':database_name' => $scope['database'],
-            ':table_name' => $scope['table'],
+            ':database_name' => $rowScope['database'],
+            ':table_name' => $rowScope['table'],
             ':field_name' => $field,
             ':view_as' => $viewAs,
             ':source' => $source,
@@ -399,7 +408,7 @@ function saveViewAsRows(PDO $pdo, array $scope, array $rows, string $defaultSour
             ? parseViewAsOptionsText((string) $row['listExpression'])
             : normalizeViewAsOptions($row['options'] ?? []);
         if ($hasOptionPayload || $options) {
-            saveViewAsOptions($pdo, $scope, $id, $field, $options, $source);
+            saveViewAsOptions($pdo, $rowScope, $id, $field, $options, $source);
         }
     }
 }
@@ -687,10 +696,12 @@ function importViewAsCsv(PDO $pdo, array $payload): void
 	         (id, environment_id, company_id, database_name, table_name, field_name, view_as, source, raw_json, updated_at)
 	         VALUES (:id, "", "", :database_name, :table_name, :field_name, :view_as, "CSV", :raw_json, :updated_at)'
 	    );
+    $scope = requestScope($payload);
     foreach ($rows as $row) {
+        $database = text($row['database'] ?? $row['databaseName'] ?? $row['database_name'] ?? $scope['database']);
         $stmt->execute([
-            ':id' => viewAsId(['database' => text($payload['database'] ?? ''), 'table' => $row['table']], $row['field']),
-            ':database_name' => text($payload['database'] ?? ''),
+            ':id' => viewAsId(['database' => $database, 'table' => $row['table']], $row['field']),
+            ':database_name' => $database,
             ':table_name' => $row['table'],
             ':field_name' => $row['field'],
             ':view_as' => $row['viewAs'],
@@ -713,8 +724,9 @@ function parseViewAsCsv(string $csv): array
 
     $delimiter = csvDelimiter($lines[0]);
     $header = array_map('normalizeCsvHeader', str_getcsv(array_shift($lines), $delimiter) ?: []);
+    $databaseIndex = findCsvColumn($header, ['banco', 'database', 'database_name', 'databaseName']);
     $tableIndex = findCsvColumn($header, ['tabela', 'table']);
-    $fieldIndex = findCsvColumn($header, ['campo', 'field', 'banco']);
+    $fieldIndex = findCsvColumn($header, ['campo', 'field']);
     $viewAsIndex = findCsvColumn($header, ['lista_de_opcoes', 'lista_opcoes', 'lista de opcoes', 'lista de opções', 'opcoes', 'opções', 'view_as', 'viewas', 'view-as']);
     if ($tableIndex < 0 || $fieldIndex < 0 || $viewAsIndex < 0) {
         throw new InvalidArgumentException('CSV deve conter as colunas tabela, campo e lista de opcoes.');
@@ -726,10 +738,11 @@ function parseViewAsCsv(string $csv): array
         $table = text($cols[$tableIndex] ?? '');
         $field = text($cols[$fieldIndex] ?? '');
         $viewAs = text($cols[$viewAsIndex] ?? '');
+        $database = $databaseIndex >= 0 ? text($cols[$databaseIndex] ?? '') : '';
         if ($table === '' || $field === '' || $viewAs === '') {
             continue;
         }
-        $rows[] = ['table' => $table, 'field' => $field, 'viewAs' => $viewAs];
+        $rows[] = ['database' => $database, 'table' => $table, 'field' => $field, 'viewAs' => $viewAs];
     }
     return $rows;
 }
