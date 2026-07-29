@@ -27,7 +27,8 @@
     browseCursor: null,
     browseHasMore: false,
     browseFilters: [],
-    browseEditingFilterId: ""
+    browseEditingFilterId: "",
+    browseDataMaximized: false
   };
   let addCompanyWindow = null;
   let addCompanyValidator = null;
@@ -254,6 +255,8 @@
     });
     $("#browseInvertBtn").on("click", invertBrowseDirection);
     $("#openBrowseFilterBtn").on("click", openBrowseFilterWindow);
+    $("#toggleDataMaximizeBtn").on("click", toggleBrowseDataMaximized);
+    $(window).on("resize", resizeBrowseDataGrid);
     initBrowseFilterWindow();
     updateBrowseState();
   }
@@ -1512,6 +1515,45 @@
     if (!grid) return;
     const height = Math.max(260, $(window).height() - $(".browse-filter-editor").outerHeight(true) - 110);
     grid.setOptions({ height });
+  }
+
+  function toggleBrowseDataMaximized() {
+    setBrowseDataMaximized(!state.browseDataMaximized);
+  }
+
+  function setBrowseDataMaximized(maximized) {
+    state.browseDataMaximized = !!maximized;
+    $("#browseDataPanel").toggleClass("is-maximized", state.browseDataMaximized);
+    $("body").toggleClass("browse-data-maximized", state.browseDataMaximized);
+    setButtonText("#toggleDataMaximizeBtn", state.browseDataMaximized ? "Fechar" : "Maximizar");
+    resizeBrowseDataGrid();
+  }
+
+  function resizeBrowseDataGrid() {
+    const grid = $("#dataGrid").data("kendoGrid");
+    if (!grid) return;
+    if (!state.browseDataMaximized) {
+      grid.setOptions({ height: 500 });
+      return;
+    }
+    const toolbarHeight = $(".browse-data-panel .browse-toolbar").outerHeight(true) || 0;
+    const summaryHeight = $(".browse-data-panel .browse-summary").outerHeight(true) || 0;
+    const height = Math.max(280, $(window).height() - toolbarHeight - summaryHeight - 40);
+    grid.setOptions({ height });
+  }
+
+  function setButtonText(selector, text) {
+    const button = $(selector).data("kendoButton");
+    if (button) {
+      const label = button.element.find(".k-button-text");
+      if (label.length) {
+        label.text(text);
+      } else {
+        button.element.text(text);
+      }
+      return;
+    }
+    $(selector).text(text);
   }
 
   function refreshBrowseFilterFieldSelector() {

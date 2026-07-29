@@ -160,6 +160,27 @@ test('table browser data tab keeps rows when order is inverted and formats dates
   expect(browseRequests.map((item) => item.body.direction)).toEqual(['ASC', 'DESC']);
 });
 
+test('table browser data tab can be maximized and restored', async ({ page }) => {
+  await page.goto('/table-browser.html');
+  await page.locator('#tableName').fill('Customer');
+  await page.locator('#findTableBtn').click();
+  await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
+
+  await page.locator('#metadataTabs li').filter({ hasText: 'Dados' }).click();
+  await page.locator('#browseFirstBtn').click();
+  await expect(page.locator('#dataGrid')).toContainText('Cliente Asc');
+
+  await page.locator('#toggleDataMaximizeBtn').click();
+  await expect(page.locator('#browseDataPanel')).toHaveClass(/is-maximized/);
+  await expect(page.locator('#toggleDataMaximizeBtn')).toContainText('Fechar');
+  await expect.poll(async () => page.locator('#browseDataPanel.is-maximized #dataGrid').boundingBox())
+    .toMatchObject({ width: expect.any(Number), height: expect.any(Number) });
+
+  await page.locator('#toggleDataMaximizeBtn').click();
+  await expect(page.locator('#browseDataPanel')).not.toHaveClass(/is-maximized/);
+  await expect(page.locator('#toggleDataMaximizeBtn')).toContainText('Maximizar');
+});
+
 test('table browser data tab sends filters configured in maximized filter window', async ({ page, request }) => {
   await page.goto('/table-browser.html');
   await page.locator('#tableName').fill('Customer');
