@@ -794,10 +794,8 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DEFINE VARIABLE cField AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cViewAs AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cInclude AS CHARACTER NO-UNDO.
-        DEFINE VARIABLE cIncludeOriginal AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cList AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cError AS CHARACTER NO-UNDO.
-        DEFINE VARIABLE cOriginalError AS CHARACTER NO-UNDO.
 
         IF pcBody = "" OR pcBody = ? THEN
             RETURN THIS-OBJECT:buildError("EMPTY_BODY", "Body JSON obrigatorio", "POST /metadata/view-as/resolve").
@@ -825,20 +823,10 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                 ASSIGN cViewAs = THIS-OBJECT:getJsonChar(joRow, "view_as").
 
             ASSIGN cInclude = THIS-OBJECT:extractViewAsInclude(cViewAs)
-                   cIncludeOriginal = THIS-OBJECT:extractViewAsIncludeOriginal(cViewAs)
                    cError = ""
-                   cOriginalError = ""
                    cList = "".
-            IF cInclude <> "" THEN DO:
+            IF cInclude <> "" THEN
                 ASSIGN cList = THIS-OBJECT:resolveViewAsInclude(cInclude, joEnvironment, OUTPUT cError).
-                IF cList = "" AND cError = "" AND cIncludeOriginal <> "" AND cIncludeOriginal <> cInclude THEN DO:
-                    ASSIGN cList = THIS-OBJECT:resolveViewAsInclude(cIncludeOriginal, joEnvironment, OUTPUT cOriginalError).
-                    IF cList <> "" OR cOriginalError = "" THEN DO:
-                        ASSIGN cInclude = cIncludeOriginal
-                               cError = cOriginalError.
-                    END.
-                END.
-            END.
             ELSE
                 ASSIGN cList = THIS-OBJECT:normalizeViewAsList(cViewAs).
 
@@ -906,31 +894,6 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         END.
 
         RETURN LC(TRIM(REPLACE(cInclude + ".i 3", "~\", "/"))).
-    END METHOD.
-
-    METHOD PRIVATE CHARACTER extractViewAsIncludeOriginal(INPUT pcViewAs AS CHARACTER):
-        DEFINE VARIABLE cInclude AS CHARACTER NO-UNDO.
-        DEFINE VARIABLE cOpen AS CHARACTER NO-UNDO.
-        DEFINE VARIABLE cClose AS CHARACTER NO-UNDO.
-
-        ASSIGN cOpen = CHR(123)
-               cClose = CHR(125).
-        IF pcViewAs = ? OR INDEX(pcViewAs, ".i") = 0 OR INDEX(pcViewAs, cOpen) = 0 THEN
-            RETURN "".
-
-        ASSIGN cInclude = ENTRY(2, pcViewAs, cOpen) NO-ERROR.
-        IF ERROR-STATUS:ERROR OR cInclude = "" OR cInclude = ? THEN DO:
-            ERROR-STATUS:ERROR = FALSE.
-            RETURN "".
-        END.
-
-        ASSIGN cInclude = ENTRY(1, cInclude, cClose) NO-ERROR.
-        IF ERROR-STATUS:ERROR OR cInclude = "" OR cInclude = ? THEN DO:
-            ERROR-STATUS:ERROR = FALSE.
-            RETURN "".
-        END.
-
-        RETURN LC(TRIM(REPLACE(THIS-OBJECT:compactSpaces(cInclude), "~\", "/"))).
     END METHOD.
 
     METHOD PRIVATE CHARACTER resolveViewAsInclude(INPUT pcInclude AS CHARACTER, INPUT poEnvironment AS JsonObject, OUTPUT pcError AS CHARACTER):
