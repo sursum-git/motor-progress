@@ -72,6 +72,19 @@ test('table browser opens available table selector from table search icon', asyn
 });
 
 test('table browser searches typed table across all databases when database combo is blank', async ({ page }) => {
+  const tableListRequests = [];
+  await page.route('**/metadata/tables?**', async (route) => {
+    const url = new URL(route.request().url());
+    const database = url.searchParams.get('database') || '';
+    const query = url.searchParams.get('q') || url.searchParams.get('filter') || '';
+    tableListRequests.push({ database, query });
+    if (database === 'TODOS' && query === 'Customer') {
+      await route.fulfill({ json: { success: true, data: [{ name: 'Customer', label: 'Customer', database: 'DICTDB' }] } });
+      return;
+    }
+    await route.fulfill({ json: { success: true, data: [] } });
+  });
+
   await page.goto('/table-browser.html');
   await page.evaluate(() => {
     $("#dbCombo").data("kendoComboBox").value("");
@@ -81,6 +94,7 @@ test('table browser searches typed table across all databases when database comb
 
   await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
   await expect.poll(async () => page.locator('.k-loading-mask:visible').count()).toBe(0);
+  expect(tableListRequests).toContainEqual({ database: 'TODOS', query: 'Customer' });
 });
 
 test('table browser does not keep grid loading while auxiliary relation request is pending', async ({ page }) => {

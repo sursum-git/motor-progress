@@ -829,6 +829,14 @@
       return;
     }
 
+    if (selectedDatabase() === TODOS_DATABASE) {
+      setStatus(`Buscando tabela ${typed} em todos os bancos...`, "");
+      loadTableCandidatesForSearch(typed, function (rows) {
+        findTableFromRows(typed, rows, TODOS_DATABASE);
+      });
+      return;
+    }
+
     ensureTablesLoaded(function () {
       findTableFromLoadedList(typed);
     });
@@ -836,9 +844,13 @@
 
   function findTableFromLoadedList(typed) {
     const database = selectedDatabase();
+    findTableFromRows(typed, state.tables, database);
+  }
+
+  function findTableFromRows(typed, rows, database) {
     const typedLower = typed.toLowerCase();
 
-    const candidates = state.tables.filter((row) => {
+    const candidates = (Array.isArray(rows) ? rows : []).filter((row) => {
       const sameName = String(row.name || "").toLowerCase() === typedLower;
       const inDatabase = database === TODOS_DATABASE || !row.database || row.database === database;
       return sameName && inDatabase;
@@ -1091,6 +1103,28 @@
         state.tables = [];
         if (typeof done === "function") {
           done();
+        }
+      });
+  }
+
+  function loadTableCandidatesForSearch(typed, done) {
+    const database = selectedDatabase();
+    const db = database === TODOS_DATABASE ? TODOS_DATABASE : database;
+    const url = pasoeUrl(`/metadata/tables?database=${encodeURIComponent(db)}&q=${encodeURIComponent(typed)}`);
+
+    $.getJSON(url)
+      .done(function (response) {
+        if (!response || response.success === false) {
+          throw new Error(apiError(response));
+        }
+        if (typeof done === "function") {
+          done(Array.isArray(response.data) ? response.data : []);
+        }
+      })
+      .fail(function (xhr) {
+        setStatus("Falha ao buscar tabela em " + state.apiBase + ": " + ajaxErrorMessage(xhr), "error");
+        if (typeof done === "function") {
+          done([]);
         }
       });
   }
