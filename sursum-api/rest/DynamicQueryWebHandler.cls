@@ -28,13 +28,16 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         FIELD fieldOrder AS INTEGER
         FIELD fieldName AS CHARACTER
         FIELD dataType AS CHARACTER
-        FIELD ascendingFlag AS LOGICAL.
+        FIELD ascendingFlag AS LOGICAL
+        FIELD fieldHandle AS HANDLE.
 
     DEFINE PRIVATE TEMP-TABLE ttBrowseField NO-UNDO
         FIELD fieldOrder AS INTEGER
         FIELD fieldName AS CHARACTER
         FIELD dataType AS CHARACTER
-        FIELD extentIndex AS INTEGER.
+        FIELD extentIndex AS INTEGER
+        FIELD outputName AS CHARACTER
+        FIELD fieldHandle AS HANDLE.
 
 
     METHOD PUBLIC INTEGER HandleRequest():
@@ -1659,6 +1662,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         CREATE BUFFER hBuffer FOR TABLE cFullTable NO-ERROR.
         IF NOT VALID-HANDLE(hBuffer) THEN
             RETURN THIS-OBJECT:buildError("BROWSE_TABLE_NOT_FOUND", "Tabela nao encontrada", cFullTable).
+        THIS-OBJECT:prepareBrowseHandles(hBuffer).
 
         CREATE QUERY hQuery.
         hQuery:SET-BUFFERS(hBuffer).
@@ -3263,17 +3267,13 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
     METHOD PRIVATE JsonObject buildBrowseRow(INPUT phBuffer AS HANDLE):
         DEFINE VARIABLE joRow AS JsonObject NO-UNDO.
         DEFINE VARIABLE hField AS HANDLE NO-UNDO.
-        DEFINE VARIABLE cOut AS CHARACTER NO-UNDO.
 
         ASSIGN joRow = NEW JsonObject().
         FOR EACH ttBrowseField BY ttBrowseField.fieldOrder:
-            ASSIGN hField = phBuffer:BUFFER-FIELD(ttBrowseField.fieldName) NO-ERROR.
+            ASSIGN hField = ttBrowseField.fieldHandle NO-ERROR.
             IF NOT VALID-HANDLE(hField) THEN
                 NEXT.
-            ASSIGN cOut = ttBrowseField.fieldName.
-            IF ttBrowseField.extentIndex > 0 THEN
-                ASSIGN cOut = cOut + "[" + STRING(ttBrowseField.extentIndex) + "]".
-            THIS-OBJECT:addBrowseValue(joRow, cOut, hField, ttBrowseField.dataType, ttBrowseField.extentIndex).
+            THIS-OBJECT:addBrowseValue(joRow, ttBrowseField.outputName, hField, ttBrowseField.dataType, ttBrowseField.extentIndex).
         END.
         RETURN joRow.
     END METHOD.
@@ -3284,12 +3284,26 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
 
         ASSIGN joCursor = NEW JsonObject().
         FOR EACH ttBrowseKey BY ttBrowseKey.fieldOrder:
-            ASSIGN hField = phBuffer:BUFFER-FIELD(ttBrowseKey.fieldName) NO-ERROR.
+            ASSIGN hField = ttBrowseKey.fieldHandle NO-ERROR.
             IF NOT VALID-HANDLE(hField) THEN
                 NEXT.
             THIS-OBJECT:addBrowseValue(joCursor, ttBrowseKey.fieldName, hField, ttBrowseKey.dataType, 0).
         END.
         RETURN joCursor.
+    END METHOD.
+
+    METHOD PRIVATE VOID prepareBrowseHandles(INPUT phBuffer AS HANDLE):
+        FOR EACH ttBrowseField:
+            ASSIGN ttBrowseField.fieldHandle = phBuffer:BUFFER-FIELD(ttBrowseField.fieldName) NO-ERROR.
+            IF ttBrowseField.extentIndex > 0 THEN
+                ASSIGN ttBrowseField.outputName = ttBrowseField.fieldName + "[" + STRING(ttBrowseField.extentIndex) + "]".
+            ELSE
+                ASSIGN ttBrowseField.outputName = ttBrowseField.fieldName.
+        END.
+
+        FOR EACH ttBrowseKey:
+            ASSIGN ttBrowseKey.fieldHandle = phBuffer:BUFFER-FIELD(ttBrowseKey.fieldName) NO-ERROR.
+        END.
     END METHOD.
 
     METHOD PRIVATE JsonArray buildBrowseKeyFieldsJson(INPUT pcDirection AS CHARACTER):
@@ -3332,48 +3346,74 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DEFINE VARIABLE dtValue AS DATE NO-UNDO.
         DEFINE VARIABLE dtmValue AS DATETIME NO-UNDO.
 
-        IF piExtent > 0 THEN
-            ASSIGN cValue = STRING(phField:BUFFER-VALUE(piExtent)) NO-ERROR.
-        ELSE
-            ASSIGN cValue = STRING(phField:BUFFER-VALUE) NO-ERROR.
-
-        IF cValue = ? THEN DO:
+        IF piExtent > 0 AND phField:BUFFER-VALUE(piExtent) = ? THEN DO:
+            poTarget:AddNull(pcName).
+            RETURN.
+        END.
+        IF piExtent <= 0 AND phField:BUFFER-VALUE = ? THEN DO:
             poTarget:AddNull(pcName).
             RETURN.
         END.
 
         CASE pcType:
             WHEN "integer" THEN DO:
-                ASSIGN iValue = INTEGER(cValue) NO-ERROR.
+                IF piExtent > 0 THEN
+                    ASSIGN iValue = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN iValue = phField:BUFFER-VALUE NO-ERROR.
                 IF ERROR-STATUS:ERROR THEN poTarget:Add(pcName, cValue).
                 ELSE poTarget:Add(pcName, iValue).
             END.
             WHEN "int64" THEN DO:
-                ASSIGN i64Value = INT64(cValue) NO-ERROR.
+                IF piExtent > 0 THEN
+                    ASSIGN i64Value = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN i64Value = phField:BUFFER-VALUE NO-ERROR.
                 IF ERROR-STATUS:ERROR THEN poTarget:Add(pcName, cValue).
                 ELSE poTarget:Add(pcName, i64Value).
             END.
             WHEN "decimal" THEN DO:
-                ASSIGN dValue = DECIMAL(cValue) NO-ERROR.
+                IF piExtent > 0 THEN
+                    ASSIGN dValue = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN dValue = phField:BUFFER-VALUE NO-ERROR.
                 IF ERROR-STATUS:ERROR THEN poTarget:Add(pcName, cValue).
                 ELSE poTarget:Add(pcName, dValue).
             END.
             WHEN "logical" THEN DO:
-                ASSIGN lValue = LOGICAL(cValue) NO-ERROR.
+                IF piExtent > 0 THEN
+                    ASSIGN lValue = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN lValue = phField:BUFFER-VALUE NO-ERROR.
                 IF ERROR-STATUS:ERROR THEN poTarget:Add(pcName, cValue).
                 ELSE poTarget:Add(pcName, lValue).
             END.
             WHEN "date" THEN DO:
-                ASSIGN dtValue = DATE(cValue) NO-ERROR.
+                IF piExtent > 0 THEN
+                    ASSIGN dtValue = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN dtValue = phField:BUFFER-VALUE NO-ERROR.
                 IF ERROR-STATUS:ERROR THEN poTarget:Add(pcName, cValue).
                 ELSE poTarget:Add(pcName, ISO-DATE(dtValue)).
             END.
             WHEN "datetime" THEN DO:
-                ASSIGN dtmValue = DATETIME(cValue) NO-ERROR.
+                IF piExtent > 0 THEN
+                    ASSIGN dtmValue = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN dtmValue = phField:BUFFER-VALUE NO-ERROR.
                 IF ERROR-STATUS:ERROR THEN poTarget:Add(pcName, cValue).
                 ELSE poTarget:Add(pcName, STRING(dtmValue)).
             END.
-            OTHERWISE poTarget:Add(pcName, THIS-OBJECT:safeJsonChar(cValue)).
+            OTHERWISE DO:
+                IF piExtent > 0 THEN
+                    ASSIGN cValue = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN cValue = phField:BUFFER-VALUE NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN
+                    poTarget:Add(pcName, "").
+                ELSE
+                    poTarget:Add(pcName, cValue).
+            END.
         END CASE.
     END METHOD.
 
@@ -3979,7 +4019,6 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
 
         FIX-CODEPAGE(lcJson) = "UTF-8".
         poJson:Write(lcJson, TRUE).
-        ASSIGN lcJson = THIS-OBJECT:escapeJsonForWeb(lcJson).
 
         ASSIGN oResponse = NEW WebResponse()
                oWriter = NEW WebResponseWriter(oResponse).
