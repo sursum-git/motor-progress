@@ -226,10 +226,16 @@ function compactDetail(string $value, int $limit = 1800): string
 
 function extractViewAsInclude(string $viewAs): string
 {
-    if (!preg_match('/\{\s*([^}\s]+\.i)\s+[^}]*\}/i', $viewAs, $match)) {
+    if (!preg_match('/\{\s*([^}]*?\.i(?:\s+[^}]*)?)\s*\}/i', $viewAs, $match)) {
         return '';
     }
-    return str_replace('\\', '/', strtolower(trim($match[1]))) . ' 3';
+    $include = preg_replace('/\s+/', ' ', trim($match[1])) ?? trim($match[1]);
+    $parts = preg_split('/\s+/', $include) ?: [];
+    $path = (string) ($parts[0] ?? '');
+    if ($path === '') {
+        return '';
+    }
+    return str_replace('\\', '/', strtolower($path)) . ' 3';
 }
 
 function normalizeDirectListExpression(string $viewAs): string
@@ -276,6 +282,7 @@ function parseOptions(string $list, bool $singleItems = false): array
     }
     return $options;
 }
+
 
 function cleanToken($value): string
 {

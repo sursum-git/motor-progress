@@ -86,3 +86,24 @@ test('table browser find metadata loads fields indexes view-as and refreshes joi
   await expect(page.locator('#joinsGrid')).toContainText('Order');
   await expect(page.locator('#statusBox')).toContainText('Joins OF atualizados');
 });
+
+test('table browser data tab keeps rows when order is inverted and formats dates as pt-BR', async ({ page, request }) => {
+  await page.goto('/table-browser.html');
+  await page.locator('#tableName').fill('Customer');
+  await page.locator('#findTableBtn').click();
+  await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
+
+  await page.locator('#metadataTabs li').filter({ hasText: 'Dados' }).click();
+  await page.locator('#browseFirstBtn').click();
+  await expect(page.locator('#dataGrid')).toContainText('Cliente Asc');
+  await expect(page.locator('#dataGrid')).toContainText('05/01/2026');
+
+  await page.locator('#browseInvertBtn').click();
+  await expect(page.locator('#dataGrid')).toContainText('Cliente Desc');
+  await expect(page.locator('#dataGrid')).toContainText('29/07/2026');
+  await expect(page.locator('#browseKeyInfo')).toContainText('CustNum DESC');
+
+  const payload = await (await request.get('/__requests')).json();
+  const browseRequests = payload.requests.filter((item) => item.path.endsWith('/table-browse'));
+  expect(browseRequests.map((item) => item.body.direction)).toEqual(['ASC', 'DESC']);
+});

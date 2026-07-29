@@ -1483,19 +1483,81 @@
     if (!grid) return;
 
     const rows = Array.isArray(response.data) ? response.data : [];
-    const fields = Array.isArray(response.fields) && response.fields.length
-      ? response.fields.map((item) => item.name).filter(Boolean)
+    const fieldDefs = Array.isArray(response.fields) && response.fields.length
+      ? response.fields.filter((item) => item && item.name)
       : Object.keys(rows[0] || {});
-    const columns = fields.map((field) => ({
-      field,
-      title: field,
-      width: 160
-    }));
+    const fields = fieldDefs.map((item) => typeof item === "string" ? item : item.name);
+    const fieldTypes = fieldDefs.reduce((acc, item) => {
+      if (item && typeof item === "object" && item.name) {
+        acc[item.name] = String(item.type || "").toLowerCase();
+      }
+      return acc;
+    }, {});
+    const formattedRows = rows.map((row) => formatBrowseRow(row, fieldTypes));
+    const columns = fields.map((field) => browseColumn(field, fieldTypes[field]));
 
     grid.setOptions({ columns });
-    grid.dataSource.data(rows);
+    grid.dataSource.data(formattedRows);
     renderBrowseSummary(response);
     updateBrowseState();
+  }
+
+  function formatBrowseRow(row, fieldTypes) {
+    const out = Object.assign({}, row);
+    Object.keys(fieldTypes).forEach((field) => {
+      if (fieldTypes[field] === "date" || fieldTypes[field] === "datetime" || fieldTypes[field] === "datetime-tz") {
+        out[field] = parseBrowseDateValue(row[field], fieldTypes[field]);
+      }
+    });
+    return out;
+  }
+
+  function browseColumn(field, type) {
+    const column = { field, title: field, width: 160 };
+    if (type === "date") {
+      column.format = "{0:dd/MM/yyyy}";
+    } else if (type === "datetime" || type === "datetime-tz") {
+      column.format = "{0:dd/MM/yyyy HH:mm:ss}";
+      column.width = 190;
+    }
+    return column;
+  }
+
+  function parseBrowseDateValue(value, type) {
+    if (value === null || value === undefined || value === "") return value;
+    if (value instanceof Date) return value;
+    const text = String(value).trim();
+    let match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if (match) {
+      return new Date(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3]),
+        Number(match[4] || 0),
+        Number(match[5] || 0),
+        Number(match[6] || 0)
+      );
+    }
+    match = text.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if (match) {
+      const first = Number(match[1]);
+      const second = Number(match[2]);
+      const month = first > 12 ? second : first;
+      const day = first > 12 ? first : second;
+      return new Date(
+        Number(match[3]),
+        month - 1,
+        day,
+        Number(match[4] || 0),
+        Number(match[5] || 0),
+        Number(match[6] || 0)
+      );
+    }
+    if (type === "datetime-tz") {
+      const parsed = new Date(text);
+      if (!Number.isNaN(parsed.getTime())) return parsed;
+    }
+    return value;
   }
 
   function renderBrowseSummary(response) {

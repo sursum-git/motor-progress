@@ -3017,11 +3017,11 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
 
     METHOD PRIVATE CHARACTER buildBrowseOrder(INPUT pcDatabase AS CHARACTER, INPUT pcTable AS CHARACTER, INPUT pcDirection AS CHARACTER):
         DEFINE VARIABLE cOrder AS CHARACTER NO-UNDO.
-        DEFINE VARIABLE cDesc AS CHARACTER NO-UNDO.
 
-        ASSIGN cDesc = IF pcDirection = "DESC" THEN " DESCENDING" ELSE "".
         FOR EACH ttBrowseKey BY ttBrowseKey.fieldOrder:
-            ASSIGN cOrder = cOrder + " BY" + cDesc + " " + pcDatabase + "." + pcTable + "." + ttBrowseKey.fieldName.
+            ASSIGN cOrder = cOrder + " BY " + pcDatabase + "." + pcTable + "." + ttBrowseKey.fieldName.
+            IF pcDirection = "DESC" THEN
+                ASSIGN cOrder = cOrder + " DESCENDING".
         END.
         RETURN cOrder.
     END METHOD.

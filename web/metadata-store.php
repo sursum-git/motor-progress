@@ -577,10 +577,11 @@ function normalizeDirectViewAsList(string $viewAs): string
 
 function extractViewAsInclude(string $viewAs): string
 {
-    if (!preg_match('/\{\s*([^}\s]+\.i)\s+[^}]*\}/i', $viewAs, $match)) {
+    if (!preg_match('/\{\s*([^}]*?\.i(?:\s+[^}]*)?)\s*\}/i', $viewAs, $match)) {
         return '';
     }
-    return str_replace('\\', '/', strtolower(text($match[1]))) . ' 3';
+    $include = preg_replace('/\s+/', ' ', text($match[1])) ?? text($match[1]);
+    return str_replace('\\', '/', strtolower($include));
 }
 
 function isSingleViewAsList(string $viewAs): bool

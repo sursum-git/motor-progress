@@ -10,6 +10,10 @@ $pdo = new PDO('sqlite::memory:');
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 initializeMetadataSchema($pdo);
 
+assertSame('adinc/i03ad209.i 2', extractViewAsInclude('view-as radio-set radio-buttons {adinc/i03ad209.i 2}'), 'include deve preservar argumento 2');
+assertSame('adinc/i01ad270.i 02', extractViewAsInclude('view-as radio-set radio-buttons {adinc/i01ad270.i 02}'), 'include deve preservar argumento 02');
+assertSame('adinc/i03ad209.i 2', extractViewAsInclude('view-as radio-set radio-buttons {adinc\\i03ad209.i 2}'), 'include deve normalizar barras sem alterar argumento');
+
 saveViewAsRows($pdo, ['environmentId' => '', 'companyId' => '', 'database' => 'ems2cad', 'table' => 'acum-cb'], [[
     'field' => 'modalidade',
     'viewAs' => 'view-as radio-set radio-buttons {adinc/i03ad209.i 2}',

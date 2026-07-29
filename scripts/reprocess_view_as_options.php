@@ -12,10 +12,12 @@ $dbPath = (string) ($options['db'] ?? ($root . '/web/sursum-conf/sursum.sqlite')
 $companyCode = (string) ($options['company-code'] ?? '5');
 $environmentId = (string) ($options['environment-id'] ?? '');
 $batchSize = max(1, (int) ($options['batch-size'] ?? 50));
+$httpTimeout = max(1, (int) ($options['timeout'] ?? 30));
 $onlyMissing = array_key_exists('only-missing', $options);
 $limit = max(0, (int) ($options['limit'] ?? 0));
 $directOnly = array_key_exists('direct-only', $options);
 $includeOnly = array_key_exists('include-only', $options);
+$GLOBALS['sursumViewAsHttpTimeout'] = $httpTimeout;
 if ($directOnly && $includeOnly) {
     throw new InvalidArgumentException('Use apenas uma das opcoes: --direct-only ou --include-only.');
 }
@@ -206,7 +208,7 @@ function postJson(string $url, array $payload): array
             'method' => 'POST',
             'header' => "Content-Type: application/json; charset=utf-8\r\nAccept: application/json\r\n",
             'content' => $body,
-            'timeout' => 120,
+            'timeout' => (int) ($GLOBALS['sursumViewAsHttpTimeout'] ?? 30),
             'ignore_errors' => true,
         ],
         'ssl' => [
@@ -325,10 +327,16 @@ function normalizeOptions($options): array
 
 function extractViewAsInclude(string $viewAs): string
 {
-    if (!preg_match('/\{\s*([^}\s]+\.i)\s+[^}]*\}/i', $viewAs, $match)) {
+    if (!preg_match('/\{\s*([^}]*?\.i(?:\s+[^}]*)?)\s*\}/i', $viewAs, $match)) {
         return '';
     }
-    return str_replace('\\', '/', strtolower(trim($match[1]))) . ' 3';
+    $include = preg_replace('/\s+/', ' ', trim($match[1])) ?? trim($match[1]);
+    $parts = preg_split('/\s+/', $include) ?: [];
+    $path = (string) ($parts[0] ?? '');
+    if ($path === '') {
+        return '';
+    }
+    return str_replace('\\', '/', strtolower($path)) . ' 3';
 }
 
 function normalizeDirectListExpression(string $viewAs): string

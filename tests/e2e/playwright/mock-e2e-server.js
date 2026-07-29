@@ -261,6 +261,35 @@ async function handleApi(req, res, pathname) {
     }] });
   }
 
+  if (pathname.endsWith('/table-browse') && req.method === 'POST') {
+    let body;
+    try { body = await readBody(req); } catch (err) { return sendJson(res, 200, error('INVALID_JSON', 'JSON invalido', err.message)); }
+    requests.push({ method: 'POST', path: pathname, body });
+    const direction = String(body.direction || 'ASC').toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+    const row = direction === 'DESC'
+      ? { CustNum: 99, Name: 'Cliente Desc', BirthDate: '2026-07-29', LastUpdate: '2026-07-29T14:35:20' }
+      : { CustNum: 1, Name: 'Cliente Asc', BirthDate: '2026-01-05', LastUpdate: '2026-01-05T08:10:11' };
+    return sendJson(res, 200, {
+      success: true,
+      database: body.database || 'DICTDB',
+      table: body.table || 'Customer',
+      direction,
+      pageSize: body.pageSize || 50,
+      recordsReturned: 1,
+      hasMore: false,
+      keyFields: [{ name: 'CustNum', type: 'integer', ascending: direction !== 'DESC' }],
+      fields: [
+        { name: 'CustNum', type: 'integer' },
+        { name: 'Name', type: 'character' },
+        { name: 'BirthDate', type: 'date' },
+        { name: 'LastUpdate', type: 'datetime' }
+      ],
+      data: [row],
+      nextCursor: { CustNum: row.CustNum },
+      strategy: 'KEYSET_CURSOR'
+    });
+  }
+
   if (pathname.endsWith('/query-store') && req.method === 'POST') {
     let body;
     try { body = await readBody(req); } catch (err) { return sendJson(res, 200, error('INVALID_JSON', 'JSON invalido', err.message)); }
