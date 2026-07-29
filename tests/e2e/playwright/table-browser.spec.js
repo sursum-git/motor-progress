@@ -107,3 +107,30 @@ test('table browser data tab keeps rows when order is inverted and formats dates
   const browseRequests = payload.requests.filter((item) => item.path.endsWith('/table-browse'));
   expect(browseRequests.map((item) => item.body.direction)).toEqual(['ASC', 'DESC']);
 });
+
+test('table browser data tab sends filters configured in maximized filter window', async ({ page, request }) => {
+  await page.goto('/table-browser.html');
+  await page.locator('#tableName').fill('Customer');
+  await page.locator('#findTableBtn').click();
+  await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
+
+  await page.locator('#metadataTabs li').filter({ hasText: 'Dados' }).click();
+  await page.locator('#openBrowseFilterBtn').click();
+  await expect(page.locator('.k-window-title').filter({ hasText: 'Filtros da tabela corrente' })).toBeVisible();
+
+  await page.evaluate(() => {
+    $("#filterField").data("kendoDropDownList").value("Name");
+    $("#filterOperator").data("kendoDropDownList").value("contains");
+    $("#filterValue").val("Cliente");
+    $("#filterValue").trigger("keyup");
+  });
+  await page.locator('#updateBrowseFilter').click();
+
+  await expect(page.locator('#browseFilterGrid')).toContainText('Name');
+  await expect(page.locator('#browseFilterGrid')).toContainText('Contem');
+  await expect(page.locator('#browseFilterInfo')).toContainText('Filtros: 1 ativo');
+
+  const payload = await (await request.get('/__requests')).json();
+  const browseRequest = payload.requests.find((item) => item.path.endsWith('/table-browse'));
+  expect(browseRequest.body.filters).toEqual([{ field: 'Name', operator: 'contains', value: 'Cliente' }]);
+});

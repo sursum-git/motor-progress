@@ -1589,6 +1589,9 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DEFINE VARIABLE cDirection AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cPrepare AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cWhere AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cCursorWhere AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cFilterWhere AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cFilterError AS CHARACTER NO-UNDO.
         DEFINE VARIABLE iPageSize AS INTEGER NO-UNDO.
         DEFINE VARIABLE iRead AS INTEGER NO-UNDO.
         DEFINE VARIABLE lHasMore AS LOGICAL NO-UNDO.
@@ -1641,9 +1644,16 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
 
         IF joBody:Has("cursor") AND NOT joBody:IsNull("cursor") THEN
             ASSIGN joCursor = joBody:GetJsonObject("cursor") NO-ERROR.
-        ASSIGN cWhere = THIS-OBJECT:buildBrowseCursorWhere(cDatabase, cTable, joCursor, cDirection).
-        IF cWhere = ? THEN
+        ASSIGN cCursorWhere = THIS-OBJECT:buildBrowseCursorWhere(cDatabase, cTable, joCursor, cDirection).
+        IF cCursorWhere = ? THEN
             RETURN THIS-OBJECT:buildError("BROWSE_CURSOR_INVALID", "Cursor invalido para a chave selecionada", cTable).
+        ASSIGN cFilterWhere = THIS-OBJECT:buildBrowseFiltersWhere(cDatabase, cTable, joBody, OUTPUT cFilterError).
+        IF cFilterWhere = ? THEN
+            RETURN THIS-OBJECT:buildError("BROWSE_FILTER_INVALID", "Filtro invalido para navegacao", cFilterError).
+        IF cFilterWhere <> "" AND cCursorWhere <> "" THEN
+            ASSIGN cWhere = "(" + cFilterWhere + ") AND (" + cCursorWhere + ")".
+        ELSE
+            ASSIGN cWhere = IF cFilterWhere <> "" THEN cFilterWhere ELSE cCursorWhere.
 
         ASSIGN cFullTable = cDatabase + "." + cTable.
         CREATE BUFFER hBuffer FOR TABLE cFullTable NO-ERROR.
@@ -3013,6 +3023,230 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         IF cWhere <> "" THEN
             ASSIGN cWhere = "(" + cWhere + ")".
         RETURN cWhere.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER buildBrowseFiltersWhere(INPUT pcDatabase AS CHARACTER, INPUT pcTable AS CHARACTER, INPUT poBody AS JsonObject, OUTPUT pcError AS CHARACTER):
+        DEFINE VARIABLE jaFilters AS JsonArray NO-UNDO.
+        DEFINE VARIABLE joFilter AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cWhere AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cPart AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cField AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cOperator AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cValue AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cType AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iFilter AS INTEGER NO-UNDO.
+
+        ASSIGN pcError = "".
+        IF NOT VALID-OBJECT(poBody) OR NOT poBody:Has("filters") OR poBody:IsNull("filters") THEN
+            RETURN "".
+
+        ASSIGN jaFilters = poBody:GetJsonArray("filters") NO-ERROR.
+        IF NOT VALID-OBJECT(jaFilters) THEN
+            RETURN "".
+
+        DO iFilter = 1 TO jaFilters:Length:
+            ASSIGN joFilter = jaFilters:GetJsonObject(iFilter) NO-ERROR.
+            IF NOT VALID-OBJECT(joFilter) THEN
+                NEXT.
+
+            ASSIGN cField = THIS-OBJECT:getJsonChar(joFilter, "field")
+                   cOperator = LC(THIS-OBJECT:getJsonChar(joFilter, "operator"))
+                   cValue = THIS-OBJECT:getJsonChar(joFilter, "value").
+            IF cField = "" THEN
+                ASSIGN cField = THIS-OBJECT:getJsonChar(joFilter, "name").
+            IF cField = "" OR NOT THIS-OBJECT:isRelationIdentifier(cField) THEN DO:
+                ASSIGN pcError = "Campo invalido: " + cField.
+                RETURN ?.
+            END.
+            IF cOperator = "" THEN
+                ASSIGN cOperator = "=".
+            ASSIGN cType = THIS-OBJECT:getBrowseFieldDataType(pcDatabase, pcTable, cField).
+            IF cType = "" THEN DO:
+                ASSIGN pcError = "Campo nao encontrado: " + cField.
+                RETURN ?.
+            END.
+            ASSIGN cPart = THIS-OBJECT:buildBrowseFilterExpression(pcDatabase, pcTable, cField, cType, cOperator, cValue, OUTPUT pcError).
+            IF cPart = ? THEN
+                RETURN ?.
+            IF cPart = "" THEN
+                NEXT.
+            IF cWhere = "" THEN
+                ASSIGN cWhere = cPart.
+            ELSE
+                ASSIGN cWhere = cWhere + " AND " + cPart.
+        END.
+
+        RETURN cWhere.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getBrowseFieldDataType(INPUT pcDatabase AS CHARACTER, INPUT pcTable AS CHARACTER, INPUT pcField AS CHARACTER):
+        DEFINE VARIABLE hFile AS HANDLE NO-UNDO.
+        DEFINE VARIABLE hField AS HANDLE NO-UNDO.
+        DEFINE VARIABLE cType AS CHARACTER NO-UNDO.
+
+        CREATE BUFFER hFile FOR TABLE pcDatabase + "._File" NO-ERROR.
+        CREATE BUFFER hField FOR TABLE pcDatabase + "._Field" NO-ERROR.
+        IF NOT VALID-HANDLE(hFile) OR NOT VALID-HANDLE(hField) THEN DO:
+            IF VALID-HANDLE(hFile) THEN DELETE OBJECT hFile NO-ERROR.
+            IF VALID-HANDLE(hField) THEN DELETE OBJECT hField NO-ERROR.
+            RETURN "".
+        END.
+
+        hFile:FIND-FIRST("WHERE _File-Name = " + QUOTER(pcTable), NO-LOCK) NO-ERROR.
+        IF hFile:AVAILABLE THEN DO:
+            hField:FIND-FIRST("WHERE _File-Recid = " + STRING(hFile:RECID) + " AND _Field-Name = " + QUOTER(pcField), NO-LOCK) NO-ERROR.
+            IF hField:AVAILABLE THEN
+                ASSIGN cType = THIS-OBJECT:normalizeBrowseDataType(STRING(hField:BUFFER-FIELD("_Data-Type"):BUFFER-VALUE)).
+        END.
+
+        DELETE OBJECT hFile NO-ERROR.
+        DELETE OBJECT hField NO-ERROR.
+        RETURN cType.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER buildBrowseFilterExpression(
+        INPUT pcDatabase AS CHARACTER,
+        INPUT pcTable AS CHARACTER,
+        INPUT pcField AS CHARACTER,
+        INPUT pcType AS CHARACTER,
+        INPUT pcOperator AS CHARACTER,
+        INPUT pcValue AS CHARACTER,
+        OUTPUT pcError AS CHARACTER):
+        DEFINE VARIABLE cColumn AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cOperator AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cLiteral AS CHARACTER NO-UNDO.
+
+        ASSIGN pcError = ""
+               cOperator = LC(TRIM(pcOperator))
+               cColumn = pcDatabase + "." + pcTable + "." + pcField.
+
+        CASE cOperator:
+            WHEN "=" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " = " + cLiteral.
+            END.
+            WHEN "eq" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " = " + cLiteral.
+            END.
+            WHEN "<>" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " <> " + cLiteral.
+            END.
+            WHEN "ne" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " <> " + cLiteral.
+            END.
+            WHEN ">" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " > " + cLiteral.
+            END.
+            WHEN "gt" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " > " + cLiteral.
+            END.
+            WHEN ">=" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " >= " + cLiteral.
+            END.
+            WHEN "gte" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " >= " + cLiteral.
+            END.
+            WHEN "<" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " < " + cLiteral.
+            END.
+            WHEN "lt" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " < " + cLiteral.
+            END.
+            WHEN "<=" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " <= " + cLiteral.
+            END.
+            WHEN "lte" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " <= " + cLiteral.
+            END.
+            WHEN "contains" THEN DO:
+                IF pcType <> "character" THEN DO:
+                    ASSIGN pcError = "Operador contem requer campo character: " + pcField.
+                    RETURN ?.
+                END.
+                RETURN "INDEX(" + cColumn + ", " + QUOTER(pcValue) + ") > 0".
+            END.
+            WHEN "begins" THEN DO:
+                IF pcType <> "character" THEN DO:
+                    ASSIGN pcError = "Operador comeca com requer campo character: " + pcField.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " BEGINS " + QUOTER(pcValue).
+            END.
+        END CASE.
+
+        ASSIGN pcError = "Operador nao suportado: " + pcOperator.
+        RETURN ?.
     END METHOD.
 
     METHOD PRIVATE CHARACTER buildBrowseOrder(INPUT pcDatabase AS CHARACTER, INPUT pcTable AS CHARACTER, INPUT pcDirection AS CHARACTER):

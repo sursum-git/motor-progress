@@ -25,10 +25,12 @@
     currentDatabase: "",
     selectedTableRows: [],
     browseCursor: null,
-    browseHasMore: false
+    browseHasMore: false,
+    browseFilters: []
   };
   let addCompanyWindow = null;
   let addCompanyValidator = null;
+  let browseFilterWindow = null;
   let endpointFileHandle = null;
   let uiReady = false;
 
@@ -250,7 +252,63 @@
       loadBrowsePage(true);
     });
     $("#browseInvertBtn").on("click", invertBrowseDirection);
+    $("#openBrowseFilterBtn").on("click", openBrowseFilterWindow);
+    initBrowseFilterWindow();
     updateBrowseState();
+  }
+
+  function initBrowseFilterWindow() {
+    browseFilterWindow = $("#browseFilterWindow").kendoWindow({
+      title: "Filtros da tabela corrente",
+      modal: true,
+      visible: false,
+      actions: ["Close"],
+      open: function () {
+        resizeBrowseFilterWindow();
+      },
+      activate: function () {
+        resizeBrowseFilterWindow();
+      }
+    }).data("kendoWindow");
+
+    $("#filterField").kendoDropDownList({
+      dataTextField: "text",
+      dataValueField: "value",
+      optionLabel: "Selecione",
+      dataSource: []
+    });
+    $("#filterOperator").kendoDropDownList({
+      dataTextField: "text",
+      dataValueField: "value",
+      optionLabel: "Selecione",
+      dataSource: browseFilterOperators()
+    });
+    $("#filterValue").kendoTextBox();
+    $("#filterField,#filterOperator,#filterValue").on("change keyup", updateBrowseFilterButtonState);
+    $("#updateBrowseFilter").on("click", updateBrowseFilter);
+    $("#clearBrowseFilters").on("click", clearBrowseFilters);
+
+    $("#browseFilterGrid").kendoGrid({
+      dataSource: [],
+      height: 420,
+      sortable: true,
+      noRecords: { template: "Nenhum filtro adicionado." },
+      columns: [
+        { field: "field", title: "Campo", width: 220 },
+        { field: "operatorText", title: "Operador", width: 170 },
+        { field: "value", title: "Valor" },
+        {
+          title: "",
+          width: 90,
+          template: '<button type="button" class="remove-browse-filter" data-filter-id="#: id #">Remover</button>'
+        }
+      ]
+    });
+    $("#browseFilterGrid").on("click", ".remove-browse-filter", function () {
+      removeBrowseFilter($(this).attr("data-filter-id"));
+    });
+    updateBrowseFilterButtonState();
+    renderBrowseFilterGrid();
   }
 
   function initSelectionWindow() {
@@ -1081,6 +1139,9 @@
         state.indexes = indexesFromMetadataResponse(response, baseFields);
         state.browseCursor = null;
         state.browseHasMore = false;
+        state.browseFilters = [];
+        renderBrowseFilterSummary();
+        renderBrowseFilterGrid();
 
         loadViewAsOverrides(table, state.currentDatabase)
           .then(function (overrides) {
@@ -1373,6 +1434,153 @@
     grid.dataSource.data(rows);
   }
 
+  function browseFilterOperators() {
+    return [
+      { text: "Igual", value: "=" },
+      { text: "Diferente", value: "<>" },
+      { text: "Maior que", value: ">" },
+      { text: "Maior ou igual", value: ">=" },
+      { text: "Menor que", value: "<" },
+      { text: "Menor ou igual", value: "<=" },
+      { text: "Contem", value: "contains" },
+      { text: "Comeca com", value: "begins" }
+    ];
+  }
+
+  function browseFilterOperatorText(value) {
+    const found = browseFilterOperators().find((item) => item.value === value);
+    return found ? found.text : value;
+  }
+
+  function openBrowseFilterWindow() {
+    if (!state.currentTable || !state.currentDatabase) {
+      setStatus("Carregue uma tabela antes de configurar filtros.", "error");
+      return;
+    }
+    refreshBrowseFilterFieldSelector();
+    renderBrowseFilterGrid();
+    updateBrowseFilterButtonState();
+    if (browseFilterWindow) {
+      browseFilterWindow.center().open();
+      browseFilterWindow.maximize();
+      resizeBrowseFilterWindow();
+    }
+  }
+
+  function resizeBrowseFilterWindow() {
+    const grid = $("#browseFilterGrid").data("kendoGrid");
+    if (!grid) return;
+    const height = Math.max(260, $(window).height() - $(".browse-filter-editor").outerHeight(true) - 110);
+    grid.setOptions({ height });
+  }
+
+  function refreshBrowseFilterFieldSelector() {
+    const combo = $("#filterField").data("kendoDropDownList");
+    if (!combo) return;
+    const fields = (state.fields || [])
+      .map((field) => field && field.name ? { text: field.name, value: field.name, type: field.type || "" } : null)
+      .filter(Boolean);
+    combo.setDataSource(new kendo.data.DataSource({ data: fields }));
+  }
+
+  function updateBrowseFilterButtonState() {
+    const button = $("#updateBrowseFilter").data("kendoButton");
+    const complete = !!filterFieldValue() && !!filterOperatorValue() && filterValueText() !== "";
+    if (button) button.enable(complete);
+  }
+
+  function filterFieldValue() {
+    const combo = $("#filterField").data("kendoDropDownList");
+    return combo ? combo.value() : "";
+  }
+
+  function filterOperatorValue() {
+    const combo = $("#filterOperator").data("kendoDropDownList");
+    return combo ? combo.value() : "";
+  }
+
+  function filterValueText() {
+    return String($("#filterValue").val() || "").trim();
+  }
+
+  function updateBrowseFilter() {
+    const field = filterFieldValue();
+    const operator = filterOperatorValue();
+    const value = filterValueText();
+    if (!field || !operator || value === "") {
+      setStatus("Informe campo, operador e valor para atualizar o filtro.", "error");
+      updateBrowseFilterButtonState();
+      return;
+    }
+    const id = `${field}|${operator}|${value}`.toLowerCase();
+    const next = state.browseFilters.filter((item) => item.id !== id);
+    next.push({
+      id,
+      field,
+      operator,
+      operatorText: browseFilterOperatorText(operator),
+      value
+    });
+    state.browseFilters = next;
+    state.browseCursor = null;
+    state.browseHasMore = false;
+    renderBrowseFilterGrid();
+    renderBrowseFilterSummary();
+    clearBrowseFilterInputs();
+    loadBrowsePage(false);
+  }
+
+  function clearBrowseFilterInputs() {
+    const field = $("#filterField").data("kendoDropDownList");
+    const operator = $("#filterOperator").data("kendoDropDownList");
+    if (field) field.value("");
+    if (operator) operator.value("");
+    $("#filterValue").val("");
+    updateBrowseFilterButtonState();
+  }
+
+  function removeBrowseFilter(id) {
+    state.browseFilters = state.browseFilters.filter((item) => item.id !== id);
+    state.browseCursor = null;
+    state.browseHasMore = false;
+    renderBrowseFilterGrid();
+    renderBrowseFilterSummary();
+    loadBrowsePage(false);
+  }
+
+  function clearBrowseFilters() {
+    state.browseFilters = [];
+    state.browseCursor = null;
+    state.browseHasMore = false;
+    renderBrowseFilterGrid();
+    renderBrowseFilterSummary();
+    clearBrowseFilterInputs();
+    clearBrowseGrid();
+    if (state.currentTable && state.currentDatabase) {
+      loadBrowsePage(false);
+    }
+  }
+
+  function renderBrowseFilterGrid() {
+    const grid = $("#browseFilterGrid").data("kendoGrid");
+    if (grid) {
+      grid.dataSource.data(state.browseFilters.slice());
+    }
+  }
+
+  function renderBrowseFilterSummary() {
+    const count = state.browseFilters.length;
+    $("#browseFilterInfo").text(count ? `Filtros: ${count} ativo(s).` : "Filtros: nenhum.");
+  }
+
+  function browseFiltersPayload() {
+    return state.browseFilters.map((item) => ({
+      field: item.field,
+      operator: item.operator,
+      value: item.value
+    }));
+  }
+
   function refreshBrowseFieldSelector() {
     const multi = $("#browseFields").data("kendoMultiSelect");
     if (!multi) return;
@@ -1450,7 +1658,8 @@
       table: state.currentTable,
       pageSize: browsePageSize(),
       direction: browseDirection(),
-      fields: selectedBrowseFields()
+      fields: selectedBrowseFields(),
+      filters: browseFiltersPayload()
     };
     if (useCursor) {
       payload.cursor = state.browseCursor;
@@ -1576,6 +1785,7 @@
       grid.dataSource.data([]);
     }
     $("#browseKeyInfo").text("Chave: -");
+    renderBrowseFilterSummary();
     $("#browseMoreInfo").text("Sem dados carregados.");
     updateBrowseState();
   }
@@ -1585,8 +1795,10 @@
     const nextButton = $("#browseNextBtn").data("kendoButton");
     const firstButton = $("#browseFirstBtn").data("kendoButton");
     const invertButton = $("#browseInvertBtn").data("kendoButton");
+    const filterButton = $("#openBrowseFilterBtn").data("kendoButton");
     if (firstButton) firstButton.enable(hasTable);
     if (invertButton) invertButton.enable(hasTable);
+    if (filterButton) filterButton.enable(hasTable);
     if (nextButton) nextButton.enable(hasTable && !!state.browseCursor && state.browseHasMore);
   }
 
@@ -1659,10 +1871,12 @@
     state.joins = [];
     state.browseCursor = null;
     state.browseHasMore = false;
+    state.browseFilters = [];
 
     $("#fieldsGrid").data("kendoGrid").dataSource.data([]);
     $("#indexesGrid").data("kendoGrid").dataSource.data([]);
     $("#joinsGrid").data("kendoGrid").dataSource.data([]);
+    renderBrowseFilterGrid();
     refreshBrowseFieldSelector();
     clearBrowseGrid();
     $("#resultSummary").text("Selecione banco e tabela para carregar os metadados.");

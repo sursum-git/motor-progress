@@ -99,6 +99,7 @@
                 <select id="browseFields" multiple></select>
               </div>
               <div class="action-row tight browse-actions">
+                <button id="openBrowseFilterBtn">Filtrar</button>
                 <button id="browseFirstBtn">Carregar primeiros</button>
                 <button id="browseNextBtn">Próximos</button>
                 <button id="browseInvertBtn">Inverter ordem</button>
@@ -106,6 +107,7 @@
             </div>
             <div class="browse-summary">
               <span id="browseKeyInfo">Chave: -</span>
+              <span id="browseFilterInfo">Filtros: nenhum.</span>
               <span id="browseMoreInfo">Sem dados carregados.</span>
             </div>
             <div id="dataGrid"></div>
@@ -128,6 +130,28 @@
       <button id="applyTableSelection">Selecionar</button>
       <button id="cancelTableSelection">Cancelar</button>
     </div>
+  </div>
+
+  <div id="browseFilterWindow" style="display:none">
+    <div class="browse-filter-editor">
+      <div class="endpoint-field">
+        <label for="filterField">Campo</label>
+        <input id="filterField">
+      </div>
+      <div class="endpoint-field">
+        <label for="filterOperator">Operador</label>
+        <input id="filterOperator">
+      </div>
+      <div class="endpoint-field">
+        <label for="filterValue">Valor</label>
+        <input id="filterValue">
+      </div>
+      <div class="action-row tight browse-filter-actions">
+        <button id="updateBrowseFilter">Atualizar</button>
+        <button id="clearBrowseFilters">Limpar filtros</button>
+      </div>
+    </div>
+    <div id="browseFilterGrid"></div>
   </div>
 
   <div id="addCompanyWindow" style="display:none">
