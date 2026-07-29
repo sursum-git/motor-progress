@@ -14,6 +14,9 @@ assertContains($script, 'updateViewAsSummary', 'resumo deve diferenciar registro
 assertContains($script, 'metadata-grid-loading', 'grid deve alternar classe de carregamento');
 assertContains($style, '.metadata-grid-loading::after', 'CSS deve exibir indicador visual de carregamento');
 assertContains($style, 'metadata-grid-spin', 'indicador visual deve ter animacao');
+assertContains($script, 'viewAsRequestTableNames', 'view-as deve enviar lista de tabelas para filtrar legados no backend');
+assertContains($script, 'action: "list"', 'view-as deve usar POST quando enviar muitas tabelas');
+assertNotContains($script, "loadTables();\n        loadViewAsRows();", 'troca de banco nao deve carregar view-as antes de terminar a lista de tabelas');
 
 echo "View-as maintenance contract OK\n";
 
@@ -21,5 +24,12 @@ function assertContains(string $content, string $needle, string $label): void
 {
     if (strpos($content, $needle) === false) {
         throw new RuntimeException($label . ': trecho nao encontrado: ' . $needle);
+    }
+}
+
+function assertNotContains(string $content, string $needle, string $label): void
+{
+    if (strpos($content, $needle) !== false) {
+        throw new RuntimeException($label . ': trecho ainda presente: ' . $needle);
     }
 }

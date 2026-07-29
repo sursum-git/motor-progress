@@ -178,6 +178,10 @@ function handleViewAsPost(PDO $pdo, array $payload): array
         return ['success' => true, 'data' => loadViewAsRows($pdo, $scope)];
     }
 
+    if ($action === 'list') {
+        return ['success' => true, 'data' => loadViewAsRows($pdo, $scope)];
+    }
+
     if ($scope['table'] === '') {
         throw new InvalidArgumentException('Tabela obrigatoria.');
     }
@@ -272,7 +276,32 @@ function requestScope(?array $payload = null): array
         'database' => text($source['database'] ?? $source['databaseName'] ?? ''),
         'table' => text($source['table'] ?? ''),
         'includeLegacy' => text($source['includeLegacy'] ?? $source['include_legacy'] ?? '') === '1',
+        'tableNames' => requestTableNames($source),
     ];
+}
+
+function requestTableNames(array $source): array
+{
+    $raw = $source['tableNames'] ?? $source['table_names'] ?? [];
+    if (is_string($raw)) {
+        $decoded = json_decode($raw, true);
+        if (is_array($decoded)) {
+            $raw = $decoded;
+        } else {
+            $raw = explode(',', $raw);
+        }
+    }
+    if (!is_array($raw)) {
+        return [];
+    }
+    $names = [];
+    foreach ($raw as $name) {
+        $text = text($name);
+        if ($text !== '') {
+            $names[strtolower($text)] = $text;
+        }
+    }
+    return array_values($names);
 }
 
 function loadViewAsRows(PDO $pdo, array $scope): array
@@ -288,6 +317,17 @@ function loadViewAsRows(PDO $pdo, array $scope): array
     if ($scope['table'] !== '') {
         $sql .= ' AND lower(table_name) = lower(:table_name)';
         $params[':table_name'] = $scope['table'];
+    } elseif (!empty($scope['tableNames'])) {
+        $tableNames = array_values(array_filter(array_map('text', $scope['tableNames'])));
+        if ($tableNames) {
+            $placeholders = [];
+            foreach ($tableNames as $index => $tableName) {
+                $placeholder = ':table_name_' . $index;
+                $placeholders[] = $placeholder;
+                $params[$placeholder] = strtolower($tableName);
+            }
+            $sql .= ' AND lower(table_name) IN (' . implode(',', $placeholders) . ')';
+        }
     }
     $sql .= ' ORDER BY table_name, field_name';
     $stmt = $pdo->prepare($sql);

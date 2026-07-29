@@ -57,8 +57,10 @@
       dataValueField: "name",
       filter: "contains",
       change: function () {
+        state.tables = [];
+        state.viewAsTables = [];
+        refreshTableCombo();
         loadTables();
-        loadViewAsRows();
         loadRelationsRows();
       }
     });
@@ -1131,8 +1133,9 @@
     const database = selectedDatabase();
     const targetTable = table || tableValue();
     const params = Object.assign(scope(targetTable, database), { resource: "view-as", includeLegacy: "1" });
+    const requestTables = viewAsRequestTableNames(database, targetTable);
     setStatus(targetTable ? `Carregando view-as de ${targetTable}...` : "Carregando registros de view-as...", "");
-    withGridLoading("#viewAsGrid", $.getJSON("metadata-store.php?" + $.param(params)))
+    withGridLoading("#viewAsGrid", viewAsRowsRequest(params, requestTables))
       .done(function (response) {
         const rows = filterViewAsRowsForSelectedDatabase(response && response.success ? response.data || [] : [], database, targetTable);
         const loadedTables = uniqueTableNames(rows.map(function (row) { return row && row.table; }));
@@ -1147,6 +1150,29 @@
       .fail(function (xhr) {
         setStatus("Falha ao carregar view-as: " + ajaxErrorMessage(xhr), "error");
       });
+  }
+
+  function viewAsRowsRequest(params, tableNames) {
+    if (Array.isArray(tableNames) && tableNames.length) {
+      return $.ajax({
+        url: "metadata-store.php",
+        method: "POST",
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
+        data: JSON.stringify(Object.assign({}, params, {
+          action: "list",
+          tableNames
+        }))
+      });
+    }
+    return $.getJSON("metadata-store.php?" + $.param(params));
+  }
+
+  function viewAsRequestTableNames(database, table) {
+    if (table) return [];
+    const selected = String(database || "").trim();
+    if (!selected || selected === TODOS_DATABASE) return [];
+    return uniqueTableNames(state.tables || []);
   }
 
   function updateViewAsSummary(rows, table) {

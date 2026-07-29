@@ -32,14 +32,31 @@ $pdo->prepare(
      (id, environment_id, company_id, database_name, table_name, field_name, view_as, source, raw_json, updated_at)
      VALUES ("legacy-emitente", "", "", "", "emitente", "cod-emitente", "FILL-IN", "PASOE", "{}", :updated_at)'
 )->execute([':updated_at' => date(DATE_ATOM)]);
+$pdo->prepare(
+    'INSERT INTO field_view_as
+     (id, environment_id, company_id, database_name, table_name, field_name, view_as, source, raw_json, updated_at)
+     VALUES ("legacy-fora-banco", "", "", "", "tabela-fora-banco", "campo", "FILL-IN", "PASOE", "{}", :updated_at)'
+)->execute([':updated_at' => date(DATE_ATOM)]);
 
 $ems2cadWithLegacy = loadViewAsRows($pdo, ['database' => 'ems2cad', 'table' => '', 'includeLegacy' => true]);
-assertSame(2, count($ems2cadWithLegacy), 'consulta ems2cad com legado deve retornar banco selecionado e registros sem banco');
+assertSame(3, count($ems2cadWithLegacy), 'consulta ems2cad com legado sem lista de tabelas mantem registros sem banco');
 $tables = array_map(static function (array $row): string {
     return $row['table'] ?? '';
 }, $ems2cadWithLegacy);
 sort($tables);
-assertSame(['emitente', 'wt-ped-venda'], $tables, 'consulta com legado nao deve retornar registros de outro banco');
+assertSame(['emitente', 'tabela-fora-banco', 'wt-ped-venda'], $tables, 'consulta com legado nao deve retornar registros de outro banco');
+
+$ems2cadWithTableNames = loadViewAsRows($pdo, [
+    'database' => 'ems2cad',
+    'table' => '',
+    'includeLegacy' => true,
+    'tableNames' => ['wt-ped-venda', 'emitente'],
+]);
+$tables = array_map(static function (array $row): string {
+    return $row['table'] ?? '';
+}, $ems2cadWithTableNames);
+sort($tables);
+assertSame(['emitente', 'wt-ped-venda'], $tables, 'lista de tabelas deve limitar registros legados retornados ao banco selecionado');
 
 echo "View-as database scope contract OK\n";
 
