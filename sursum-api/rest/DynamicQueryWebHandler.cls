@@ -1624,8 +1624,6 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
             ASSIGN iPageSize = joBody:GetInteger("pageSize") NO-ERROR.
         IF iPageSize < 1 THEN
             ASSIGN iPageSize = 50.
-        IF iPageSize > 500 THEN
-            ASSIGN iPageSize = 500.
 
         ASSIGN cDirection = CAPS(THIS-OBJECT:getJsonChar(joBody, "direction")).
         IF cDirection = "" THEN

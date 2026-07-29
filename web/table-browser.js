@@ -233,7 +233,6 @@
   function initBrowseControls() {
     $("#browsePageSize").kendoNumericTextBox({
       min: 1,
-      max: 500,
       step: 25,
       decimals: 0,
       format: "n0",
@@ -1737,7 +1736,7 @@
     const numeric = $("#browsePageSize").data("kendoNumericTextBox");
     const value = numeric ? Number(numeric.value()) : 50;
     if (!Number.isFinite(value) || value < 1) return 50;
-    return Math.min(500, Math.floor(value));
+    return Math.floor(value);
   }
 
   function browseGridPageSize() {

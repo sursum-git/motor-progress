@@ -165,8 +165,10 @@ test('table browser data tab keeps rows when order is inverted and formats dates
 });
 
 test('table browser data tab appends more records and moves to last grid page', async ({ page }) => {
+  const requestedPageSizes = [];
   await page.route(/\/table-browse(\?|$)/, async (route) => {
     const body = route.request().postDataJSON();
+    requestedPageSizes.push(body.pageSize);
     const useCursor = !!body.cursor;
     const rows = useCursor
       ? Array.from({ length: 55 }, (_, index) => ({ CustNum: index + 51, Name: `Cliente Mais ${index + 51}` }))
@@ -199,7 +201,7 @@ test('table browser data tab appends more records and moves to last grid page', 
 
   await page.locator('#metadataTabs li').filter({ hasText: 'Dados' }).click();
   await page.evaluate(() => {
-    $("#browsePageSize").data("kendoNumericTextBox").value(500);
+    $("#browsePageSize").data("kendoNumericTextBox").value(750);
     $("#browseGridPageSize").data("kendoNumericTextBox").value(25);
     $("#browseGridPageSize").data("kendoNumericTextBox").trigger("change");
   });
@@ -211,6 +213,7 @@ test('table browser data tab appends more records and moves to last grid page', 
   await expect.poll(async () => page.evaluate(() => $("#dataGrid").data("kendoGrid").dataSource.data().length)).toBe(105);
   await expect.poll(async () => page.evaluate(() => $("#dataGrid").data("kendoGrid").dataSource.pageSize())).toBe(25);
   await expect.poll(async () => page.evaluate(() => $("#dataGrid").data("kendoGrid").dataSource.page())).toBe(5);
+  expect(requestedPageSizes).toEqual([750, 750]);
 });
 
 test('table browser data tab can be maximized and restored', async ({ page }) => {
