@@ -794,8 +794,10 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DEFINE VARIABLE cField AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cViewAs AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cInclude AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cIncludeOriginal AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cList AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cError AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cOriginalError AS CHARACTER NO-UNDO.
 
         IF pcBody = "" OR pcBody = ? THEN
             RETURN THIS-OBJECT:buildError("EMPTY_BODY", "Body JSON obrigatorio", "POST /metadata/view-as/resolve").
@@ -823,10 +825,20 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                 ASSIGN cViewAs = THIS-OBJECT:getJsonChar(joRow, "view_as").
 
             ASSIGN cInclude = THIS-OBJECT:extractViewAsInclude(cViewAs)
+                   cIncludeOriginal = THIS-OBJECT:extractViewAsIncludeOriginal(cViewAs)
                    cError = ""
+                   cOriginalError = ""
                    cList = "".
-            IF cInclude <> "" THEN
+            IF cInclude <> "" THEN DO:
                 ASSIGN cList = THIS-OBJECT:resolveViewAsInclude(cInclude, joEnvironment, OUTPUT cError).
+                IF cList = "" AND cError = "" AND cIncludeOriginal <> "" AND cIncludeOriginal <> cInclude THEN DO:
+                    ASSIGN cList = THIS-OBJECT:resolveViewAsInclude(cIncludeOriginal, joEnvironment, OUTPUT cOriginalError).
+                    IF cList <> "" OR cOriginalError = "" THEN DO:
+                        ASSIGN cInclude = cIncludeOriginal
+                               cError = cOriginalError.
+                    END.
+                END.
+            END.
             ELSE
                 ASSIGN cList = THIS-OBJECT:normalizeViewAsList(cViewAs).
 
@@ -894,6 +906,31 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         END.
 
         RETURN LC(TRIM(REPLACE(cInclude + ".i 3", "~\", "/"))).
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER extractViewAsIncludeOriginal(INPUT pcViewAs AS CHARACTER):
+        DEFINE VARIABLE cInclude AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cOpen AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cClose AS CHARACTER NO-UNDO.
+
+        ASSIGN cOpen = CHR(123)
+               cClose = CHR(125).
+        IF pcViewAs = ? OR INDEX(pcViewAs, ".i") = 0 OR INDEX(pcViewAs, cOpen) = 0 THEN
+            RETURN "".
+
+        ASSIGN cInclude = ENTRY(2, pcViewAs, cOpen) NO-ERROR.
+        IF ERROR-STATUS:ERROR OR cInclude = "" OR cInclude = ? THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            RETURN "".
+        END.
+
+        ASSIGN cInclude = ENTRY(1, cInclude, cClose) NO-ERROR.
+        IF ERROR-STATUS:ERROR OR cInclude = "" OR cInclude = ? THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            RETURN "".
+        END.
+
+        RETURN LC(TRIM(REPLACE(THIS-OBJECT:compactSpaces(cInclude), "~\", "/"))).
     END METHOD.
 
     METHOD PRIVATE CHARACTER resolveViewAsInclude(INPUT pcInclude AS CHARACTER, INPUT poEnvironment AS JsonObject, OUTPUT pcError AS CHARACTER):
@@ -3688,6 +3725,53 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN FALSE.
     END METHOD.
 
+    METHOD PRIVATE LONGCHAR escapeJsonForWeb(INPUT pcJson AS LONGCHAR):
+        DEFINE VARIABLE lcEscaped AS LONGCHAR NO-UNDO.
+        DEFINE VARIABLE cChar AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cHex AS CHARACTER NO-UNDO INITIAL "0123456789ABCDEF".
+        DEFINE VARIABLE iPos AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iLen AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iCode AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iNibble AS INTEGER NO-UNDO.
+        DEFINE VARIABLE cEscape AS CHARACTER NO-UNDO.
+
+        IF pcJson = ? THEN
+            RETURN pcJson.
+
+        FIX-CODEPAGE(lcEscaped) = "UTF-8".
+        ASSIGN iLen = LENGTH(pcJson).
+
+        DO iPos = 1 TO iLen:
+            ASSIGN cChar = SUBSTRING(pcJson, iPos, 1)
+                   iCode = ASC(cChar) NO-ERROR.
+
+            IF ERROR-STATUS:ERROR OR iCode = ? THEN DO:
+                ERROR-STATUS:ERROR = FALSE.
+                ASSIGN lcEscaped = lcEscaped + "\uFFFD".
+                NEXT.
+            END.
+
+            IF iCode > 126 THEN DO:
+                ASSIGN cEscape = "\u"
+                       iNibble = TRUNCATE(iCode / 4096, 0)
+                       cEscape = cEscape + SUBSTRING(cHex, iNibble + 1, 1)
+                       iCode = iCode MODULO 4096
+                       iNibble = TRUNCATE(iCode / 256, 0)
+                       cEscape = cEscape + SUBSTRING(cHex, iNibble + 1, 1)
+                       iCode = iCode MODULO 256
+                       iNibble = TRUNCATE(iCode / 16, 0)
+                       cEscape = cEscape + SUBSTRING(cHex, iNibble + 1, 1)
+                       iNibble = iCode MODULO 16
+                       cEscape = cEscape + SUBSTRING(cHex, iNibble + 1, 1)
+                       lcEscaped = lcEscaped + cEscape.
+            END.
+            ELSE
+                ASSIGN lcEscaped = lcEscaped + cChar.
+        END.
+
+        RETURN lcEscaped.
+    END METHOD.
+
     METHOD PRIVATE VOID writeJson(INPUT poJson AS JsonObject):
         DEFINE VARIABLE lcJson AS LONGCHAR NO-UNDO.
         DEFINE VARIABLE oResponse AS WebResponse NO-UNDO.
@@ -3698,11 +3782,12 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
 
         FIX-CODEPAGE(lcJson) = "UTF-8".
         poJson:Write(lcJson, TRUE).
+        ASSIGN lcJson = THIS-OBJECT:escapeJsonForWeb(lcJson).
 
         ASSIGN oResponse = NEW WebResponse()
                oWriter = NEW WebResponseWriter(oResponse).
 
-        oResponse:SetHeader("Content-Type":U, "application/json; charset=windows-1252":U).
+        oResponse:SetHeader("Content-Type":U, "application/json; charset=UTF-8":U).
         oResponse:SetHeader("Cache-Control":U, "no-store":U).
         oResponse:SetHeader("Access-Control-Allow-Methods":U, "GET, POST, OPTIONS":U).
         oResponse:SetHeader("Access-Control-Allow-Headers":U, "Content-Type, Accept, Origin":U).
