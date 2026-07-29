@@ -104,13 +104,42 @@ function serveStatic(req, res, pathname) {
   });
 }
 
-async function handleApi(req, res, pathname) {
+async function handleApi(req, res, pathname, searchParams = new URL(req.url, `http://${req.headers.host}`).searchParams) {
   const url = new URL(req.url, `http://${req.headers.host}`);
   if (req.method === 'OPTIONS') return sendJson(res, 200, { success: true });
   if (pathname === '/__health') return sendJson(res, 200, { ok: true });
   if (pathname === '/__requests') return sendJson(res, 200, { requests });
   if (pathname === '/__reset' && req.method === 'POST') { store.clear(); relationRows = []; viewAsRows = []; metadataJobs = new Map(); requests.length = 0; return sendJson(res, 200, { success: true }); }
   if (pathname === '/auth.php') return sendJson(res, 200, { authenticated: true, user: 'e2e' });
+  if (pathname === '/context-store.php' && req.method === 'GET') {
+    return sendJson(res, 200, {
+      success: true,
+      data: {
+        version: 4,
+        clients: [{ id: 'cliente-a', name: 'Cliente A' }],
+        environments: [{
+          id: 'ambiente-a',
+          clientId: 'cliente-a',
+          name: 'Ambiente A',
+          pasoeBaseUrl: 'http://127.0.0.1:18180/web/SursumDynamicQuery',
+          companyIdMode: 'query'
+        }],
+        links: [{ id: 'link-a', clientId: 'cliente-a', environmentId: 'ambiente-a' }],
+        paths: {},
+        companies: [{
+          id: 'empresa-a',
+          clientId: 'cliente-a',
+          environmentId: 'ambiente-a',
+          name: 'Empresa A',
+          code: '1',
+          pathParam: 'empresa-a'
+        }],
+        physicalDatabases: [],
+        aliases: [],
+        selected: { clientId: 'cliente-a', environmentId: 'ambiente-a', companyId: 'empresa-a' }
+      }
+    });
+  }
   if (pathname === '/relation-store.php' && req.method === 'GET') return sendJson(res, 200, { success: true, data: relationRows });
   if (pathname === '/relation-store.php' && req.method === 'POST') {
     let body;
@@ -219,9 +248,10 @@ async function handleApi(req, res, pathname) {
     return sendJson(res, 200, { success: true, data: Array.isArray(body.rows) ? body.rows.map(row => Object.assign({ source: 'PASOE' }, row)) : [] });
   }
   if (pathname === '/metadata-pasoe.php') {
+    requests.push({ method: req.method, path: req.url });
     const targetPath = url.searchParams.get('path') || '';
     const targetUrl = new URL(targetPath, `http://${req.headers.host}`);
-    return handleApi(req, res, targetUrl.pathname);
+    return handleApi(req, res, targetUrl.pathname, targetUrl.searchParams);
   }
 
   if (pathname.endsWith('/metadata/sync')) {
@@ -237,10 +267,42 @@ async function handleApi(req, res, pathname) {
   }
   if (pathname.endsWith('/metadata/database-catalog')) {
     requests.push({ method: req.method, path: req.url });
-    return sendJson(res, 200, { success: true, data: [{ name: 'DICTDB', displayName: 'DICTDB' }] });
+    return sendJson(res, 200, { success: true, data: [
+      { name: 'DICTDB', displayName: 'DICTDB' },
+      { name: 'espec', displayName: 'espec' }
+    ] });
   }
-  if (pathname.endsWith('/metadata/tables')) return sendJson(res, 200, { success: true, data: [{ name: 'Customer', label: 'Customer', database: 'DICTDB' }, { name: 'Order', label: 'Order', database: 'DICTDB' }] });
+  if (pathname.endsWith('/metadata/tables')) {
+    const database = String(searchParams.get('database') || '').toLowerCase();
+    const data = database === 'espec'
+      ? [{ name: 'pp-container', label: 'pp-container', database: 'espec' }]
+      : [{ name: 'Customer', label: 'Customer', database: 'DICTDB' }, { name: 'Order', label: 'Order', database: 'DICTDB' }];
+    return sendJson(res, 200, { success: true, data });
+  }
   if (pathname.includes('/metadata/tables/') && pathname.endsWith('/fields')) {
+    const decodedPathname = decodeURIComponent(pathname);
+    if (decodedPathname.includes('/metadata/tables/pp-container/fields')) {
+      return sendJson(res, 200, { success: true, database: 'espec', table: 'pp-container', data: [
+        { name: 'nr-container', type: 'integer', fieldType: 'integer', indices: 'nr-container', primaryKey: true, isPrimaryKey: true, viewAs: 'FILL-IN' },
+        { name: 'nr-pedido', type: 'integer', fieldType: 'integer', indices: 'nr-pedido', viewAs: 'COMBO-BOX', options: [
+          { value: '7788', label: 'Pedido exportacao' }
+        ] },
+        { name: 'ativo', type: 'logical', fieldType: 'logical', viewAs: 'FILL-IN' },
+        { name: 'descricao', type: 'character', indices: 'descricao' }
+      ] });
+    }
+    if (decodedPathname.includes('/metadata/tables/pp-container-item/fields')) {
+      return sendJson(res, 200, { success: true, database: 'espec', table: 'pp-container-item', data: [
+        { name: 'nr-container', type: 'integer', fieldType: 'integer' },
+        { name: 'item', type: 'integer', fieldType: 'integer' }
+      ] });
+    }
+    if (decodedPathname.includes('/metadata/tables/pp-pedido/fields')) {
+      return sendJson(res, 200, { success: true, database: 'espec', table: 'pp-pedido', data: [
+        { name: 'nr-pedido', type: 'integer', fieldType: 'integer' },
+        { name: 'cliente', type: 'character' }
+      ] });
+    }
     return sendJson(res, 200, { success: true, database: 'DICTDB', table: 'Customer', data: [
       { name: 'CustNum', indices: 'CustNum', viewAs: 'FILL-IN' },
       { name: 'Name', indices: 'NameIdx' },
@@ -249,6 +311,29 @@ async function handleApi(req, res, pathname) {
     ] });
   }
   if (pathname.endsWith('/metadata/relations/of')) {
+    const table = String(searchParams.get('table') || '');
+    const database = String(searchParams.get('database') || '');
+    if (table === 'pp-container') {
+      return sendJson(res, 200, { success: true, data: [{
+        leftDatabase: database || 'espec',
+        leftTable: 'pp-container',
+        leftField: 'nr-container',
+        rightDatabase: database || 'espec',
+        rightTable: 'pp-container-item',
+        rightField: 'nr-container',
+        type: 'INNER',
+        fileName: 'espec__pp-container__espec__pp-container-item.json'
+      }, {
+        leftDatabase: database || 'espec',
+        leftTable: 'pp-container',
+        leftField: 'nr-pedido',
+        rightDatabase: database || 'espec',
+        rightTable: 'pp-pedido',
+        rightField: 'nr-pedido',
+        type: 'INNER',
+        fileName: 'espec__pp-container__espec__pp-pedido.json'
+      }] });
+    }
     return sendJson(res, 200, { success: true, data: [{
       leftDatabase: 'DICTDB',
       leftTable: 'Customer',
@@ -307,7 +392,13 @@ async function handleApi(req, res, pathname) {
     let body;
     try { body = await readBody(req); } catch (err) { return sendJson(res, 200, error('INVALID_JSON', 'JSON invalido', err.message)); }
     requests.push({ method: 'POST', path: pathname, body });
-    if (!body.code) return sendJson(res, 200, { success: true, data: [], directQuery: true });
+    if (!body.code) {
+      const firstSource = Array.isArray(body.sources) ? body.sources[0] || {} : {};
+      if (firstSource.nome === 'pp-container') {
+        return sendJson(res, 200, { success: true, data: [{ 'nr-container': 1650, 'nr-pedido': 7788, ativo: 'yes', descricao: 'Container E2E' }], recordsReturned: 1, directQuery: true });
+      }
+      return sendJson(res, 200, { success: true, data: [], directQuery: true });
+    }
     if (!validCode(body.code)) return sendJson(res, 200, error('INVALID_QUERY_CODE', 'Codigo de consulta invalido', body.code));
     const saved = store.get(body.code);
     if (!saved) return sendJson(res, 200, error('QUERY_NOT_FOUND', 'Consulta salva nao encontrada', body.code));

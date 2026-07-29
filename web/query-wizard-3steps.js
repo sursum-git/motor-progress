@@ -1,5 +1,8 @@
 ﻿(function () {
   const QUERY_COMPANY_KEY = "sursumQueryCompanyId";
+  const METADATA_PROXY = "metadata-pasoe.php";
+  const PASOE_PROXY = "pasoe-proxy.php";
+  const TABLE_CACHE_PREFIX = "sursumQueryWizardTableCache:";
 
   const state = {
     apiBase: initialApiBase(),
@@ -12,13 +15,16 @@
     tableSearchRows: [],
     fields: [],
     fieldsByName: {},
+    fieldOptionLookup: {},
     foreignKeys: [],
     filterRows: [],
     currentRecordRow: null,
     currentRecordJoinFieldOptions: {},
     currentRecordJoinOptions: [],
     foreignKeyCache: {},
-    activeFilterId: 1
+    activeFilterId: 1,
+    loadedDatabaseApiBase: "",
+    tableLoading: {}
   };
 
   function initialApiBase() {
@@ -65,9 +71,10 @@
     initWidgets();
     refreshContextUi();
     bindEvents();
+    window.addEventListener("sursum:context-changed", onSursumContextChanged);
     showStep(1);
     if (window.SursumUiReady) window.SursumUiReady();
-    loadDatabases(false, function () {
+    loadDatabasesWhenContextReady(false, function () {
       setStatus("Metadados prontos. Selecione o banco e a tabela na etapa 1.", "ok");
       showStep(1);
     });
@@ -124,7 +131,8 @@
     refreshFilterDynamicSelectors();
 
     $("#queryPage").kendoNumericTextBox({ format: "n0", min: 1, value: 1, decimals: 0 });
-    $("#queryPageSize").kendoNumericTextBox({ format: "n0", min: 1, max: 10000, value: 200, decimals: 0 });
+    $("#queryPageSize").kendoNumericTextBox({ format: "n0", min: 1, max: 10000, value: 500, decimals: 0 });
+    $("#queryGridPageSize").kendoNumericTextBox({ format: "n0", min: 1, max: 1000, value: 50, decimals: 0 });
 
     $("#tableSearchText").kendoTextBox();
 
@@ -133,7 +141,8 @@
       width: "860px",
       height: "600px",
       visible: false,
-      modal: true
+      modal: true,
+      animation: false
     });
 
     $("#tableSearchGrid").kendoGrid({
@@ -194,7 +203,7 @@
       height: 520,
       sortable: true,
       filterable: true,
-      pageable: { buttonCount: 5, pageSize: Number($("#queryPageSize").val()) },
+      pageable: { buttonCount: 5, pageSize: Number($("#queryGridPageSize").val()) || 50 },
       selectable: "row",
       noRecords: { template: "Nenhum registro encontrado." }
     });
@@ -258,14 +267,14 @@
     });
 
     $("#refreshMetadata").on("click", function () {
-      refreshContextUi();
-      loadDatabases(true, function () {
+      loadDatabasesWhenContextReady(true, function () {
         setStatus("Metadados atualizados.", "ok");
       });
     });
 
     $("#openTableSearch").on("click", openTableSearch);
     $("#applyTableSearch").on("click", applyTableSearch);
+    $("#refreshTableSearch").on("click", forceRefreshTableSearch);
     $("#cancelTableSearch").on("click", function () {
       $("#tableSearchWindow").data("kendoWindow").close();
     });
@@ -320,10 +329,9 @@
       if (!row) return;
       state.selectedDatabase = row.database || row.logicalName || state.selectedDatabase || "TODOS";
       state.selectedTable = row.name;
-      applySelectedTableFromStepSearch(function () {
-        $("#tableSearchWindow").data("kendoWindow").close();
-        showStep(2);
-      });
+      $("#tableSearchWindow").data("kendoWindow").close();
+      showStep(2);
+      applySelectedTableFromStepSearch();
     });
 
     $("#filtersGrid").on("click", ".remove-filter", function () {
@@ -343,6 +351,7 @@
       const el = $(this);
       const value = el.val();
       el.data("filterValue", value);
+      clearIndexFilterError(el.closest(".index-filter-item"));
     });
 
     $("#indexFilterTabs").on("click", ".add-index-filter", function () {
@@ -415,7 +424,7 @@
     }
     refreshContextUi();
     setStatus(forceSync ? "Sincronizando cadastro de bancos..." : "Carregando cadastro de bancos...", "");
-    getJsonUtf8(state.apiBase + (forceSync ? "/metadata/databases/sync" : "/metadata/database-catalog"))
+    getJsonUtf8(metadataUrl(forceSync ? "/metadata/databases/sync" : "/metadata/database-catalog"))
       .done(function (response) {
         if (!response || response.success === false) {
           throw new Error(apiError(response));
@@ -434,6 +443,7 @@
         combo.refresh();
         onDatabaseChanged();
         state.tableCache = {};
+        state.loadedDatabaseApiBase = state.apiBase;
         if (typeof done === "function") done();
         setStatus("Bancos carregados: " + list.length, "ok");
       })
@@ -444,6 +454,25 @@
         combo.value("TODOS");
         if (typeof done === "function") done();
       });
+  }
+
+  function loadDatabasesWhenContextReady(forceSync, done) {
+    const ready = window.SursumContext && typeof window.SursumContext.whenReady === "function"
+      ? window.SursumContext.whenReady()
+      : Promise.resolve();
+
+    ready.then(function () {
+      refreshContextUi();
+      loadDatabases(forceSync, done);
+    });
+  }
+
+  function onSursumContextChanged() {
+    const previousApiBase = state.apiBase;
+    refreshContextUi();
+    if (state.apiBase && state.apiBase !== previousApiBase && state.loadedDatabaseApiBase !== state.apiBase) {
+      loadDatabases(false);
+    }
   }
 
   function normalizeDatabases(rows) {
@@ -512,30 +541,47 @@
   function loadTablesForDatabase(database, done) {
     if (state.tableCache[database]) {
       state.tables = state.tableCache[database];
-      if (typeof done === "function") done();
+      if (typeof done === "function") done(true, true);
       return;
     }
+
+    const cached = readTableCache(database);
+    if (cached) {
+      state.tables = cached;
+      state.tableCache[database] = cached;
+      if (typeof done === "function") done(true, true);
+      return;
+    }
+
+    if (state.tableLoading[database]) {
+      state.tableLoading[database].push(done);
+      return;
+    }
+    state.tableLoading[database] = [done];
 
     if (database === "TODOS") {
-      loadAllTables(done);
+      loadAllTables(function (success) {
+        finishTableLoad(database, success !== false, false);
+      });
       return;
     }
 
-    let url = state.apiBase + "/metadata/tables";
+    let path = "/metadata/tables";
     if (database && database !== "TODOS") {
-      url += "?database=" + encodeURIComponent(database);
+      path += "?database=" + encodeURIComponent(database);
     }
 
-    getJsonUtf8(url)
+    getJsonUtf8(metadataUrl(path))
       .done(function (response) {
         const rows = response && response.success === false ? [] : (response.data || []);
         state.tables = normalizeTableRows(rows, database);
         state.tableCache[database] = state.tables;
-        if (typeof done === "function") done();
+        writeTableCache(database, state.tables);
+        finishTableLoad(database, true, false);
       })
       .fail(function () {
         state.tables = [];
-        if (typeof done === "function") done();
+        finishTableLoad(database, false, false);
       });
   }
 
@@ -553,8 +599,8 @@
     let hasFailure = false;
 
     dbs.forEach((dbName) => {
-      const url = state.apiBase + "/metadata/tables?database=" + encodeURIComponent(dbName);
-      getJsonUtf8(url)
+      const path = "/metadata/tables?database=" + encodeURIComponent(dbName);
+      getJsonUtf8(metadataUrl(path))
         .done(function (response) {
           const sourceRows = response && response.success === false ? [] : (response.data || []);
           normalizeTableRows(sourceRows, dbName).forEach(function (row) {
@@ -578,7 +624,8 @@
             });
             state.tables = merged;
             state.tableCache["TODOS"] = merged;
-            if (typeof done === "function") done();
+            writeTableCache("TODOS", merged);
+            if (typeof done === "function") done(hasFailure ? false : true);
             if (hasFailure) {
               setStatus("Falha ao carregar algumas tabelas no modo TODOS.", "error");
             }
@@ -596,6 +643,108 @@
     });
   }
 
+  function finishTableLoad(database, success, fromCache) {
+    const callbacks = state.tableLoading[database] || [];
+    delete state.tableLoading[database];
+    callbacks.forEach(function (callback) {
+      if (typeof callback === "function") callback(success, fromCache);
+    });
+  }
+
+  function tableCacheKey(database) {
+    const scope = currentScope();
+    return TABLE_CACHE_PREFIX + [
+      String(state.apiBase || "").replace(/\/+$/, ""),
+      scope.companyId || "",
+      database || "TODOS"
+    ].join("|");
+  }
+
+  function readTableCache(database) {
+    try {
+      const raw = localStorage.getItem(tableCacheKey(database));
+      if (!raw) return null;
+      const payload = JSON.parse(raw);
+      if (!payload || !Array.isArray(payload.rows)) return null;
+      return payload.rows;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeTableCache(database, rows) {
+    try {
+      localStorage.setItem(tableCacheKey(database), JSON.stringify({
+        savedAt: Date.now(),
+        rows: Array.isArray(rows) ? rows : []
+      }));
+    } catch (_) {}
+  }
+
+  function clearTableCache(database) {
+    try {
+      localStorage.removeItem(tableCacheKey(database));
+    } catch (_) {}
+    delete state.tableCache[database];
+    if (database === "TODOS") {
+      Object.keys(state.tableCache).forEach(function (key) {
+        delete state.tableCache[key];
+      });
+      const prefix = TABLE_CACHE_PREFIX + String(state.apiBase || "").replace(/\/+$/, "") + "|" + (currentScope().companyId || "") + "|";
+      for (let index = localStorage.length - 1; index >= 0; index--) {
+        const key = localStorage.key(index);
+        if (key && key.indexOf(prefix) === 0) {
+          localStorage.removeItem(key);
+        }
+      }
+    }
+  }
+
+  function metadataUrl(path) {
+    const scope = currentScope();
+    if (scope.environmentId && scope.companyId) {
+      return METADATA_PROXY
+        + "?environmentId=" + encodeURIComponent(scope.environmentId)
+        + "&companyId=" + encodeURIComponent(scope.companyId)
+        + "&path=" + encodeURIComponent(path);
+    }
+    return pasoeUrl(path);
+  }
+
+  function pasoeUrl(path, options) {
+    const target = pasoeDirectUrl(path, options);
+    return shouldUsePasoeProxy(target) ? PASOE_PROXY + "?target=" + encodeURIComponent(target) : target;
+  }
+
+  function pasoeDirectUrl(path, options) {
+    const base = String(state.apiBase || "").replace(/\/+$/, "");
+    const suffix = String(path || "").replace(/^\/+/, "");
+    let target = base + "/" + suffix;
+    if (window.SursumContext && typeof window.SursumContext.getRequestConfig === "function") {
+      const request = window.SursumContext.getRequestConfig(target, options || {});
+      target = request && request.url ? request.url : target;
+    }
+    return target;
+  }
+
+  function shouldUsePasoeProxy(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      return /^https?:$/.test(parsed.protocol) && parsed.origin !== window.location.origin;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function currentScope() {
+    const environment = currentEnvironment();
+    const company = currentCompany();
+    return {
+      environmentId: environment && environment.id ? environment.id : "",
+      companyId: company && company.id ? company.id : ""
+    };
+  }
+
   function normalizeTableRows(rows, defaultDatabase) {
     return (rows || []).map((item) => ({
       name: item.name || "",
@@ -607,16 +756,52 @@
 
   function openTableSearch() {
     const db = state.selectedDatabase || "TODOS";
-    loadTablesForDatabase(db, function () {
+    const win = $("#tableSearchWindow").data("kendoWindow");
+    win.setOptions({ title: "Buscar tabela em " + db });
+    win.center().open();
+    if (!$("#tableSearchText").val()) {
+      $("#tableSearchText").val("");
+    }
+    $("#tableSearchText").trigger("focus");
+    setTableSearchLoading(true);
+    loadTablesForDatabase(db, function (success, fromCache) {
       applyTableSearch();
-      const win = $("#tableSearchWindow").data("kendoWindow");
-      win.setOptions({ title: "Buscar tabela em " + db });
-      win.center().open();
-      if (!$("#tableSearchText").val()) {
-        $("#tableSearchText").val("");
+      setTableSearchLoading(false);
+      if (success === false) {
+        setFooterStatus("Falha ao carregar tabelas para " + db + ".", "error");
+      } else if (fromCache) {
+        setFooterStatus("Tabelas carregadas do cache local para " + db + ".", "ok");
+      } else {
+        setFooterStatus("Tabelas carregadas para " + db + ".", "ok");
       }
-      $("#tableSearchText").trigger("focus");
     });
+  }
+
+  function forceRefreshTableSearch() {
+    const db = state.selectedDatabase || "TODOS";
+    clearTableCache(db);
+    setTableSearchLoading(true);
+    setFooterStatus("Atualizando lista de tabelas de " + db + "...", "");
+    loadTablesForDatabase(db, function (success) {
+      applyTableSearch();
+      setTableSearchLoading(false);
+      setFooterStatus(success === false ? "Falha ao atualizar tabelas para " + db + "." : "Lista de tabelas atualizada para " + db + ".", success === false ? "error" : "ok");
+    });
+  }
+
+  function setTableSearchLoading(active) {
+    const target = $("#tableSearchWindow");
+    if (window.kendo && kendo.ui && typeof kendo.ui.progress === "function") {
+      kendo.ui.progress(target, !!active);
+    }
+    $("#applyTableSearch,#refreshTableSearch,#cancelTableSearch").prop("disabled", !!active);
+  }
+
+  function setFieldsLoading(active) {
+    const target = $("[data-step-panel='2']");
+    if (window.kendo && kendo.ui && typeof kendo.ui.progress === "function") {
+      kendo.ui.progress(target, !!active);
+    }
   }
 
   function applyTableSearch() {
@@ -661,13 +846,38 @@
       return;
     }
 
-    if (!state.selectedDatabase || state.selectedDatabase === "TODOS") {
-      setFooterStatus("Selecione um banco específico antes de validar a tabela digitada.", "error");
-      return;
-    }
-
     state.currentRecordJoinOptions = [];
     state.currentRecordRow = null;
+
+    if (!state.selectedDatabase || state.selectedDatabase === "TODOS") {
+      loadTablesForDatabase("TODOS", function () {
+        const rows = state.tableCache.TODOS || state.tables || [];
+        const matches = rows.filter(function (row) {
+          return String(row.name || "").toLowerCase() === tableName.toLowerCase();
+        });
+        const uniqueMatches = uniqueTableDatabaseMatches(matches);
+
+        if (!uniqueMatches.length) {
+          setFooterStatus("A tabela informada não foi encontrada em nenhum banco.", "error");
+          return;
+        }
+        if (uniqueMatches.length > 1) {
+          const databaseNames = uniqueMatches.map(function (row) {
+            return row.database || "sem banco";
+          }).join(", ");
+          setFooterStatus("Informe o banco para a tabela " + tableName + ". Ela existe em: " + databaseNames + ".", "error");
+          return;
+        }
+
+        const found = uniqueMatches[0];
+        state.selectedDatabase = found.database || "";
+        state.selectedTable = found.name;
+        const combo = $("#databaseCombo").data("kendoComboBox");
+        if (combo) combo.value(state.selectedDatabase);
+        applySelectedTableFromStepSearch();
+      });
+      return;
+    }
 
     loadTablesForDatabase(state.selectedDatabase, function () {
       const rows = state.tableCache[state.selectedDatabase] || [];
@@ -685,6 +895,18 @@
     });
   }
 
+  function uniqueTableDatabaseMatches(rows) {
+    const seen = {};
+    const result = [];
+    (rows || []).forEach(function (row) {
+      const key = String(row.database || "").toLowerCase() + "|" + String(row.name || "").toLowerCase();
+      if (seen[key]) return;
+      seen[key] = true;
+      result.push(row);
+    });
+    return result;
+  }
+
   function applySelectedTableFromStepSearch(done) {
     $("#selectedTable").val(state.selectedTable || "");
     state.fields = [];
@@ -693,12 +915,16 @@
     state.filterRows = [];
     refreshFilterGrid();
     clearFilterTabs();
-    ensureTableFields(loadFilterTabs);
+    setFieldsLoading(true);
+    ensureTableFields(function () {
+      setFieldsLoading(false);
+      loadFilterTabs();
+      if (typeof done === "function") {
+        done();
+      }
+    });
     setStepSourceInfo();
     setFooterStatus("Tabela validada. Carregando campos e indices: " + state.selectedTable, "ok");
-    if (typeof done === "function") {
-      done();
-    }
   }
 
   function openForeignKeySearch() {
@@ -821,8 +1047,9 @@
       return;
     }
 
+    setFieldsLoading(true);
     setStatus("Carregando metadados de campos de " + state.selectedDatabase + "." + state.selectedTable + "...", "");
-    getJsonUtf8(state.apiBase + "/metadata/tables/" + encodeURIComponent(state.selectedTable) + "/fields?database=" + encodeURIComponent(state.selectedDatabase))
+    getJsonUtf8(metadataUrl("/metadata/tables/" + encodeURIComponent(state.selectedTable) + "/fields?database=" + encodeURIComponent(state.selectedDatabase)))
       .done(function (response) {
         if (!response || response.success === false) {
           throw new Error(apiError(response));
@@ -837,6 +1064,7 @@
           }
           return acc;
         }, {});
+        state.fieldOptionLookup = buildFieldOptionLookup(state.fields);
         state.foreignKeys = [];
         state.foreignKeyCache = {};
         refreshFilterDynamicSelectors();
@@ -844,9 +1072,11 @@
         state.filterRows = [];
         refreshFilterGrid();
         buildFilterTabs(state.fields);
+        setFieldsLoading(false);
         if (typeof done === "function") done();
       })
       .fail(function (xhr) {
+        setFieldsLoading(false);
         const msg = xhr && (xhr.responseText || xhr.statusText) ? ("Erro " + (xhr.status || "") + " " + (xhr.responseText || xhr.statusText)) : "Erro desconhecido";
         setStatus("Falha ao carregar campos: " + msg, "error");
       });
@@ -880,22 +1110,98 @@
       });
     });
 
-    if (!refs.length) {
-      state.foreignKeys = [];
-      state.foreignKeyCache[cacheKey] = [];
-      if (typeof done === "function") done();
-      return;
-    }
-
-    Promise.all(refs.map(loadRelationForForeignTable)).then(function (rows) {
-      state.foreignKeys = rows.filter(Boolean);
+    loadOfRelationsForCurrentTable().then(function (ofRows) {
+      const directRows = (ofRows || []).map(mapRelationOfToForeignKey).filter(Boolean);
+      return Promise.all(refs.map(loadRelationForForeignTable)).then(function (expressionRows) {
+        return mergeForeignKeyRows(directRows.concat(expressionRows.filter(Boolean)));
+      });
+    }).then(function (rows) {
+      state.foreignKeys = rows;
       state.foreignKeyCache[cacheKey] = state.foreignKeys;
       if (typeof done === "function") done();
     }).catch(function () {
-      state.foreignKeys = refs;
+      state.foreignKeys = refs.length ? refs : [];
       state.foreignKeyCache[cacheKey] = state.foreignKeys;
       if (typeof done === "function") done();
     });
+  }
+
+  function loadOfRelationsForCurrentTable() {
+    return new Promise(function (resolve) {
+      if (!state.selectedTable || !state.selectedDatabase || state.selectedDatabase === "TODOS") {
+        resolve([]);
+        return;
+      }
+      getJsonUtf8(metadataUrl("/metadata/relations/of?table=" + encodeURIComponent(state.selectedTable) + "&database=" + encodeURIComponent(state.selectedDatabase)))
+        .done(function (response) {
+          const rows = response && response.success !== false && Array.isArray(response.data) ? response.data : [];
+          resolve(rows);
+        })
+        .fail(function () {
+          resolve([]);
+        });
+    });
+  }
+
+  function mapRelationOfToForeignKey(item) {
+    if (!item) return null;
+    const localTable = state.selectedTable;
+    const localDatabase = state.selectedDatabase;
+    const leftMatches = sameName(item.leftTable, localTable);
+    const rightMatches = sameName(item.rightTable, localTable);
+    if (!leftMatches && !rightMatches) return null;
+
+    if (leftMatches) {
+      return {
+        relationStatus: "Encontrada",
+        source: item.source || "OF",
+        localDatabase: item.leftDatabase || localDatabase,
+        localTable,
+        localField: item.leftField || "",
+        localLabel: item.leftField || "",
+        foreignDatabase: item.rightDatabase || localDatabase,
+        foreignTable: item.rightTable || "",
+        localToForeignField: item.rightField || "",
+        relationPath: item.updatedAt || item.path || item.fileName || ""
+      };
+    }
+
+    return {
+      relationStatus: "Encontrada",
+      source: item.source || "OF",
+      localDatabase: item.rightDatabase || localDatabase,
+      localTable,
+      localField: item.rightField || "",
+      localLabel: item.rightField || "",
+      foreignDatabase: item.leftDatabase || localDatabase,
+      foreignTable: item.leftTable || "",
+      localToForeignField: item.leftField || "",
+      relationPath: item.updatedAt || item.path || item.fileName || ""
+    };
+  }
+
+  function mergeForeignKeyRows(rows) {
+    const seen = {};
+    return (rows || []).filter(function (row) {
+      if (!row || !row.localField || !row.foreignTable || !row.localToForeignField) return false;
+      const key = [
+        row.localDatabase || state.selectedDatabase,
+        row.localTable || state.selectedTable,
+        row.localField,
+        row.foreignDatabase || state.selectedDatabase,
+        row.foreignTable,
+        row.localToForeignField
+      ].map(function (part) {
+        return String(part || "").toLowerCase();
+      }).join("|");
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  function sameName(left, right) {
+    return String(left || "").toLowerCase() === String(right || "").toLowerCase();
   }
 
   function extractForeignTablesFromExpression(expression) {
@@ -934,10 +1240,10 @@
         resolve(candidate);
       };
 
-      const primary = state.apiBase + "/metadata/relations/" + encodeURIComponent(localTable) + "/" + encodeURIComponent(foreignTable) +
-        "?leftDatabase=" + encodeURIComponent(database) + "&rightDatabase=" + encodeURIComponent(database);
-      const secondary = state.apiBase + "/metadata/relations/" + encodeURIComponent(foreignTable) + "/" + encodeURIComponent(localTable) +
-        "?leftDatabase=" + encodeURIComponent(database) + "&rightDatabase=" + encodeURIComponent(database);
+      const primary = metadataUrl("/metadata/relations/" + encodeURIComponent(localTable) + "/" + encodeURIComponent(foreignTable) +
+        "?leftDatabase=" + encodeURIComponent(database) + "&rightDatabase=" + encodeURIComponent(database));
+      const secondary = metadataUrl("/metadata/relations/" + encodeURIComponent(foreignTable) + "/" + encodeURIComponent(localTable) +
+        "?leftDatabase=" + encodeURIComponent(database) + "&rightDatabase=" + encodeURIComponent(database));
 
       const xhr1 = getJsonUtf8(primary);
       xhr1.done(function (response) {
@@ -985,6 +1291,33 @@
     return meta.raw;
   }
 
+  function collectAssociatedInputs($node) {
+    const candidates = [];
+    function add(candidate) {
+      if (candidate && candidates.indexOf(candidate) < 0) candidates.push(candidate);
+    }
+
+    if ($node.is("input, textarea, select")) add($node[0]);
+    $node.closest(".index-filter-value, .index-filter-value-to").find("input, textarea, select").toArray().forEach(add);
+    $node.find("input, textarea, select").toArray().forEach(add);
+    $node.parent().find("input, textarea, select").toArray().forEach(add);
+    $node.closest(".k-widget, .k-numerictextbox, .k-picker, .k-multiselect, .k-input").find("input, textarea, select").toArray().forEach(add);
+    $node.next(".k-widget, .k-numerictextbox, .k-picker, .k-multiselect, .k-input").find("input, textarea, select").toArray().forEach(add);
+    $node.prev(".k-widget, .k-numerictextbox, .k-picker, .k-multiselect, .k-input").find("input, textarea, select").toArray().forEach(add);
+    return candidates;
+  }
+
+  function findAssociatedKendoWidget($node, widgetName) {
+    const direct = $node.data(widgetName);
+    if (direct) return direct;
+    const candidates = collectAssociatedInputs($node);
+    for (let i = 0; i < candidates.length; i++) {
+      const widget = $(candidates[i]).data(widgetName);
+      if (widget) return widget;
+    }
+    return null;
+  }
+
   function readFilterInputValue($input) {
     if (!$input || !$input.length) {
       return { values: [], raw: "", rawToPayload: "", isMulti: false };
@@ -992,10 +1325,10 @@
 
     const node = $input[0];
     const $node = $(node);
-    const widgetText = $node.data("kendoTextBox");
-    const widgetNumeric = $node.data("kendoNumericTextBox");
-    const widgetDate = $node.data("kendoDatePicker") || $node.data("kendoDateTimePicker");
-    const widgetMulti = $node.data("kendoMultiSelect");
+    const widgetText = findAssociatedKendoWidget($node, "kendoTextBox");
+    const widgetNumeric = findAssociatedKendoWidget($node, "kendoNumericTextBox");
+    const widgetDate = findAssociatedKendoWidget($node, "kendoDatePicker") || findAssociatedKendoWidget($node, "kendoDateTimePicker");
+    const widgetMulti = findAssociatedKendoWidget($node, "kendoMultiSelect");
 
     if (widgetMulti) {
       const rawValues = widgetMulti.value() || [];
@@ -1018,39 +1351,25 @@
     if (widgetText) {
       const value = widgetText.value();
       const normalized = normalizeScalarFilterText(value);
-      return { values: normalized ? [normalized] : [], raw: normalized, rawToPayload: normalized, isMulti: false };
+      if (normalized) return { values: [normalized], raw: normalized, rawToPayload: normalized, isMulti: false };
     }
     if (widgetNumeric) {
       const value = widgetNumeric.value();
       const normalized = normalizeScalarFilterText(value);
-      return { values: normalized ? [normalized] : [], raw: normalized, rawToPayload: normalized, isMulti: false };
+      if (normalized) return { values: [normalized], raw: normalized, rawToPayload: normalized, isMulti: false };
     }
     if (widgetDate) {
       const value = widgetDate.value();
       const normalized = normalizeDateForPayload(value);
-      return { values: normalized ? [normalized] : [], raw: normalized, rawToPayload: normalized, isMulti: false };
+      if (normalized) return { values: [normalized], raw: normalized, rawToPayload: normalized, isMulti: false };
     }
 
-    const candidates = [];
     const cached = $node.data("filterValue");
     if (cached !== null && cached !== undefined && cached !== "") {
       const normalized = normalizeScalarFilterText(cached);
       return { values: normalized ? [normalized] : [], raw: normalized, rawToPayload: normalized, isMulti: false };
     }
-
-    if ($node.is("input, textarea, select")) {
-      candidates.push(node);
-    }
-    const parentInput = $node.closest(".index-filter-value").find("input, textarea, select").toArray();
-    parentInput.forEach(function (candidate) {
-      if (candidates.indexOf(candidate) < 0) candidates.push(candidate);
-    });
-    $node.find("input, textarea, select").toArray().forEach(function (candidate) {
-      if (candidates.indexOf(candidate) < 0) candidates.push(candidate);
-    });
-    $node.parent().find("input, textarea, select").toArray().forEach(function (candidate) {
-      if (candidates.indexOf(candidate) < 0) candidates.push(candidate);
-    });
+    const candidates = collectAssociatedInputs($node);
 
     for (let i = 0; i < candidates.length; i++) {
       const value = normalizeScalarFilterText($(candidates[i]).val());
@@ -1078,9 +1397,11 @@
     const normalized = normalizeFilterValue(fieldMeta, operator, readFilterInputValue(valueInput), readFilterInputValue(toInput), true);
 
     if (!normalized) {
+      showIndexFilterError(row, "Informe um valor valido para adicionar o filtro.");
       return false;
     }
 
+    clearIndexFilterError(row);
     state.filterRows.push({
       __id: String(state.activeFilterId++),
       indexName: indexName || "Indice",
@@ -1108,6 +1429,18 @@
       input.val("");
     });
     return true;
+  }
+
+  function showIndexFilterError(row, message) {
+    if (!row || !row.length) return;
+    row.addClass("has-error");
+    row.find(".index-filter-error").text(message || "Nao foi possivel adicionar o filtro.");
+  }
+
+  function clearIndexFilterError(row) {
+    if (!row || !row.length) return;
+    row.removeClass("has-error");
+    row.find(".index-filter-error").text("");
   }
 
   function addDynamicFilter() {
@@ -1224,6 +1557,7 @@
               <span></span>
             </div>
             <button class="k-button k-button-sm add-index-filter" type="button">Adicionar</button>
+            <div class="index-filter-error" role="alert"></div>
           </div>
         `;
       }).join("");
@@ -1260,9 +1594,7 @@
       setFooterStatus(`Filtros por índice/abas: ${indexNames.length} | Campos: ${fields.length}`, "");
     } catch (_) {}
 
-    requestAnimationFrame(function () {
-      initIndexFilterWidgets(tabEl);
-    });
+    initIndexFilterWidgets(tabEl);
 
     return;
   }
@@ -1556,6 +1888,15 @@
     return String(value).trim();
   }
 
+  function normalizeIntegerFilterText(value) {
+    const text = normalizeScalarFilterText(value);
+    if (!text) return "";
+    if (/^-?\d{1,3}([.,\s]\d{3})+$/.test(text)) {
+      return text.replace(/[.,\s]/g, "");
+    }
+    return text;
+  }
+
   function validateFilterValues(fieldMeta, operator, valueData, valueToData) {
     const type = getFieldType(fieldMeta);
     const isList = isListField(fieldMeta);
@@ -1617,7 +1958,7 @@
     if (text === "") return false;
     const type = getFieldType(fieldMeta);
     if (type === "integer" || type === "int64") {
-      if (!/^-?\d+$/.test(text)) {
+      if (!/^-?\d+$/.test(normalizeIntegerFilterText(text))) {
         setFooterStatus("Informe um número inteiro válido para o campo " + (fieldMeta.name || ""), "error");
         return false;
       }
@@ -1696,6 +2037,9 @@
       const dateType = getFieldType(fieldMeta);
       return toPayloadDateTime(dateType, text);
     }
+    if (getFieldType(fieldMeta) === "integer" || getFieldType(fieldMeta) === "int64") {
+      return normalizeIntegerFilterText(text);
+    }
     if (isDecimalType(fieldMeta)) {
       return String(Number(text.replace(",", ".")));
     }
@@ -1735,7 +2079,11 @@
 
     if (isDateType(fieldMeta)) {
       $input.kendoDatePicker({
-        format: "dd/MM/yyyy"
+        format: "dd/MM/yyyy",
+        change: function () {
+          $input.data("filterValue", this.value());
+          clearIndexFilterError($input.closest(".index-filter-item"));
+        }
       });
       return;
     }
@@ -1743,7 +2091,15 @@
     if (isDecimalType(fieldMeta)) {
       $input.kendoNumericTextBox({
         decimals: getFieldType(fieldMeta) === "integer" || getFieldType(fieldMeta) === "int64" ? 0 : 2,
-        format: getFieldType(fieldMeta) === "integer" || getFieldType(fieldMeta) === "int64" ? "n0" : "n2"
+        format: getFieldType(fieldMeta) === "integer" || getFieldType(fieldMeta) === "int64" ? "n0" : "n2",
+        change: function () {
+          $input.data("filterValue", this.value());
+          clearIndexFilterError($input.closest(".index-filter-item"));
+        },
+        spin: function () {
+          $input.data("filterValue", this.value());
+          clearIndexFilterError($input.closest(".index-filter-item"));
+        }
       });
       return;
     }
@@ -1765,7 +2121,15 @@
       const row = $(this);
       const field = row.data("field");
       const fieldMeta = getFieldMeta(field);
-      const operator = row.find(".index-filter-operator").data("kendoDropDownList");
+      const operatorInput = row.find(".index-filter-operator");
+      if (!operatorInput.data("kendoDropDownList")) {
+        operatorInput.kendoDropDownList({
+          dataTextField: "label",
+          dataValueField: "value",
+          dataSource: []
+        });
+      }
+      const operator = operatorInput.data("kendoDropDownList");
       configureFilterOperator(operator, fieldMeta);
       if (operator) {
         operator.unbind("change");
@@ -1803,6 +2167,66 @@
     });
   }
 
+  function isNumericType(fieldMeta) {
+    const type = getFieldType(fieldMeta);
+    return ["integer", "int64", "decimal", "float", "double", "amount"].indexOf(type) >= 0;
+  }
+
+  function buildFieldOptionLookup(fields) {
+    const lookup = {};
+    (fields || []).forEach(function (field) {
+      if (!field || !field.name || !isNumericType(field) || !Array.isArray(field.options) || !field.options.length) {
+        return;
+      }
+
+      const fieldLookup = {};
+      normalizeListOptions(field.options).forEach(function (option) {
+        const value = normalizeScalarFilterText(option.value);
+        const label = normalizeScalarFilterText(option.label);
+        if (!value || !label) return;
+        fieldLookup[value] = label;
+        const numericValue = Number(value.replace(",", "."));
+        if (!isNaN(numericValue)) {
+          fieldLookup[String(numericValue)] = label;
+        }
+      });
+
+      if (Object.keys(fieldLookup).length) {
+        lookup[field.name] = fieldLookup;
+      }
+    });
+    return lookup;
+  }
+
+  function describeFieldValue(fieldMeta, value, lookupSource) {
+    const raw = normalizeScalarFilterText(value);
+    if (!fieldMeta || !fieldMeta.name || raw === "") return raw;
+    if (isLogicalType(fieldMeta)) {
+      const logical = normalizeLogicalDisplayValue(raw);
+      if (logical) return logical;
+    }
+    const source = lookupSource || state.fieldOptionLookup;
+    const lookup = source[fieldMeta.name];
+    if (!lookup) return raw;
+
+    const numericKey = String(Number(raw.replace(",", ".")));
+    const label = lookup[raw] || (numericKey !== "NaN" ? lookup[numericKey] : "");
+    if (!label || label === raw) return raw;
+    return raw + " - " + label;
+  }
+
+  function normalizeLogicalDisplayValue(value) {
+    const normalized = normalizeScalarFilterText(value).toLowerCase();
+    if (["true", "1", "sim", "yes", "y"].indexOf(normalized) >= 0) return "Sim";
+    if (["false", "0", "nao", "não", "no", "n"].indexOf(normalized) >= 0) return "Não";
+    return "";
+  }
+
+  function displayFieldValue(fieldMeta, value, lookupSource) {
+    const text = describeFieldValue(fieldMeta, value, lookupSource);
+    return window.kendo && typeof kendo.htmlEncode === "function" ? kendo.htmlEncode(text) : String(text);
+  }
+
   function loadFilterTabs() {
     buildFilterTabs(state.fields);
     showStep(2);
@@ -1827,7 +2251,10 @@
     const columns = (state.fields || []).map((field) => ({
       field: field.name,
       title: field.label || field.name,
-      width: Math.min(Math.max(160, (field.label || field.name).length * 8), 280)
+      width: Math.min(Math.max(160, (field.label || field.name).length * 8), 280),
+      template: function (dataItem) {
+        return displayFieldValue(field, dataItem ? dataItem[field.name] : "");
+      }
     }));
 
     if (!columns.length) {
@@ -1836,8 +2263,13 @@
 
     grid.setOptions({
       columns,
-      pageable: { pageSize: Number($("#queryPageSize").data("kendoNumericTextBox").value()) }
+      pageable: { pageSize: getGridPageSize() }
     });
+  }
+
+  function getGridPageSize() {
+    const widget = $("#queryGridPageSize").data("kendoNumericTextBox");
+    return Number(widget && widget.value ? widget.value() : $("#queryGridPageSize").val()) || 50;
   }
 
   function runQuery() {
@@ -1857,7 +2289,7 @@
     }
 
     const page = Number($("#queryPage").data("kendoNumericTextBox").value()) || 1;
-    const pageSize = Number($("#queryPageSize").data("kendoNumericTextBox").value()) || 200;
+    const pageSize = Number($("#queryPageSize").data("kendoNumericTextBox").value()) || 500;
 
     const payload = {
       execution: "sync",
@@ -1887,7 +2319,7 @@
     $("#resultStatus").text("Executando consulta...");
 
     $.ajax({
-      url: state.apiBase + "/query",
+      url: pasoeUrl("/query"),
       method: "POST",
       contentType: "application/json",
       dataType: "json",
@@ -1916,6 +2348,7 @@
     if (!grid) return;
 
     buildResultColumns();
+    grid.dataSource.pageSize(getGridPageSize());
     grid.dataSource.data(rows);
 
     const records = Number(response.recordsReturned || rows.length);
@@ -1931,10 +2364,6 @@
     const win = $("#recordWindow").data("kendoWindow");
     const joinDrop = $("#recordJoinTable").data("kendoDropDownList");
     const container = $("#recordForm");
-    const metaByName = state.fields.reduce((acc, field) => {
-      acc[field.name] = field;
-      return acc;
-    }, {});
 
     state.currentRecordRow = row || {};
     state.currentRecordJoinFieldOptions = {};
@@ -1946,45 +2375,20 @@
     }
 
     function renderRecordFormContent(rowData, rowJoinOptions) {
-      const keys = Object.keys(rowData || {});
-      container.empty();
-      keys
-        .filter((fieldName) => {
-          if (typeof fieldName !== "string") return false;
-          if (!fieldName) return false;
-          if (fieldName.startsWith("_")) return false;
-          if (fieldName === "uid" || fieldName === "dirty" || fieldName === "__index" || fieldName === "editable") return false;
-          return true;
-        })
-        .filter((fieldName) => {
-          return !!metaByName[fieldName];
-        })
-        .sort((a, b) => {
-          const aOrder = metaByName[a] ? metaByName[a].__seq || 0 : 9999;
-          const bOrder = metaByName[b] ? metaByName[b].__seq || 0 : 9999;
-          return aOrder - bOrder;
-        })
-        .forEach(function (fieldName) {
-          const fieldMeta = metaByName[fieldName] || {};
-          const value = rowData[fieldName];
-          const longText = isLongTextField(fieldMeta, value);
-          const cls = longText ? "record-field full-row" : "record-field";
-          const joinButton = getRecordFieldJoinButton(fieldName, value, rowJoinOptions[fieldName]);
-
-          const wrapper = $("<div class='" + cls + "'></div>");
-          const label = $("<label></label>").text(fieldMeta.label || fieldName);
-          const labelRow = $("<div class='record-field-title-row'></div>");
-          if (joinButton) {
-            labelRow.append(joinButton);
-          }
-          labelRow.append(label);
-          const input = $("<input type=\"text\" readonly />");
-          input.val(value == null ? "" : String(value));
-          input.addClass("record-field-input");
-          wrapper.append(labelRow, input);
-          container.append(wrapper);
-          applyRecordFieldWidget(input, fieldMeta);
-        });
+      if (!window.SursumRecordFormRenderer || typeof SursumRecordFormRenderer.render !== "function") {
+        container.empty().append("<div class='status-box error'>Renderizador de formulario indisponivel.</div>");
+        return;
+      }
+      SursumRecordFormRenderer.render({
+        container,
+        row: rowData || {},
+        fields: state.fields,
+        joinOptionsByField: rowJoinOptions || {},
+        formatValue: describeFieldValue,
+        createJoinButton: getRecordFieldJoinButton,
+        applyWidget: applyRecordFieldWidget,
+        isLongTextField
+      });
     }
 
     discoverForeignKeys(function () {
@@ -2209,7 +2613,7 @@
 
     setFooterStatus("Carregando metadados da tabela " + option.foreignTable + "...", "");
 
-    getJsonUtf8(state.apiBase + "/metadata/tables/" + encodeURIComponent(option.foreignTable) + "/fields?database=" + encodeURIComponent(option.foreignDatabase))
+    getJsonUtf8(metadataUrl("/metadata/tables/" + encodeURIComponent(option.foreignTable) + "/fields?database=" + encodeURIComponent(option.foreignDatabase)))
       .done(function (response) {
         if (!response || response.success === false) {
           throw new Error(apiError(response));
@@ -2219,11 +2623,15 @@
           __seq: index
         }));
 
+        const relatedOptionLookup = buildFieldOptionLookup(fields);
         const columns = fields.length
           ? fields.map((field) => ({
               field: field.name,
               title: field.label || field.name,
-              width: Math.min(Math.max(160, (field.label || field.name).length * 8), 280)
+              width: Math.min(Math.max(160, (field.label || field.name).length * 8), 280),
+              template: function (dataItem) {
+                return displayFieldValue(field, dataItem ? dataItem[field.name] : "", relatedOptionLookup);
+              }
             }))
           : [{ field: "_noData", title: "Sem metadados" }];
 
@@ -2234,7 +2642,7 @@
         relatedGrid.dataSource.data([]);
 
         $.ajax({
-          url: state.apiBase + "/query",
+          url: pasoeUrl("/query"),
           method: "POST",
           contentType: "application/json",
           dataType: "json",
@@ -2301,7 +2709,7 @@
     return isNaN(asDate.getTime()) ? null : asDate;
   }
 
-  function applyRecordFieldWidget(input, fieldMeta) {
+  function applyRecordFieldWidget(input, fieldMeta, forceText) {
     if (!input || !input.length) return;
     const type = String(fieldMeta.type || "").toLowerCase();
     const format = String(fieldMeta.format || "").toLowerCase();
@@ -2327,7 +2735,7 @@
       return;
     }
 
-    if (isNumeric && typeof input.kendoNumericTextBox === "function") {
+    if (!forceText && isNumeric && typeof input.kendoNumericTextBox === "function") {
       const decimal = /decimal|numeric|float|double|currency|money/.test(type);
       const value = Number(rawValue);
       input.kendoNumericTextBox({
@@ -2421,12 +2829,20 @@
   function onCompanyChanged() {
     const companyCombo = $("#apiCompany").data("kendoComboBox");
     const companyId = companyCombo ? String(companyCombo.value() || "") : "";
-    const client = currentClient();
-    const environment = currentEnvironment();
-    if (companyId) {
-      localStorage.setItem(QUERY_COMPANY_KEY, companyId);
+    const company = resolveCompanySelection(companyCombo, companyId);
+    if (!company) {
+      refreshContextUi();
+      return;
     }
+
+    localStorage.setItem(QUERY_COMPANY_KEY, company.id);
+    if (window.SursumContext && typeof SursumContext.setSelection === "function") {
+      SursumContext.setSelection(company.clientId || "", company.environmentId || "", company.id);
+      return;
+    }
+
     refreshContextUi();
+    loadDatabases(false);
   }
 
   function currentClient() {
@@ -2465,5 +2881,27 @@
       });
     }
     return [];
+  }
+
+  function resolveCompanySelection(companyCombo, companyId) {
+    const companies = companiesForCurrentEnvironment();
+    const selectedId = String(companyId || "").trim();
+    if (selectedId) {
+      const byId = companies.find(function (item) {
+        return item.id === selectedId;
+      });
+      if (byId) return byId;
+    }
+
+    const typedText = companyCombo && typeof companyCombo.text === "function"
+      ? String(companyCombo.text() || "").trim().toLowerCase()
+      : "";
+    if (!typedText) return null;
+
+    return companies.find(function (item) {
+      return String(item.name || "").trim().toLowerCase() === typedText
+        || String(item.code || "").trim().toLowerCase() === typedText
+        || String(item.pathParam || "").trim().toLowerCase() === typedText;
+    }) || null;
   }
 })();

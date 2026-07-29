@@ -100,14 +100,17 @@
           <span>Grid Kendo com dados retornados e duplo clique para abrir o registro.</span>
         </div>
 
-        <div class="grid three compact">
+        <div class="grid three compact query-run-controls">
           <label for="queryPage">Pagina
             <input id="queryPage" value="1">
           </label>
-          <label for="queryPageSize">Tamanho da pagina
-            <input id="queryPageSize" value="200">
+          <label for="queryPageSize">Registros por busca
+            <input id="queryPageSize" value="500">
           </label>
-          <label>
+          <label for="queryGridPageSize">Registros por pagina
+            <input id="queryGridPageSize" value="50">
+          </label>
+          <label class="run-query-cell">
             <span style="opacity:0">.</span>
             <button id="runQuery" type="button">Executar consulta</button>
           </label>
@@ -133,6 +136,7 @@
         </label>
         <label>&nbsp;
           <button id="applyTableSearch" type="button">Filtrar</button>
+          <button id="refreshTableSearch" type="button">Forçar atualização</button>
           <button id="cancelTableSearch" type="button">Fechar</button>
         </label>
       </div>
@@ -194,6 +198,7 @@
   <script src="auth-guard.js"></script>
 
   <script src="context-manager.js"></script>
+  <script src="record-form-renderer.js"></script>
   <script src="query-wizard-3steps.js"></script>
 </body>
 </html>
