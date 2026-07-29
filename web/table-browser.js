@@ -220,7 +220,6 @@
       },
       height: 500,
       pageable: {
-        pageSizes: [50, 100, 200],
         buttonCount: 5
       },
       sortable: true,
@@ -239,6 +238,15 @@
       decimals: 0,
       format: "n0",
       value: 50
+    });
+    $("#browseGridPageSize").kendoNumericTextBox({
+      min: 1,
+      max: 500,
+      step: 25,
+      decimals: 0,
+      format: "n0",
+      value: 50,
+      change: applyBrowseGridPageSize
     });
     $("#browseDirection").kendoDropDownList({
       dataSource: [
@@ -1732,6 +1740,21 @@
     return Math.min(500, Math.floor(value));
   }
 
+  function browseGridPageSize() {
+    const numeric = $("#browseGridPageSize").data("kendoNumericTextBox");
+    const value = numeric ? Number(numeric.value()) : 50;
+    if (!Number.isFinite(value) || value < 1) return 50;
+    return Math.min(500, Math.floor(value));
+  }
+
+  function applyBrowseGridPageSize() {
+    const grid = $("#dataGrid").data("kendoGrid");
+    if (!grid) return;
+    const pageSize = browseGridPageSize();
+    grid.dataSource.pageSize(pageSize);
+    grid.dataSource.page(Math.min(grid.dataSource.page() || 1, Math.max(1, grid.dataSource.totalPages())));
+  }
+
   function browseDirection() {
     const combo = $("#browseDirection").data("kendoDropDownList");
     return combo ? combo.value() || "ASC" : "ASC";
@@ -1823,7 +1846,7 @@
 
     applyBrowseColumns(grid, columns, columnSignature);
     grid.dataSource.data(nextRows);
-    grid.dataSource.pageSize(grid.dataSource.pageSize() || 50);
+    grid.dataSource.pageSize(browseGridPageSize());
     if (appendRows) {
       grid.dataSource.page(Math.max(1, grid.dataSource.totalPages()));
     } else {

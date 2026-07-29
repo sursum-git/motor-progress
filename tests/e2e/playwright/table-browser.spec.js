@@ -148,6 +148,8 @@ test('table browser data tab keeps rows when order is inverted and formats dates
   await page.locator('#metadataTabs li').filter({ hasText: 'Dados' }).click();
   await expect(page.locator('#openBrowseFilterBtn')).toContainText('Abrir filtros');
   await expect(page.locator('#browseNextBtn')).toContainText('Carregar mais registros');
+  await expect(page.locator('label[for="browsePageSize"]')).toContainText('Novos registros');
+  await expect(page.locator('label[for="browseGridPageSize"]')).toContainText('Registros por página');
   await page.locator('#browseFirstBtn').click();
   await expect(page.locator('#dataGrid')).toContainText('Cliente Asc');
   await expect(page.locator('#dataGrid')).toContainText('05/01/2026');
@@ -196,13 +198,19 @@ test('table browser data tab appends more records and moves to last grid page', 
   await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
 
   await page.locator('#metadataTabs li').filter({ hasText: 'Dados' }).click();
+  await page.evaluate(() => {
+    $("#browsePageSize").data("kendoNumericTextBox").value(500);
+    $("#browseGridPageSize").data("kendoNumericTextBox").value(25);
+    $("#browseGridPageSize").data("kendoNumericTextBox").trigger("change");
+  });
   await page.locator('#browseFirstBtn').click();
   await expect(page.locator('#dataGrid')).toContainText('Cliente Inicial 1');
 
   await page.locator('#browseNextBtn').click();
   await expect(page.locator('#dataGrid')).toContainText('Cliente Mais 101');
   await expect.poll(async () => page.evaluate(() => $("#dataGrid").data("kendoGrid").dataSource.data().length)).toBe(105);
-  await expect.poll(async () => page.evaluate(() => $("#dataGrid").data("kendoGrid").dataSource.page())).toBe(3);
+  await expect.poll(async () => page.evaluate(() => $("#dataGrid").data("kendoGrid").dataSource.pageSize())).toBe(25);
+  await expect.poll(async () => page.evaluate(() => $("#dataGrid").data("kendoGrid").dataSource.page())).toBe(5);
 });
 
 test('table browser data tab can be maximized and restored', async ({ page }) => {

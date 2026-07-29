@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
   <link rel="stylesheet" href="ui-ready.css?v=20260617-grid-center">
   <link rel="stylesheet" href="query-builder.css?v=20260612-table-browser-toolbar">
-  <link rel="stylesheet" href="table-browser.css?v=20260729-data-maximize">
+  <link rel="stylesheet" href="table-browser.css?v=20260729-grid-page-size">
 </head>
 <body class="sursum-ui-pending">
   <div class="shell">
@@ -88,8 +88,12 @@
             <div id="browseDataPanel" class="browse-data-panel">
               <div class="browse-toolbar">
                 <div class="endpoint-field">
-                  <label for="browsePageSize">Registros</label>
+                  <label for="browsePageSize">Novos registros</label>
                   <input id="browsePageSize">
+                </div>
+                <div class="endpoint-field">
+                  <label for="browseGridPageSize">Registros por página</label>
+                  <input id="browseGridPageSize">
                 </div>
                 <div class="endpoint-field">
                   <label for="browseDirection">Ordem</label>
@@ -191,6 +195,6 @@
   <script src="auth-guard.js"></script>
 
   <script src="context-manager.js"></script>
-  <script src="table-browser.js?v=20260729-data-append-paging"></script>
+  <script src="table-browser.js?v=20260729-grid-page-size"></script>
 </body>
 </html>
