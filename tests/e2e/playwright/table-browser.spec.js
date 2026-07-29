@@ -146,6 +146,8 @@ test('table browser data tab keeps rows when order is inverted and formats dates
   await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
 
   await page.locator('#metadataTabs li').filter({ hasText: 'Dados' }).click();
+  await expect(page.locator('#openBrowseFilterBtn')).toContainText('Abrir filtros');
+  await expect(page.locator('#browseNextBtn')).toContainText('Carregar mais registros');
   await page.locator('#browseFirstBtn').click();
   await expect(page.locator('#dataGrid')).toContainText('Cliente Asc');
   await expect(page.locator('#dataGrid')).toContainText('05/01/2026');
@@ -158,6 +160,49 @@ test('table browser data tab keeps rows when order is inverted and formats dates
   const payload = await (await request.get('/__requests')).json();
   const browseRequests = payload.requests.filter((item) => item.path.endsWith('/table-browse'));
   expect(browseRequests.map((item) => item.body.direction)).toEqual(['ASC', 'DESC']);
+});
+
+test('table browser data tab appends more records and moves to last grid page', async ({ page }) => {
+  await page.route(/\/table-browse(\?|$)/, async (route) => {
+    const body = route.request().postDataJSON();
+    const useCursor = !!body.cursor;
+    const rows = useCursor
+      ? Array.from({ length: 55 }, (_, index) => ({ CustNum: index + 51, Name: `Cliente Mais ${index + 51}` }))
+      : Array.from({ length: 50 }, (_, index) => ({ CustNum: index + 1, Name: `Cliente Inicial ${index + 1}` }));
+    await route.fulfill({
+      json: {
+        success: true,
+        database: body.database || 'DICTDB',
+        table: body.table || 'Customer',
+        direction: body.direction || 'ASC',
+        pageSize: body.pageSize || 50,
+        recordsReturned: rows.length,
+        hasMore: !useCursor,
+        keyFields: [{ name: 'CustNum', type: 'integer', ascending: true }],
+        fields: [
+          { name: 'CustNum', type: 'integer' },
+          { name: 'Name', type: 'character' }
+        ],
+        data: rows,
+        nextCursor: { CustNum: rows[rows.length - 1].CustNum },
+        strategy: 'KEYSET_CURSOR'
+      }
+    });
+  });
+
+  await page.goto('/table-browser.html');
+  await page.locator('#tableName').fill('Customer');
+  await page.locator('#findTableBtn').click();
+  await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
+
+  await page.locator('#metadataTabs li').filter({ hasText: 'Dados' }).click();
+  await page.locator('#browseFirstBtn').click();
+  await expect(page.locator('#dataGrid')).toContainText('Cliente Inicial 1');
+
+  await page.locator('#browseNextBtn').click();
+  await expect(page.locator('#dataGrid')).toContainText('Cliente Mais 101');
+  await expect.poll(async () => page.evaluate(() => $("#dataGrid").data("kendoGrid").dataSource.data().length)).toBe(105);
+  await expect.poll(async () => page.evaluate(() => $("#dataGrid").data("kendoGrid").dataSource.page())).toBe(3);
 });
 
 test('table browser data tab can be maximized and restored', async ({ page }) => {

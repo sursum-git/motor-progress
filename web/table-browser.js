@@ -28,7 +28,8 @@
     browseHasMore: false,
     browseFilters: [],
     browseEditingFilterId: "",
-    browseDataMaximized: false
+    browseDataMaximized: false,
+    browseColumnSignature: ""
   };
   let addCompanyWindow = null;
   let addCompanyValidator = null;
@@ -213,8 +214,15 @@
     });
 
     $("#dataGrid").kendoGrid({
-      dataSource: [],
+      dataSource: {
+        data: [],
+        pageSize: 50
+      },
       height: 500,
+      pageable: {
+        pageSizes: [50, 100, 200],
+        buttonCount: 5
+      },
       sortable: true,
       filterable: true,
       resizable: true,
@@ -1781,15 +1789,17 @@
         }
         state.browseCursor = response.nextCursor || null;
         state.browseHasMore = !!response.hasMore;
-        renderBrowseResponse(response);
-        setStatus(`Dados carregados: ${response.recordsReturned || 0} registros.`, "ok");
+        renderBrowseResponse(response, useCursor);
+        setStatus(useCursor
+          ? `Registros agregados: ${response.recordsReturned || 0}.`
+          : `Dados carregados: ${response.recordsReturned || 0} registros.`, "ok");
       })
       .fail(function (xhr) {
         setStatus("Falha ao carregar dados: " + ajaxErrorMessage(xhr), "error");
       });
   }
 
-  function renderBrowseResponse(response) {
+  function renderBrowseResponse(response, appendRows) {
     const grid = $("#dataGrid").data("kendoGrid");
     if (!grid) return;
 
@@ -1806,11 +1816,38 @@
     }, {});
     const formattedRows = rows.map((row) => formatBrowseRow(row, fieldTypes));
     const columns = fields.map((field) => browseColumn(field, fieldTypes[field]));
+    const columnSignature = fields.map((field) => `${field}:${fieldTypes[field] || ""}`).join("|");
+    const nextRows = appendRows
+      ? currentBrowseGridRows(grid).concat(formattedRows)
+      : formattedRows;
 
-    grid.setOptions({ columns });
-    grid.dataSource.data(formattedRows);
+    applyBrowseColumns(grid, columns, columnSignature);
+    grid.dataSource.data(nextRows);
+    grid.dataSource.pageSize(grid.dataSource.pageSize() || 50);
+    if (appendRows) {
+      grid.dataSource.page(Math.max(1, grid.dataSource.totalPages()));
+    } else {
+      grid.dataSource.page(1);
+    }
     renderBrowseSummary(response);
     updateBrowseState();
+    resizeBrowseDataGrid();
+  }
+
+  function currentBrowseGridRows(grid) {
+    return grid.dataSource.data().map((item) => {
+      if (item && typeof item.toJSON === "function") {
+        return item.toJSON();
+      }
+      return Object.assign({}, item);
+    });
+  }
+
+  function applyBrowseColumns(grid, columns, signature) {
+    if (state.browseColumnSignature !== signature) {
+      grid.setOptions({ columns });
+      state.browseColumnSignature = signature;
+    }
   }
 
   function formatBrowseRow(row, fieldTypes) {
@@ -1886,6 +1923,7 @@
       grid.setOptions({ columns: [] });
       grid.dataSource.data([]);
     }
+    state.browseColumnSignature = "";
     $("#browseKeyInfo").text("Chave: -");
     renderBrowseFilterSummary();
     $("#browseMoreInfo").text("Sem dados carregados.");
