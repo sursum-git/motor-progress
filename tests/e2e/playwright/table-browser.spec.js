@@ -130,7 +130,19 @@ test('table browser data tab sends filters configured in maximized filter window
   await expect(page.locator('#browseFilterGrid')).toContainText('Contem');
   await expect(page.locator('#browseFilterInfo')).toContainText('Filtros: 1 ativo');
 
+  await page.locator('#browseFilterGrid tbody tr').filter({ hasText: 'Name' }).click();
+  await expect.poll(async () => page.evaluate(() => $("#filterField").data("kendoDropDownList").value())).toBe("Name");
+  await expect.poll(async () => page.evaluate(() => $("#filterOperator").data("kendoDropDownList").value())).toBe("contains");
+  await expect(page.locator('#filterValue')).toHaveValue('Cliente');
+
+  await page.locator('#filterValue').fill('Cliente Alterado');
+  await page.locator('#updateBrowseFilter').click();
+
+  await expect(page.locator('#browseFilterGrid')).toContainText('Cliente Alterado');
+  await expect.poll(async () => page.evaluate(() => $("#browseFilterGrid").data("kendoGrid").dataSource.data().length)).toBe(1);
   const payload = await (await request.get('/__requests')).json();
-  const browseRequest = payload.requests.find((item) => item.path.endsWith('/table-browse'));
-  expect(browseRequest.body.filters).toEqual([{ field: 'Name', operator: 'contains', value: 'Cliente' }]);
+  const browseRequests = payload.requests.filter((item) => item.path.endsWith('/table-browse'));
+  const browseRequest = browseRequests[browseRequests.length - 1];
+  expect(browseRequests).toHaveLength(2);
+  expect(browseRequest.body.filters).toEqual([{ field: 'Name', operator: 'contains', value: 'Cliente Alterado' }]);
 });

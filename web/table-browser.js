@@ -26,7 +26,8 @@
     selectedTableRows: [],
     browseCursor: null,
     browseHasMore: false,
-    browseFilters: []
+    browseFilters: [],
+    browseEditingFilterId: ""
   };
   let addCompanyWindow = null;
   let addCompanyValidator = null;
@@ -292,7 +293,9 @@
       dataSource: [],
       height: 420,
       sortable: true,
+      selectable: "row",
       noRecords: { template: "Nenhum filtro adicionado." },
+      change: fillBrowseFilterInputsFromSelection,
       columns: [
         { field: "field", title: "Campo", width: 220 },
         { field: "operatorText", title: "Operador", width: 170 },
@@ -304,7 +307,8 @@
         }
       ]
     });
-    $("#browseFilterGrid").on("click", ".remove-browse-filter", function () {
+    $("#browseFilterGrid").on("click", ".remove-browse-filter", function (event) {
+      event.stopPropagation();
       removeBrowseFilter($(this).attr("data-filter-id"));
     });
     updateBrowseFilterButtonState();
@@ -1140,6 +1144,7 @@
         state.browseCursor = null;
         state.browseHasMore = false;
         state.browseFilters = [];
+        state.browseEditingFilterId = "";
         renderBrowseFilterSummary();
         renderBrowseFilterGrid();
 
@@ -1513,7 +1518,8 @@
       return;
     }
     const id = `${field}|${operator}|${value}`.toLowerCase();
-    const next = state.browseFilters.filter((item) => item.id !== id);
+    const editingId = state.browseEditingFilterId;
+    const next = state.browseFilters.filter((item) => item.id !== id && item.id !== editingId);
     next.push({
       id,
       field,
@@ -1536,11 +1542,29 @@
     if (field) field.value("");
     if (operator) operator.value("");
     $("#filterValue").val("");
+    state.browseEditingFilterId = "";
+    updateBrowseFilterButtonState();
+  }
+
+  function fillBrowseFilterInputsFromSelection() {
+    const grid = $("#browseFilterGrid").data("kendoGrid");
+    if (!grid) return;
+    const dataItem = grid.dataItem(grid.select());
+    if (!dataItem) return;
+    const field = $("#filterField").data("kendoDropDownList");
+    const operator = $("#filterOperator").data("kendoDropDownList");
+    if (field) field.value(dataItem.field || "");
+    if (operator) operator.value(dataItem.operator || "");
+    $("#filterValue").val(dataItem.value || "");
+    state.browseEditingFilterId = dataItem.id || "";
     updateBrowseFilterButtonState();
   }
 
   function removeBrowseFilter(id) {
     state.browseFilters = state.browseFilters.filter((item) => item.id !== id);
+    if (state.browseEditingFilterId === id) {
+      clearBrowseFilterInputs();
+    }
     state.browseCursor = null;
     state.browseHasMore = false;
     renderBrowseFilterGrid();
@@ -1550,6 +1574,7 @@
 
   function clearBrowseFilters() {
     state.browseFilters = [];
+    state.browseEditingFilterId = "";
     state.browseCursor = null;
     state.browseHasMore = false;
     renderBrowseFilterGrid();
@@ -1872,6 +1897,7 @@
     state.browseCursor = null;
     state.browseHasMore = false;
     state.browseFilters = [];
+    state.browseEditingFilterId = "";
 
     $("#fieldsGrid").data("kendoGrid").dataSource.data([]);
     $("#indexesGrid").data("kendoGrid").dataSource.data([]);
