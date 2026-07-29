@@ -343,6 +343,13 @@ function loadViewAsRows(PDO $pdo, array $scope): array
         }
         $options = $optionsByViewAs[(string) $row['id']] ?? [];
         $listExpression = $options ? viewAsListExpression($options) : text($raw['listExpression'] ?? '');
+        if (!$options && $listExpression === '') {
+            $listExpression = normalizeDirectViewAsList((string) ($row['view_as'] ?? ''));
+            $options = $listExpression !== ''
+                ? parseViewAsOptionsText($listExpression, isSingleViewAsList((string) ($row['view_as'] ?? '')))
+                : [];
+            $listExpression = $options ? viewAsListExpression($options) : '';
+        }
         return [
             'id' => $row['id'],
             'database' => $row['database_name'],
@@ -532,9 +539,15 @@ function normalizeViewAsOptions($options): array
     return $normalized;
 }
 
-function parseViewAsOptionsText(string $listExpression): array
+function parseViewAsOptionsText(string $listExpression, bool $singleItems = false): array
 {
     $tokens = str_getcsv($listExpression);
+    if ($singleItems) {
+        return array_values(array_filter(array_map(static function ($token): array {
+            $value = cleanViewAsOptionToken((string) $token);
+            return $value === '' ? [] : ['label' => $value, 'value' => $value];
+        }, $tokens)));
+    }
     $options = [];
     for ($index = 0; $index < count($tokens); $index += 2) {
         $label = cleanViewAsOptionToken((string) ($tokens[$index] ?? ''));
@@ -544,6 +557,39 @@ function parseViewAsOptionsText(string $listExpression): array
         }
     }
     return $options;
+}
+
+function normalizeDirectViewAsList(string $viewAs): string
+{
+    $text = text($viewAs);
+    if ($text === '' || extractViewAsInclude($text) !== '') {
+        return '';
+    }
+    $lower = strtolower($text);
+    foreach (['radio-buttons', 'list-item-pairs', 'list-items', 'list-item'] as $needle) {
+        $pos = strpos($lower, $needle);
+        if ($pos !== false) {
+            return text(substr($text, $pos + strlen($needle)));
+        }
+    }
+    return '';
+}
+
+function extractViewAsInclude(string $viewAs): string
+{
+    if (!preg_match('/\{\s*([^}\s]+\.i)\s+[^}]*\}/i', $viewAs, $match)) {
+        return '';
+    }
+    return str_replace('\\', '/', strtolower(text($match[1]))) . ' 3';
+}
+
+function isSingleViewAsList(string $viewAs): bool
+{
+    $lower = strtolower($viewAs);
+    if (strpos($lower, 'list-item-pairs') !== false) {
+        return false;
+    }
+    return strpos($lower, 'list-items') !== false || strpos($lower, 'list-item') !== false;
 }
 
 function cleanViewAsOptionToken(string $value): string

@@ -54,6 +54,24 @@ deleteViewAsRow($pdo, ['database' => 'ems2cad', 'table' => 'acum-cb'], 'modalida
 assertSame(0, (int) $pdo->query('SELECT COUNT(*) FROM field_view_as')->fetchColumn(), 'delete deve remover view-as');
 assertSame(0, (int) $pdo->query('SELECT COUNT(*) FROM field_view_as_options')->fetchColumn(), 'delete deve remover opcoes');
 
+$pdo->prepare(
+    'INSERT INTO field_view_as
+     (id, environment_id, company_id, database_name, table_name, field_name, view_as, source, raw_json, updated_at)
+     VALUES ("direct-list", "", "", "ems5", "gg-inscricao", "ind-tp-propriedade", :view_as, "PASOE", "{}", :updated_at)'
+)->execute([
+    ':view_as' => 'VIEW-AS RADIO-SET RADIO-BUTTONS "Proprietario", 1, "Arrendatario", 2, "Outros", 3 VERTICAL SIZE 10 BY 1',
+    ':updated_at' => date(DATE_ATOM),
+]);
+
+$directRows = loadViewAsRows($pdo, ['database' => 'ems5', 'table' => 'gg-inscricao']);
+assertSame(1, count($directRows), 'deve carregar view-as direto sem tabela de opcoes');
+assertSame('"Proprietario",1,"Arrendatario",2,"Outros",3', $directRows[0]['listExpression'], 'view-as direto deve gerar expressao de lista no retorno');
+assertSame([
+    ['label' => 'Proprietario', 'value' => '1'],
+    ['label' => 'Arrendatario', 'value' => '2'],
+    ['label' => 'Outros', 'value' => '3'],
+], $directRows[0]['options'], 'view-as direto deve gerar opcoes no retorno');
+
 echo "View-as options table contract OK\n";
 
 function assertSame($expected, $actual, string $label): void
