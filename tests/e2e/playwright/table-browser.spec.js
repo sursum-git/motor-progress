@@ -80,6 +80,33 @@ test('table browser searches typed table across all databases when database comb
   await page.locator('#findTableBtn').click();
 
   await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
+  await expect.poll(async () => page.locator('.k-loading-mask:visible').count()).toBe(0);
+});
+
+test('table browser does not keep grid loading while auxiliary relation request is pending', async ({ page }) => {
+  await page.route('**/relation-store.php**', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 4000));
+    await route.fulfill({ json: { success: true, data: [] } });
+  });
+
+  await page.goto('/table-browser.html');
+  await page.locator('#tableName').fill('Customer');
+  await page.locator('#findTableBtn').click();
+
+  await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
+  await expect.poll(async () => page.locator('.k-loading-mask:visible').count()).toBe(0);
+});
+
+test('grid loading cleanup removes masks from grids hidden during ajax stop', async ({ page }) => {
+  await page.goto('/table-browser.html');
+  await page.evaluate(() => {
+    window.SursumGridLoading.visible(true);
+    $("#fieldsGrid").hide();
+    window.SursumGridLoading.visible(false);
+    $("#fieldsGrid").show();
+  });
+
+  await expect.poll(async () => page.locator('#fieldsGrid .k-loading-mask:visible').count()).toBe(0);
 });
 
 test('table browser find metadata loads fields indexes view-as and refreshes joins by OF', async ({ page }) => {

@@ -63,7 +63,7 @@
       return;
     }
 
-    window.jQuery(".k-grid:visible").each(function () {
+    window.jQuery(loading ? ".k-grid:visible" : ".k-grid").each(function () {
       setGridLoading(this, loading);
     });
   }
