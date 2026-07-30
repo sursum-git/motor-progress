@@ -67,6 +67,11 @@
     { value: "in", label: "Estar em (múltiplas opções)" }
   ];
 
+  const INDEX_KIND_OVERRIDES = {
+    "ems2med|ped-venda|ch-pedseq": "primary",
+    "ems2med|ped-venda|ch-pedido": "unique"
+  };
+
   $(init);
 
   function init() {
@@ -1677,6 +1682,13 @@
     return "";
   }
 
+  function indexKindOverride(indexName) {
+    const database = String(state.selectedDatabase || "").toLowerCase();
+    const table = String(state.selectedTable || "").toLowerCase();
+    const index = String(indexName || "").toLowerCase();
+    return INDEX_KIND_OVERRIDES[`${database}|${table}|${index}`] || "normal";
+  }
+
   function groupFieldsByIndex(fields) {
     const grouped = {};
     (fields || []).forEach(function (field) {
@@ -1698,7 +1710,10 @@
         grouped[indexName].kind = strongerIndexKind(
           grouped[indexName].kind || "normal",
           strongerIndexKind(
-            strongerIndexKind(indexInfo.kind || "normal", metadataInfo.kind || "normal"),
+            strongerIndexKind(
+              strongerIndexKind(indexInfo.kind || "normal", metadataInfo.kind || "normal"),
+              indexKindOverride(indexName)
+            ),
             fieldIndexKind
           )
         );

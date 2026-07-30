@@ -308,8 +308,10 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
     }
     if (decodedPathname.includes('/metadata/tables/ped-venda/fields')) {
       return sendJson(res, 200, { success: true, database: 'ems2med', table: 'ped-venda', data: [
-        { name: 'nr-pedcli', type: 'character', fieldType: 'character', indices: 'nr-pedcli' },
-        { name: 'cod-emitente', type: 'integer', fieldType: 'integer' }
+        { name: 'cod-estabel', type: 'character', fieldType: 'character', indices: 'ch-pedido' },
+        { name: 'nr-pedcli', type: 'character', fieldType: 'character', indices: 'ch-pedido,nr-pedcli' },
+        { name: 'nr-pedseq', type: 'integer', fieldType: 'integer', indices: 'ch-pedseq' },
+        { name: 'cod-emitente', type: 'integer', fieldType: 'integer', indices: 'ch-pedido' }
       ] });
     }
     return sendJson(res, 200, { success: true, database: 'DICTDB', table: 'Customer', data: [
