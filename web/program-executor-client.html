@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Executor de Programas Progress</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f6f8;
+      color: #17202a;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      font-weight: 700;
+    }
+    p {
+      margin: 0 0 18px;
+      color: #52616f;
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto;
+      gap: 12px;
+      align-items: end;
+      margin-bottom: 16px;
+      padding: 16px;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+    }
+    label {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #344150;
+    }
+    input,
+    textarea {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #b8c2cc;
+      border-radius: 6px;
+      font: inherit;
+    }
+    input {
+      min-height: 38px;
+    }
+    textarea {
+      min-height: 180px;
+      resize: vertical;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    button {
+      min-height: 38px;
+      padding: 8px 14px;
+      border: 0;
+      border-radius: 6px;
+      background: #1d4ed8;
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #8fa4cf;
+      cursor: wait;
+    }
+    .status {
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-left: 4px solid #1d4ed8;
+      border-radius: 6px;
+      color: #344150;
+    }
+    .editor {
+      margin-bottom: 16px;
+      padding: 16px;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    section {
+      min-width: 0;
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    h2 {
+      margin: 0;
+      padding: 12px 14px;
+      border-bottom: 1px solid #d8dee4;
+      font-size: 16px;
+    }
+    pre {
+      min-height: 320px;
+      max-height: 620px;
+      margin: 0;
+      padding: 14px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 13px;
+      line-height: 1.45;
+      background: #fbfcfd;
+    }
+    @media (max-width: 900px) {
+      body {
+        padding: 14px;
+      }
+      .toolbar,
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Executor de Programas Progress</h1>
+    <p>Executa programas Progress cadastrados no PASOE que recebem e retornam JsonObject.</p>
+
+    <div class="toolbar">
+      <label>
+        Programa
+        <input id="programInput" value="echo-json">
+      </label>
+      <button id="runButton" type="button">Executar</button>
+    </div>
+
+    <div class="editor">
+      <label>
+        Parâmetros JSON
+        <textarea id="parametersInput">{
+  "nr_container": 1650,
+  "texto": "teste"
+}</textarea>
+      </label>
+    </div>
+
+    <div id="statusBox" class="status">Pronto.</div>
+
+    <div class="grid">
+      <section>
+        <h2>JSON enviado</h2>
+        <pre id="requestBox"></pre>
+      </section>
+      <section>
+        <h2>Resposta</h2>
+        <pre id="responseBox"></pre>
+      </section>
+    </div>
+  </main>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="context-manager.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      const DEFAULT_API_BASE = "https://192.168.0.111:9911/med/web/SursumDynamicQuery";
+      const statusBox = document.getElementById("statusBox");
+      const requestBox = document.getElementById("requestBox");
+      const responseBox = document.getElementById("responseBox");
+      const runButton = document.getElementById("runButton");
+      const programInput = document.getElementById("programInput");
+      const parametersInput = document.getElementById("parametersInput");
+
+      function qs(name) {
+        return new URLSearchParams(window.location.search).get(name);
+      }
+
+      function setStatus(message) {
+        statusBox.textContent = message;
+      }
+
+      function pretty(value) {
+        return JSON.stringify(value, null, 2);
+      }
+
+      function currentApiBase() {
+        if (window.SursumContext && typeof SursumContext.getCurrentApiBase === "function") {
+          return String(SursumContext.getCurrentApiBase() || DEFAULT_API_BASE).replace(/\/+$/, "");
+        }
+        return DEFAULT_API_BASE;
+      }
+
+      function pasoeProxyUrl(path) {
+        return "pasoe-proxy.php?target=" + encodeURIComponent(currentApiBase() + path);
+      }
+
+      function parseParameters() {
+        const text = String(parametersInput.value || "").trim();
+        if (!text) return {};
+        return JSON.parse(text);
+      }
+
+      function buildRequest() {
+        return {
+          program: String(programInput.value || "").trim(),
+          parameters: parseParameters()
+        };
+      }
+
+      function refreshFromQueryString() {
+        const program = qs("program");
+        const parameters = qs("parameters");
+        if (program) programInput.value = program;
+        if (parameters) {
+          try {
+            parametersInput.value = pretty(JSON.parse(parameters));
+          } catch (_) {
+            parametersInput.value = parameters;
+          }
+        }
+        refreshPreview();
+      }
+
+      function refreshPreview() {
+        try {
+          requestBox.textContent = pretty(buildRequest());
+          setStatus("Pronto.");
+        } catch (error) {
+          requestBox.textContent = "";
+          setStatus("JSON de parâmetros inválido: " + error.message);
+        }
+      }
+
+      async function readResponsePayload(response) {
+        const text = await response.text();
+        try {
+          return { isJson: true, payload: JSON.parse(text), raw: text };
+        } catch (error) {
+          return { isJson: false, payload: null, raw: text };
+        }
+      }
+
+      function renderResponse(response, result) {
+        responseBox.textContent = result.isJson ? pretty(result.payload) : result.raw;
+        if (!result.isJson) {
+          setStatus("Resposta nao JSON do servidor. HTTP " + response.status + ".");
+          return;
+        }
+        setStatus(response.ok ? "Programa executado." : "Programa retornou erro HTTP " + response.status + ".");
+      }
+
+      async function run() {
+        let request;
+        try {
+          request = buildRequest();
+        } catch (error) {
+          setStatus("JSON de parâmetros inválido: " + error.message);
+          return;
+        }
+
+        if (!request.program) {
+          setStatus("Informe o código do programa.");
+          return;
+        }
+
+        runButton.disabled = true;
+        responseBox.textContent = "";
+        requestBox.textContent = pretty(request);
+        try {
+          setStatus("Executando programa no PASOE...");
+          const response = await fetch(pasoeProxyUrl("/program/execute"), {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            },
+            body: JSON.stringify(request)
+          });
+          renderResponse(response, await readResponsePayload(response));
+        } catch (error) {
+          setStatus("Falha ao executar programa: " + error.message);
+        } finally {
+          runButton.disabled = false;
+        }
+      }
+
+      runButton.addEventListener("click", run);
+      programInput.addEventListener("input", refreshPreview);
+      parametersInput.addEventListener("input", refreshPreview);
+      refreshFromQueryString();
+    })();
+  </script>
+</body>
+</html>

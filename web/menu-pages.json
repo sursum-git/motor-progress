@@ -45,6 +45,11 @@
         "description": "Exemplo de cliente HTML para executar uma consulta salva por codigo."
       },
       {
+        "text": "Executor de programas Progress",
+        "url": "program-executor-client.html",
+        "description": "Exemplo de cliente HTML para executar programas .p cadastrados no PASOE."
+      },
+      {
         "text": "Consulta de container",
         "url": "container-client.html",
         "description": "Exemplo de cliente HTML para consultar container por parametro."
