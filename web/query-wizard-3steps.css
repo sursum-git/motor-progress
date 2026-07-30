@@ -218,65 +218,22 @@ textarea {
   background: #fbfcfd;
 }
 
-.manual-tab-nav {
-  display: flex;
-  flex-wrap: wrap;
+.index-selector-shell {
+  display: grid;
+  grid-template-columns: minmax(220px, 420px);
   gap: 6px;
   min-width: 0;
   margin-bottom: 12px;
 }
 
-.manual-tab {
-  min-width: 0;
-  max-width: 100%;
-  padding: 7px 10px;
-  border: 1px solid #cbd5df;
-  border-radius: 6px;
-  background: #fff;
+.index-selector-shell label {
   color: #344150;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font: inherit;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.manual-tab.active {
-  border-color: #0f766e;
-  background: #e1f3f0;
-  color: #063a34;
+  font-size: 12px;
   font-weight: 700;
 }
 
-.manual-tab.index-kind-primary {
-  border-color: #b45309;
-  background: #fff4d6;
-  color: #6b3300;
-  font-weight: 700;
-}
-
-.manual-tab.index-kind-primary.active {
-  border-color: #92400e;
-  background: #fbbf24;
-  color: #2f1900;
-}
-
-.manual-tab.index-kind-unique {
-  border-color: #2563eb;
-  background: #dbeafe;
-  color: #123f8c;
-  font-weight: 700;
-}
-
-.manual-tab.index-kind-unique.active {
-  border-color: #1d4ed8;
-  background: #93c5fd;
-  color: #082f68;
-}
-
-.manual-tab-name {
-  min-width: 0;
+.index-selector-shell .k-combobox {
+  width: 100%;
 }
 
 .index-kind-badge {
@@ -288,6 +245,11 @@ textarea {
   line-height: 16px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.k-list-item .index-kind-badge {
+  margin-left: 6px;
+  color: #334155;
 }
 
 .manual-tab-panels,
@@ -537,14 +499,8 @@ textarea {
     grid-template-columns: 1fr;
   }
 
-  .manual-tab-nav {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-  }
-
-  .manual-tab {
-    width: 100%;
-    overflow-wrap: anywhere;
+  .index-selector-shell {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .add-index-filter {

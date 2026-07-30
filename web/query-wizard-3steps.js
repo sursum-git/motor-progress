@@ -1531,19 +1531,19 @@
       existing.destroy();
       tabEl.empty();
     }
+    const existingIndexSelector = $("#indexSelector").data("kendoComboBox");
+    if (existingIndexSelector) {
+      existingIndexSelector.destroy();
+    }
 
     const dynamicTabId = "index-filter-dynamic-tab";
     const hasIndexes = indexNames.length > 0;
-    const moveDynamicFilterSection = function (activeTabId) {
+    const moveDynamicFilterSection = function () {
       const targetPanel = $("#" + dynamicTabId);
       const dynamicSection = $("#dynamicFilterSection");
       if (!targetPanel.length || !dynamicSection.length) return;
       dynamicSection.appendTo(targetPanel);
-      if (activeTabId) {
-        targetPanel.addClass("active");
-      } else {
-        targetPanel.removeClass("active");
-      }
+      targetPanel.addClass("active");
       setTimeout(function () {
         const dynamicValue = $("#dynamicFilterValue");
         if (dynamicValue.length && dynamicValue.closest(".dynamic-filter-grid").length) {
@@ -1592,6 +1592,7 @@
       return {
         name,
         tabId,
+        group: indexKindGroupLabel(groups[name] && groups[name].kind ? groups[name].kind : "normal"),
         kind: groups[name] && groups[name].kind ? groups[name].kind : "normal",
         html: `<section id="${tabId}" class="manual-tab-panel ${index === 0 ? "active" : ""}">
           <div class="index-tab-head">Indice: ${escapeHtml(name)}</div>
@@ -1600,28 +1601,57 @@
       };
     });
 
-    const nav = tabs.map((tab, index) =>
-      `<button type="button" class="manual-tab index-kind-${escapeHtml(tab.kind)} ${index === 0 ? "active" : ""}" data-target="#${tab.tabId}">
-        <span class="manual-tab-name">${escapeHtml(tab.name)}</span>${indexKindBadge(tab.kind)}
-      </button>`
-    ).join("");
-    const dynamicNav = `<button type="button" class="manual-tab ${hasIndexes ? "" : "active"}" data-target="#${dynamicTabId}">Filtros dinâmicos</button>`;
-    const dynamicPanel = `<section id="${dynamicTabId}" class="manual-tab-panel ${hasIndexes ? "" : "active"}"></section>`;
+    const selectorHtml = hasIndexes
+      ? `<div class="index-selector-shell">
+          <label for="indexSelector">Índice</label>
+          <input id="indexSelector" />
+        </div>`
+      : `<div class="status-box">Nenhum índice encontrado para esta tabela.</div>`;
+    const dynamicPanel = `<section id="${dynamicTabId}" class="manual-tab-panel active dynamic-filter-panel"></section>`;
     const panels = tabs.map((tab) => tab.html).join("") + dynamicPanel;
-    const manualHtml = `<div class="manual-tab-nav">${nav}${dynamicNav}</div><div class="manual-tab-panels">${panels}</div>`;
+    const manualHtml = `${selectorHtml}<div class="manual-tab-panels">${panels}</div>`;
     tabEl.html(manualHtml);
 
-    tabEl.find(".manual-tab").on("click", function () {
-      const target = $(this).data("target");
-      tabEl.find(".manual-tab").removeClass("active");
-      $(this).addClass("active");
-      tabEl.find(".manual-tab-panel").removeClass("active");
-      tabEl.find(target).addClass("active");
-    });
-    moveDynamicFilterSection(!hasIndexes);
+    if (hasIndexes) {
+      $("#indexSelector").kendoComboBox({
+        dataTextField: "displayText",
+        dataValueField: "name",
+        filter: "contains",
+        suggest: true,
+        placeholder: "Digite para filtrar índices",
+        template: '#: name # # if (kindLabel) { #<span class="index-kind-badge">#: kindLabel #</span># } #',
+        groupTemplate: "#= data #",
+        dataSource: {
+          data: tabs.map(function (tab) {
+            return {
+              name: tab.name,
+              displayText: tab.name + (tab.kind === "primary" ? " - Primário" : tab.kind === "unique" ? " - Único" : ""),
+              tabId: tab.tabId,
+              kind: tab.kind,
+              kindLabel: indexKindText(tab.kind),
+              group: tab.group
+            };
+          }),
+          group: { field: "group" }
+        },
+        change: function () {
+          const item = this.dataItem();
+          activateIndexPanel(item && item.tabId ? item.tabId : tabs[0].tabId);
+        },
+        select: function (event) {
+          const item = this.dataItem(event.item);
+          activateIndexPanel(item && item.tabId ? item.tabId : tabs[0].tabId);
+        }
+      });
+      const selector = $("#indexSelector").data("kendoComboBox");
+      selector.value(tabs[0].name);
+      selector.text(tabs[0].displayText || tabs[0].name);
+      activateIndexPanel(tabs[0].tabId);
+    }
+    moveDynamicFilterSection();
 
     try {
-      setFooterStatus(`Filtros por índice/abas: ${indexNames.length} | Campos: ${fields.length}`, "");
+      setFooterStatus(`Filtros por índice: ${indexNames.length} | Campos: ${fields.length}`, "");
     } catch (_) {}
 
     initIndexFilterWidgets(tabEl);
@@ -1629,9 +1659,21 @@
     return;
   }
 
-  function indexKindBadge(kind) {
-    if (kind === "primary") return '<span class="index-kind-badge">Primário</span>';
-    if (kind === "unique") return '<span class="index-kind-badge">Único</span>';
+  function activateIndexPanel(tabId) {
+    const tabEl = $("#indexFilterTabs");
+    tabEl.find(".manual-tab-panel").not(".dynamic-filter-panel").removeClass("active");
+    tabEl.find("#" + tabId).addClass("active");
+  }
+
+  function indexKindGroupLabel(kind) {
+    if (kind === "primary") return "Chave primária";
+    if (kind === "unique") return "Chave única";
+    return "Demais índices";
+  }
+
+  function indexKindText(kind) {
+    if (kind === "primary") return "Primário";
+    if (kind === "unique") return "Único";
     return "";
   }
 

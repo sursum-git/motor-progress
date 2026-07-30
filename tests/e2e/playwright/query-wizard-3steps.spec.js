@@ -292,7 +292,7 @@ test('query wizard step 3 keeps mobile pager and controls inside the viewport', 
   expect(layout.runButtonRight).toBeLessThanOrEqual(layout.viewportWidth);
 });
 
-test('query wizard step 2 keeps index filters and tabs inside mobile viewport', async ({ page }) => {
+test('query wizard step 2 keeps index filters and selector inside mobile viewport', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript((payload) => {
     localStorage.clear();
@@ -323,7 +323,7 @@ test('query wizard step 2 keeps index filters and tabs inside mobile viewport', 
 
   const layout = await page.evaluate(() => {
     const panel = document.querySelector("[data-step-panel='2']").getBoundingClientRect();
-    const nav = document.querySelector('#indexFilterTabs .manual-tab-nav').getBoundingClientRect();
+    const selector = document.querySelector('#indexFilterTabs .index-selector-shell').getBoundingClientRect();
     const item = document.querySelector('#indexFilterTabs .index-filter-item').getBoundingClientRect();
     const operator = document.querySelector('#indexFilterTabs .index-filter-operator').closest('span, input').getBoundingClientRect();
     const addButton = document.querySelector('#indexFilterTabs .add-index-filter').getBoundingClientRect();
@@ -333,7 +333,7 @@ test('query wizard step 2 keeps index filters and tabs inside mobile viewport', 
       scrollWidth: document.documentElement.scrollWidth,
       viewportWidth: window.innerWidth,
       panelRight: panel.right,
-      navRight: nav.right,
+      selectorRight: selector.right,
       itemRight: item.right,
       operatorRight: operator.right,
       addButtonRight: addButton.right,
@@ -343,7 +343,7 @@ test('query wizard step 2 keeps index filters and tabs inside mobile viewport', 
   });
 
   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.viewportWidth);
-  expect(layout.navRight).toBeLessThanOrEqual(layout.panelRight);
+  expect(layout.selectorRight).toBeLessThanOrEqual(layout.panelRight);
   expect(layout.itemRight).toBeLessThanOrEqual(layout.panelRight);
   expect(layout.operatorRight).toBeLessThanOrEqual(layout.panelRight);
   expect(layout.addButtonRight).toBeLessThanOrEqual(layout.panelRight);
@@ -351,7 +351,7 @@ test('query wizard step 2 keeps index filters and tabs inside mobile viewport', 
   expect(layout.searchWindowVisible).toBe(false);
 });
 
-test('query wizard orders primary and unique indexes first with visual highlights', async ({ page }) => {
+test('query wizard shows searchable grouped index combo', async ({ page }) => {
   await page.addInitScript((payload) => {
     localStorage.clear();
     localStorage.setItem('sursumContextV4', JSON.stringify(payload.data));
@@ -378,23 +378,39 @@ test('query wizard orders primary and unique indexes first with visual highlight
   await expect(page.locator('#tableSearchGrid')).toContainText('Customer');
   await page.locator('#tableSearchGrid tbody tr').filter({ hasText: 'Customer' }).dblclick();
   await expect(page.locator('#indexFilterTabs')).toContainText('CustNum');
+  await expect(page.locator('#indexFilterTabs .manual-tab')).toHaveCount(0);
+  const comboWrapper = page.locator('#indexSelector').locator('xpath=ancestor::*[contains(@class, "k-combobox")]');
+  await expect(comboWrapper).toBeVisible();
 
-  const tabs = await page.evaluate(() => {
-    return Array.from(document.querySelectorAll('#indexFilterTabs .manual-tab'))
-      .filter((tab) => !tab.textContent.includes('Filtros dinâmicos'))
-      .map((tab) => ({
-        text: tab.querySelector('.manual-tab-name').textContent.trim(),
-        badge: tab.querySelector('.index-kind-badge') ? tab.querySelector('.index-kind-badge').textContent.trim() : '',
-        primary: tab.classList.contains('index-kind-primary'),
-        unique: tab.classList.contains('index-kind-unique')
-      }));
+  const comboState = await page.evaluate(() => {
+    const combo = window.$('#indexSelector').data('kendoComboBox');
+    return {
+      value: combo.value(),
+      text: combo.text(),
+      groups: combo.dataSource.view().map((group) => ({
+        value: group.value,
+        items: group.items.map((item) => item.name)
+      }))
+    };
   });
 
-  expect(tabs.map((tab) => tab.text)).toEqual(['CustNum', 'NameIdx', 'StateIdx']);
-  expect(tabs[0].badge).toBe('Primário');
-  expect(tabs[1].badge).toBe('Único');
-  expect(tabs[0].primary).toBe(true);
-  expect(tabs[1].unique).toBe(true);
+  expect(comboState.value).toBe('CustNum');
+  expect(comboState.text).toContain('CustNum');
+  expect(comboState.groups).toEqual([
+    { value: 'Chave primária', items: ['CustNum'] },
+    { value: 'Chave única', items: ['NameIdx'] },
+    { value: 'Demais índices', items: ['StateIdx'] }
+  ]);
+
+  await page.evaluate(() => {
+    const combo = window.$('#indexSelector').data('kendoComboBox');
+    combo.search('name');
+  });
+  const filteredItems = await page.evaluate(() => {
+    const combo = window.$('#indexSelector').data('kendoComboBox');
+    return combo.dataSource.view().reduce((items, group) => items.concat(group.items.map((item) => item.name)), []);
+  });
+  expect(filteredItems).toEqual(['NameIdx']);
 });
 
 test('query wizard adds an index filter when Add is clicked', async ({ page }) => {
@@ -503,11 +519,11 @@ test('query wizard adds integer index filter for espec pp-container nr-container
   await page.locator('#openTableSearch').click();
   await expect(page.locator('#tableSearchGrid')).toContainText('pp-container');
   await page.locator('#tableSearchGrid tbody tr').filter({ hasText: 'pp-container' }).dblclick();
-  const indexTabs = page.locator('#indexFilterTabs .manual-tab').filter({ hasNotText: 'Filtros dinâmicos' });
-  await expect(indexTabs.first()).toContainText('indice1');
-  await expect(indexTabs.first()).toContainText('Primário');
-  await expect(indexTabs.first()).toHaveClass(/index-kind-primary/);
-  await indexTabs.filter({ hasText: 'indice1' }).click();
+  await expect(page.locator('#indexFilterTabs')).toContainText('indice1');
+  await expect.poll(async () => page.evaluate(() => {
+    const combo = window.$('#indexSelector').data('kendoComboBox');
+    return combo ? combo.value() : '';
+  })).toBe('indice1');
 
   const containerFilter = page.locator('#indexFilterTabs .index-filter-item').filter({ hasText: 'nr-container' }).first();
   await expect(containerFilter.locator('.index-filter-operator.k-dropdownlist')).toBeVisible();
