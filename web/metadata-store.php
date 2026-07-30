@@ -21,6 +21,12 @@ try {
             if ($resource === 'indices' || $resource === 'indexes') {
                 return [['success' => true, 'data' => loadIndexRows($pdo, requestScope())], 200];
             }
+            if ($resource === 'tables') {
+                return [['success' => true, 'data' => loadTableRows($pdo, requestScope())], 200];
+            }
+            if ($resource === 'fields') {
+                return [['success' => true, 'data' => loadFieldRows($pdo, requestScope())], 200];
+            }
             return [['success' => true, 'data' => loadViewAsRows($pdo, requestScope())], 200];
         }
 
@@ -35,6 +41,12 @@ try {
             }
             if ($resource === 'indices' || $resource === 'indexes') {
                 return [handleIndexPost($pdo, $requestPayload), 200];
+            }
+            if ($resource === 'tables') {
+                return [handleTablePost($pdo, $requestPayload), 200];
+            }
+            if ($resource === 'fields') {
+                return [handleFieldPost($pdo, $requestPayload), 200];
             }
             return [handleViewAsPost($pdo, $requestPayload), 200];
         }
@@ -129,6 +141,46 @@ function initializeMetadataSchema(PDO $pdo): void
     ensureColumn($pdo, 'table_indices', 'fields_json', 'TEXT NOT NULL DEFAULT "[]"');
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_table_indices_lookup ON table_indices(environment_id, company_id, database_name, table_name)');
     $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS metadata_tables (
+            id TEXT PRIMARY KEY,
+            environment_id TEXT NOT NULL DEFAULT "",
+            company_id TEXT NOT NULL DEFAULT "",
+            database_name TEXT NOT NULL,
+            table_name TEXT NOT NULL,
+            label TEXT NOT NULL DEFAULT "",
+            dump_name TEXT NOT NULL DEFAULT "",
+            description TEXT NOT NULL DEFAULT "",
+            source TEXT NOT NULL DEFAULT "manual",
+            raw_json TEXT NOT NULL DEFAULT "{}",
+            updated_at TEXT NOT NULL,
+            UNIQUE(environment_id, company_id, database_name, table_name)
+        )'
+    );
+    $pdo->exec('CREATE INDEX IF NOT EXISTS idx_metadata_tables_lookup ON metadata_tables(environment_id, company_id, database_name, table_name)');
+    $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS metadata_fields (
+            id TEXT PRIMARY KEY,
+            environment_id TEXT NOT NULL DEFAULT "",
+            company_id TEXT NOT NULL DEFAULT "",
+            database_name TEXT NOT NULL,
+            table_name TEXT NOT NULL,
+            field_name TEXT NOT NULL,
+            field_order INTEGER NOT NULL DEFAULT 0,
+            label TEXT NOT NULL DEFAULT "",
+            data_type TEXT NOT NULL DEFAULT "",
+            field_type TEXT NOT NULL DEFAULT "",
+            format TEXT NOT NULL DEFAULT "",
+            extent INTEGER NOT NULL DEFAULT 0,
+            mandatory INTEGER NOT NULL DEFAULT 0,
+            indices_json TEXT NOT NULL DEFAULT "[]",
+            source TEXT NOT NULL DEFAULT "manual",
+            raw_json TEXT NOT NULL DEFAULT "{}",
+            updated_at TEXT NOT NULL,
+            UNIQUE(environment_id, company_id, database_name, table_name, field_name)
+        )'
+    );
+    $pdo->exec('CREATE INDEX IF NOT EXISTS idx_metadata_fields_lookup ON metadata_fields(environment_id, company_id, database_name, table_name)');
+    $pdo->exec(
         'CREATE TABLE IF NOT EXISTS field_view_as_options (
             id TEXT PRIMARY KEY,
             view_as_id TEXT NOT NULL,
@@ -159,6 +211,7 @@ function initializeMetadataSchema(PDO $pdo): void
             processed_tables INTEGER NOT NULL DEFAULT 0,
             failed_tables INTEGER NOT NULL DEFAULT 0,
             include_relations INTEGER NOT NULL DEFAULT 1,
+            include_fields INTEGER NOT NULL DEFAULT 1,
             include_indices INTEGER NOT NULL DEFAULT 1,
             include_view_as INTEGER NOT NULL DEFAULT 1,
             existing_metadata_behavior TEXT NOT NULL DEFAULT "skip",
@@ -169,6 +222,7 @@ function initializeMetadataSchema(PDO $pdo): void
         )'
     );
     ensureColumn($pdo, 'metadata_sync_jobs', 'existing_metadata_behavior', 'TEXT NOT NULL DEFAULT "skip"');
+    ensureColumn($pdo, 'metadata_sync_jobs', 'include_fields', 'INTEGER NOT NULL DEFAULT 1');
     ensureColumn($pdo, 'metadata_sync_jobs', 'include_indices', 'INTEGER NOT NULL DEFAULT 1');
     $pdo->exec(
         'CREATE TABLE IF NOT EXISTS metadata_sync_items (
@@ -264,6 +318,25 @@ function handleIndexPost(PDO $pdo, array $payload): array
     return ['success' => true, 'data' => loadIndexRows($pdo, $scope)];
 }
 
+function handleTablePost(PDO $pdo, array $payload): array
+{
+    $scope = requestScope($payload);
+    $rows = is_array($payload['rows'] ?? null) ? $payload['rows'] : (is_array($payload['tables'] ?? null) ? $payload['tables'] : []);
+    saveTableRows($pdo, $scope, $rows, text($payload['source'] ?? 'manual') ?: 'manual', text($payload['action'] ?? 'save') !== 'append');
+    return ['success' => true, 'data' => loadTableRows($pdo, $scope)];
+}
+
+function handleFieldPost(PDO $pdo, array $payload): array
+{
+    $scope = requestScope($payload);
+    if ($scope['database'] === '' || $scope['table'] === '') {
+        throw new InvalidArgumentException('Banco e tabela sao obrigatorios para gravar campos.');
+    }
+    $rows = is_array($payload['rows'] ?? null) ? $payload['rows'] : (is_array($payload['fields'] ?? null) ? $payload['fields'] : []);
+    saveFieldRows($pdo, $scope, $rows, text($payload['source'] ?? 'manual') ?: 'manual', text($payload['action'] ?? 'save') !== 'append');
+    return ['success' => true, 'data' => loadFieldRows($pdo, $scope)];
+}
+
 function handleJobPost(PDO $pdo, array $payload): array
 {
     $action = text($payload['action'] ?? '');
@@ -288,6 +361,7 @@ function handleJobPost(PDO $pdo, array $payload): array
             ':database_name' => $scope['database'],
             ':total_tables' => count($tables),
             ':include_relations' => !empty($payload['includeRelations']) ? 1 : 0,
+            ':include_fields' => array_key_exists('includeFields', $payload) ? (!empty($payload['includeFields']) ? 1 : 0) : 1,
             ':include_indices' => array_key_exists('includeIndices', $payload) ? (!empty($payload['includeIndices']) ? 1 : 0) : 1,
             ':include_view_as' => !empty($payload['includeViewAs']) ? 1 : 0,
             ':existing_metadata_behavior' => $existingBehavior,
@@ -332,6 +406,7 @@ function requestScope(?array $payload = null): array
         'companyId' => text($source['companyId'] ?? $source['company_id'] ?? ''),
         'database' => text($source['database'] ?? $source['databaseName'] ?? $source['database_name'] ?? $source['banco'] ?? ''),
         'table' => text($source['table'] ?? $source['tableName'] ?? $source['table_name'] ?? ''),
+        'q' => text($source['q'] ?? $source['query'] ?? $source['filter'] ?? ''),
         'includeLegacy' => text($source['includeLegacy'] ?? $source['include_legacy'] ?? '') === '1',
         'tableNames' => requestTableNames($source),
     ];
@@ -546,6 +621,178 @@ function deleteIndexRow(PDO $pdo, array $scope, string $name): void
         ':table_name' => $scope['table'],
         ':index_name' => $name,
     ]);
+}
+
+function loadTableRows(PDO $pdo, array $scope): array
+{
+    $sql = 'SELECT * FROM metadata_tables WHERE 1 = 1';
+    $params = [];
+    if ($scope['database'] !== '') {
+        $sql .= ' AND lower(database_name) = lower(:database_name)';
+        $params[':database_name'] = $scope['database'];
+    }
+    if ($scope['table'] !== '') {
+        $sql .= ' AND lower(table_name) = lower(:table_name)';
+        $params[':table_name'] = $scope['table'];
+    }
+    $q = text($scope['q'] ?? '');
+    if ($q !== '') {
+        $sql .= ' AND (lower(table_name) LIKE :q OR lower(label) LIKE :q OR lower(dump_name) LIKE :q OR lower(description) LIKE :q)';
+        $params[':q'] = '%' . strtolower($q) . '%';
+    }
+    $sql .= ' ORDER BY database_name, table_name';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return array_map(static function (array $row): array {
+        return [
+            'id' => $row['id'],
+            'database' => $row['database_name'],
+            'name' => $row['table_name'],
+            'table' => $row['table_name'],
+            'label' => $row['label'] ?: $row['table_name'],
+            'dumpName' => $row['dump_name'],
+            'description' => $row['description'],
+            'source' => $row['source'],
+            'updatedAt' => $row['updated_at'],
+        ];
+    }, $stmt->fetchAll(PDO::FETCH_ASSOC));
+}
+
+function saveTableRows(PDO $pdo, array $scope, array $rows, string $defaultSource, bool $replaceExisting = true): void
+{
+    if ($scope['database'] === '') {
+        throw new InvalidArgumentException('Banco obrigatorio para gravar tabelas.');
+    }
+    $pdo->beginTransaction();
+    try {
+        if ($replaceExisting) {
+            $delete = $pdo->prepare('DELETE FROM metadata_tables WHERE lower(database_name) = lower(:database_name)');
+            $delete->execute([':database_name' => $scope['database']]);
+        }
+        $stmt = $pdo->prepare(
+            'INSERT OR REPLACE INTO metadata_tables
+             (id, environment_id, company_id, database_name, table_name, label, dump_name, description, source, raw_json, updated_at)
+             VALUES (:id, "", "", :database_name, :table_name, :label, :dump_name, :description, :source, :raw_json, :updated_at)'
+        );
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $name = text($row['name'] ?? $row['table'] ?? $row['tableName'] ?? '');
+            if ($name === '') {
+                continue;
+            }
+            $database = text($row['database'] ?? $row['databaseName'] ?? $row['database_name'] ?? $scope['database']);
+            $stmt->execute([
+                ':id' => tableId(['database' => $database], $name),
+                ':database_name' => $database,
+                ':table_name' => $name,
+                ':label' => text($row['label'] ?? $row['description'] ?? $row['descricao'] ?? $name),
+                ':dump_name' => text($row['dumpName'] ?? $row['dump_name'] ?? ''),
+                ':description' => text($row['description'] ?? $row['descricao'] ?? ''),
+                ':source' => text($row['source'] ?? $defaultSource) ?: $defaultSource,
+                ':raw_json' => json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                ':updated_at' => date(DATE_ATOM),
+            ]);
+        }
+        $pdo->commit();
+    } catch (Throwable $error) {
+        $pdo->rollBack();
+        throw $error;
+    }
+}
+
+function loadFieldRows(PDO $pdo, array $scope): array
+{
+    if ($scope['database'] === '' || $scope['table'] === '') {
+        return [];
+    }
+    $stmt = $pdo->prepare(
+        'SELECT * FROM metadata_fields
+         WHERE lower(database_name) = lower(:database_name)
+           AND lower(table_name) = lower(:table_name)
+         ORDER BY field_order, field_name'
+    );
+    $stmt->execute([
+        ':database_name' => $scope['database'],
+        ':table_name' => $scope['table'],
+    ]);
+    return array_map(static function (array $row): array {
+        $indices = json_decode((string) ($row['indices_json'] ?? '[]'), true);
+        if (!is_array($indices)) {
+            $indices = [];
+        }
+        return [
+            'id' => $row['id'],
+            'database' => $row['database_name'],
+            'table' => $row['table_name'],
+            'name' => $row['field_name'],
+            'field' => $row['field_name'],
+            'label' => $row['label'],
+            'type' => $row['data_type'],
+            'fieldType' => $row['field_type'] ?: $row['data_type'],
+            'format' => $row['format'],
+            'extent' => (int) $row['extent'],
+            'mandatory' => ((int) $row['mandatory']) === 1,
+            'indices' => $indices,
+            'source' => $row['source'],
+            'updatedAt' => $row['updated_at'],
+        ];
+    }, $stmt->fetchAll(PDO::FETCH_ASSOC));
+}
+
+function saveFieldRows(PDO $pdo, array $scope, array $rows, string $defaultSource, bool $replaceExisting = true): void
+{
+    $pdo->beginTransaction();
+    try {
+        if ($replaceExisting) {
+            $delete = $pdo->prepare(
+                'DELETE FROM metadata_fields
+                 WHERE lower(database_name) = lower(:database_name)
+                   AND lower(table_name) = lower(:table_name)'
+            );
+            $delete->execute([
+                ':database_name' => $scope['database'],
+                ':table_name' => $scope['table'],
+            ]);
+        }
+        $stmt = $pdo->prepare(
+            'INSERT OR REPLACE INTO metadata_fields
+             (id, environment_id, company_id, database_name, table_name, field_name, field_order, label, data_type, field_type, format, extent, mandatory, indices_json, source, raw_json, updated_at)
+             VALUES (:id, "", "", :database_name, :table_name, :field_name, :field_order, :label, :data_type, :field_type, :format, :extent, :mandatory, :indices_json, :source, :raw_json, :updated_at)'
+        );
+        foreach (array_values($rows) as $index => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $name = text($row['name'] ?? $row['field'] ?? $row['fieldName'] ?? '');
+            if ($name === '') {
+                continue;
+            }
+            $dataType = text($row['type'] ?? $row['dataType'] ?? $row['data_type'] ?? $row['fieldType'] ?? $row['field_type'] ?? '');
+            $stmt->execute([
+                ':id' => fieldId($scope, $name),
+                ':database_name' => $scope['database'],
+                ':table_name' => $scope['table'],
+                ':field_name' => $name,
+                ':field_order' => (int) ($row['__seq'] ?? $row['order'] ?? $row['fieldOrder'] ?? $index),
+                ':label' => text($row['label'] ?? $row['description'] ?? $row['descricao'] ?? $name),
+                ':data_type' => $dataType,
+                ':field_type' => text($row['fieldType'] ?? $row['field_type'] ?? $dataType),
+                ':format' => text($row['format'] ?? ''),
+                ':extent' => (int) ($row['extent'] ?? 0),
+                ':mandatory' => truthy($row['mandatory'] ?? $row['required'] ?? false) ? 1 : 0,
+                ':indices_json' => json_encode(normalizeIndexFieldValue($row['indices'] ?? $row['indexes'] ?? $row['index'] ?? []), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                ':source' => text($row['source'] ?? $defaultSource) ?: $defaultSource,
+                ':raw_json' => json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                ':updated_at' => date(DATE_ATOM),
+            ]);
+        }
+        $pdo->commit();
+    } catch (Throwable $error) {
+        $pdo->rollBack();
+        throw $error;
+    }
 }
 
 function saveViewAsRows(PDO $pdo, array $scope, array $rows, string $defaultSource): void
@@ -1144,6 +1391,7 @@ function loadJob(PDO $pdo, string $id): ?array
         'failedTables' => (int) $job['failed_tables'],
         'cancelledTables' => (int) $cancelled->fetchColumn(),
         'includeRelations' => (bool) $job['include_relations'],
+        'includeFields' => (bool) $job['include_fields'],
         'includeIndices' => (bool) $job['include_indices'],
         'includeViewAs' => (bool) $job['include_view_as'],
         'existingMetadataBehavior' => normalizeExistingMetadataBehavior($job['existing_metadata_behavior'] ?? 'skip'),
@@ -1181,6 +1429,54 @@ function indexId(array $scope, string $name): string
         strtolower(text($scope['table'] ?? '')),
         strtolower($name),
     ]));
+}
+
+function tableId(array $scope, string $name): string
+{
+    return sha1(implode('|', [
+        strtolower(text($scope['database'] ?? '')),
+        strtolower($name),
+    ]));
+}
+
+function fieldId(array $scope, string $name): string
+{
+    return sha1(implode('|', [
+        strtolower(text($scope['database'] ?? '')),
+        strtolower(text($scope['table'] ?? '')),
+        strtolower($name),
+    ]));
+}
+
+function normalizeIndexFieldValue($value): array
+{
+    if (is_string($value)) {
+        $value = preg_split('/[,;|]/', $value) ?: [];
+    }
+    if (!is_array($value)) {
+        return [];
+    }
+    $normalized = [];
+    foreach ($value as $item) {
+        if (is_array($item)) {
+            $name = text($item['name'] ?? $item['indexName'] ?? $item['index'] ?? '');
+            if ($name !== '') {
+                $normalized[] = array_filter([
+                    'name' => $name,
+                    'primary' => array_key_exists('primary', $item) ? truthy($item['primary']) : null,
+                    'unique' => array_key_exists('unique', $item) ? truthy($item['unique']) : null,
+                ], static function ($entry): bool {
+                    return $entry !== null && $entry !== '';
+                });
+            }
+            continue;
+        }
+        $name = text($item);
+        if ($name !== '') {
+            $normalized[] = $name;
+        }
+    }
+    return $normalized;
 }
 
 function normalizeIndexFields($fields): array

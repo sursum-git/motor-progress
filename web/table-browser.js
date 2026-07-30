@@ -1158,8 +1158,19 @@
     const db = database === TODOS_DATABASE ? TODOS_DATABASE : database;
     const url = pasoeUrl(`/metadata/tables?database=${encodeURIComponent(db)}`);
 
-    $.getJSON(url)
+    loadTablesFromSqlite(db)
+      .then(function (localRows) {
+        if (Array.isArray(localRows) && localRows.length) {
+          state.tables = localRows;
+          if (typeof done === "function") {
+            done();
+          }
+          return null;
+        }
+        return $.getJSON(url);
+      })
       .done(function (response) {
+        if (response === null) return;
         if (!response || response.success === false) {
           throw new Error(apiError(response));
         }
@@ -1183,7 +1194,13 @@
     const db = database === TODOS_DATABASE ? TODOS_DATABASE : database;
     const url = pasoeUrl(`/metadata/tables?database=${encodeURIComponent(db)}&q=${encodeURIComponent(typed)}`);
 
-    $.getJSON(url)
+    loadTablesFromSqlite(db, typed)
+      .then(function (localRows) {
+        if (Array.isArray(localRows) && localRows.length) {
+          return { success: true, data: localRows };
+        }
+        return $.getJSON(url);
+      })
       .done(function (response) {
         if (!response || response.success === false) {
           throw new Error(apiError(response));
@@ -1237,7 +1254,13 @@
     $("#tableName").val(table);
     setStatus(`Carregando metadados de ${table}${finalDatabase ? ` (${finalDatabase})` : ""}...`, "");
 
-    $.getJSON(url)
+    loadFieldsFromSqlite(table, finalDatabase || "")
+      .then(function (localFields) {
+        if (Array.isArray(localFields) && localFields.length) {
+          return { success: true, database: finalDatabase || "", table, data: localFields, __sqlite: true };
+        }
+        return $.getJSON(url);
+      })
       .done(function (response) {
         if (!response || response.success === false) {
           throw new Error(apiError(response));
@@ -1302,6 +1325,38 @@
   function loadIndexesFromSqlite(table, database) {
     const deferred = $.Deferred();
     $.getJSON(metadataStoreUrl("indices", table, database))
+      .done(function (response) {
+        deferred.resolve(response && response.success && Array.isArray(response.data) ? response.data : []);
+      })
+      .fail(function () {
+        deferred.resolve([]);
+      });
+    return deferred.promise();
+  }
+
+  function loadTablesFromSqlite(database, query) {
+    const deferred = $.Deferred();
+    const scope = relationScope("", database);
+    let url = "metadata-store.php?resource=tables"
+      + "&environmentId=" + encodeURIComponent(scope.environmentId)
+      + "&companyId=" + encodeURIComponent(scope.companyId)
+      + "&database=" + encodeURIComponent(scope.database);
+    if (query) {
+      url += "&q=" + encodeURIComponent(query);
+    }
+    $.getJSON(url)
+      .done(function (response) {
+        deferred.resolve(response && response.success && Array.isArray(response.data) ? response.data : []);
+      })
+      .fail(function () {
+        deferred.resolve([]);
+      });
+    return deferred.promise();
+  }
+
+  function loadFieldsFromSqlite(table, database) {
+    const deferred = $.Deferred();
+    $.getJSON(metadataStoreUrl("fields", table, database))
       .done(function (response) {
         deferred.resolve(response && response.success && Array.isArray(response.data) ? response.data : []);
       })

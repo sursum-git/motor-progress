@@ -440,13 +440,20 @@
     }
     const path = "/metadata/tables" + (database && database !== TODOS_DATABASE ? "?database=" + encodeURIComponent(database) : "");
     setStatus("Carregando tabelas...", "");
-    getPasoeJson(path)
+    const sourceRequest = forceReload ? getPasoeJson(path) : loadExistingTables(database).then(function (rows) {
+      return rows.length ? { success: true, data: rows, __sqlite: true } : getPasoeJson(path);
+    });
+    sourceRequest
       .done(function (response) {
         if (!response || response.success === false) throw new Error(apiError(response));
-        state.tables = uniqueTableNames((Array.isArray(response.data) ? response.data : []).map(tableNameFromMetadataItem));
+        const rows = Array.isArray(response.data) ? response.data : [];
+        state.tables = uniqueTableNames(rows.map(tableNameFromMetadataItem));
         refreshTableCombo();
         if (hasElement("#viewAsGrid") && !tableValue()) loadViewAsRows();
         setStatus(`Tabelas carregadas: ${state.tables.length}.`, "ok");
+        if (forceReload) {
+          saveTableRows(database, rows, "PASOE");
+        }
       })
       .fail(function (xhr) {
         loadTablesBySync(database)
@@ -459,6 +466,19 @@
           .fail(function (syncError) {
             setStatus("Falha ao carregar tabelas. Endpoint: " + state.apiBase + ". Detalhe: " + ajaxErrorMessage(syncError || xhr), "error");
           });
+      });
+  }
+
+  function loadExistingTables(database) {
+    const params = Object.assign(scope("", database), { resource: "tables" });
+    return $.getJSON("metadata-store.php?" + $.param(params))
+      .then(function (response) {
+        if (!response || response.success === false) {
+          throw new Error(apiError(response));
+        }
+        return Array.isArray(response.data) ? response.data : [];
+      }, function () {
+        return [];
       });
   }
 
@@ -508,6 +528,7 @@
         action: "create",
         tables,
         includeRelations: $("#includeRelations").is(":checked"),
+        includeFields: $("#includeFields").is(":checked"),
         includeIndices: $("#includeIndices").is(":checked"),
         includeViewAs: $("#includeViewAs").is(":checked"),
         existingMetadataBehavior: existingMetadataBehavior()
@@ -808,17 +829,31 @@
       });
   }
 
+  function loadExistingFields(table, database) {
+    const params = Object.assign(scope(table, database), { resource: "fields" });
+    return $.getJSON("metadata-store.php?" + $.param(params))
+      .then(function (response) {
+        if (!response || response.success === false) {
+          throw new Error(apiError(response));
+        }
+        return Array.isArray(response.data) ? response.data : [];
+      });
+  }
+
   function metadataResultMessage(result) {
     const relations = result.relationsSkipped
       ? `joins existentes ${result.relationCount}`
       : `joins ${result.relationCount}`;
+    const fields = result.fieldsSkipped
+      ? `campos existentes ${result.fieldCount}`
+      : `campos ${result.fieldCount}`;
     const indices = result.indicesSkipped
       ? `índices existentes ${result.indexCount}`
       : `índices ${result.indexCount}`;
     const viewAs = result.viewAsSkipped
       ? `view-as existentes ${result.viewAsCount}`
       : `view-as ${result.viewAsCount}`;
-    return `${relations}; ${indices}; ${viewAs}`;
+    return `${relations}; ${fields}; ${indices}; ${viewAs}`;
   }
 
   function processTable(table) {
@@ -829,7 +864,7 @@
         .promise();
     }
     setStatus(`Processando ${database}.${table}...`, "");
-    const result = { relationCount: 0, indexCount: 0, viewAsCount: 0, relationsSkipped: false, indicesSkipped: false, viewAsSkipped: false, message: "" };
+    const result = { relationCount: 0, fieldCount: 0, indexCount: 0, viewAsCount: 0, relationsSkipped: false, fieldsSkipped: false, indicesSkipped: false, viewAsSkipped: false, message: "" };
     let fieldsResponse = null;
     const loadFieldsMetadata = function () {
       if (fieldsResponse) {
@@ -860,6 +895,24 @@
             const relations = Array.isArray(response.data) ? response.data : [];
             result.relationCount = relations.length;
             return saveRelations(table, database, relations);
+          });
+      })
+      .then(function () {
+        if (!state.currentJob.includeFields) return null;
+        return shouldUpdateExistingMetadata() ? [] : loadExistingFields(table, database);
+      })
+      .then(function (existingFields) {
+        if (!state.currentJob.includeFields) return null;
+        if (Array.isArray(existingFields) && existingFields.length > 0) {
+          result.fieldCount = existingFields.length;
+          result.fieldsSkipped = true;
+          return null;
+        }
+        return loadFieldsMetadata()
+          .then(function (response) {
+            const fields = fieldsFromMetadataResponse(response);
+            result.fieldCount = fields.length;
+            return saveFieldRows(table, database, fields, "PASOE");
           });
       })
       .then(function () {
@@ -1025,6 +1078,44 @@
       }
     }, function (xhr) {
       throw new Error(`Gravar indices no SQLite para ${database}.${table}. Detalhe: ${ajaxErrorMessage(xhr)}`);
+    });
+  }
+
+  function saveTableRows(database, rows, source) {
+    return $.ajax({
+      url: "metadata-store.php",
+      method: "POST",
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      data: JSON.stringify(Object.assign(scope("", database), {
+        resource: "tables",
+        action: "save",
+        source,
+        rows
+      }))
+    }).then(null, function (xhr) {
+      setStatus("Falha ao gravar tabelas no SQLite: " + ajaxErrorMessage(xhr), "error");
+    });
+  }
+
+  function saveFieldRows(table, database, rows, source) {
+    return $.ajax({
+      url: "metadata-store.php",
+      method: "POST",
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      data: JSON.stringify(Object.assign(scope(table, database), {
+        resource: "fields",
+        action: "save",
+        source,
+        rows
+      }))
+    }).then(function (response) {
+      if (!response || response.success === false) {
+        throw new Error(`Gravar campos no SQLite para ${database}.${table}. Detalhe: ${apiError(response)}`);
+      }
+    }, function (xhr) {
+      throw new Error(`Gravar campos no SQLite para ${database}.${table}. Detalhe: ${ajaxErrorMessage(xhr)}`);
     });
   }
 

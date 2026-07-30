@@ -63,6 +63,7 @@ test('metadata maintenance updates indexes into SQLite when requested manually',
     window.$('#includeViewAs').prop('checked', false);
     window.$('#onlyCurrentTable').prop('checked', true);
     window.$('#tableName').data('kendoComboBox').value('Customer');
+    window.$('#existingMetadataBehavior').data('kendoDropDownList').value('update');
   });
 
   await page.route('**/metadata-pasoe.php**', async (route) => {
@@ -102,6 +103,51 @@ test('metadata maintenance updates indexes into SQLite when requested manually',
   expect(response.data).toEqual(expect.arrayContaining([
     expect.objectContaining({ name: 'CustNumIdx', description: 'Chave principal de cliente', primary: true }),
     expect.objectContaining({ name: 'NameIdx', description: 'Busca por nome de cliente', unique: true })
+  ]));
+});
+
+test('metadata maintenance updates table fields into SQLite when requested manually', async ({ page, request }) => {
+  await page.goto('/metadata-maintenance.html');
+  await expect(page.locator('#includeFields')).toBeChecked();
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+    window.$('#includeRelations').prop('checked', false);
+    window.$('#includeIndices').prop('checked', false);
+    window.$('#includeViewAs').prop('checked', false);
+    window.$('#onlyCurrentTable').prop('checked', true);
+    window.$('#tableName').data('kendoComboBox').value('Customer');
+    window.$('#existingMetadataBehavior').data('kendoDropDownList').value('update');
+  });
+  await page.route('**/metadata-pasoe.php**', async (route) => {
+    const path = new URL(route.request().url()).searchParams.get('path') || '';
+    if (!path.includes('/metadata/tables/Customer/fields')) {
+      return route.continue();
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json; charset=utf-8',
+      body: JSON.stringify({
+        success: true,
+        database: 'DICTDB',
+        table: 'Customer',
+        data: [
+          { name: 'StoredId', label: 'Campo salvo', fieldType: 'integer', type: 'integer' },
+          { name: 'StoredName', label: 'Nome salvo', fieldType: 'character', type: 'character' }
+        ]
+      })
+    });
+  });
+
+  await page.locator('#createJob').click();
+  await page.locator('#runJob').click();
+  await expect(page.locator('#statusBox')).toContainText('Fila concluida');
+
+  const response = await (await request.get('/metadata-store.php?resource=fields&environmentId=ambiente-a&companyId=empresa-a&database=DICTDB&table=Customer')).json();
+  expect(response.data).toEqual(expect.arrayContaining([
+    expect.objectContaining({ name: 'StoredId', label: 'Campo salvo', fieldType: 'integer' }),
+    expect.objectContaining({ name: 'StoredName', label: 'Nome salvo', fieldType: 'character' })
   ]));
 });
 

@@ -142,12 +142,23 @@ test('table browser find metadata loads fields indexes view-as and refreshes joi
 test('table browser loads table indexes from SQLite metadata before PASOE index data', async ({ page, request }) => {
   await request.post('/metadata-store.php', {
     data: {
+      resource: 'tables',
+      action: 'save',
+      environmentId: 'ambiente-a',
+      companyId: 'empresa-a',
+      database: 'DICTDB',
+      source: 'manual',
+      rows: [{ name: 'IndexCustomer', label: 'Cliente com índice local', database: 'DICTDB' }]
+    }
+  });
+  await request.post('/metadata-store.php', {
+    data: {
       resource: 'indices',
       action: 'save',
       environmentId: 'ambiente-a',
       companyId: 'empresa-a',
       database: 'DICTDB',
-      table: 'Customer',
+      table: 'IndexCustomer',
       source: 'manual',
       rows: [{
         name: 'SqliteCustIdx',
@@ -159,15 +170,79 @@ test('table browser loads table indexes from SQLite metadata before PASOE index 
       }]
     }
   });
+  await request.post('/metadata-store.php', {
+    data: {
+      resource: 'fields',
+      action: 'save',
+      environmentId: 'ambiente-a',
+      companyId: 'empresa-a',
+      database: 'DICTDB',
+      table: 'IndexCustomer',
+      source: 'manual',
+      rows: [{ name: 'CustNum', type: 'integer', fieldType: 'integer', indices: 'SqliteCustIdx' }]
+    }
+  });
 
   await page.goto('/table-browser.html');
-  await page.locator('#tableName').fill('Customer');
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+  });
+  await page.locator('#tableName').fill('IndexCustomer');
   await page.locator('#findTableBtn').click();
 
   await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
   await expect(page.locator('#indexesGrid')).toContainText('SqliteCustIdx');
   await expect(page.locator('#indexesGrid')).toContainText('Índice salvo localmente para navegação');
   await expect(page.locator('#indexesGrid')).not.toContainText('NameIdx');
+});
+
+test('table browser loads table list and fields from SQLite metadata before PASOE', async ({ page, request }) => {
+  await request.post('/metadata-store.php', {
+    data: {
+      resource: 'tables',
+      action: 'save',
+      environmentId: 'ambiente-a',
+      companyId: 'empresa-a',
+      database: 'DICTDB',
+      source: 'manual',
+      rows: [{ name: 'CachedCustomer', label: 'Cliente em cache', database: 'DICTDB' }]
+    }
+  });
+  await request.post('/metadata-store.php', {
+    data: {
+      resource: 'fields',
+      action: 'save',
+      environmentId: 'ambiente-a',
+      companyId: 'empresa-a',
+      database: 'DICTDB',
+      table: 'CachedCustomer',
+      source: 'manual',
+      rows: [
+        { name: 'CachedId', label: 'Codigo cache', fieldType: 'integer', type: 'integer', indices: 'CachedIdIdx' },
+        { name: 'CachedName', label: 'Nome cache', fieldType: 'character', type: 'character' }
+      ]
+    }
+  });
+
+  await page.goto('/table-browser.html');
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+  });
+  await page.locator('#openTableSelector').click();
+  await expect(page.locator('#tableSelectorGrid')).toContainText('CachedCustomer');
+  await page.locator('#tableSelectorGrid tbody tr').filter({ hasText: 'CachedCustomer' }).dblclick();
+
+  await expect(page.locator('#fieldsGrid')).toContainText('CachedId');
+  await expect(page.locator('#fieldsGrid')).toContainText('Codigo cache');
+  await expect(page.locator('#indexesGrid')).toContainText('CachedIdIdx');
+
+  const payload = await (await request.get('/__requests')).json();
+  expect(payload.requests.some((item) => decodeURIComponent(item.path).includes('/metadata/tables?database=DICTDB'))).toBe(false);
+  expect(payload.requests.some((item) => decodeURIComponent(item.path).includes('/metadata/tables/CachedCustomer/fields'))).toBe(false);
 });
 
 test('table browser data tab keeps rows when order is inverted and formats dates as pt-BR', async ({ page, request }) => {

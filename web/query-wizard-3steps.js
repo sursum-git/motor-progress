@@ -580,7 +580,13 @@
       path += "?database=" + encodeURIComponent(database);
     }
 
-    getJsonUtf8(metadataUrl(path))
+    loadTablesFromMetadataStore(database)
+      .then(function (localRows) {
+        if (Array.isArray(localRows) && localRows.length) {
+          return { success: true, data: localRows, __sqlite: true };
+        }
+        return getJsonUtf8(metadataUrl(path));
+      })
       .done(function (response) {
         const rows = response && response.success === false ? [] : (response.data || []);
         state.tables = normalizeTableRows(rows, database);
@@ -609,7 +615,13 @@
 
     dbs.forEach((dbName) => {
       const path = "/metadata/tables?database=" + encodeURIComponent(dbName);
-      getJsonUtf8(metadataUrl(path))
+      loadTablesFromMetadataStore(dbName)
+        .then(function (localRows) {
+          if (Array.isArray(localRows) && localRows.length) {
+            return { success: true, data: localRows, __sqlite: true };
+          }
+          return getJsonUtf8(metadataUrl(path));
+        })
         .done(function (response) {
           const sourceRows = response && response.success === false ? [] : (response.data || []);
           normalizeTableRows(sourceRows, dbName).forEach(function (row) {
@@ -655,6 +667,39 @@
         }
       }
     });
+  }
+
+  function loadTablesFromMetadataStore(database) {
+    const deferred = $.Deferred();
+    const scope = currentScope();
+    getJsonUtf8("metadata-store.php?resource=tables"
+      + "&environmentId=" + encodeURIComponent(scope.environmentId || "")
+      + "&companyId=" + encodeURIComponent(scope.companyId || "")
+      + "&database=" + encodeURIComponent(database || ""))
+      .done(function (response) {
+        deferred.resolve(response && response.success && Array.isArray(response.data) ? response.data : []);
+      })
+      .fail(function () {
+        deferred.resolve([]);
+      });
+    return deferred.promise();
+  }
+
+  function loadFieldsFromMetadataStore(table, database) {
+    const deferred = $.Deferred();
+    const scope = currentScope();
+    getJsonUtf8("metadata-store.php?resource=fields"
+      + "&environmentId=" + encodeURIComponent(scope.environmentId || "")
+      + "&companyId=" + encodeURIComponent(scope.companyId || "")
+      + "&database=" + encodeURIComponent(database || "")
+      + "&table=" + encodeURIComponent(table || ""))
+      .done(function (response) {
+        deferred.resolve(response && response.success && Array.isArray(response.data) ? response.data : []);
+      })
+      .fail(function () {
+        deferred.resolve([]);
+      });
+    return deferred.promise();
   }
 
   function finishTableLoad(database, success, fromCache) {
@@ -1075,7 +1120,13 @@
 
     setFieldsLoading(true);
     setStatus("Carregando metadados de campos de " + state.selectedDatabase + "." + state.selectedTable + "...", "");
-    getJsonUtf8(metadataUrl("/metadata/tables/" + encodeURIComponent(state.selectedTable) + "/fields?database=" + encodeURIComponent(state.selectedDatabase)))
+    loadFieldsFromMetadataStore(state.selectedTable, state.selectedDatabase)
+      .then(function (localRows) {
+        if (Array.isArray(localRows) && localRows.length) {
+          return { success: true, data: localRows, __sqlite: true };
+        }
+        return getJsonUtf8(metadataUrl("/metadata/tables/" + encodeURIComponent(state.selectedTable) + "/fields?database=" + encodeURIComponent(state.selectedDatabase)));
+      })
       .done(function (response) {
         if (!response || response.success === false) {
           throw new Error(apiError(response));
