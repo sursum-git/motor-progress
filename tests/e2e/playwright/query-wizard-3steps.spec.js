@@ -500,7 +500,10 @@ test('query wizard adds integer index filter for espec pp-container nr-container
   await page.locator('#openTableSearch').click();
   await expect(page.locator('#tableSearchGrid')).toContainText('pp-container');
   await page.locator('#tableSearchGrid tbody tr').filter({ hasText: 'pp-container' }).dblclick();
-  await page.locator('#indexFilterTabs .manual-tab').filter({ hasText: 'nr-container' }).click();
+  const indexTabs = page.locator('#indexFilterTabs .manual-tab').filter({ hasNotText: 'Filtros dinâmicos' });
+  await expect(indexTabs.first()).toHaveText('nr-container');
+  await expect(indexTabs.first()).toHaveClass(/index-kind-primary/);
+  await indexTabs.filter({ hasText: 'nr-container' }).click();
 
   const containerFilter = page.locator('#indexFilterTabs .index-filter-item').filter({ hasText: 'nr-container' }).first();
   await expect(containerFilter.locator('.index-filter-operator.k-dropdownlist')).toBeVisible();

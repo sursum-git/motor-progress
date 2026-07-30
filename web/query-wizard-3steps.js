@@ -1632,12 +1632,16 @@
     (fields || []).forEach(function (field) {
       const indexList = splitIndices(field.indices || field.indexes || field.index);
       if (!indexList.length) return;
+      const fieldIndexKind = indexKindFromField(field);
       indexList.forEach(function (indexInfo) {
         const indexName = indexInfo.name || "";
         if (!indexName) return;
         if (!grouped[indexName]) grouped[indexName] = [];
         grouped[indexName].push(field);
-        grouped[indexName].kind = strongerIndexKind(grouped[indexName].kind || "normal", indexInfo.kind || "normal");
+        grouped[indexName].kind = strongerIndexKind(
+          grouped[indexName].kind || "normal",
+          strongerIndexKind(indexInfo.kind || "normal", fieldIndexKind)
+        );
       });
     });
     return grouped;
@@ -1677,21 +1681,53 @@
   function normalizeIndexInfo(value) {
     if (!value) return { name: "", kind: "normal" };
     if (typeof value === "object") {
-      const name = String(value.name || value.indexName || value.index || value.idx || value.value || "").trim();
+      const name = String(value.name || value.indexName || value.index || value.idx || value.idxName || value.value || "").trim();
       return { name, kind: indexKindFromMetadata(value) };
     }
     return { name: String(value || "").trim(), kind: "normal" };
   }
 
   function indexKindFromMetadata(meta) {
-    const type = String(meta.type || meta.kind || meta.indexType || meta.category || "").toLowerCase();
-    if (meta.primary || meta.primaryKey || meta.isPrimary || meta.isPrimaryKey || type === "primary" || type === "pk") {
+    const type = String(meta.type || meta.kind || meta.indexType || meta.indexKind || meta.category || meta.keyType || meta.keyKind || "").toLowerCase();
+    if (isTrueLike(meta.primary) || isTrueLike(meta.primaryKey) || isTrueLike(meta.isPrimary) || isTrueLike(meta.isPrimaryKey) ||
+      isTrueLike(meta.primaryIndex) || isTrueLike(meta.isPrimaryIndex) || hasIndexKindText(type, "primary")) {
       return "primary";
     }
-    if (meta.unique || meta.isUnique || type === "unique" || type === "uniq") {
+    if (isTrueLike(meta.unique) || isTrueLike(meta.isUnique) || isTrueLike(meta.uniqueKey) || isTrueLike(meta.isUniqueKey) ||
+      isTrueLike(meta.uniqueIndex) || isTrueLike(meta.isUniqueIndex) || hasIndexKindText(type, "unique")) {
       return "unique";
     }
     return "normal";
+  }
+
+  function indexKindFromField(field) {
+    if (!field) return "normal";
+    const type = String(field.indexType || field.indexKind || field.indexCategory || field.keyType || field.keyKind || "").toLowerCase();
+    const text = String(field.indexMeta || field.indexInfo || field.indexDescription || "").toLowerCase();
+    if (isTrueLike(field.primary) || isTrueLike(field.primaryKey) || isTrueLike(field.isPrimary) || isTrueLike(field.isPrimaryKey) ||
+      isTrueLike(field.primaryIndex) || isTrueLike(field.isPrimaryIndex) || hasIndexKindText(type, "primary") || hasIndexKindText(text, "primary")) {
+      return "primary";
+    }
+    if (isTrueLike(field.unique) || isTrueLike(field.isUnique) || isTrueLike(field.uniqueKey) || isTrueLike(field.isUniqueKey) ||
+      isTrueLike(field.uniqueIndex) || isTrueLike(field.isUniqueIndex) || hasIndexKindText(type, "unique") || hasIndexKindText(text, "unique")) {
+      return "unique";
+    }
+    return "normal";
+  }
+
+  function isTrueLike(value) {
+    if (value === true || value === 1) return true;
+    if (typeof value !== "string") return false;
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "yes" || normalized === "sim" || normalized === "1";
+  }
+
+  function hasIndexKindText(text, kind) {
+    const normalized = String(text || "").toLowerCase();
+    if (!normalized) return false;
+    if (kind === "primary") return /\b(primary|primario|primário|pk)\b/.test(normalized);
+    if (kind === "unique") return /\b(unique|unico|único|uniq)\b/.test(normalized);
+    return false;
   }
 
   function strongerIndexKind(current, next) {
