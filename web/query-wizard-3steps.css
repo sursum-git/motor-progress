@@ -234,6 +234,9 @@ textarea {
   border-radius: 6px;
   background: #fff;
   color: #344150;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font: inherit;
   font-size: 13px;
   cursor: pointer;
@@ -270,6 +273,21 @@ textarea {
   border-color: #1d4ed8;
   background: #93c5fd;
   color: #082f68;
+}
+
+.manual-tab-name {
+  min-width: 0;
+}
+
+.index-kind-badge {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 1px 6px;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .manual-tab-panels,

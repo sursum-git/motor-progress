@@ -383,13 +383,16 @@ test('query wizard orders primary and unique indexes first with visual highlight
     return Array.from(document.querySelectorAll('#indexFilterTabs .manual-tab'))
       .filter((tab) => !tab.textContent.includes('Filtros dinâmicos'))
       .map((tab) => ({
-        text: tab.textContent.trim(),
+        text: tab.querySelector('.manual-tab-name').textContent.trim(),
+        badge: tab.querySelector('.index-kind-badge') ? tab.querySelector('.index-kind-badge').textContent.trim() : '',
         primary: tab.classList.contains('index-kind-primary'),
         unique: tab.classList.contains('index-kind-unique')
       }));
   });
 
   expect(tabs.map((tab) => tab.text)).toEqual(['CustNum', 'NameIdx', 'StateIdx']);
+  expect(tabs[0].badge).toBe('Primário');
+  expect(tabs[1].badge).toBe('Único');
   expect(tabs[0].primary).toBe(true);
   expect(tabs[1].unique).toBe(true);
 });
@@ -501,7 +504,8 @@ test('query wizard adds integer index filter for espec pp-container nr-container
   await expect(page.locator('#tableSearchGrid')).toContainText('pp-container');
   await page.locator('#tableSearchGrid tbody tr').filter({ hasText: 'pp-container' }).dblclick();
   const indexTabs = page.locator('#indexFilterTabs .manual-tab').filter({ hasNotText: 'Filtros dinâmicos' });
-  await expect(indexTabs.first()).toHaveText('indice1');
+  await expect(indexTabs.first()).toContainText('indice1');
+  await expect(indexTabs.first()).toContainText('Primário');
   await expect(indexTabs.first()).toHaveClass(/index-kind-primary/);
   await indexTabs.filter({ hasText: 'indice1' }).click();
 

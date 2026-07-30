@@ -1601,7 +1601,9 @@
     });
 
     const nav = tabs.map((tab, index) =>
-      `<button type="button" class="manual-tab index-kind-${escapeHtml(tab.kind)} ${index === 0 ? "active" : ""}" data-target="#${tab.tabId}">${escapeHtml(tab.name)}</button>`
+      `<button type="button" class="manual-tab index-kind-${escapeHtml(tab.kind)} ${index === 0 ? "active" : ""}" data-target="#${tab.tabId}">
+        <span class="manual-tab-name">${escapeHtml(tab.name)}</span>${indexKindBadge(tab.kind)}
+      </button>`
     ).join("");
     const dynamicNav = `<button type="button" class="manual-tab ${hasIndexes ? "" : "active"}" data-target="#${dynamicTabId}">Filtros dinâmicos</button>`;
     const dynamicPanel = `<section id="${dynamicTabId}" class="manual-tab-panel ${hasIndexes ? "" : "active"}"></section>`;
@@ -1625,6 +1627,12 @@
     initIndexFilterWidgets(tabEl);
 
     return;
+  }
+
+  function indexKindBadge(kind) {
+    if (kind === "primary") return '<span class="index-kind-badge">Primário</span>';
+    if (kind === "unique") return '<span class="index-kind-badge">Único</span>';
+    return "";
   }
 
   function groupFieldsByIndex(fields) {
