@@ -1523,7 +1523,7 @@
 
   function buildFilterTabs(fields) {
     const groups = groupFieldsByIndex(fields);
-    const indexNames = Object.keys(groups).sort();
+    const indexNames = sortedIndexNames(groups);
     const tabEl = $("#indexFilterTabs");
 
     const existing = tabEl.data("kendoTabStrip");
@@ -1592,6 +1592,7 @@
       return {
         name,
         tabId,
+        kind: groups[name] && groups[name].kind ? groups[name].kind : "normal",
         html: `<section id="${tabId}" class="manual-tab-panel ${index === 0 ? "active" : ""}">
           <div class="index-tab-head">Indice: ${escapeHtml(name)}</div>
           ${rows || "<div class=\"status-box\">Sem campo com este indice.</div>"}
@@ -1600,7 +1601,7 @@
     });
 
     const nav = tabs.map((tab, index) =>
-      `<button type="button" class="manual-tab ${index === 0 ? "active" : ""}" data-target="#${tab.tabId}">${escapeHtml(tab.name)}</button>`
+      `<button type="button" class="manual-tab index-kind-${escapeHtml(tab.kind)} ${index === 0 ? "active" : ""}" data-target="#${tab.tabId}">${escapeHtml(tab.name)}</button>`
     ).join("");
     const dynamicNav = `<button type="button" class="manual-tab ${hasIndexes ? "" : "active"}" data-target="#${dynamicTabId}">Filtros dinâmicos</button>`;
     const dynamicPanel = `<section id="${dynamicTabId}" class="manual-tab-panel ${hasIndexes ? "" : "active"}"></section>`;
@@ -1631,9 +1632,12 @@
     (fields || []).forEach(function (field) {
       const indexList = splitIndices(field.indices || field.indexes || field.index);
       if (!indexList.length) return;
-      indexList.forEach(function (indexName) {
+      indexList.forEach(function (indexInfo) {
+        const indexName = indexInfo.name || "";
+        if (!indexName) return;
         if (!grouped[indexName]) grouped[indexName] = [];
         grouped[indexName].push(field);
+        grouped[indexName].kind = strongerIndexKind(grouped[indexName].kind || "normal", indexInfo.kind || "normal");
       });
     });
     return grouped;
@@ -1644,8 +1648,8 @@
 
     if (Array.isArray(value)) {
       return value
-        .map((item) => String(item || "").trim())
-        .filter((item) => item);
+        .map(normalizeIndexInfo)
+        .filter((item) => item.name);
     }
 
     if (typeof value === "string") {
@@ -1655,28 +1659,56 @@
         try {
           const parsed = JSON.parse(text);
           if (Array.isArray(parsed)) {
-            return parsed.map((item) => String(item || "").trim()).filter((item) => item);
+            return parsed.map(normalizeIndexInfo).filter((item) => item.name);
           }
         } catch (_) {}
       }
       return text
         .split(/[,;|\s]+/)
-        .map((item) => String(item || "").trim())
-        .filter((item) => item);
+        .map(normalizeIndexInfo)
+        .filter((item) => item.name);
     }
 
     if (typeof value !== "string") {
-      if (typeof value === "object" && value !== null && !Array.isArray(value)) {
-        if (value.name || value.value) {
-          return [String(value.name || value.value)].filter((item) => item);
-        }
-        return [JSON.stringify(value)];
-      }
-
-      return [String(value)]
-        .map((item) => item.trim())
-        .filter((item) => item);
+      return [normalizeIndexInfo(value)].filter((item) => item.name);
     }
+  }
+
+  function normalizeIndexInfo(value) {
+    if (!value) return { name: "", kind: "normal" };
+    if (typeof value === "object") {
+      const name = String(value.name || value.indexName || value.index || value.idx || value.value || "").trim();
+      return { name, kind: indexKindFromMetadata(value) };
+    }
+    return { name: String(value || "").trim(), kind: "normal" };
+  }
+
+  function indexKindFromMetadata(meta) {
+    const type = String(meta.type || meta.kind || meta.indexType || meta.category || "").toLowerCase();
+    if (meta.primary || meta.primaryKey || meta.isPrimary || meta.isPrimaryKey || type === "primary" || type === "pk") {
+      return "primary";
+    }
+    if (meta.unique || meta.isUnique || type === "unique" || type === "uniq") {
+      return "unique";
+    }
+    return "normal";
+  }
+
+  function strongerIndexKind(current, next) {
+    const order = { primary: 0, unique: 1, normal: 2 };
+    return (order[next] ?? 2) < (order[current] ?? 2) ? next : current;
+  }
+
+  function sortedIndexNames(groups) {
+    const order = { primary: 0, unique: 1, normal: 2 };
+    return Object.keys(groups).sort(function (left, right) {
+      const leftKind = groups[left] && groups[left].kind ? groups[left].kind : "normal";
+      const rightKind = groups[right] && groups[right].kind ? groups[right].kind : "normal";
+      const leftOrder = order[leftKind] ?? 2;
+      const rightOrder = order[rightKind] ?? 2;
+      if (leftOrder !== rightOrder) return leftOrder - rightOrder;
+      return left.localeCompare(right, "pt-BR", { sensitivity: "base" });
+    });
   }
 
   function hydrateDynamicFilterOperator() {

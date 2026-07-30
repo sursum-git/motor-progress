@@ -246,6 +246,32 @@ textarea {
   font-weight: 700;
 }
 
+.manual-tab.index-kind-primary {
+  border-color: #b45309;
+  background: #fff4d6;
+  color: #6b3300;
+  font-weight: 700;
+}
+
+.manual-tab.index-kind-primary.active {
+  border-color: #92400e;
+  background: #fbbf24;
+  color: #2f1900;
+}
+
+.manual-tab.index-kind-unique {
+  border-color: #2563eb;
+  background: #dbeafe;
+  color: #123f8c;
+  font-weight: 700;
+}
+
+.manual-tab.index-kind-unique.active {
+  border-color: #1d4ed8;
+  background: #93c5fd;
+  color: #082f68;
+}
+
 .manual-tab-panels,
 .manual-tab-panel.active {
   display: grid;

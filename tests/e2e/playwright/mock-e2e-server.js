@@ -313,9 +313,9 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
       ] });
     }
     return sendJson(res, 200, { success: true, database: 'DICTDB', table: 'Customer', data: [
-      { name: 'CustNum', indices: 'CustNum', viewAs: 'FILL-IN' },
-      { name: 'Name', indices: 'NameIdx' },
-      { name: 'State' },
+      { name: 'Name', indices: [{ name: 'NameIdx', unique: true }], fieldType: 'character' },
+      { name: 'State', indices: 'StateIdx', fieldType: 'character' },
+      { name: 'CustNum', indices: [{ name: 'CustNum', primary: true, unique: true }], viewAs: 'FILL-IN', fieldType: 'integer' },
       { name: 'Phone', extent: 2 }
     ] });
   }
