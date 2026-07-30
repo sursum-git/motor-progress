@@ -61,6 +61,8 @@ function loadRequestLogList(PDO $pdo): array
     $limit = max(1, min(500, (int) ($_GET['limit'] ?? 100)));
     $status = trim((string) ($_GET['status'] ?? ''));
     $search = trim((string) ($_GET['search'] ?? ''));
+    $startDate = normalizeDateFilter((string) ($_GET['startDate'] ?? ''), false);
+    $endDate = normalizeDateFilter((string) ($_GET['endDate'] ?? ''), true);
     $where = [];
     $params = [];
     if ($status !== '') {
@@ -70,6 +72,14 @@ function loadRequestLogList(PDO $pdo): array
     if ($search !== '') {
         $where[] = '(target LIKE :search OR request_body_json LIKE :search OR response_body_json LIKE :search OR error_message LIKE :search)';
         $params[':search'] = '%' . $search . '%';
+    }
+    if ($startDate !== '') {
+        $where[] = 'started_at >= :start_date';
+        $params[':start_date'] = $startDate;
+    }
+    if ($endDate !== '') {
+        $where[] = 'started_at <= :end_date';
+        $params[':end_date'] = $endDate;
     }
     $sql = 'SELECT id, started_at, finished_at, duration_ms, method, target, response_status, error_message, user_name, remote_addr
             FROM request_logs';
@@ -84,6 +94,22 @@ function loadRequestLogList(PDO $pdo): array
     $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
     $stmt->execute();
     return array_map('mapRequestLogSummary', $stmt->fetchAll(PDO::FETCH_ASSOC));
+}
+
+function normalizeDateFilter(string $value, bool $endOfDay): string
+{
+    $value = trim($value);
+    if ($value === '') {
+        return '';
+    }
+    $formats = ['Y-m-d', 'd/m/Y'];
+    foreach ($formats as $format) {
+        $date = DateTimeImmutable::createFromFormat('!' . $format, $value);
+        if ($date instanceof DateTimeImmutable && $date->format($format) === $value) {
+            return $date->setTime($endOfDay ? 23 : 0, $endOfDay ? 59 : 0, $endOfDay ? 59 : 0)->format('Y-m-d H:i:s');
+        }
+    }
+    throw new InvalidArgumentException('Data invalida.');
 }
 
 function loadRequestLogDetail(PDO $pdo, string $id): array

@@ -20,7 +20,7 @@
     }
     .toolbar {
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) 120px auto;
+      grid-template-columns: minmax(220px, 1fr) minmax(150px, 180px) minmax(150px, 180px) 120px auto;
       gap: 10px;
       align-items: end;
       padding: 12px;
@@ -108,6 +108,14 @@
         <input id="searchInput" placeholder="target, request, response ou erro">
       </label>
       <label>
+        Data inicial
+        <input id="startDateInput">
+      </label>
+      <label>
+        Data final
+        <input id="endDateInput">
+      </label>
+      <label>
         Limite
         <input id="limitInput" type="number" min="1" max="500" value="100">
       </label>
@@ -161,6 +169,26 @@
         }
       }
 
+      function parseLogDate(value) {
+        if (!value) return null;
+        const text = String(value).replace(" ", "T");
+        const date = new Date(text);
+        return Number.isNaN(date.getTime()) ? null : date;
+      }
+
+      function dateFilterValue(selector) {
+        const picker = $(selector).data("kendoDatePicker");
+        const value = picker ? picker.value() : null;
+        return value ? kendo.toString(value, "yyyy-MM-dd") : "";
+      }
+
+      function normalizeRows(rows) {
+        return (rows || []).map((row) => Object.assign({}, row, {
+          startedAtDate: parseLogDate(row.startedAt),
+          finishedAtDate: parseLogDate(row.finishedAt)
+        }));
+      }
+
       async function getJson(url) {
         const response = await fetch(url, { credentials: "same-origin", cache: "no-store" });
         const text = await response.text();
@@ -184,12 +212,14 @@
         setStatus("Carregando logs...");
         const payload = await getJson(endpoint({
           limit: $("#limitInput").val() || "100",
-          search: $("#searchInput").val() || ""
+          search: $("#searchInput").val() || "",
+          startDate: dateFilterValue("#startDateInput"),
+          endDate: dateFilterValue("#endDateInput")
         }));
         if (!payload || !payload.success) {
           throw new Error((payload && payload.error) || "Falha ao carregar logs.");
         }
-        grid().dataSource.data(payload.data || []);
+        grid().dataSource.data(normalizeRows(payload.data || []));
         setStatus("Logs carregados: " + (payload.data || []).length + ".");
       }
 
@@ -206,18 +236,35 @@
 
       function initGrid() {
         $("#requestLogGrid").kendoGrid({
-          dataSource: { data: [], pageSize: 25 },
+          dataSource: {
+            data: [],
+            pageSize: 25,
+            schema: {
+              model: {
+                fields: {
+                  startedAtDate: { type: "date" },
+                  finishedAtDate: { type: "date" },
+                  durationMs: { type: "number" },
+                  responseStatus: { type: "number" }
+                }
+              }
+            }
+          },
           height: 430,
           selectable: "row",
           sortable: true,
+          filterable: true,
+          groupable: true,
           pageable: true,
           columns: [
-            { field: "startedAt", title: "Inicio", width: 180 },
-            { field: "finishedAt", title: "Fim", width: 180 },
+            { field: "startedAtDate", title: "Inicio", width: 180, format: "{0:dd/MM/yyyy HH:mm:ss}" },
+            { field: "finishedAtDate", title: "Fim", width: 180, format: "{0:dd/MM/yyyy HH:mm:ss}" },
             { field: "durationMs", title: "ms", width: 80 },
             { field: "method", title: "Metodo", width: 90 },
             { field: "responseStatus", title: "HTTP", width: 90 },
             { field: "target", title: "Destino" },
+            { field: "userName", title: "Usuario", width: 130 },
+            { field: "remoteAddr", title: "IP", width: 130 },
             { field: "errorMessage", title: "Erro", width: 220 }
           ],
           change: function () {
@@ -239,6 +286,10 @@
       $(function () {
         $("button").kendoButton();
         $("#searchInput, #limitInput").kendoTextBox();
+        $("#startDateInput, #endDateInput").kendoDatePicker({
+          culture: "pt-BR",
+          format: "dd/MM/yyyy"
+        });
         initGrid();
         if (window.SursumUiReady) window.SursumUiReady();
         const ready = window.SursumContext && typeof SursumContext.whenReady === "function"
