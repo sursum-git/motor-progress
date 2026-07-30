@@ -286,7 +286,7 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
     const decodedPathname = decodeURIComponent(pathname);
     if (decodedPathname.includes('/metadata/tables/pp-container/fields')) {
       return sendJson(res, 200, { success: true, database: 'espec', table: 'pp-container', data: [
-        { name: 'nr-container', type: 'integer', fieldType: 'integer', indices: 'nr-container', primaryKey: true, isPrimaryKey: true, viewAs: 'FILL-IN' },
+        { name: 'nr-container', type: 'integer', fieldType: 'integer', indices: 'indice1,ind_fornec', viewAs: 'FILL-IN' },
         { name: 'nr-pedido', type: 'integer', fieldType: 'integer', indices: 'nr-pedido', viewAs: 'COMBO-BOX', options: [
           { value: '7788', label: 'Pedido exportacao' }
         ] },

@@ -204,7 +204,9 @@ CLASS DynamicMetadataService:
         DEFINE VARIABLE cViewAs AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cListExpression AS CHARACTER NO-UNDO.
         DEFINE VARIABLE jaOptions AS JsonArray NO-UNDO.
+        DEFINE VARIABLE jaIndexMetadata AS JsonArray NO-UNDO.
         DEFINE VARIABLE rFile AS RECID NO-UNDO.
+        DEFINE VARIABLE rPrimaryIndex AS RECID NO-UNDO.
 
         ASSIGN jaFields = NEW JsonArray().
 
@@ -223,7 +225,8 @@ CLASS DynamicMetadataService:
             RETURN jaFields.
         END.
 
-        ASSIGN rFile = hFile:RECID.
+        ASSIGN rFile = hFile:RECID
+               rPrimaryIndex = hFile:BUFFER-FIELD("_Prime-Index"):BUFFER-VALUE NO-ERROR.
 
         CREATE QUERY hQuery.
         hQuery:SET-BUFFERS(hField).
@@ -247,6 +250,7 @@ CLASS DynamicMetadataService:
                 NEXT.
 
             ASSIGN cListaIndices = THIS-OBJECT:getDynamicIndexListForField(hField:RECID)
+                   jaIndexMetadata = THIS-OBJECT:getDynamicIndexMetadataForField(hField:RECID, rPrimaryIndex)
                    cViewAs = IF hField:BUFFER-FIELD("_View-As"):BUFFER-VALUE = ? THEN "" ELSE STRING(hField:BUFFER-FIELD("_View-As"):BUFFER-VALUE)
                    cListExpression = ""
                    jaOptions = NEW JsonArray()
@@ -269,6 +273,7 @@ CLASS DynamicMetadataService:
             joField:Add("mandatory", LOGICAL(hField:BUFFER-FIELD("_Mandatory"):BUFFER-VALUE)).
             joField:Add("extent", INTEGER(hField:BUFFER-FIELD("_Extent"):BUFFER-VALUE)).
             joField:Add("indices", cListaIndices).
+            joField:Add("indexMetadata", jaIndexMetadata).
             jaFields:Add(joField).
         END.
 
@@ -526,6 +531,71 @@ CLASS DynamicMetadataService:
         DELETE OBJECT hIndex NO-ERROR.
 
         RETURN cLista.
+    END METHOD.
+
+    METHOD PRIVATE JsonArray getDynamicIndexMetadataForField(INPUT prField AS RECID, INPUT prPrimaryIndex AS RECID):
+        DEFINE VARIABLE hIndexField AS HANDLE NO-UNDO.
+        DEFINE VARIABLE hIndex AS HANDLE NO-UNDO.
+        DEFINE VARIABLE hQuery AS HANDLE NO-UNDO.
+        DEFINE VARIABLE cPrepare AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cIndexName AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE rIndex AS RECID NO-UNDO.
+        DEFINE VARIABLE jaIndexes AS JsonArray NO-UNDO.
+        DEFINE VARIABLE joIndex AS JsonObject NO-UNDO.
+
+        ASSIGN jaIndexes = NEW JsonArray().
+
+        CREATE BUFFER hIndexField FOR TABLE cBanco + "._Index-Field" NO-ERROR.
+        CREATE BUFFER hIndex FOR TABLE cBanco + "._Index" NO-ERROR.
+        IF NOT VALID-HANDLE(hIndexField) OR NOT VALID-HANDLE(hIndex) THEN DO:
+            IF VALID-HANDLE(hIndexField) THEN DELETE OBJECT hIndexField NO-ERROR.
+            IF VALID-HANDLE(hIndex) THEN DELETE OBJECT hIndex NO-ERROR.
+            RETURN jaIndexes.
+        END.
+
+        CREATE QUERY hQuery.
+        hQuery:SET-BUFFERS(hIndexField).
+        ASSIGN cPrepare = "FOR EACH " + cBanco + "._Index-Field NO-LOCK "
+                        + "WHERE " + cBanco + "._Index-Field._Field-recid = " + STRING(prField) + " "
+                        + "BY " + cBanco + "._Index-Field._Index-Seq".
+        hQuery:QUERY-PREPARE(cPrepare) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            DELETE OBJECT hQuery NO-ERROR.
+            DELETE OBJECT hIndexField NO-ERROR.
+            DELETE OBJECT hIndex NO-ERROR.
+            RETURN jaIndexes.
+        END.
+
+        hQuery:QUERY-OPEN().
+        REPEAT:
+            hQuery:GET-NEXT().
+            IF hQuery:QUERY-OFF-END THEN
+                LEAVE.
+
+            ASSIGN rIndex = hIndexField:BUFFER-FIELD("_Index-recid"):BUFFER-VALUE.
+            hIndex:FIND-FIRST("WHERE RECID(" + cBanco + "._Index) = " + STRING(rIndex), NO-LOCK) NO-ERROR.
+            IF NOT hIndex:AVAILABLE THEN
+                NEXT.
+
+            ASSIGN cIndexName = STRING(hIndex:BUFFER-FIELD("_Index-Name"):BUFFER-VALUE).
+            IF cIndexName = "" THEN
+                NEXT.
+
+            ASSIGN joIndex = NEW JsonObject().
+            joIndex:Add("name", cIndexName).
+            joIndex:Add("primary", rIndex = prPrimaryIndex).
+            joIndex:Add("unique", LOGICAL(hIndex:BUFFER-FIELD("_Unique"):BUFFER-VALUE)).
+            joIndex:Add("active", LOGICAL(hIndex:BUFFER-FIELD("_Active"):BUFFER-VALUE)).
+            joIndex:Add("wordIndex", INTEGER(hIndex:BUFFER-FIELD("_Wordidx"):BUFFER-VALUE)).
+            jaIndexes:Add(joIndex).
+        END.
+
+        hQuery:QUERY-CLOSE().
+        DELETE OBJECT hQuery NO-ERROR.
+        DELETE OBJECT hIndexField NO-ERROR.
+        DELETE OBJECT hIndex NO-ERROR.
+
+        RETURN jaIndexes.
     END METHOD.
 
     METHOD PRIVATE CHARACTER extractViewAsList(INPUT pcViewAs AS CHARACTER):

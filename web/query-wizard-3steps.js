@@ -1631,16 +1631,26 @@
     const grouped = {};
     (fields || []).forEach(function (field) {
       const indexList = splitIndices(field.indices || field.indexes || field.index);
-      if (!indexList.length) return;
+      const metadataList = splitIndices(field.indexMetadata || field.indexInfos || field.indicesInfo || field.indexDetails);
+      const metadataByName = metadataList.reduce(function (acc, item) {
+        if (item.name) acc[item.name.toLowerCase()] = item;
+        return acc;
+      }, {});
+      const resolvedIndexList = indexList.length ? indexList : metadataList;
+      if (!resolvedIndexList.length) return;
       const fieldIndexKind = indexKindFromField(field);
-      indexList.forEach(function (indexInfo) {
+      resolvedIndexList.forEach(function (indexInfo) {
         const indexName = indexInfo.name || "";
         if (!indexName) return;
+        const metadataInfo = metadataByName[indexName.toLowerCase()] || {};
         if (!grouped[indexName]) grouped[indexName] = [];
         grouped[indexName].push(field);
         grouped[indexName].kind = strongerIndexKind(
           grouped[indexName].kind || "normal",
-          strongerIndexKind(indexInfo.kind || "normal", fieldIndexKind)
+          strongerIndexKind(
+            strongerIndexKind(indexInfo.kind || "normal", metadataInfo.kind || "normal"),
+            fieldIndexKind
+          )
         );
       });
     });
@@ -1682,9 +1692,10 @@
     if (!value) return { name: "", kind: "normal" };
     if (typeof value === "object") {
       const name = String(value.name || value.indexName || value.index || value.idx || value.idxName || value.value || "").trim();
-      return { name, kind: indexKindFromMetadata(value) };
+      return { name, kind: strongerIndexKind(indexKindFromMetadata(value), indexKindFromName(name)) };
     }
-    return { name: String(value || "").trim(), kind: "normal" };
+    const name = String(value || "").trim();
+    return { name, kind: indexKindFromName(name) };
   }
 
   function indexKindFromMetadata(meta) {
@@ -1728,6 +1739,15 @@
     if (kind === "primary") return /\b(primary|primario|primário|pk)\b/.test(normalized);
     if (kind === "unique") return /\b(unique|unico|único|uniq)\b/.test(normalized);
     return false;
+  }
+
+  function indexKindFromName(name) {
+    const normalized = String(name || "").trim().toLowerCase();
+    if (!normalized) return "normal";
+    if (normalized === "indice1" || normalized === "primary" || normalized === "primarykey" || normalized === "pk") return "primary";
+    if (/(\b|[_-])(primary|primario|primário|pk)(\b|[_-])/.test(normalized)) return "primary";
+    if (/(\b|[_-])(unique|unico|único|uniq)(\b|[_-])/.test(normalized)) return "unique";
+    return "normal";
   }
 
   function strongerIndexKind(current, next) {
