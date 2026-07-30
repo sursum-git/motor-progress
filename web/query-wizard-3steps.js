@@ -639,7 +639,12 @@
       url: url,
       method: "GET",
       dataType: "json",
-      cache: false
+      cache: false,
+      beforeSend: function (xhr) {
+        if (xhr && typeof xhr.overrideMimeType === "function") {
+          xhr.overrideMimeType("application/json; charset=UTF-8");
+        }
+      }
     });
   }
 
