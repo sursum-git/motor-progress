@@ -29,6 +29,24 @@ CLASS DynamicQueryJobRepository:
         INPUT pcPreferredMode AS CHARACTER,
         INPUT piMaxAttempts AS INTEGER):
 
+        RETURN THIS-OBJECT:createJob(
+            pcRequestJson,
+            pcPlanJson,
+            pcRequestContextJson,
+            pcPreferredMode,
+            piMaxAttempts,
+            ""
+        ).
+    END METHOD.
+
+    METHOD PUBLIC JsonObject createJob(
+        INPUT pcRequestJson AS LONGCHAR,
+        INPUT pcPlanJson AS LONGCHAR,
+        INPUT pcRequestContextJson AS LONGCHAR,
+        INPUT pcPreferredMode AS CHARACTER,
+        INPUT piMaxAttempts AS INTEGER,
+        INPUT pcExecutionId AS CHARACTER):
+
         DEFINE VARIABLE hJob AS HANDLE NO-UNDO.
         DEFINE VARIABLE cJobId AS CHARACTER NO-UNDO.
         DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
@@ -44,6 +62,7 @@ CLASS DynamicQueryJobRepository:
             THIS-OBJECT:setCharField(hJob, "jobId", cJobId).
             THIS-OBJECT:setCharField(hJob, "jobStatus", "queued").
             THIS-OBJECT:setCharField(hJob, "executionMode", pcPreferredMode).
+            THIS-OBJECT:setCharField(hJob, "executionId", pcExecutionId).
             THIS-OBJECT:setLongcharField(hJob, "requestJson", pcRequestJson).
             THIS-OBJECT:setLongcharField(hJob, "planJson", pcPlanJson).
             THIS-OBJECT:setLongcharField(hJob, "requestContextJson", pcRequestContextJson).
@@ -62,6 +81,7 @@ CLASS DynamicQueryJobRepository:
         joRet:Add("execution", "async").
         joRet:Add("status", "queued").
         joRet:Add("jobId", cJobId).
+        joRet:Add("executionId", pcExecutionId).
         RETURN joRet.
     END METHOD.
 
@@ -266,6 +286,7 @@ CLASS DynamicQueryJobRepository:
                joRet = NEW JsonObject().
         joRet:Add("success", TRUE).
         joRet:Add("jobId", THIS-OBJECT:getCharField(phJob, "jobId")).
+        joRet:Add("executionId", THIS-OBJECT:getCharField(phJob, "executionId")).
         joRet:Add("status", THIS-OBJECT:getCharField(phJob, "jobStatus")).
         joRet:Add("execution", "async").
         joRet:Add("executionMode", THIS-OBJECT:getCharField(phJob, "executionMode")).

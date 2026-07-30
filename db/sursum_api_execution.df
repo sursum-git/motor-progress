@@ -1,0 +1,216 @@
+ADD TABLE "SursumApiExecution"
+  AREA "Schema Area"
+  DUMP-NAME "sursumapiexecution"
+
+ADD FIELD "executionId" OF "SursumApiExecution" AS character
+  FORMAT "x(60)"
+  INITIAL ""
+  POSITION 2
+
+ADD FIELD "requestId" OF "SursumApiExecution" AS character
+  FORMAT "x(60)"
+  INITIAL ""
+  POSITION 3
+
+ADD FIELD "executionStatus" OF "SursumApiExecution" AS character
+  FORMAT "x(30)"
+  INITIAL "received"
+  POSITION 4
+
+ADD FIELD "executionType" OF "SursumApiExecution" AS character
+  FORMAT "x(30)"
+  INITIAL ""
+  POSITION 5
+
+ADD FIELD "entrypoint" OF "SursumApiExecution" AS character
+  FORMAT "x(40)"
+  INITIAL ""
+  POSITION 6
+
+ADD FIELD "endpoint" OF "SursumApiExecution" AS character
+  FORMAT "x(180)"
+  INITIAL ""
+  POSITION 7
+
+ADD FIELD "companyId" OF "SursumApiExecution" AS character
+  FORMAT "x(60)"
+  INITIAL ""
+  POSITION 8
+
+ADD FIELD "applicationName" OF "SursumApiExecution" AS character
+  FORMAT "x(80)"
+  INITIAL ""
+  POSITION 9
+
+ADD FIELD "actionCode" OF "SursumApiExecution" AS character
+  FORMAT "x(120)"
+  INITIAL ""
+  POSITION 10
+
+ADD FIELD "programName" OF "SursumApiExecution" AS character
+  FORMAT "x(180)"
+  INITIAL ""
+  POSITION 11
+
+ADD FIELD "queryCode" OF "SursumApiExecution" AS character
+  FORMAT "x(120)"
+  INITIAL ""
+  POSITION 12
+
+ADD FIELD "jobId" OF "SursumApiExecution" AS character
+  FORMAT "x(60)"
+  INITIAL ""
+  POSITION 13
+
+ADD FIELD "startedAt" OF "SursumApiExecution" AS datetime
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  POSITION 14
+
+ADD FIELD "lastHeartbeatAt" OF "SursumApiExecution" AS datetime
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  POSITION 15
+
+ADD FIELD "finishedAt" OF "SursumApiExecution" AS datetime
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  POSITION 16
+
+ADD FIELD "durationMs" OF "SursumApiExecution" AS integer
+  FORMAT "->,>>>,>>9"
+  INITIAL "0"
+  POSITION 17
+
+ADD FIELD "pasoePid" OF "SursumApiExecution" AS character
+  FORMAT "x(40)"
+  INITIAL ""
+  POSITION 18
+
+ADD FIELD "pasoeAgent" OF "SursumApiExecution" AS character
+  FORMAT "x(80)"
+  INITIAL ""
+  POSITION 19
+
+ADD FIELD "pasoeInstance" OF "SursumApiExecution" AS character
+  FORMAT "x(80)"
+  INITIAL ""
+  POSITION 20
+
+ADD FIELD "hostName" OF "SursumApiExecution" AS character
+  FORMAT "x(120)"
+  INITIAL ""
+  POSITION 21
+
+ADD FIELD "databaseName" OF "SursumApiExecution" AS character
+  FORMAT "x(80)"
+  INITIAL ""
+  POSITION 22
+
+ADD FIELD "dbTransactionRef" OF "SursumApiExecution" AS character
+  FORMAT "x(80)"
+  INITIAL ""
+  POSITION 23
+
+ADD FIELD "userName" OF "SursumApiExecution" AS character
+  FORMAT "x(120)"
+  INITIAL ""
+  POSITION 24
+
+ADD FIELD "authType" OF "SursumApiExecution" AS character
+  FORMAT "x(40)"
+  INITIAL ""
+  POSITION 25
+
+ADD FIELD "requestSummary" OF "SursumApiExecution" AS character
+  FORMAT "x(1000)"
+  INITIAL ""
+  POSITION 26
+
+ADD FIELD "requestContextJson" OF "SursumApiExecution" AS character
+  FORMAT "x(32000)"
+  INITIAL ""
+  POSITION 27
+
+ADD FIELD "errorCode" OF "SursumApiExecution" AS character
+  FORMAT "x(80)"
+  INITIAL ""
+  POSITION 28
+
+ADD FIELD "errorMessage" OF "SursumApiExecution" AS character
+  FORMAT "x(1000)"
+  INITIAL ""
+  POSITION 29
+
+ADD FIELD "killRequestedAt" OF "SursumApiExecution" AS datetime
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  POSITION 30
+
+ADD FIELD "killRequestedBy" OF "SursumApiExecution" AS character
+  FORMAT "x(120)"
+  INITIAL ""
+  POSITION 31
+
+ADD FIELD "killReason" OF "SursumApiExecution" AS character
+  FORMAT "x(1000)"
+  INITIAL ""
+  POSITION 32
+
+ADD INDEX "executionId" ON "SursumApiExecution"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "executionId" ASCENDING
+
+ADD INDEX "executionStatusStarted" ON "SursumApiExecution"
+  INDEX-FIELD "executionStatus" ASCENDING
+  INDEX-FIELD "startedAt" ASCENDING
+
+ADD INDEX "pasoePidStarted" ON "SursumApiExecution"
+  INDEX-FIELD "pasoePid" ASCENDING
+  INDEX-FIELD "startedAt" ASCENDING
+
+ADD INDEX "jobId" ON "SursumApiExecution"
+  INDEX-FIELD "jobId" ASCENDING
+
+ADD TABLE "SursumApiExecutionEvent"
+  AREA "Schema Area"
+  DUMP-NAME "sursumapiexecutionevent"
+
+ADD FIELD "eventId" OF "SursumApiExecutionEvent" AS character
+  FORMAT "x(100)"
+  INITIAL ""
+  POSITION 2
+
+ADD FIELD "executionId" OF "SursumApiExecutionEvent" AS character
+  FORMAT "x(60)"
+  INITIAL ""
+  POSITION 3
+
+ADD FIELD "eventStatus" OF "SursumApiExecutionEvent" AS character
+  FORMAT "x(30)"
+  INITIAL ""
+  POSITION 4
+
+ADD FIELD "eventMessage" OF "SursumApiExecutionEvent" AS character
+  FORMAT "x(1000)"
+  INITIAL ""
+  POSITION 5
+
+ADD FIELD "eventContextJson" OF "SursumApiExecutionEvent" AS character
+  FORMAT "x(32000)"
+  INITIAL ""
+  POSITION 6
+
+ADD FIELD "eventTime" OF "SursumApiExecutionEvent" AS datetime
+  FORMAT "99/99/9999 HH:MM:SS.SSS"
+  POSITION 7
+
+ADD INDEX "eventId" ON "SursumApiExecutionEvent"
+  UNIQUE
+  PRIMARY
+  INDEX-FIELD "eventId" ASCENDING
+
+ADD INDEX "executionEventTime" ON "SursumApiExecutionEvent"
+  INDEX-FIELD "executionId" ASCENDING
+  INDEX-FIELD "eventTime" ASCENDING
+
+.
+PSC
+cpstream=ISO8859-1

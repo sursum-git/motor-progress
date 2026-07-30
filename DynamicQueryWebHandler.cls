@@ -5,6 +5,7 @@ URLs esperadas:
   POST /web/SursumDynamicQuery/query
   POST /web/SursumDynamicQuery/query-store
   POST /web/SursumDynamicQuery/table-browse
+  POST /web/SursumDynamicQuery/program/execute
   GET  /web/SursumDynamicQuery/jobs/{jobId}
   GET  /web/SursumDynamicQuery/jobs/{jobId}/result
   POST /web/SursumDynamicQuery/jobs/drain
@@ -28,13 +29,16 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         FIELD fieldOrder AS INTEGER
         FIELD fieldName AS CHARACTER
         FIELD dataType AS CHARACTER
-        FIELD ascendingFlag AS LOGICAL.
+        FIELD ascendingFlag AS LOGICAL
+        FIELD fieldHandle AS HANDLE.
 
     DEFINE PRIVATE TEMP-TABLE ttBrowseField NO-UNDO
         FIELD fieldOrder AS INTEGER
         FIELD fieldName AS CHARACTER
         FIELD dataType AS CHARACTER
-        FIELD extentIndex AS INTEGER.
+        FIELD extentIndex AS INTEGER
+        FIELD outputName AS CHARACTER
+        FIELD fieldHandle AS HANDLE.
 
 
     METHOD PUBLIC INTEGER HandleRequest():
@@ -61,6 +65,18 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                     END.
                     ELSE IF cPath MATCHES "*/table-browse" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleTableBrowse(cBody).
+                    END.
+                    ELSE IF cPath MATCHES "*/program/execute" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleProgramExecute(cBody).
+                    END.
+                    ELSE IF cPath MATCHES "*/actions/execute" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleActionExecute(cBody).
+                    END.
+                    ELSE IF cPath MATCHES "*/executions/*/kill-request" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleKillRequest(THIS-OBJECT:getExecutionIdFromPath(cPath), cBody).
+                    END.
+                    ELSE IF cPath MATCHES "*/executions/*/cancel" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleCancelExecution(THIS-OBJECT:getExecutionIdFromPath(cPath), cBody).
                     END.
                     ELSE IF cPath MATCHES "*/metadata/view-as/resolve" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleResolveViewAs(cBody).
@@ -111,6 +127,12 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                     ELSE IF cPath MATCHES "*/diagnostics/runtime" OR cPath MATCHES "*/diagnostics/agent" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleRuntimeDiagnostics(cMethod, cPath).
                     END.
+                    ELSE IF cPath MATCHES "*/executions/*" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleGetExecution(THIS-OBJECT:getExecutionIdFromPath(cPath)).
+                    END.
+                    ELSE IF cPath MATCHES "*/executions" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleListExecutions().
+                    END.
                     ELSE IF THIS-OBJECT:isRootPath(cPath) THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleIndex().
                     END.
@@ -156,8 +178,12 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DEFINE VARIABLE oRequest AS DynamicQueryRequestModel NO-UNDO.
         DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
         DEFINE VARIABLE oService AS DynamicMultiTableQueryService NO-UNDO.
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
         DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
         DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joExecution AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joErr AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cExecutionId AS CHARACTER NO-UNDO.
 
         IF pcBody = "" OR pcBody = ? THEN
             RETURN THIS-OBJECT:buildError("EMPTY_BODY", "Body JSON obrigatorio", "POST /query").
@@ -174,12 +200,34 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         oContext:setCustomField("entrypoint", "WEB").
         oContext:setCustomField("transport", "PASOE-WEB").
 
+        ASSIGN oExec = NEW ApiExecutionRepository()
+               joExecution = oExec:startExecution(oContext, "query", "POST /query", "running", SUBSTRING(STRING(pcBody), 1, 1000)).
+        IF VALID-OBJECT(joExecution) AND joExecution:Has("success") AND joExecution:GetLogical("success") THEN DO:
+            ASSIGN cExecutionId = THIS-OBJECT:getJsonChar(joExecution, "executionId").
+            oContext:setCustomField("executionId", cExecutionId).
+        END.
+        DELETE OBJECT joExecution NO-ERROR.
+
         ASSIGN joRet = oService:execute(oRequest, oContext).
+        IF cExecutionId <> "" THEN DO:
+            IF VALID-OBJECT(joRet) AND joRet:Has("success") AND joRet:GetLogical("success") THEN
+                ASSIGN joExecution = oExec:finishExecution(cExecutionId, IF THIS-OBJECT:getJsonChar(joRet, "status") = "queued" THEN "queued" ELSE "completed", "Consulta executada", oContext).
+            ELSE DO:
+                ASSIGN joErr = joRet:GetJsonObject("error") NO-ERROR.
+                IF VALID-OBJECT(joErr) THEN
+                    ASSIGN joExecution = oExec:failExecution(cExecutionId, THIS-OBJECT:getJsonChar(joErr, "code"), THIS-OBJECT:getJsonChar(joErr, "message"), oContext).
+                ELSE
+                    ASSIGN joExecution = oExec:failExecution(cExecutionId, "QUERY_ERROR", "Falha ao executar consulta", oContext).
+            END.
+            joRet:Add("executionId", cExecutionId) NO-ERROR.
+            DELETE OBJECT joExecution NO-ERROR.
+        END.
 
         DELETE OBJECT oSerializer NO-ERROR.
         DELETE OBJECT oRequest NO-ERROR.
         DELETE OBJECT oContext NO-ERROR.
         DELETE OBJECT oService NO-ERROR.
+        DELETE OBJECT oExec NO-ERROR.
 
         RETURN joRet.
     END METHOD.
@@ -245,11 +293,15 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DEFINE VARIABLE oRequest AS DynamicQueryRequestModel NO-UNDO.
         DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
         DEFINE VARIABLE oService AS DynamicMultiTableQueryService NO-UNDO.
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
         DEFINE VARIABLE joStored AS JsonObject NO-UNDO.
         DEFINE VARIABLE joQuery AS JsonObject NO-UNDO.
         DEFINE VARIABLE joParams AS JsonObject NO-UNDO.
         DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joExecution AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joErr AS JsonObject NO-UNDO.
         DEFINE VARIABLE cCode AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cExecutionId AS CHARACTER NO-UNDO.
 
         ASSIGN cCode = THIS-OBJECT:getJsonChar(poBody, "code").
         IF NOT THIS-OBJECT:isQueryCode(cCode) THEN
@@ -281,14 +333,182 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         oContext:setCustomField("transport", "PASOE-WEB").
         oContext:setCustomField("queryCode", cCode).
 
+        ASSIGN oExec = NEW ApiExecutionRepository()
+               joExecution = oExec:startExecution(oContext, "stored-query", "POST /query", "running", "queryCode=" + cCode).
+        IF VALID-OBJECT(joExecution) AND joExecution:Has("success") AND joExecution:GetLogical("success") THEN DO:
+            ASSIGN cExecutionId = THIS-OBJECT:getJsonChar(joExecution, "executionId").
+            oContext:setCustomField("executionId", cExecutionId).
+        END.
+        DELETE OBJECT joExecution NO-ERROR.
+
         ASSIGN joRet = oService:execute(oRequest, oContext).
+        IF cExecutionId <> "" THEN DO:
+            IF VALID-OBJECT(joRet) AND joRet:Has("success") AND joRet:GetLogical("success") THEN
+                ASSIGN joExecution = oExec:finishExecution(cExecutionId, IF THIS-OBJECT:getJsonChar(joRet, "status") = "queued" THEN "queued" ELSE "completed", "Consulta salva executada", oContext).
+            ELSE DO:
+                ASSIGN joErr = joRet:GetJsonObject("error") NO-ERROR.
+                IF VALID-OBJECT(joErr) THEN
+                    ASSIGN joExecution = oExec:failExecution(cExecutionId, THIS-OBJECT:getJsonChar(joErr, "code"), THIS-OBJECT:getJsonChar(joErr, "message"), oContext).
+                ELSE
+                    ASSIGN joExecution = oExec:failExecution(cExecutionId, "QUERY_ERROR", "Falha ao executar consulta salva", oContext).
+            END.
+            joRet:Add("executionId", cExecutionId) NO-ERROR.
+            DELETE OBJECT joExecution NO-ERROR.
+        END.
 
         DELETE OBJECT oSerializer NO-ERROR.
         DELETE OBJECT oRequest NO-ERROR.
         DELETE OBJECT oContext NO-ERROR.
         DELETE OBJECT oService NO-ERROR.
+        DELETE OBJECT oExec NO-ERROR.
 
         RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleProgramExecute(INPUT pcBody AS LONGCHAR):
+        DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joParams AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joExecution AS JsonObject NO-UNDO.
+        DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
+        DEFINE VARIABLE cProgramCode AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cProgramPath AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cRunPath AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cExecutionId AS CHARACTER NO-UNDO.
+
+        IF pcBody = "" OR pcBody = ? THEN
+            RETURN THIS-OBJECT:buildError("EMPTY_BODY", "Body JSON obrigatorio", "POST /program/execute").
+
+        ASSIGN joBody = THIS-OBJECT:parseJsonObject(pcBody) NO-ERROR.
+        IF NOT VALID-OBJECT(joBody) THEN
+            RETURN THIS-OBJECT:buildError("INVALID_JSON", "JSON de execucao de programa invalido", "").
+
+        ASSIGN cProgramCode = THIS-OBJECT:getJsonChar(joBody, "program").
+        IF NOT THIS-OBJECT:isProgramCode(cProgramCode) THEN
+            RETURN THIS-OBJECT:buildError("INVALID_PROGRAM_CODE", "Codigo de programa invalido", cProgramCode).
+
+        ASSIGN cProgramPath = THIS-OBJECT:getConfiguredProgramPath(cProgramCode).
+        IF cProgramPath = "" THEN
+            RETURN THIS-OBJECT:buildError("PROGRAM_NOT_ALLOWED", "Programa nao cadastrado para execucao", cProgramCode).
+        IF NOT THIS-OBJECT:isAllowedProgramPath(cProgramPath) THEN
+            RETURN THIS-OBJECT:buildError("INVALID_PROGRAM_PATH", "Caminho de programa invalido no catalogo", cProgramCode + "=" + cProgramPath).
+
+        ASSIGN cRunPath = THIS-OBJECT:resolveProgramRunPath(cProgramPath).
+        IF cRunPath = "" THEN
+            RETURN THIS-OBJECT:buildError("PROGRAM_NOT_FOUND", "Programa cadastrado nao encontrado no PROPATH", cProgramCode + "=" + cProgramPath).
+
+        IF joBody:Has("parameters") AND NOT joBody:IsNull("parameters") THEN DO:
+            ASSIGN joParams = joBody:GetJsonObject("parameters") NO-ERROR.
+            IF NOT VALID-OBJECT(joParams) THEN
+                RETURN THIS-OBJECT:buildError("INVALID_PARAMETERS", "Campo parameters deve ser um objeto JSON", cProgramCode).
+        END.
+        ELSE
+            ASSIGN joParams = NEW JsonObject().
+
+        ASSIGN oContext = NEW PasoeExecutionContext()
+               oExec = NEW ApiExecutionRepository().
+        oContext:setCustomField("entrypoint", "WEB").
+        oContext:setCustomField("transport", "PASOE-WEB").
+        oContext:setCustomField("programName", cProgramCode).
+        ASSIGN joExecution = oExec:startExecution(oContext, "program", "POST /program/execute", "running", "program=" + cProgramCode).
+        IF VALID-OBJECT(joExecution) AND joExecution:Has("success") AND joExecution:GetLogical("success") THEN DO:
+            ASSIGN cExecutionId = THIS-OBJECT:getJsonChar(joExecution, "executionId").
+            oContext:setCustomField("executionId", cExecutionId).
+        END.
+        DELETE OBJECT joExecution NO-ERROR.
+
+        RUN VALUE(cRunPath) (INPUT joParams, OUTPUT joRet) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            IF cExecutionId <> "" THEN
+                ASSIGN joExecution = oExec:failExecution(cExecutionId, "PROGRAM_EXECUTION_ERROR", ERROR-STATUS:GET-MESSAGE(1), oContext).
+            DELETE OBJECT oContext NO-ERROR.
+            DELETE OBJECT oExec NO-ERROR.
+            RETURN THIS-OBJECT:buildError("PROGRAM_EXECUTION_ERROR", "Erro ao executar programa Progress", ERROR-STATUS:GET-MESSAGE(1)).
+        END.
+
+        IF NOT VALID-OBJECT(joRet) THEN DO:
+            IF cExecutionId <> "" THEN
+                ASSIGN joExecution = oExec:failExecution(cExecutionId, "PROGRAM_EMPTY_RESPONSE", "Programa nao retornou JsonObject", oContext).
+            DELETE OBJECT oContext NO-ERROR.
+            DELETE OBJECT oExec NO-ERROR.
+            RETURN THIS-OBJECT:buildError("PROGRAM_EMPTY_RESPONSE", "Programa nao retornou JsonObject", cProgramCode).
+        END.
+
+        IF cExecutionId <> "" THEN DO:
+            ASSIGN joExecution = oExec:finishExecution(cExecutionId, IF joRet:Has("success") AND NOT joRet:GetLogical("success") THEN "failed" ELSE "completed", "Programa executado", oContext).
+            joRet:Add("executionId", cExecutionId) NO-ERROR.
+            DELETE OBJECT joExecution NO-ERROR.
+        END.
+        DELETE OBJECT oContext NO-ERROR.
+        DELETE OBJECT oExec NO-ERROR.
+
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getConfiguredProgramPath(INPUT pcProgramCode AS CHARACTER):
+        DEFINE VARIABLE joConfig AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joPrograms AS JsonObject NO-UNDO.
+
+        ASSIGN joConfig = THIS-OBJECT:readProgramExecutorConfig().
+        IF VALID-OBJECT(joConfig) AND joConfig:Has("programs") AND NOT joConfig:IsNull("programs") THEN
+            ASSIGN joPrograms = joConfig:GetJsonObject("programs") NO-ERROR.
+        RETURN THIS-OBJECT:getJsonChar(joPrograms, pcProgramCode).
+    END METHOD.
+
+    METHOD PRIVATE JsonObject readProgramExecutorConfig():
+        DEFINE VARIABLE cFile AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE joConfig AS JsonObject NO-UNDO.
+
+        ASSIGN cFile = THIS-OBJECT:resolveConfigFile("sursum-conf/program-executor.json").
+        ASSIGN joConfig = THIS-OBJECT:readJsonFile(cFile).
+        IF VALID-OBJECT(joConfig) THEN
+            RETURN joConfig.
+
+        ASSIGN joConfig = THIS-OBJECT:readJsonFile("/dados/pasoe/sursum-api/sursum-conf/program-executor.json").
+        IF VALID-OBJECT(joConfig) THEN
+            RETURN joConfig.
+
+        RETURN THIS-OBJECT:readJsonFile("/mnt/datasul/ERP/sursum/sursum-conf/program-executor.json").
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER resolveProgramRunPath(INPUT pcProgramPath AS CHARACTER):
+        DEFINE VARIABLE cResolved AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cRun AS CHARACTER NO-UNDO.
+
+        ASSIGN cResolved = THIS-OBJECT:resolveConfigFile(pcProgramPath).
+        ASSIGN cRun = THIS-OBJECT:firstExistingProgramArtifact(cResolved).
+        IF cRun <> "" THEN
+            RETURN cRun.
+
+        ASSIGN cResolved = "/mnt/datasul/ERP/sursum/" + THIS-OBJECT:normalizeConfigPath(pcProgramPath)
+               cRun = THIS-OBJECT:firstExistingProgramArtifact(cResolved).
+        IF cRun <> "" THEN
+            RETURN cRun.
+
+        ASSIGN cResolved = "/dados/pasoe/sursum-api/" + THIS-OBJECT:normalizeConfigPath(pcProgramPath)
+               cRun = THIS-OBJECT:firstExistingProgramArtifact(cResolved).
+        IF cRun <> "" THEN
+            RETURN cRun.
+
+        RETURN "".
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER firstExistingProgramArtifact(INPUT pcProgramPath AS CHARACTER):
+        DEFINE VARIABLE cAlt AS CHARACTER NO-UNDO.
+
+        FILE-INFO:FILE-NAME = pcProgramPath.
+        IF FILE-INFO:FULL-PATHNAME <> ? THEN
+            RETURN pcProgramPath.
+
+        IF LENGTH(pcProgramPath) > 2 AND LC(SUBSTRING(pcProgramPath, LENGTH(pcProgramPath) - 1)) = ".p" THEN DO:
+            ASSIGN cAlt = SUBSTRING(pcProgramPath, 1, LENGTH(pcProgramPath) - 2) + ".r".
+            FILE-INFO:FILE-NAME = cAlt.
+            IF FILE-INFO:FULL-PATHNAME <> ? THEN
+                RETURN cAlt.
+        END.
+
+        RETURN "".
     END METHOD.
 
     METHOD PRIVATE JsonObject handleIndex():
@@ -302,6 +522,12 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         joEndpoints:Add("query", "POST /web/SursumDynamicQuery/query").
         joEndpoints:Add("queryStore", "POST /web/SursumDynamicQuery/query-store").
         joEndpoints:Add("tableBrowse", "POST /web/SursumDynamicQuery/table-browse").
+        joEndpoints:Add("programExecute", "POST /web/SursumDynamicQuery/program/execute").
+        joEndpoints:Add("actionExecute", "POST /web/SursumDynamicQuery/actions/execute").
+        joEndpoints:Add("executions", "GET /web/SursumDynamicQuery/executions?status=:status&pid=:pid&limit=:limit").
+        joEndpoints:Add("executionDetail", "GET /web/SursumDynamicQuery/executions/:executionId").
+        joEndpoints:Add("executionCancel", "POST /web/SursumDynamicQuery/executions/:executionId/cancel").
+        joEndpoints:Add("executionKillRequest", "POST /web/SursumDynamicQuery/executions/:executionId/kill-request").
         joEndpoints:Add("metadataSync", "GET /web/SursumDynamicQuery/metadata/sync?include=banks,aliases,tables,fields&database=:database&table=:table").
         joEndpoints:Add("metadataDatabases", "GET /web/SursumDynamicQuery/metadata/databases").
         joEndpoints:Add("metadataDatabaseCatalog", "GET /web/SursumDynamicQuery/metadata/database-catalog").
@@ -1002,7 +1228,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
             RETURN "".
         END.
 
-        ASSIGN cJob = "viewas_" + STRING(YEAR(TODAY), "9999") + STRING(MONTH(TODAY), "99") + STRING(DAY(TODAY), "99") + "_" + STRING(TIME) + "_" + STRING(RANDOM(1000, 999999))
+        ASSIGN cJob = "viewas_" + REPLACE(GUID(GENERATE-UUID), "-", "")
                cLocalOut = SESSION:TEMP-DIRECTORY + cJob + ".out"
                cRemoteIn = "C:/opencode/motor-progress/temp/" + cJob + ".in"
                cRemoteOut = "C:/opencode/motor-progress/temp/" + cJob + ".out".
@@ -1014,8 +1240,8 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
           + "Set-Content -LiteralPath $in -Value " + THIS-OBJECT:psQuote(pcInclude) + " -Encoding ASCII; "
           + "& " + THIS-OBJECT:psQuote("C:\Progress_12\OE\bin\_progres.exe")
           + " -b "
-          + (IF cArquivoPf <> "" THEN "-pf " + THIS-OBJECT:psQuote(cArquivoPf) ELSE "-db " + THIS-OBJECT:psQuote("C:\opencode\motor-progress\db\sports2000"))
-          + " -1 -ld DICTDB -param ($in + " + THIS-OBJECT:psQuote("|") + " + $out + " + THIS-OBJECT:psQuote("|") + " + " + THIS-OBJECT:psQuote(cArquivoAlias) + ")"
+          + (IF cArquivoPf <> "" THEN "-pf " + THIS-OBJECT:psQuote(cArquivoPf) ELSE "-db " + THIS-OBJECT:psQuote("C:\opencode\motor-progress\db\sports2000") + " -1 -ld DICTDB")
+          + " -param ($in + " + THIS-OBJECT:psQuote("|") + " + $out + " + THIS-OBJECT:psQuote("|") + " + " + THIS-OBJECT:psQuote(cArquivoAlias) + ")"
           + " -p " + THIS-OBJECT:psQuote("C:\opencode\motor-progress\sursum-api\sursum\RunViewAsIncludeResolver.p") + "; "
           + "if (Test-Path -LiteralPath $out) ~{ Get-Content -Raw -LiteralPath $out ~}; "
           + "Remove-Item -Force $in,$out -ErrorAction SilentlyContinue".
@@ -1544,6 +1770,136 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN joRet.
     END METHOD.
 
+    METHOD PRIVATE JsonObject handleActionExecute(INPUT pcBody AS LONGCHAR):
+        DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joExecution AS JsonObject NO-UNDO.
+        DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
+        DEFINE VARIABLE cActionCode AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cMode AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cExecutionId AS CHARACTER NO-UNDO.
+
+        IF pcBody = "" OR pcBody = ? THEN
+            RETURN THIS-OBJECT:buildError("EMPTY_BODY", "Body JSON obrigatorio", "POST /actions/execute").
+
+        ASSIGN joBody = THIS-OBJECT:parseJsonObject(pcBody) NO-ERROR.
+        IF NOT VALID-OBJECT(joBody) THEN
+            RETURN THIS-OBJECT:buildError("INVALID_JSON", "JSON de acao invalido", "").
+
+        ASSIGN cActionCode = THIS-OBJECT:getJsonChar(joBody, "actionCode")
+               cMode = LC(THIS-OBJECT:getJsonChar(joBody, "mode")).
+        IF cActionCode = "" THEN
+            RETURN THIS-OBJECT:buildError("ACTION_CODE_REQUIRED", "Codigo da acao obrigatorio", "actionCode").
+        IF cMode = "" THEN
+            ASSIGN cMode = "dryrun".
+
+        ASSIGN oContext = NEW PasoeExecutionContext()
+               oExec = NEW ApiExecutionRepository().
+        oContext:setCustomField("entrypoint", "WEB").
+        oContext:setCustomField("transport", "PASOE-WEB").
+        oContext:setCustomField("actionCode", cActionCode).
+
+        ASSIGN joExecution = oExec:startExecution(oContext, "action", "POST /actions/execute", "validating", "actionCode=" + cActionCode + ";mode=" + cMode).
+        IF VALID-OBJECT(joExecution) AND joExecution:Has("success") AND joExecution:GetLogical("success") THEN DO:
+            ASSIGN cExecutionId = THIS-OBJECT:getJsonChar(joExecution, "executionId").
+            oContext:setCustomField("executionId", cExecutionId).
+            DELETE OBJECT joExecution NO-ERROR.
+            ASSIGN joExecution = oExec:finishExecution(cExecutionId, "failed", "Catalogo de acoes ainda nao implementado", oContext).
+        END.
+
+        ASSIGN joRet = THIS-OBJECT:buildError("ACTION_CATALOG_NOT_IMPLEMENTED", "Catalogo de acoes dinamicas ainda nao implementado nesta etapa", cActionCode).
+        IF cExecutionId <> "" THEN
+            joRet:Add("executionId", cExecutionId) NO-ERROR.
+
+        DELETE OBJECT joBody NO-ERROR.
+        DELETE OBJECT joExecution NO-ERROR.
+        DELETE OBJECT oContext NO-ERROR.
+        DELETE OBJECT oExec NO-ERROR.
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleListExecutions():
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cQuery AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cStatus AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cPid AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iLimit AS INTEGER NO-UNDO.
+
+        ASSIGN cQuery = WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "QUERY_STRING":U) NO-ERROR.
+        ASSIGN cStatus = THIS-OBJECT:getQueryValue(cQuery, "status")
+               cPid = THIS-OBJECT:getQueryValue(cQuery, "pid")
+               iLimit = INTEGER(THIS-OBJECT:getQueryValue(cQuery, "limit")) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            ASSIGN iLimit = 100.
+        END.
+        ASSIGN oExec = NEW ApiExecutionRepository()
+               joRet = oExec:listExecutions(cStatus, cPid, iLimit).
+        DELETE OBJECT oExec NO-ERROR.
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleGetExecution(INPUT pcExecutionId AS CHARACTER):
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+
+        ASSIGN oExec = NEW ApiExecutionRepository()
+               joRet = oExec:getExecution(pcExecutionId).
+        DELETE OBJECT oExec NO-ERROR.
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleKillRequest(INPUT pcExecutionId AS CHARACTER, INPUT pcBody AS LONGCHAR):
+        DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
+        DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cRequestedBy AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cReason AS CHARACTER NO-UNDO.
+
+        ASSIGN joBody = THIS-OBJECT:parseJsonObject(pcBody) NO-ERROR.
+        IF VALID-OBJECT(joBody) THEN DO:
+            ASSIGN cRequestedBy = THIS-OBJECT:getJsonChar(joBody, "requestedBy")
+                   cReason = THIS-OBJECT:getJsonChar(joBody, "reason").
+        END.
+        IF cRequestedBy = "" THEN
+            ASSIGN cRequestedBy = "admin".
+
+        ASSIGN oContext = NEW PasoeExecutionContext()
+               oExec = NEW ApiExecutionRepository()
+               joRet = oExec:requestKill(pcExecutionId, cRequestedBy, cReason, oContext).
+
+        DELETE OBJECT joBody NO-ERROR.
+        DELETE OBJECT oContext NO-ERROR.
+        DELETE OBJECT oExec NO-ERROR.
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleCancelExecution(INPUT pcExecutionId AS CHARACTER, INPUT pcBody AS LONGCHAR):
+        DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
+        DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cReason AS CHARACTER NO-UNDO.
+
+        ASSIGN joBody = THIS-OBJECT:parseJsonObject(pcBody) NO-ERROR.
+        IF VALID-OBJECT(joBody) THEN
+            ASSIGN cReason = THIS-OBJECT:getJsonChar(joBody, "reason").
+        IF cReason = "" THEN
+            ASSIGN cReason = "Cancelamento solicitado".
+
+        ASSIGN oContext = NEW PasoeExecutionContext()
+               oExec = NEW ApiExecutionRepository()
+               joRet = oExec:finishExecution(pcExecutionId, "cancelled", cReason, oContext).
+
+        DELETE OBJECT joBody NO-ERROR.
+        DELETE OBJECT oContext NO-ERROR.
+        DELETE OBJECT oExec NO-ERROR.
+        RETURN joRet.
+    END METHOD.
+
     METHOD PRIVATE JsonObject handleGetStatus(INPUT pcJobId AS CHARACTER):
         DEFINE VARIABLE oAsync AS DynamicQueryAsyncService NO-UNDO.
         DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
@@ -1589,6 +1945,9 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DEFINE VARIABLE cDirection AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cPrepare AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cWhere AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cCursorWhere AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cFilterWhere AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cFilterError AS CHARACTER NO-UNDO.
         DEFINE VARIABLE iPageSize AS INTEGER NO-UNDO.
         DEFINE VARIABLE iRead AS INTEGER NO-UNDO.
         DEFINE VARIABLE lHasMore AS LOGICAL NO-UNDO.
@@ -1618,8 +1977,6 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
             ASSIGN iPageSize = joBody:GetInteger("pageSize") NO-ERROR.
         IF iPageSize < 1 THEN
             ASSIGN iPageSize = 50.
-        IF iPageSize > 500 THEN
-            ASSIGN iPageSize = 500.
 
         ASSIGN cDirection = CAPS(THIS-OBJECT:getJsonChar(joBody, "direction")).
         IF cDirection = "" THEN
@@ -1641,14 +1998,22 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
 
         IF joBody:Has("cursor") AND NOT joBody:IsNull("cursor") THEN
             ASSIGN joCursor = joBody:GetJsonObject("cursor") NO-ERROR.
-        ASSIGN cWhere = THIS-OBJECT:buildBrowseCursorWhere(cDatabase, cTable, joCursor, cDirection).
-        IF cWhere = ? THEN
+        ASSIGN cCursorWhere = THIS-OBJECT:buildBrowseCursorWhere(cDatabase, cTable, joCursor, cDirection).
+        IF cCursorWhere = ? THEN
             RETURN THIS-OBJECT:buildError("BROWSE_CURSOR_INVALID", "Cursor invalido para a chave selecionada", cTable).
+        ASSIGN cFilterWhere = THIS-OBJECT:buildBrowseFiltersWhere(cDatabase, cTable, joBody, OUTPUT cFilterError).
+        IF cFilterWhere = ? THEN
+            RETURN THIS-OBJECT:buildError("BROWSE_FILTER_INVALID", "Filtro invalido para navegacao", cFilterError).
+        IF cFilterWhere <> "" AND cCursorWhere <> "" THEN
+            ASSIGN cWhere = "(" + cFilterWhere + ") AND (" + cCursorWhere + ")".
+        ELSE
+            ASSIGN cWhere = IF cFilterWhere <> "" THEN cFilterWhere ELSE cCursorWhere.
 
         ASSIGN cFullTable = cDatabase + "." + cTable.
         CREATE BUFFER hBuffer FOR TABLE cFullTable NO-ERROR.
         IF NOT VALID-HANDLE(hBuffer) THEN
             RETURN THIS-OBJECT:buildError("BROWSE_TABLE_NOT_FOUND", "Tabela nao encontrada", cFullTable).
+        THIS-OBJECT:prepareBrowseHandles(hBuffer).
 
         CREATE QUERY hQuery.
         hQuery:SET-BUFFERS(hBuffer).
@@ -1885,6 +2250,24 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         ASSIGN iResult = INDEX(cPath, "/result").
         IF iResult > 0 THEN
             ASSIGN cPath = SUBSTRING(cPath, 1, iResult - 1).
+
+        RETURN cPath.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getExecutionIdFromPath(INPUT pcPath AS CHARACTER):
+        DEFINE VARIABLE cPath AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iExecutions AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iSuffix AS INTEGER NO-UNDO.
+
+        ASSIGN cPath = REPLACE(pcPath, "~\", "/").
+        ASSIGN iExecutions = INDEX(cPath, "/executions/").
+        IF iExecutions = 0 THEN
+            RETURN "".
+
+        ASSIGN cPath = SUBSTRING(cPath, iExecutions + 12).
+        ASSIGN iSuffix = INDEX(cPath, "/").
+        IF iSuffix > 0 THEN
+            ASSIGN cPath = SUBSTRING(cPath, 1, iSuffix - 1).
 
         RETURN cPath.
     END METHOD.
@@ -3015,13 +3398,237 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN cWhere.
     END METHOD.
 
+    METHOD PRIVATE CHARACTER buildBrowseFiltersWhere(INPUT pcDatabase AS CHARACTER, INPUT pcTable AS CHARACTER, INPUT poBody AS JsonObject, OUTPUT pcError AS CHARACTER):
+        DEFINE VARIABLE jaFilters AS JsonArray NO-UNDO.
+        DEFINE VARIABLE joFilter AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cWhere AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cPart AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cField AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cOperator AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cValue AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cType AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iFilter AS INTEGER NO-UNDO.
+
+        ASSIGN pcError = "".
+        IF NOT VALID-OBJECT(poBody) OR NOT poBody:Has("filters") OR poBody:IsNull("filters") THEN
+            RETURN "".
+
+        ASSIGN jaFilters = poBody:GetJsonArray("filters") NO-ERROR.
+        IF NOT VALID-OBJECT(jaFilters) THEN
+            RETURN "".
+
+        DO iFilter = 1 TO jaFilters:Length:
+            ASSIGN joFilter = jaFilters:GetJsonObject(iFilter) NO-ERROR.
+            IF NOT VALID-OBJECT(joFilter) THEN
+                NEXT.
+
+            ASSIGN cField = THIS-OBJECT:getJsonChar(joFilter, "field")
+                   cOperator = LC(THIS-OBJECT:getJsonChar(joFilter, "operator"))
+                   cValue = THIS-OBJECT:getJsonChar(joFilter, "value").
+            IF cField = "" THEN
+                ASSIGN cField = THIS-OBJECT:getJsonChar(joFilter, "name").
+            IF cField = "" OR NOT THIS-OBJECT:isRelationIdentifier(cField) THEN DO:
+                ASSIGN pcError = "Campo invalido: " + cField.
+                RETURN ?.
+            END.
+            IF cOperator = "" THEN
+                ASSIGN cOperator = "=".
+            ASSIGN cType = THIS-OBJECT:getBrowseFieldDataType(pcDatabase, pcTable, cField).
+            IF cType = "" THEN DO:
+                ASSIGN pcError = "Campo nao encontrado: " + cField.
+                RETURN ?.
+            END.
+            ASSIGN cPart = THIS-OBJECT:buildBrowseFilterExpression(pcDatabase, pcTable, cField, cType, cOperator, cValue, OUTPUT pcError).
+            IF cPart = ? THEN
+                RETURN ?.
+            IF cPart = "" THEN
+                NEXT.
+            IF cWhere = "" THEN
+                ASSIGN cWhere = cPart.
+            ELSE
+                ASSIGN cWhere = cWhere + " AND " + cPart.
+        END.
+
+        RETURN cWhere.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getBrowseFieldDataType(INPUT pcDatabase AS CHARACTER, INPUT pcTable AS CHARACTER, INPUT pcField AS CHARACTER):
+        DEFINE VARIABLE hFile AS HANDLE NO-UNDO.
+        DEFINE VARIABLE hField AS HANDLE NO-UNDO.
+        DEFINE VARIABLE cType AS CHARACTER NO-UNDO.
+
+        CREATE BUFFER hFile FOR TABLE pcDatabase + "._File" NO-ERROR.
+        CREATE BUFFER hField FOR TABLE pcDatabase + "._Field" NO-ERROR.
+        IF NOT VALID-HANDLE(hFile) OR NOT VALID-HANDLE(hField) THEN DO:
+            IF VALID-HANDLE(hFile) THEN DELETE OBJECT hFile NO-ERROR.
+            IF VALID-HANDLE(hField) THEN DELETE OBJECT hField NO-ERROR.
+            RETURN "".
+        END.
+
+        hFile:FIND-FIRST("WHERE _File-Name = " + QUOTER(pcTable), NO-LOCK) NO-ERROR.
+        IF hFile:AVAILABLE THEN DO:
+            hField:FIND-FIRST("WHERE _File-Recid = " + STRING(hFile:RECID) + " AND _Field-Name = " + QUOTER(pcField), NO-LOCK) NO-ERROR.
+            IF hField:AVAILABLE THEN
+                ASSIGN cType = THIS-OBJECT:normalizeBrowseDataType(STRING(hField:BUFFER-FIELD("_Data-Type"):BUFFER-VALUE)).
+        END.
+
+        DELETE OBJECT hFile NO-ERROR.
+        DELETE OBJECT hField NO-ERROR.
+        RETURN cType.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER buildBrowseFilterExpression(
+        INPUT pcDatabase AS CHARACTER,
+        INPUT pcTable AS CHARACTER,
+        INPUT pcField AS CHARACTER,
+        INPUT pcType AS CHARACTER,
+        INPUT pcOperator AS CHARACTER,
+        INPUT pcValue AS CHARACTER,
+        OUTPUT pcError AS CHARACTER):
+        DEFINE VARIABLE cColumn AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cOperator AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cLiteral AS CHARACTER NO-UNDO.
+
+        ASSIGN pcError = ""
+               cOperator = LC(TRIM(pcOperator))
+               cColumn = pcDatabase + "." + pcTable + "." + pcField.
+
+        CASE cOperator:
+            WHEN "=" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " = " + cLiteral.
+            END.
+            WHEN "eq" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " = " + cLiteral.
+            END.
+            WHEN "<>" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " <> " + cLiteral.
+            END.
+            WHEN "ne" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " <> " + cLiteral.
+            END.
+            WHEN ">" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " > " + cLiteral.
+            END.
+            WHEN "gt" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " > " + cLiteral.
+            END.
+            WHEN ">=" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " >= " + cLiteral.
+            END.
+            WHEN "gte" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " >= " + cLiteral.
+            END.
+            WHEN "<" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " < " + cLiteral.
+            END.
+            WHEN "lt" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " < " + cLiteral.
+            END.
+            WHEN "<=" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " <= " + cLiteral.
+            END.
+            WHEN "lte" THEN DO:
+                ASSIGN cLiteral = THIS-OBJECT:browseLiteral(pcValue, pcType) NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN DO:
+                    ASSIGN pcError = "Valor invalido para " + pcField + ": " + pcValue.
+                    ERROR-STATUS:ERROR = FALSE.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " <= " + cLiteral.
+            END.
+            WHEN "contains" THEN DO:
+                IF pcType <> "character" THEN DO:
+                    ASSIGN pcError = "Operador contem requer campo character: " + pcField.
+                    RETURN ?.
+                END.
+                RETURN "INDEX(" + cColumn + ", " + QUOTER(pcValue) + ") > 0".
+            END.
+            WHEN "begins" THEN DO:
+                IF pcType <> "character" THEN DO:
+                    ASSIGN pcError = "Operador comeca com requer campo character: " + pcField.
+                    RETURN ?.
+                END.
+                RETURN cColumn + " BEGINS " + QUOTER(pcValue).
+            END.
+        END CASE.
+
+        ASSIGN pcError = "Operador nao suportado: " + pcOperator.
+        RETURN ?.
+    END METHOD.
+
     METHOD PRIVATE CHARACTER buildBrowseOrder(INPUT pcDatabase AS CHARACTER, INPUT pcTable AS CHARACTER, INPUT pcDirection AS CHARACTER):
         DEFINE VARIABLE cOrder AS CHARACTER NO-UNDO.
-        DEFINE VARIABLE cDesc AS CHARACTER NO-UNDO.
 
-        ASSIGN cDesc = IF pcDirection = "DESC" THEN " DESCENDING" ELSE "".
         FOR EACH ttBrowseKey BY ttBrowseKey.fieldOrder:
-            ASSIGN cOrder = cOrder + " BY" + cDesc + " " + pcDatabase + "." + pcTable + "." + ttBrowseKey.fieldName.
+            ASSIGN cOrder = cOrder + " BY " + pcDatabase + "." + pcTable + "." + ttBrowseKey.fieldName.
+            IF pcDirection = "DESC" THEN
+                ASSIGN cOrder = cOrder + " DESCENDING".
         END.
         RETURN cOrder.
     END METHOD.
@@ -3029,17 +3636,13 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
     METHOD PRIVATE JsonObject buildBrowseRow(INPUT phBuffer AS HANDLE):
         DEFINE VARIABLE joRow AS JsonObject NO-UNDO.
         DEFINE VARIABLE hField AS HANDLE NO-UNDO.
-        DEFINE VARIABLE cOut AS CHARACTER NO-UNDO.
 
         ASSIGN joRow = NEW JsonObject().
         FOR EACH ttBrowseField BY ttBrowseField.fieldOrder:
-            ASSIGN hField = phBuffer:BUFFER-FIELD(ttBrowseField.fieldName) NO-ERROR.
+            ASSIGN hField = ttBrowseField.fieldHandle NO-ERROR.
             IF NOT VALID-HANDLE(hField) THEN
                 NEXT.
-            ASSIGN cOut = ttBrowseField.fieldName.
-            IF ttBrowseField.extentIndex > 0 THEN
-                ASSIGN cOut = cOut + "[" + STRING(ttBrowseField.extentIndex) + "]".
-            THIS-OBJECT:addBrowseValue(joRow, cOut, hField, ttBrowseField.dataType, ttBrowseField.extentIndex).
+            THIS-OBJECT:addBrowseValue(joRow, ttBrowseField.outputName, hField, ttBrowseField.dataType, ttBrowseField.extentIndex).
         END.
         RETURN joRow.
     END METHOD.
@@ -3050,12 +3653,26 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
 
         ASSIGN joCursor = NEW JsonObject().
         FOR EACH ttBrowseKey BY ttBrowseKey.fieldOrder:
-            ASSIGN hField = phBuffer:BUFFER-FIELD(ttBrowseKey.fieldName) NO-ERROR.
+            ASSIGN hField = ttBrowseKey.fieldHandle NO-ERROR.
             IF NOT VALID-HANDLE(hField) THEN
                 NEXT.
             THIS-OBJECT:addBrowseValue(joCursor, ttBrowseKey.fieldName, hField, ttBrowseKey.dataType, 0).
         END.
         RETURN joCursor.
+    END METHOD.
+
+    METHOD PRIVATE VOID prepareBrowseHandles(INPUT phBuffer AS HANDLE):
+        FOR EACH ttBrowseField:
+            ASSIGN ttBrowseField.fieldHandle = phBuffer:BUFFER-FIELD(ttBrowseField.fieldName) NO-ERROR.
+            IF ttBrowseField.extentIndex > 0 THEN
+                ASSIGN ttBrowseField.outputName = ttBrowseField.fieldName + "[" + STRING(ttBrowseField.extentIndex) + "]".
+            ELSE
+                ASSIGN ttBrowseField.outputName = ttBrowseField.fieldName.
+        END.
+
+        FOR EACH ttBrowseKey:
+            ASSIGN ttBrowseKey.fieldHandle = phBuffer:BUFFER-FIELD(ttBrowseKey.fieldName) NO-ERROR.
+        END.
     END METHOD.
 
     METHOD PRIVATE JsonArray buildBrowseKeyFieldsJson(INPUT pcDirection AS CHARACTER):
@@ -3098,48 +3715,74 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DEFINE VARIABLE dtValue AS DATE NO-UNDO.
         DEFINE VARIABLE dtmValue AS DATETIME NO-UNDO.
 
-        IF piExtent > 0 THEN
-            ASSIGN cValue = STRING(phField:BUFFER-VALUE(piExtent)) NO-ERROR.
-        ELSE
-            ASSIGN cValue = STRING(phField:BUFFER-VALUE) NO-ERROR.
-
-        IF cValue = ? THEN DO:
+        IF piExtent > 0 AND phField:BUFFER-VALUE(piExtent) = ? THEN DO:
+            poTarget:AddNull(pcName).
+            RETURN.
+        END.
+        IF piExtent <= 0 AND phField:BUFFER-VALUE = ? THEN DO:
             poTarget:AddNull(pcName).
             RETURN.
         END.
 
         CASE pcType:
             WHEN "integer" THEN DO:
-                ASSIGN iValue = INTEGER(cValue) NO-ERROR.
+                IF piExtent > 0 THEN
+                    ASSIGN iValue = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN iValue = phField:BUFFER-VALUE NO-ERROR.
                 IF ERROR-STATUS:ERROR THEN poTarget:Add(pcName, cValue).
                 ELSE poTarget:Add(pcName, iValue).
             END.
             WHEN "int64" THEN DO:
-                ASSIGN i64Value = INT64(cValue) NO-ERROR.
+                IF piExtent > 0 THEN
+                    ASSIGN i64Value = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN i64Value = phField:BUFFER-VALUE NO-ERROR.
                 IF ERROR-STATUS:ERROR THEN poTarget:Add(pcName, cValue).
                 ELSE poTarget:Add(pcName, i64Value).
             END.
             WHEN "decimal" THEN DO:
-                ASSIGN dValue = DECIMAL(cValue) NO-ERROR.
+                IF piExtent > 0 THEN
+                    ASSIGN dValue = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN dValue = phField:BUFFER-VALUE NO-ERROR.
                 IF ERROR-STATUS:ERROR THEN poTarget:Add(pcName, cValue).
                 ELSE poTarget:Add(pcName, dValue).
             END.
             WHEN "logical" THEN DO:
-                ASSIGN lValue = LOGICAL(cValue) NO-ERROR.
+                IF piExtent > 0 THEN
+                    ASSIGN lValue = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN lValue = phField:BUFFER-VALUE NO-ERROR.
                 IF ERROR-STATUS:ERROR THEN poTarget:Add(pcName, cValue).
                 ELSE poTarget:Add(pcName, lValue).
             END.
             WHEN "date" THEN DO:
-                ASSIGN dtValue = DATE(cValue) NO-ERROR.
+                IF piExtent > 0 THEN
+                    ASSIGN dtValue = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN dtValue = phField:BUFFER-VALUE NO-ERROR.
                 IF ERROR-STATUS:ERROR THEN poTarget:Add(pcName, cValue).
                 ELSE poTarget:Add(pcName, ISO-DATE(dtValue)).
             END.
             WHEN "datetime" THEN DO:
-                ASSIGN dtmValue = DATETIME(cValue) NO-ERROR.
+                IF piExtent > 0 THEN
+                    ASSIGN dtmValue = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN dtmValue = phField:BUFFER-VALUE NO-ERROR.
                 IF ERROR-STATUS:ERROR THEN poTarget:Add(pcName, cValue).
                 ELSE poTarget:Add(pcName, STRING(dtmValue)).
             END.
-            OTHERWISE poTarget:Add(pcName, THIS-OBJECT:safeJsonChar(cValue)).
+            OTHERWISE DO:
+                IF piExtent > 0 THEN
+                    ASSIGN cValue = phField:BUFFER-VALUE(piExtent) NO-ERROR.
+                ELSE
+                    ASSIGN cValue = phField:BUFFER-VALUE NO-ERROR.
+                IF ERROR-STATUS:ERROR THEN
+                    poTarget:Add(pcName, "").
+                ELSE
+                    poTarget:Add(pcName, cValue).
+            END.
         END CASE.
     END METHOD.
 
@@ -3265,6 +3908,25 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         ASSIGN joValue = CAST(oConstruct, JsonObject) NO-ERROR.
         DELETE OBJECT oParser NO-ERROR.
         RETURN joValue.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject readJsonFile(INPUT pcFile AS CHARACTER):
+        DEFINE VARIABLE lcJson AS LONGCHAR NO-UNDO.
+
+        IF pcFile = ? OR pcFile = "" THEN
+            RETURN ?.
+
+        FILE-INFO:FILE-NAME = pcFile.
+        IF FILE-INFO:FULL-PATHNAME = ? THEN
+            RETURN ?.
+
+        COPY-LOB FROM FILE pcFile TO lcJson NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            RETURN ?.
+        END.
+
+        RETURN THIS-OBJECT:parseJsonObject(lcJson).
     END METHOD.
 
     METHOD PRIVATE JsonObject readStoredQuery(INPUT pcCode AS CHARACTER):
@@ -3516,6 +4178,29 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN TRUE.
     END METHOD.
 
+    METHOD PRIVATE LOGICAL isProgramCode(INPUT pcCode AS CHARACTER):
+        RETURN THIS-OBJECT:isQueryCode(pcCode).
+    END METHOD.
+
+    METHOD PRIVATE LOGICAL isAllowedProgramPath(INPUT pcPath AS CHARACTER):
+        DEFINE VARIABLE cPath AS CHARACTER NO-UNDO.
+
+        IF pcPath = ? OR TRIM(pcPath) = "" THEN
+            RETURN FALSE.
+
+        ASSIGN cPath = THIS-OBJECT:normalizeConfigPath(pcPath).
+        IF INDEX(cPath, "..") > 0 THEN
+            RETURN FALSE.
+        IF INDEX(cPath, ":") > 0 THEN
+            RETURN FALSE.
+        IF LENGTH(cPath) < 3 THEN
+            RETURN FALSE.
+        IF LC(SUBSTRING(cPath, LENGTH(cPath) - 1)) <> ".p" THEN
+            RETURN FALSE.
+
+        RETURN TRUE.
+    END METHOD.
+
     METHOD PRIVATE LOGICAL getJsonLogical(INPUT poJson AS JsonObject, INPUT pcName AS CHARACTER, INPUT plDefault AS LOGICAL):
         DEFINE VARIABLE lValue AS LOGICAL NO-UNDO.
 
@@ -3688,6 +4373,53 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN FALSE.
     END METHOD.
 
+    METHOD PRIVATE LONGCHAR escapeJsonForWeb(INPUT pcJson AS LONGCHAR):
+        DEFINE VARIABLE lcEscaped AS LONGCHAR NO-UNDO.
+        DEFINE VARIABLE cChar AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cHex AS CHARACTER NO-UNDO INITIAL "0123456789ABCDEF".
+        DEFINE VARIABLE iPos AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iLen AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iCode AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iNibble AS INTEGER NO-UNDO.
+        DEFINE VARIABLE cEscape AS CHARACTER NO-UNDO.
+
+        IF pcJson = ? THEN
+            RETURN pcJson.
+
+        FIX-CODEPAGE(lcEscaped) = "UTF-8".
+        ASSIGN iLen = LENGTH(pcJson).
+
+        DO iPos = 1 TO iLen:
+            ASSIGN cChar = SUBSTRING(pcJson, iPos, 1)
+                   iCode = ASC(cChar) NO-ERROR.
+
+            IF ERROR-STATUS:ERROR OR iCode = ? THEN DO:
+                ERROR-STATUS:ERROR = FALSE.
+                ASSIGN lcEscaped = lcEscaped + "\uFFFD".
+                NEXT.
+            END.
+
+            IF iCode > 126 THEN DO:
+                ASSIGN cEscape = "\u"
+                       iNibble = TRUNCATE(iCode / 4096, 0)
+                       cEscape = cEscape + SUBSTRING(cHex, iNibble + 1, 1)
+                       iCode = iCode MODULO 4096
+                       iNibble = TRUNCATE(iCode / 256, 0)
+                       cEscape = cEscape + SUBSTRING(cHex, iNibble + 1, 1)
+                       iCode = iCode MODULO 256
+                       iNibble = TRUNCATE(iCode / 16, 0)
+                       cEscape = cEscape + SUBSTRING(cHex, iNibble + 1, 1)
+                       iNibble = iCode MODULO 16
+                       cEscape = cEscape + SUBSTRING(cHex, iNibble + 1, 1)
+                       lcEscaped = lcEscaped + cEscape.
+            END.
+            ELSE
+                ASSIGN lcEscaped = lcEscaped + cChar.
+        END.
+
+        RETURN lcEscaped.
+    END METHOD.
+
     METHOD PRIVATE VOID writeJson(INPUT poJson AS JsonObject):
         DEFINE VARIABLE lcJson AS LONGCHAR NO-UNDO.
         DEFINE VARIABLE oResponse AS WebResponse NO-UNDO.
@@ -3702,7 +4434,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         ASSIGN oResponse = NEW WebResponse()
                oWriter = NEW WebResponseWriter(oResponse).
 
-        oResponse:SetHeader("Content-Type":U, "application/json; charset=windows-1252":U).
+        oResponse:SetHeader("Content-Type":U, "application/json; charset=UTF-8":U).
         oResponse:SetHeader("Cache-Control":U, "no-store":U).
         oResponse:SetHeader("Access-Control-Allow-Methods":U, "GET, POST, OPTIONS":U).
         oResponse:SetHeader("Access-Control-Allow-Headers":U, "Content-Type, Accept, Origin":U).

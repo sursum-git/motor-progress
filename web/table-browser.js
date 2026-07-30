@@ -25,6 +25,7 @@
     currentDatabase: "",
     selectedTableRows: [],
     browseCursor: null,
+    browseKeyFields: [],
     browseHasMore: false,
     browseFilters: [],
     browseEditingFilterId: "",
@@ -2113,6 +2114,7 @@
         container,
         row: rowData,
         fields: state.fields,
+        keyFields: state.browseKeyFields || [],
         joinOptionsByField: {},
         formatValue: browseRecordDisplayValue,
         createJoinButton: function () { return null; },
@@ -2236,6 +2238,7 @@
 
   function renderBrowseSummary(response) {
     const keyFields = Array.isArray(response.keyFields) ? response.keyFields : [];
+    state.browseKeyFields = keyFields;
     const keyText = keyFields.length
       ? keyFields.map((item) => `${item.name} ${item.ascending === false ? "DESC" : "ASC"}`).join(", ")
       : "-";

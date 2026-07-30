@@ -12,11 +12,13 @@ CLASS DynamicQueryWorkerService:
     DEFINE PRIVATE VARIABLE oSerializer AS DynamicQueryRequestSerializer NO-UNDO.
     DEFINE PRIVATE VARIABLE oQueryService AS DynamicMultiTableQueryService NO-UNDO.
     DEFINE PRIVATE VARIABLE oWriter AS DynamicQueryResultWriter NO-UNDO.
+    DEFINE PRIVATE VARIABLE oExecution AS ApiExecutionRepository NO-UNDO.
 
     CONSTRUCTOR PUBLIC DynamicQueryWorkerService():
         ASSIGN oRepository = NEW DynamicQueryJobRepository()
                oSerializer = NEW DynamicQueryRequestSerializer()
                oQueryService = NEW DynamicMultiTableQueryService()
+               oExecution = NEW ApiExecutionRepository()
                oWriter = NEW DynamicQueryResultWriter().
     END CONSTRUCTOR.
 
@@ -24,6 +26,7 @@ CLASS DynamicQueryWorkerService:
         IF VALID-OBJECT(oRepository) THEN DELETE OBJECT oRepository.
         IF VALID-OBJECT(oSerializer) THEN DELETE OBJECT oSerializer.
         IF VALID-OBJECT(oQueryService) THEN DELETE OBJECT oQueryService.
+        IF VALID-OBJECT(oExecution) THEN DELETE OBJECT oExecution.
         IF VALID-OBJECT(oWriter) THEN DELETE OBJECT oWriter.
     END DESTRUCTOR.
 
@@ -32,11 +35,13 @@ CLASS DynamicQueryWorkerService:
         DEFINE VARIABLE joJob AS JsonObject NO-UNDO.
         DEFINE VARIABLE joRun AS JsonObject NO-UNDO.
         DEFINE VARIABLE joErr AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joExecution AS JsonObject NO-UNDO.
         DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
         DEFINE VARIABLE oRequest AS DynamicQueryRequestModel NO-UNDO.
         DEFINE VARIABLE lcRequestJson AS LONGCHAR NO-UNDO.
         DEFINE VARIABLE lcContextJson AS LONGCHAR NO-UNDO.
         DEFINE VARIABLE cJobId AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cExecutionId AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cResultPath AS CHARACTER NO-UNDO.
         DEFINE VARIABLE iProcessed AS INTEGER NO-UNDO.
         DEFINE VARIABLE iCompleted AS INTEGER NO-UNDO.
@@ -62,8 +67,19 @@ CLASS DynamicQueryWorkerService:
 
             ASSIGN iProcessed = iProcessed + 1
                    cJobId = joJob:GetCharacter("jobId")
-                   lcRequestJson = joJob:GetLongchar("requestJson")
+                   cExecutionId = joJob:GetCharacter("executionId") NO-ERROR.
+            IF ERROR-STATUS:ERROR THEN DO:
+                ERROR-STATUS:ERROR = FALSE.
+                ASSIGN cExecutionId = "".
+            END.
+            ASSIGN lcRequestJson = joJob:GetLongchar("requestJson")
                    lcContextJson = oSerializer:contextToLongchar(oContext).
+
+            oContext:setCustomField("jobId", cJobId).
+            oContext:setCustomField("executionId", cExecutionId).
+            IF cExecutionId <> "" THEN
+                ASSIGN joExecution = oExecution:heartbeat(cExecutionId, "running", "Worker iniciou processamento do job", oContext).
+            DELETE OBJECT joExecution NO-ERROR.
 
             DO ON ERROR UNDO, THROW:
                 ASSIGN oRequest = oSerializer:fromLongchar(lcRequestJson).
@@ -74,29 +90,47 @@ CLASS DynamicQueryWorkerService:
                            lHasMore = joRun:GetLogical("hasMore") NO-ERROR.
                     IF cResultPath = "" THEN DO:
                         oRepository:failJob(cJobId, "RESULT_WRITE_ERROR", "Falha ao gravar arquivo de resultado", poOptions:getOutputDirectory(), lcContextJson).
+                        IF cExecutionId <> "" THEN
+                            ASSIGN joExecution = oExecution:failExecution(cExecutionId, "RESULT_WRITE_ERROR", "Falha ao gravar arquivo de resultado", oContext).
+                        DELETE OBJECT joExecution NO-ERROR.
                         ASSIGN iFailed = iFailed + 1.
                     END.
                     ELSE DO:
                         oRepository:completeJob(cJobId, cResultPath, iRecords, lHasMore, lcContextJson).
+                        IF cExecutionId <> "" THEN
+                            ASSIGN joExecution = oExecution:finishExecution(cExecutionId, "completed", "Worker concluiu job", oContext).
+                        DELETE OBJECT joExecution NO-ERROR.
                         ASSIGN iCompleted = iCompleted + 1.
                     END.
                 END.
                 ELSE DO:
                     ASSIGN joErr = joRun:GetJsonObject("error") NO-ERROR.
-                    IF VALID-OBJECT(joErr) THEN
+                    IF VALID-OBJECT(joErr) THEN DO:
                         oRepository:failJob(cJobId, joErr:GetCharacter("code"), joErr:GetCharacter("message"), joErr:GetCharacter("details"), lcContextJson).
-                    ELSE
+                        IF cExecutionId <> "" THEN
+                            ASSIGN joExecution = oExecution:failExecution(cExecutionId, joErr:GetCharacter("code"), joErr:GetCharacter("message"), oContext).
+                        DELETE OBJECT joExecution NO-ERROR.
+                    END.
+                    ELSE DO:
                         oRepository:failJob(cJobId, "QUERY_ERROR", "Falha ao executar consulta", "", lcContextJson).
+                        IF cExecutionId <> "" THEN
+                            ASSIGN joExecution = oExecution:failExecution(cExecutionId, "QUERY_ERROR", "Falha ao executar consulta", oContext).
+                        DELETE OBJECT joExecution NO-ERROR.
+                    END.
                     ASSIGN iFailed = iFailed + 1.
                 END.
                 CATCH oErr AS Error:
                     oRepository:failJob(cJobId, "WORKER_ERROR", oErr:GetMessage(1), "", lcContextJson).
+                    IF cExecutionId <> "" THEN
+                        ASSIGN joExecution = oExecution:failExecution(cExecutionId, "WORKER_ERROR", oErr:GetMessage(1), oContext).
+                    DELETE OBJECT joExecution NO-ERROR.
                     ASSIGN iFailed = iFailed + 1.
                 END CATCH.
             END.
 
             IF VALID-OBJECT(oRequest) THEN DELETE OBJECT oRequest NO-ERROR.
             IF VALID-OBJECT(joRun) THEN DELETE OBJECT joRun NO-ERROR.
+            DELETE OBJECT joExecution NO-ERROR.
             DELETE OBJECT joJob NO-ERROR.
             DELETE OBJECT oContext NO-ERROR.
         END.

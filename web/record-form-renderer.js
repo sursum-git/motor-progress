@@ -32,11 +32,16 @@
     });
   }
 
-  function buildSections(row, fieldsByName, fields) {
+  function buildSections(row, fieldsByName, fields, keyFields) {
     const knownFields = {};
     const sections = [];
     const primary = [];
     const grouped = {};
+    const keyLookup = (keyFields || []).reduce(function (acc, field) {
+      const name = typeof field === "string" ? field : (field && field.name);
+      if (name) acc[name] = true;
+      return acc;
+    }, {});
     const orderedKeys = visibleRowKeys(row)
       .filter(function (fieldName) { return !!fieldsByName[fieldName]; })
       .sort(function (left, right) {
@@ -46,7 +51,7 @@
       });
 
     (fields || []).forEach(function (field) {
-      if (isPrimaryKeyField(field) && field.name && row && Object.prototype.hasOwnProperty.call(row, field.name)) {
+      if ((isPrimaryKeyField(field) || keyLookup[field.name]) && field.name && row && Object.prototype.hasOwnProperty.call(row, field.name)) {
         knownFields[field.name] = true;
         primary.push(field.name);
       }
@@ -124,7 +129,7 @@
       applyWidget: options.applyWidget || function () {},
       isLongTextField: options.isLongTextField || function () { return false; }
     };
-    const sections = buildSections(row, fieldsByName, fields);
+    const sections = buildSections(row, fieldsByName, fields, options.keyFields || []);
     container.empty();
     container.removeClass("record-form-grid").addClass("record-form-tabs");
 

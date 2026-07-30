@@ -5,12 +5,16 @@ const path = require('path');
 const root = path.resolve(__dirname, '../../..');
 const webRoot = path.join(root, 'web');
 const store = new Map();
+const executions = new Map();
+const queryJobs = new Map();
 let relationRows = [];
 let indexRows = [];
 let tableRows = [];
 let fieldRows = [];
 let viewAsRows = [];
 let metadataJobs = new Map();
+let executionSeq = 0;
+let queryJobSeq = 0;
 const requests = [];
 const PORT = Number(process.env.SURSUM_E2E_PORT || 18180);
 
@@ -45,6 +49,45 @@ function readBody(req) {
 
 function validCode(code) {
   return typeof code === 'string' && /^[A-Za-z0-9_.-]+$/.test(code);
+}
+
+function createExecution(type, extra = {}) {
+  executionSeq += 1;
+  const executionId = `EXE-20260730-${String(executionSeq).padStart(6, '0')}`;
+  const now = new Date().toISOString();
+  const execution = Object.assign({
+    success: true,
+    executionId,
+    requestId: `REQ-${String(executionSeq).padStart(6, '0')}`,
+    status: 'running',
+    executionStatus: 'running',
+    executionType: type,
+    startedAt: now,
+    lastHeartbeatAt: now,
+    finishedAt: '',
+    durationMs: 0,
+    pasoePid: 'mock-pid-18180',
+    pasoeAgent: 'mock-agent',
+    pasoeInstance: 'mock-pasoe',
+    hostName: 'mock-host',
+    databaseName: 'DICTDB',
+    dbTransactionRef: `DBTX-${String(executionSeq).padStart(6, '0')}`,
+    userName: 'e2e'
+  }, extra);
+  executions.set(executionId, execution);
+  return execution;
+}
+
+function finishExecution(execution, status = 'completed') {
+  const now = new Date().toISOString();
+  Object.assign(execution, {
+    status,
+    executionStatus: status,
+    lastHeartbeatAt: now,
+    finishedAt: now,
+    durationMs: 1
+  });
+  return execution;
 }
 
 function externalFilters(saved) {
@@ -112,7 +155,7 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
   if (req.method === 'OPTIONS') return sendJson(res, 200, { success: true });
   if (pathname === '/__health') return sendJson(res, 200, { ok: true });
   if (pathname === '/__requests') return sendJson(res, 200, { requests });
-  if (pathname === '/__reset' && req.method === 'POST') { store.clear(); relationRows = []; indexRows = []; tableRows = []; fieldRows = []; viewAsRows = []; metadataJobs = new Map(); requests.length = 0; return sendJson(res, 200, { success: true }); }
+  if (pathname === '/__reset' && req.method === 'POST') { store.clear(); executions.clear(); queryJobs.clear(); executionSeq = 0; queryJobSeq = 0; relationRows = []; indexRows = []; tableRows = []; fieldRows = []; viewAsRows = []; metadataJobs = new Map(); requests.length = 0; return sendJson(res, 200, { success: true }); }
   if (pathname === '/auth.php') return sendJson(res, 200, { authenticated: true, user: 'e2e' });
   if (pathname === '/context-store.php' && req.method === 'GET') {
     return sendJson(res, 200, {
@@ -354,6 +397,46 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
     return handleApi(req, res, targetUrl.pathname, targetUrl.searchParams);
   }
 
+  if (pathname.endsWith('/executions') && req.method === 'GET') {
+    const status = searchParams.get('status') || '';
+    const pid = searchParams.get('pid') || '';
+    const data = Array.from(executions.values()).filter(item => {
+      return (!status || item.status === status || item.executionStatus === status)
+        && (!pid || item.pasoePid === pid);
+    });
+    return sendJson(res, 200, { success: true, data, recordsReturned: data.length });
+  }
+
+  if (pathname.includes('/executions/') && pathname.endsWith('/kill-request') && req.method === 'POST') {
+    let body;
+    try { body = await readBody(req); } catch (err) { return sendJson(res, 200, error('INVALID_JSON', 'JSON invalido', err.message)); }
+    const executionId = pathname.split('/executions/')[1].split('/')[0];
+    const execution = executions.get(executionId);
+    if (!execution) return sendJson(res, 200, error('EXECUTION_NOT_FOUND', 'Execucao nao encontrada', executionId));
+    Object.assign(execution, {
+      status: 'killRequested',
+      executionStatus: 'killRequested',
+      killRequestedAt: new Date().toISOString(),
+      killRequestedBy: body.requestedBy || 'admin',
+      killReason: body.reason || ''
+    });
+    return sendJson(res, 200, execution);
+  }
+
+  if (pathname.includes('/executions/') && req.method === 'GET') {
+    const executionId = pathname.split('/executions/')[1].split('/')[0];
+    const execution = executions.get(executionId);
+    if (!execution) return sendJson(res, 200, error('EXECUTION_NOT_FOUND', 'Execucao nao encontrada', executionId));
+    return sendJson(res, 200, execution);
+  }
+
+  if (pathname.includes('/jobs/') && req.method === 'GET') {
+    const jobId = pathname.split('/jobs/')[1].split('/')[0];
+    const job = queryJobs.get(jobId);
+    if (!job) return sendJson(res, 200, error('JOB_NOT_FOUND', 'Job nao encontrado', jobId));
+    return sendJson(res, 200, job);
+  }
+
   if (pathname.endsWith('/metadata/sync')) {
     requests.push({ method: req.method, path: req.url });
     return sendJson(res, 200, {
@@ -500,26 +583,81 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
     return sendJson(res, 200, { success: true, code: body.code, status, path: `mock/${body.code}.json`, data: saved });
   }
 
+  if (pathname.endsWith('/program/execute') && req.method === 'POST') {
+    let body;
+    try { body = await readBody(req); } catch (err) { return sendJson(res, 200, error('INVALID_JSON', 'JSON invalido', err.message)); }
+    requests.push({ method: 'POST', path: pathname, body });
+    const execution = createExecution('program', { programName: body.program || '' });
+    if (body.program !== 'echo-json') {
+      finishExecution(execution, 'failed');
+      return sendJson(res, 200, Object.assign(error('PROGRAM_NOT_ALLOWED', 'Programa nao cadastrado para execucao', body.program || ''), {
+        executionId: execution.executionId
+      }));
+    }
+    finishExecution(execution, 'completed');
+    return sendJson(res, 200, {
+      success: true,
+      program: 'echo-json',
+      parameters: body.parameters || {},
+      executionId: execution.executionId
+    });
+  }
+
   if (pathname.endsWith('/query') && req.method === 'POST') {
     let body;
     try { body = await readBody(req); } catch (err) { return sendJson(res, 200, error('INVALID_JSON', 'JSON invalido', err.message)); }
     requests.push({ method: 'POST', path: pathname, body });
+    const execution = createExecution(body.code ? 'stored-query' : 'query', { queryCode: body.code || '' });
+    if (body.execution === 'async') {
+      queryJobSeq += 1;
+      const jobId = `JOB-20260730-${String(queryJobSeq).padStart(6, '0')}`;
+      Object.assign(execution, {
+        status: 'queued',
+        executionStatus: 'queued',
+        jobId
+      });
+      const job = {
+        success: true,
+        execution: 'async',
+        status: 'queued',
+        jobId,
+        executionId: execution.executionId,
+        lockedByPid: '',
+        lockedByAgent: '',
+        heartbeatAt: execution.lastHeartbeatAt
+      };
+      queryJobs.set(jobId, job);
+      return sendJson(res, 200, job);
+    }
     if (!body.code) {
       const firstSource = Array.isArray(body.sources) ? body.sources[0] || {} : {};
       if (firstSource.nome === 'pp-container') {
-        return sendJson(res, 200, { success: true, data: [{ 'nr-container': 1650, 'nr-pedido': 7788, ativo: 'yes', descricao: 'Container E2E' }], recordsReturned: 1, directQuery: true });
+        finishExecution(execution, 'completed');
+        return sendJson(res, 200, { success: true, data: [{ 'nr-container': 1650, 'nr-pedido': 7788, ativo: 'yes', descricao: 'Container E2E' }], recordsReturned: 1, directQuery: true, executionId: execution.executionId });
       }
       if (firstSource.nome === 'pp-pedido') {
-        return sendJson(res, 200, { success: true, data: [{ 'nr-pedido': 7788, cliente: 'Cliente E2E' }], recordsReturned: 1, directQuery: true });
+        finishExecution(execution, 'completed');
+        return sendJson(res, 200, { success: true, data: [{ 'nr-pedido': 7788, cliente: 'Cliente E2E' }], recordsReturned: 1, directQuery: true, executionId: execution.executionId });
       }
-      return sendJson(res, 200, { success: true, data: [], directQuery: true });
+      finishExecution(execution, 'completed');
+      return sendJson(res, 200, { success: true, data: [], directQuery: true, executionId: execution.executionId });
     }
-    if (!validCode(body.code)) return sendJson(res, 200, error('INVALID_QUERY_CODE', 'Codigo de consulta invalido', body.code));
+    if (!validCode(body.code)) {
+      finishExecution(execution, 'failed');
+      return sendJson(res, 200, Object.assign(error('INVALID_QUERY_CODE', 'Codigo de consulta invalido', body.code), { executionId: execution.executionId }));
+    }
     const saved = store.get(body.code);
-    if (!saved) return sendJson(res, 200, error('QUERY_NOT_FOUND', 'Consulta salva nao encontrada', body.code));
+    if (!saved) {
+      finishExecution(execution, 'failed');
+      return sendJson(res, 200, Object.assign(error('QUERY_NOT_FOUND', 'Consulta salva nao encontrada', body.code), { executionId: execution.executionId }));
+    }
     const applied = applyParameters(saved, body.parameters || {});
-    if (!applied.success) return sendJson(res, 200, applied);
-    return sendJson(res, 200, { success: true, code: body.code, status: saved.status, appliedFilters: applied.runtimeFilters, data: [{ codigo: 123, nome: 'Cliente E2E' }] });
+    if (!applied.success) {
+      finishExecution(execution, 'failed');
+      return sendJson(res, 200, Object.assign(applied, { executionId: execution.executionId }));
+    }
+    finishExecution(execution, 'completed');
+    return sendJson(res, 200, { success: true, code: body.code, status: saved.status, appliedFilters: applied.runtimeFilters, data: [{ codigo: 123, nome: 'Cliente E2E' }], executionId: execution.executionId });
   }
 
   return serveStatic(req, res, pathname);

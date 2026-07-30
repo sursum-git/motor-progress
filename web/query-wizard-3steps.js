@@ -25,6 +25,7 @@
     foreignKeyCache: {},
     foreignDescriptionCache: {},
     foreignDescriptionValues: {},
+    resultKeyFields: [],
     activeFilterId: 1,
     loadedDatabaseApiBase: "",
     tableLoading: {}
@@ -719,9 +720,18 @@
     ].join("|");
   }
 
+  function legacyTableCacheKey(database) {
+    const scope = currentScope();
+    return "sursumQueryWizardTableCache:" + [
+      String(state.apiBase || "").replace(/\/+$/, ""),
+      scope.companyId || "",
+      database || "TODOS"
+    ].join("|");
+  }
+
   function readTableCache(database) {
     try {
-      const raw = localStorage.getItem(tableCacheKey(database));
+      const raw = localStorage.getItem(tableCacheKey(database)) || localStorage.getItem(legacyTableCacheKey(database));
       if (!raw) return null;
       const payload = JSON.parse(raw);
       if (!payload || !Array.isArray(payload.rows)) return null;
@@ -743,6 +753,7 @@
   function clearTableCache(database) {
     try {
       localStorage.removeItem(tableCacheKey(database));
+      localStorage.removeItem(legacyTableCacheKey(database));
     } catch (_) {}
     delete state.tableCache[database];
     if (database === "TODOS") {
@@ -750,9 +761,10 @@
         delete state.tableCache[key];
       });
       const prefix = TABLE_CACHE_PREFIX + String(state.apiBase || "").replace(/\/+$/, "") + "|" + (currentScope().companyId || "") + "|";
+      const legacyPrefix = "sursumQueryWizardTableCache:" + String(state.apiBase || "").replace(/\/+$/, "") + "|" + (currentScope().companyId || "") + "|";
       for (let index = localStorage.length - 1; index >= 0; index--) {
         const key = localStorage.key(index);
-        if (key && key.indexOf(prefix) === 0) {
+        if (key && (key.indexOf(prefix) === 0 || key.indexOf(legacyPrefix) === 0)) {
           localStorage.removeItem(key);
         }
       }
@@ -1926,6 +1938,17 @@
     });
   }
 
+  function primaryKeyFieldsFromMetadata() {
+    const groups = groupFieldsByIndex(state.fields || []);
+    const primaryIndex = sortedIndexNames(groups).find(function (indexName) {
+      return (groups[indexName] && groups[indexName].kind) === "primary";
+    });
+    if (!primaryIndex) return [];
+    return (groups[primaryIndex] || [])
+      .filter(function (field) { return field && field.name; })
+      .map(function (field) { return { name: field.name }; });
+  }
+
   function hydrateDynamicFilterOperator() {
     const combo = $("#dynamicFilterField").data("kendoComboBox");
     const value = combo ? combo.value() : "";
@@ -2590,6 +2613,9 @@
     const rows = response.data || [];
     const grid = $("#dataGrid").data("kendoGrid");
     if (!grid) return;
+    state.resultKeyFields = Array.isArray(response.keyFields) && response.keyFields.length
+      ? response.keyFields
+      : primaryKeyFieldsFromMetadata();
 
     buildResultColumns();
     grid.dataSource.pageSize(getGridPageSize());
@@ -2759,6 +2785,7 @@
         container,
         row: rowData || {},
         fields: state.fields,
+        keyFields: state.resultKeyFields || [],
         joinOptionsByField: rowJoinOptions || {},
         descriptionValuesByField: state.foreignDescriptionValues,
         formatValue: describeFieldValue,

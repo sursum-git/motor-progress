@@ -38,7 +38,8 @@ CLASS DynamicQueryAsyncService:
             pcPlanJson,
             lcContextJson,
             pcPreferredMode,
-            3
+            3,
+            poContext:getCustomField("executionId")
         ).
     END METHOD.
 

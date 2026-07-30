@@ -69,6 +69,15 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                     ELSE IF cPath MATCHES "*/program/execute" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleProgramExecute(cBody).
                     END.
+                    ELSE IF cPath MATCHES "*/actions/execute" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleActionExecute(cBody).
+                    END.
+                    ELSE IF cPath MATCHES "*/executions/*/kill-request" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleKillRequest(THIS-OBJECT:getExecutionIdFromPath(cPath), cBody).
+                    END.
+                    ELSE IF cPath MATCHES "*/executions/*/cancel" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleCancelExecution(THIS-OBJECT:getExecutionIdFromPath(cPath), cBody).
+                    END.
                     ELSE IF cPath MATCHES "*/metadata/view-as/resolve" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleResolveViewAs(cBody).
                     END.
@@ -118,6 +127,12 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                     ELSE IF cPath MATCHES "*/diagnostics/runtime" OR cPath MATCHES "*/diagnostics/agent" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleRuntimeDiagnostics(cMethod, cPath).
                     END.
+                    ELSE IF cPath MATCHES "*/executions/*" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleGetExecution(THIS-OBJECT:getExecutionIdFromPath(cPath)).
+                    END.
+                    ELSE IF cPath MATCHES "*/executions" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleListExecutions().
+                    END.
                     ELSE IF THIS-OBJECT:isRootPath(cPath) THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleIndex().
                     END.
@@ -163,8 +178,12 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DEFINE VARIABLE oRequest AS DynamicQueryRequestModel NO-UNDO.
         DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
         DEFINE VARIABLE oService AS DynamicMultiTableQueryService NO-UNDO.
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
         DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
         DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joExecution AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joErr AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cExecutionId AS CHARACTER NO-UNDO.
 
         IF pcBody = "" OR pcBody = ? THEN
             RETURN THIS-OBJECT:buildError("EMPTY_BODY", "Body JSON obrigatorio", "POST /query").
@@ -181,12 +200,34 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         oContext:setCustomField("entrypoint", "WEB").
         oContext:setCustomField("transport", "PASOE-WEB").
 
+        ASSIGN oExec = NEW ApiExecutionRepository()
+               joExecution = oExec:startExecution(oContext, "query", "POST /query", "running", SUBSTRING(STRING(pcBody), 1, 1000)).
+        IF VALID-OBJECT(joExecution) AND joExecution:Has("success") AND joExecution:GetLogical("success") THEN DO:
+            ASSIGN cExecutionId = THIS-OBJECT:getJsonChar(joExecution, "executionId").
+            oContext:setCustomField("executionId", cExecutionId).
+        END.
+        DELETE OBJECT joExecution NO-ERROR.
+
         ASSIGN joRet = oService:execute(oRequest, oContext).
+        IF cExecutionId <> "" THEN DO:
+            IF VALID-OBJECT(joRet) AND joRet:Has("success") AND joRet:GetLogical("success") THEN
+                ASSIGN joExecution = oExec:finishExecution(cExecutionId, IF THIS-OBJECT:getJsonChar(joRet, "status") = "queued" THEN "queued" ELSE "completed", "Consulta executada", oContext).
+            ELSE DO:
+                ASSIGN joErr = joRet:GetJsonObject("error") NO-ERROR.
+                IF VALID-OBJECT(joErr) THEN
+                    ASSIGN joExecution = oExec:failExecution(cExecutionId, THIS-OBJECT:getJsonChar(joErr, "code"), THIS-OBJECT:getJsonChar(joErr, "message"), oContext).
+                ELSE
+                    ASSIGN joExecution = oExec:failExecution(cExecutionId, "QUERY_ERROR", "Falha ao executar consulta", oContext).
+            END.
+            joRet:Add("executionId", cExecutionId) NO-ERROR.
+            DELETE OBJECT joExecution NO-ERROR.
+        END.
 
         DELETE OBJECT oSerializer NO-ERROR.
         DELETE OBJECT oRequest NO-ERROR.
         DELETE OBJECT oContext NO-ERROR.
         DELETE OBJECT oService NO-ERROR.
+        DELETE OBJECT oExec NO-ERROR.
 
         RETURN joRet.
     END METHOD.
@@ -252,11 +293,15 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DEFINE VARIABLE oRequest AS DynamicQueryRequestModel NO-UNDO.
         DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
         DEFINE VARIABLE oService AS DynamicMultiTableQueryService NO-UNDO.
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
         DEFINE VARIABLE joStored AS JsonObject NO-UNDO.
         DEFINE VARIABLE joQuery AS JsonObject NO-UNDO.
         DEFINE VARIABLE joParams AS JsonObject NO-UNDO.
         DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joExecution AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joErr AS JsonObject NO-UNDO.
         DEFINE VARIABLE cCode AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cExecutionId AS CHARACTER NO-UNDO.
 
         ASSIGN cCode = THIS-OBJECT:getJsonChar(poBody, "code").
         IF NOT THIS-OBJECT:isQueryCode(cCode) THEN
@@ -288,12 +333,34 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         oContext:setCustomField("transport", "PASOE-WEB").
         oContext:setCustomField("queryCode", cCode).
 
+        ASSIGN oExec = NEW ApiExecutionRepository()
+               joExecution = oExec:startExecution(oContext, "stored-query", "POST /query", "running", "queryCode=" + cCode).
+        IF VALID-OBJECT(joExecution) AND joExecution:Has("success") AND joExecution:GetLogical("success") THEN DO:
+            ASSIGN cExecutionId = THIS-OBJECT:getJsonChar(joExecution, "executionId").
+            oContext:setCustomField("executionId", cExecutionId).
+        END.
+        DELETE OBJECT joExecution NO-ERROR.
+
         ASSIGN joRet = oService:execute(oRequest, oContext).
+        IF cExecutionId <> "" THEN DO:
+            IF VALID-OBJECT(joRet) AND joRet:Has("success") AND joRet:GetLogical("success") THEN
+                ASSIGN joExecution = oExec:finishExecution(cExecutionId, IF THIS-OBJECT:getJsonChar(joRet, "status") = "queued" THEN "queued" ELSE "completed", "Consulta salva executada", oContext).
+            ELSE DO:
+                ASSIGN joErr = joRet:GetJsonObject("error") NO-ERROR.
+                IF VALID-OBJECT(joErr) THEN
+                    ASSIGN joExecution = oExec:failExecution(cExecutionId, THIS-OBJECT:getJsonChar(joErr, "code"), THIS-OBJECT:getJsonChar(joErr, "message"), oContext).
+                ELSE
+                    ASSIGN joExecution = oExec:failExecution(cExecutionId, "QUERY_ERROR", "Falha ao executar consulta salva", oContext).
+            END.
+            joRet:Add("executionId", cExecutionId) NO-ERROR.
+            DELETE OBJECT joExecution NO-ERROR.
+        END.
 
         DELETE OBJECT oSerializer NO-ERROR.
         DELETE OBJECT oRequest NO-ERROR.
         DELETE OBJECT oContext NO-ERROR.
         DELETE OBJECT oService NO-ERROR.
+        DELETE OBJECT oExec NO-ERROR.
 
         RETURN joRet.
     END METHOD.
@@ -302,9 +369,13 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
         DEFINE VARIABLE joParams AS JsonObject NO-UNDO.
         DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joExecution AS JsonObject NO-UNDO.
+        DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
         DEFINE VARIABLE cProgramCode AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cProgramPath AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cRunPath AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cExecutionId AS CHARACTER NO-UNDO.
 
         IF pcBody = "" OR pcBody = ? THEN
             RETURN THIS-OBJECT:buildError("EMPTY_BODY", "Body JSON obrigatorio", "POST /program/execute").
@@ -335,12 +406,42 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         ELSE
             ASSIGN joParams = NEW JsonObject().
 
-        RUN VALUE(cRunPath) (INPUT joParams, OUTPUT joRet) NO-ERROR.
-        IF ERROR-STATUS:ERROR THEN
-            RETURN THIS-OBJECT:buildError("PROGRAM_EXECUTION_ERROR", "Erro ao executar programa Progress", ERROR-STATUS:GET-MESSAGE(1)).
+        ASSIGN oContext = NEW PasoeExecutionContext()
+               oExec = NEW ApiExecutionRepository().
+        oContext:setCustomField("entrypoint", "WEB").
+        oContext:setCustomField("transport", "PASOE-WEB").
+        oContext:setCustomField("programName", cProgramCode).
+        ASSIGN joExecution = oExec:startExecution(oContext, "program", "POST /program/execute", "running", "program=" + cProgramCode).
+        IF VALID-OBJECT(joExecution) AND joExecution:Has("success") AND joExecution:GetLogical("success") THEN DO:
+            ASSIGN cExecutionId = THIS-OBJECT:getJsonChar(joExecution, "executionId").
+            oContext:setCustomField("executionId", cExecutionId).
+        END.
+        DELETE OBJECT joExecution NO-ERROR.
 
-        IF NOT VALID-OBJECT(joRet) THEN
+        RUN VALUE(cRunPath) (INPUT joParams, OUTPUT joRet) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            IF cExecutionId <> "" THEN
+                ASSIGN joExecution = oExec:failExecution(cExecutionId, "PROGRAM_EXECUTION_ERROR", ERROR-STATUS:GET-MESSAGE(1), oContext).
+            DELETE OBJECT oContext NO-ERROR.
+            DELETE OBJECT oExec NO-ERROR.
+            RETURN THIS-OBJECT:buildError("PROGRAM_EXECUTION_ERROR", "Erro ao executar programa Progress", ERROR-STATUS:GET-MESSAGE(1)).
+        END.
+
+        IF NOT VALID-OBJECT(joRet) THEN DO:
+            IF cExecutionId <> "" THEN
+                ASSIGN joExecution = oExec:failExecution(cExecutionId, "PROGRAM_EMPTY_RESPONSE", "Programa nao retornou JsonObject", oContext).
+            DELETE OBJECT oContext NO-ERROR.
+            DELETE OBJECT oExec NO-ERROR.
             RETURN THIS-OBJECT:buildError("PROGRAM_EMPTY_RESPONSE", "Programa nao retornou JsonObject", cProgramCode).
+        END.
+
+        IF cExecutionId <> "" THEN DO:
+            ASSIGN joExecution = oExec:finishExecution(cExecutionId, IF joRet:Has("success") AND NOT joRet:GetLogical("success") THEN "failed" ELSE "completed", "Programa executado", oContext).
+            joRet:Add("executionId", cExecutionId) NO-ERROR.
+            DELETE OBJECT joExecution NO-ERROR.
+        END.
+        DELETE OBJECT oContext NO-ERROR.
+        DELETE OBJECT oExec NO-ERROR.
 
         RETURN joRet.
     END METHOD.
@@ -422,6 +523,11 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         joEndpoints:Add("queryStore", "POST /web/SursumDynamicQuery/query-store").
         joEndpoints:Add("tableBrowse", "POST /web/SursumDynamicQuery/table-browse").
         joEndpoints:Add("programExecute", "POST /web/SursumDynamicQuery/program/execute").
+        joEndpoints:Add("actionExecute", "POST /web/SursumDynamicQuery/actions/execute").
+        joEndpoints:Add("executions", "GET /web/SursumDynamicQuery/executions?status=:status&pid=:pid&limit=:limit").
+        joEndpoints:Add("executionDetail", "GET /web/SursumDynamicQuery/executions/:executionId").
+        joEndpoints:Add("executionCancel", "POST /web/SursumDynamicQuery/executions/:executionId/cancel").
+        joEndpoints:Add("executionKillRequest", "POST /web/SursumDynamicQuery/executions/:executionId/kill-request").
         joEndpoints:Add("metadataSync", "GET /web/SursumDynamicQuery/metadata/sync?include=banks,aliases,tables,fields&database=:database&table=:table").
         joEndpoints:Add("metadataDatabases", "GET /web/SursumDynamicQuery/metadata/databases").
         joEndpoints:Add("metadataDatabaseCatalog", "GET /web/SursumDynamicQuery/metadata/database-catalog").
@@ -1664,6 +1770,136 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN joRet.
     END METHOD.
 
+    METHOD PRIVATE JsonObject handleActionExecute(INPUT pcBody AS LONGCHAR):
+        DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joExecution AS JsonObject NO-UNDO.
+        DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
+        DEFINE VARIABLE cActionCode AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cMode AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cExecutionId AS CHARACTER NO-UNDO.
+
+        IF pcBody = "" OR pcBody = ? THEN
+            RETURN THIS-OBJECT:buildError("EMPTY_BODY", "Body JSON obrigatorio", "POST /actions/execute").
+
+        ASSIGN joBody = THIS-OBJECT:parseJsonObject(pcBody) NO-ERROR.
+        IF NOT VALID-OBJECT(joBody) THEN
+            RETURN THIS-OBJECT:buildError("INVALID_JSON", "JSON de acao invalido", "").
+
+        ASSIGN cActionCode = THIS-OBJECT:getJsonChar(joBody, "actionCode")
+               cMode = LC(THIS-OBJECT:getJsonChar(joBody, "mode")).
+        IF cActionCode = "" THEN
+            RETURN THIS-OBJECT:buildError("ACTION_CODE_REQUIRED", "Codigo da acao obrigatorio", "actionCode").
+        IF cMode = "" THEN
+            ASSIGN cMode = "dryrun".
+
+        ASSIGN oContext = NEW PasoeExecutionContext()
+               oExec = NEW ApiExecutionRepository().
+        oContext:setCustomField("entrypoint", "WEB").
+        oContext:setCustomField("transport", "PASOE-WEB").
+        oContext:setCustomField("actionCode", cActionCode).
+
+        ASSIGN joExecution = oExec:startExecution(oContext, "action", "POST /actions/execute", "validating", "actionCode=" + cActionCode + ";mode=" + cMode).
+        IF VALID-OBJECT(joExecution) AND joExecution:Has("success") AND joExecution:GetLogical("success") THEN DO:
+            ASSIGN cExecutionId = THIS-OBJECT:getJsonChar(joExecution, "executionId").
+            oContext:setCustomField("executionId", cExecutionId).
+            DELETE OBJECT joExecution NO-ERROR.
+            ASSIGN joExecution = oExec:finishExecution(cExecutionId, "failed", "Catalogo de acoes ainda nao implementado", oContext).
+        END.
+
+        ASSIGN joRet = THIS-OBJECT:buildError("ACTION_CATALOG_NOT_IMPLEMENTED", "Catalogo de acoes dinamicas ainda nao implementado nesta etapa", cActionCode).
+        IF cExecutionId <> "" THEN
+            joRet:Add("executionId", cExecutionId) NO-ERROR.
+
+        DELETE OBJECT joBody NO-ERROR.
+        DELETE OBJECT joExecution NO-ERROR.
+        DELETE OBJECT oContext NO-ERROR.
+        DELETE OBJECT oExec NO-ERROR.
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleListExecutions():
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cQuery AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cStatus AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cPid AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iLimit AS INTEGER NO-UNDO.
+
+        ASSIGN cQuery = WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "QUERY_STRING":U) NO-ERROR.
+        ASSIGN cStatus = THIS-OBJECT:getQueryValue(cQuery, "status")
+               cPid = THIS-OBJECT:getQueryValue(cQuery, "pid")
+               iLimit = INTEGER(THIS-OBJECT:getQueryValue(cQuery, "limit")) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            ASSIGN iLimit = 100.
+        END.
+        ASSIGN oExec = NEW ApiExecutionRepository()
+               joRet = oExec:listExecutions(cStatus, cPid, iLimit).
+        DELETE OBJECT oExec NO-ERROR.
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleGetExecution(INPUT pcExecutionId AS CHARACTER):
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+
+        ASSIGN oExec = NEW ApiExecutionRepository()
+               joRet = oExec:getExecution(pcExecutionId).
+        DELETE OBJECT oExec NO-ERROR.
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleKillRequest(INPUT pcExecutionId AS CHARACTER, INPUT pcBody AS LONGCHAR):
+        DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
+        DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cRequestedBy AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cReason AS CHARACTER NO-UNDO.
+
+        ASSIGN joBody = THIS-OBJECT:parseJsonObject(pcBody) NO-ERROR.
+        IF VALID-OBJECT(joBody) THEN DO:
+            ASSIGN cRequestedBy = THIS-OBJECT:getJsonChar(joBody, "requestedBy")
+                   cReason = THIS-OBJECT:getJsonChar(joBody, "reason").
+        END.
+        IF cRequestedBy = "" THEN
+            ASSIGN cRequestedBy = "admin".
+
+        ASSIGN oContext = NEW PasoeExecutionContext()
+               oExec = NEW ApiExecutionRepository()
+               joRet = oExec:requestKill(pcExecutionId, cRequestedBy, cReason, oContext).
+
+        DELETE OBJECT joBody NO-ERROR.
+        DELETE OBJECT oContext NO-ERROR.
+        DELETE OBJECT oExec NO-ERROR.
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleCancelExecution(INPUT pcExecutionId AS CHARACTER, INPUT pcBody AS LONGCHAR):
+        DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
+        DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cReason AS CHARACTER NO-UNDO.
+
+        ASSIGN joBody = THIS-OBJECT:parseJsonObject(pcBody) NO-ERROR.
+        IF VALID-OBJECT(joBody) THEN
+            ASSIGN cReason = THIS-OBJECT:getJsonChar(joBody, "reason").
+        IF cReason = "" THEN
+            ASSIGN cReason = "Cancelamento solicitado".
+
+        ASSIGN oContext = NEW PasoeExecutionContext()
+               oExec = NEW ApiExecutionRepository()
+               joRet = oExec:finishExecution(pcExecutionId, "cancelled", cReason, oContext).
+
+        DELETE OBJECT joBody NO-ERROR.
+        DELETE OBJECT oContext NO-ERROR.
+        DELETE OBJECT oExec NO-ERROR.
+        RETURN joRet.
+    END METHOD.
+
     METHOD PRIVATE JsonObject handleGetStatus(INPUT pcJobId AS CHARACTER):
         DEFINE VARIABLE oAsync AS DynamicQueryAsyncService NO-UNDO.
         DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
@@ -2014,6 +2250,24 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         ASSIGN iResult = INDEX(cPath, "/result").
         IF iResult > 0 THEN
             ASSIGN cPath = SUBSTRING(cPath, 1, iResult - 1).
+
+        RETURN cPath.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getExecutionIdFromPath(INPUT pcPath AS CHARACTER):
+        DEFINE VARIABLE cPath AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iExecutions AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iSuffix AS INTEGER NO-UNDO.
+
+        ASSIGN cPath = REPLACE(pcPath, "~\", "/").
+        ASSIGN iExecutions = INDEX(cPath, "/executions/").
+        IF iExecutions = 0 THEN
+            RETURN "".
+
+        ASSIGN cPath = SUBSTRING(cPath, iExecutions + 12).
+        ASSIGN iSuffix = INDEX(cPath, "/").
+        IF iSuffix > 0 THEN
+            ASSIGN cPath = SUBSTRING(cPath, 1, iSuffix - 1).
 
         RETURN cPath.
     END METHOD.

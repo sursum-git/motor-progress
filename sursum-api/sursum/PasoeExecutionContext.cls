@@ -194,6 +194,17 @@ CLASS PasoeExecutionContext:
         EMPTY TEMP-TABLE ttCustom.
     END METHOD.
 
+    METHOD PUBLIC CHARACTER getCustomField(INPUT pcKey AS CHARACTER):
+        DEFINE VARIABLE cTrimKey AS CHARACTER NO-UNDO.
+        ASSIGN cTrimKey = TRIM(pcKey).
+        IF cTrimKey = "" THEN
+            RETURN "".
+        FIND FIRST ttCustom WHERE ttCustom.customKey = cTrimKey NO-ERROR.
+        IF AVAILABLE ttCustom THEN
+            RETURN ttCustom.customValue.
+        RETURN "".
+    END METHOD.
+
     METHOD PUBLIC JsonObject toJson():
         DEFINE VARIABLE joContext AS JsonObject NO-UNDO.
         DEFINE VARIABLE joCustom  AS JsonObject NO-UNDO.
