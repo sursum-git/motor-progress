@@ -401,6 +401,48 @@ test('relation maintenance saves manual join', async ({ page }) => {
   await expect(page.locator('#relationsGrid')).toContainText('manual');
 });
 
+test('relation maintenance suggests fields and rejects fields outside the selected tables', async ({ page }) => {
+  await page.goto('/relation-maintenance.html');
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+  });
+  await page.locator('#addRelation').click();
+  await expect(page.locator('#relationWindow')).toBeVisible();
+
+  await page.locator('#leftTable').fill('Customer');
+  await page.locator('#rightTable').fill('Order');
+  await page.locator('#leftTable').blur();
+  await page.locator('#rightTable').blur();
+  await page.locator('#leftField').focus();
+  await page.locator('#rightField').focus();
+  await page.locator('#descriptionField').focus();
+
+  await expect.poll(async () => page.evaluate(() => {
+    const left = window.$('#leftField').data('kendoAutoComplete');
+    const right = window.$('#rightField').data('kendoAutoComplete');
+    const description = window.$('#descriptionField').data('kendoAutoComplete');
+    return {
+      left: left ? left.dataSource.data().map((item) => String(item)) : [],
+      right: right ? right.dataSource.data().map((item) => String(item)) : [],
+      description: description ? description.dataSource.data().map((item) => String(item)) : []
+    };
+  })).toEqual({
+    left: expect.arrayContaining(['CustNum']),
+    right: expect.arrayContaining(['CustNum']),
+    description: expect.arrayContaining(['Name'])
+  });
+
+  await page.locator('#leftField').fill('CampoInvalido');
+  await page.locator('#rightField').fill('CustNum');
+  await page.locator('#descriptionField').fill('Name');
+  await page.locator('#saveRelation').click();
+
+  await expect(page.locator('#statusBox')).toContainText('Campo esquerdo nao pertence a Customer');
+  await expect(page.locator('#relationsGrid')).not.toContainText('CampoInvalido');
+});
+
 test('metadata menu exposes batch, view-as and join pages separately', async ({ page }) => {
   await page.goto('/index.html');
   await expect(page.locator('#menuTree')).toContainText('Atualizacao em lote');

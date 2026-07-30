@@ -18,6 +18,7 @@
     jobRenderPending: false,
     editingViewAs: null,
     editingRelation: null,
+    relationFieldCache: Object.create(null),
     contextKey: "",
     databaseRequestSeq: 0,
     waitingForInitialContext: true,
@@ -26,6 +27,7 @@
 
   let viewAsWindow = null;
   let relationWindow = null;
+  const relationFieldRefreshTimers = {};
 
   $(function () {
     initWidgets();
@@ -79,9 +81,17 @@
     if (hasElement("#relationType")) {
       $("#relationType").kendoDropDownList({ dataSource: ["INNER", "LEFT"], value: "INNER" });
     }
-    $("#viewAsTable,#viewAsField,#leftTable,#leftField,#rightTable,#rightField,#descriptionField").filter(function () {
+    $("#viewAsTable,#viewAsField,#leftTable,#rightTable").filter(function () {
       return this && this.id;
     }).kendoTextBox();
+    $("#leftField,#rightField,#descriptionField").filter(function () {
+      return this && this.id;
+    }).kendoAutoComplete({
+      dataSource: [],
+      filter: "contains",
+      suggest: true,
+      minLength: 0
+    });
     if (hasElement("#viewAsWindow")) viewAsWindow = $("#viewAsWindow").kendoWindow({
       width: "720px",
       title: "View-as",
@@ -313,6 +323,18 @@
       if (relationWindow) relationWindow.close();
     });
     $("#loadRelations").on("click", loadRelationsRows);
+    $("#leftTable").on("input change blur", function () {
+      scheduleRelationFieldSuggestions("left");
+    });
+    $("#rightTable").on("input change blur", function () {
+      scheduleRelationFieldSuggestions("right");
+    });
+    $("#leftField").on("focus", function () {
+      loadRelationFieldSuggestions("left");
+    });
+    $("#rightField,#descriptionField").on("focus", function () {
+      loadRelationFieldSuggestions("right");
+    });
     $("#relationsGrid").on("click", ".edit-relation", function () {
       openRelationEdit(gridRowData("#relationsGrid", this));
     });
@@ -1326,6 +1348,123 @@
     });
   }
 
+  function relationFieldCacheKey(database, table) {
+    return [metadataContextKey(), database || "", table || ""].join("|").toLowerCase();
+  }
+
+  function relationFieldNamesFromResponse(response) {
+    return (response && (response.fields || response.data) || []).map(function (field) {
+      if (field && typeof field === "object") return String(field.name || field.field || "").trim();
+      return String(field || "").trim();
+    }).filter(Boolean);
+  }
+
+  function setRelationFieldSuggestions(selector, fields) {
+    const widget = $(selector).data("kendoAutoComplete");
+    if (widget) {
+      widget.dataSource.data(fields || []);
+      return;
+    }
+    $(selector).data("relationFields", fields || []);
+  }
+
+  function relationFieldNames(table, database) {
+    const deferred = $.Deferred();
+    const normalizedTable = String(table || "").trim();
+    const normalizedDatabase = String(database || "").trim();
+    if (!normalizedTable || !normalizedDatabase || normalizedDatabase === TODOS_DATABASE) {
+      deferred.reject("Informe banco e tabela para carregar campos.");
+      return deferred.promise();
+    }
+
+    const key = relationFieldCacheKey(normalizedDatabase, normalizedTable);
+    if (state.relationFieldCache[key]) {
+      deferred.resolve(state.relationFieldCache[key]);
+      return deferred.promise();
+    }
+
+    getPasoeJson(`/metadata/tables/${encodeURIComponent(normalizedTable)}/fields?database=${encodeURIComponent(normalizedDatabase)}`)
+      .done(function (response) {
+        if (!response || response.success === false) {
+          deferred.reject(apiError(response));
+          return;
+        }
+        const fields = relationFieldNamesFromResponse(response);
+        state.relationFieldCache[key] = fields;
+        deferred.resolve(fields);
+      })
+      .fail(function (xhr) {
+        deferred.reject(ajaxErrorMessage(xhr));
+      });
+
+    return deferred.promise();
+  }
+
+  function loadRelationFieldSuggestions(side) {
+    if (!hasElement("#relationWindow")) return;
+    const database = selectedDatabase();
+    const table = side === "right" ? inputValue("#rightTable") : inputValue("#leftTable");
+    const targets = side === "right" ? ["#rightField", "#descriptionField"] : ["#leftField"];
+    targets.forEach(function (selector) {
+      setRelationFieldSuggestions(selector, []);
+    });
+    if (!database || database === TODOS_DATABASE || !table) {
+      return;
+    }
+
+    setStatus(`Carregando campos de ${database}.${table}...`, "");
+    relationFieldNames(table, database)
+      .done(function (fields) {
+        targets.forEach(function (selector) {
+          setRelationFieldSuggestions(selector, fields);
+        });
+        setStatus(`Campos carregados de ${table}: ${fields.length}.`, "ok");
+      })
+      .fail(function (message) {
+        setStatus(`Falha ao carregar campos de ${table}: ${message}`, "error");
+      });
+  }
+
+  function scheduleRelationFieldSuggestions(side) {
+    window.clearTimeout(relationFieldRefreshTimers[side]);
+    relationFieldRefreshTimers[side] = window.setTimeout(function () {
+      loadRelationFieldSuggestions(side);
+    }, 180);
+  }
+
+  function fieldBelongsToTable(fields, fieldName) {
+    const normalized = String(fieldName || "").trim().toLowerCase();
+    return (fields || []).some(function (field) {
+      return String(field || "").trim().toLowerCase() === normalized;
+    });
+  }
+
+  function validateManualRelationFields(database, leftTable, leftField, rightTable, rightField, descriptionField) {
+    const deferred = $.Deferred();
+
+    $.when(relationFieldNames(leftTable, database), relationFieldNames(rightTable, database))
+      .done(function (leftFields, rightFields) {
+        if (!fieldBelongsToTable(leftFields, leftField)) {
+          deferred.reject(`Campo esquerdo nao pertence a ${leftTable}: ${leftField}`);
+          return;
+        }
+        if (!fieldBelongsToTable(rightFields, rightField)) {
+          deferred.reject(`Campo direito nao pertence a ${rightTable}: ${rightField}`);
+          return;
+        }
+        if (descriptionField && !fieldBelongsToTable(rightFields, descriptionField)) {
+          deferred.reject(`Campo descricao nao pertence a ${rightTable}: ${descriptionField}`);
+          return;
+        }
+        deferred.resolve();
+      })
+      .fail(function (message) {
+        deferred.reject("Nao foi possivel validar campos do join: " + message);
+      });
+
+    return deferred.promise();
+  }
+
   function openRelationCreate() {
     state.editingRelation = null;
     setInputValue("#leftTable", tableValue());
@@ -1338,6 +1477,8 @@
       relationWindow.title("Incluir join");
       relationWindow.center().open();
     }
+    loadRelationFieldSuggestions("left");
+    loadRelationFieldSuggestions("right");
   }
 
   function openRelationEdit(item) {
@@ -1356,6 +1497,8 @@
       relationWindow.title("Alterar join");
       relationWindow.center().open();
     }
+    loadRelationFieldSuggestions("left");
+    loadRelationFieldSuggestions("right");
   }
 
   function saveManualRelation() {
@@ -1367,6 +1510,10 @@
     const descriptionField = inputValue("#descriptionField");
     if (!leftTable || !rightTable || !leftField || !rightField) {
       setStatus("Informe tabelas e campos do join.", "error");
+      return;
+    }
+    if (!database || database === TODOS_DATABASE) {
+      setStatus("Selecione um banco especifico para validar o join.", "error");
       return;
     }
     const relation = {
@@ -1382,28 +1529,36 @@
       source: "manual",
       fields: [{ leftField, rightField }]
     };
-    withGridLoading("#relationsGrid", $.ajax({
-      url: "relation-store.php",
-      method: "POST",
-      contentType: "application/json; charset=utf-8",
-      dataType: "json",
-      data: JSON.stringify(Object.assign(scope(leftTable, database), {
-        source: "manual",
-        replaceId: state.editingRelation && state.editingRelation.id ? state.editingRelation.id : "",
-        relations: [relation]
-      }))
-    })).done(function (response) {
-      if (!response || response.success === false) {
-        setStatus("Falha ao salvar join: " + apiError(response), "error");
-        return;
-      }
-      state.editingRelation = null;
-      if (relationWindow) relationWindow.close();
-      setStatus("Join salvo.", "ok");
-      loadRelationsRows(tableValue() || leftTable);
-    }).fail(function (xhr) {
-      setStatus("Falha ao salvar join: " + ajaxErrorMessage(xhr), "error");
-    });
+
+    setStatus("Validando campos do join...", "");
+    validateManualRelationFields(database, leftTable, leftField, rightTable, rightField, descriptionField)
+      .done(function () {
+        withGridLoading("#relationsGrid", $.ajax({
+          url: "relation-store.php",
+          method: "POST",
+          contentType: "application/json; charset=utf-8",
+          dataType: "json",
+          data: JSON.stringify(Object.assign(scope(leftTable, database), {
+            source: "manual",
+            replaceId: state.editingRelation && state.editingRelation.id ? state.editingRelation.id : "",
+            relations: [relation]
+          }))
+        })).done(function (response) {
+          if (!response || response.success === false) {
+            setStatus("Falha ao salvar join: " + apiError(response), "error");
+            return;
+          }
+          state.editingRelation = null;
+          if (relationWindow) relationWindow.close();
+          setStatus("Join salvo.", "ok");
+          loadRelationsRows(tableValue() || leftTable);
+        }).fail(function (xhr) {
+          setStatus("Falha ao salvar join: " + ajaxErrorMessage(xhr), "error");
+        });
+      })
+      .fail(function (message) {
+        setStatus(message, "error");
+      });
   }
 
   function deleteRelationRow(item) {
