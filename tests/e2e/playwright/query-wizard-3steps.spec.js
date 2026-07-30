@@ -388,6 +388,49 @@ test('query wizard adds an index filter when Add is clicked', async ({ page }) =
   await expect(page.locator('#footerStatus')).toContainText('Filtro adicionado');
 });
 
+test('query wizard preserves the selected index filter operator', async ({ page }) => {
+  await page.addInitScript((payload) => {
+    localStorage.clear();
+    localStorage.setItem('sursumContextV4', JSON.stringify(payload.data));
+  }, contextPayload());
+  await page.route('**/context-store.php', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json; charset=utf-8',
+      body: JSON.stringify(contextPayload())
+    });
+  });
+
+  await page.goto('/query-wizard-3steps.html');
+  await expect.poll(async () => page.evaluate(() => {
+    const combo = window.$('#databaseCombo').data('kendoComboBox');
+    return combo ? combo.dataSource.data().map((item) => item.name) : [];
+  })).toContain('DICTDB');
+  await page.evaluate(() => {
+    const combo = window.$('#databaseCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+  });
+  await page.locator('#openTableSearch').click();
+  await expect(page.locator('#tableSearchGrid')).toContainText('Customer');
+  await page.locator('#tableSearchGrid tbody tr').filter({ hasText: 'Customer' }).dblclick();
+
+  const firstFilter = page.locator('#indexFilterTabs .index-filter-item').first();
+  await expect(firstFilter.locator('.index-filter-operator.k-dropdownlist')).toBeVisible();
+  await firstFilter.locator('input.index-filter-value').fill('10');
+  await firstFilter.evaluate((row) => {
+    const operator = window.$(row).data('operatorWidget');
+    operator.value('>');
+    operator.trigger('change');
+  });
+  await firstFilter.locator('.add-index-filter').click();
+
+  await expect(page.locator('#filtersGrid')).toContainText('>');
+  await expect.poll(async () => page.evaluate(() => {
+    return window.$('#filtersGrid').data('kendoGrid').dataSource.data().map((item) => item.operator);
+  })).toContain('>');
+});
+
 test('query wizard adds integer index filter for espec pp-container nr-container', async ({ page }) => {
   await page.addInitScript((payload) => {
     localStorage.clear();

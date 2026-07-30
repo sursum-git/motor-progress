@@ -1402,8 +1402,10 @@
   }
 
   function readFilterOperator($row) {
-    const operatorWidget = $row.find(".index-filter-operator").data("kendoDropDownList");
-    const direct = operatorWidget && operatorWidget.value() ? operatorWidget.value() : String($row.find(".index-filter-operator").val() || "").trim();
+    const operatorWidget = $row.data("operatorWidget")
+      || $row.find("input.index-filter-operator").data("kendoDropDownList")
+      || $row.find(".index-filter-operator").data("kendoDropDownList");
+    const direct = operatorWidget && operatorWidget.value() ? operatorWidget.value() : String($row.find("input.index-filter-operator").val() || $row.find(".index-filter-operator").val() || "").trim();
     return direct || TAB_OPS[0].value;
   }
 
@@ -2150,6 +2152,7 @@
         });
       }
       const operator = operatorInput.data("kendoDropDownList");
+      row.data("operatorWidget", operator);
       configureFilterOperator(operator, fieldMeta);
       if (operator) {
         operator.unbind("change");
