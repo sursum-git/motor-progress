@@ -151,13 +151,25 @@ function normalizeJsonBodyUtf8(string $body): string
         return $body;
     }
 
-    $converted = @mb_convert_encoding($body, 'UTF-8', 'Windows-1252,ISO-8859-1');
-    if (is_string($converted) && $converted !== '' && mb_check_encoding($converted, 'UTF-8')) {
-        return $converted;
+    $sourceEncodings = preg_match('/[\x80-\x9F]/', $body)
+        ? ['CP850', 'Windows-1252', 'ISO-8859-1']
+        : ['Windows-1252', 'ISO-8859-1', 'CP850'];
+
+    foreach ($sourceEncodings as $encoding) {
+        $converted = @mb_convert_encoding($body, 'UTF-8', $encoding);
+        if (is_string($converted) && $converted !== '' && mb_check_encoding($converted, 'UTF-8')) {
+            return $converted;
+        }
     }
 
-    $converted = @iconv('Windows-1252', 'UTF-8//IGNORE', $body);
-    return is_string($converted) && $converted !== '' ? $converted : $body;
+    foreach ($sourceEncodings as $encoding) {
+        $converted = @iconv($encoding, 'UTF-8//IGNORE', $body);
+        if (is_string($converted) && $converted !== '') {
+            return $converted;
+        }
+    }
+
+    return $body;
 }
 
 function jsonContentTypeUtf8(string $contentType): string
