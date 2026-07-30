@@ -29,11 +29,16 @@
     browseFilters: [],
     browseEditingFilterId: "",
     browseDataMaximized: false,
-    browseColumnSignature: ""
+    browseColumnSignature: "",
+    browseFieldOptions: [],
+    browseSelectedFields: [],
+    fieldOptionLookup: {}
   };
   let addCompanyWindow = null;
   let addCompanyValidator = null;
   let browseFilterWindow = null;
+  let browseFieldsWindow = null;
+  let recordWindow = null;
   let endpointFileHandle = null;
   let uiReady = false;
 
@@ -256,12 +261,6 @@
       dataValueField: "value",
       value: "ASC"
     });
-    $("#browseFields").kendoMultiSelect({
-      dataTextField: "text",
-      dataValueField: "value",
-      autoClose: false,
-      placeholder: "Campos padrão"
-    });
     $("#browseFirstBtn").on("click", function () {
       loadBrowsePage(false);
     });
@@ -270,10 +269,63 @@
     });
     $("#browseInvertBtn").on("click", invertBrowseDirection);
     $("#openBrowseFilterBtn").on("click", openBrowseFilterWindow);
+    $("#openBrowseFieldsBtn").on("click", openBrowseFieldsWindow);
     $("#toggleDataMaximizeBtn").on("click", toggleBrowseDataMaximized);
     $(window).on("resize", resizeBrowseDataGrid);
     initBrowseFilterWindow();
+    initBrowseFieldsWindow();
+    initBrowseRecordWindow();
     updateBrowseState();
+  }
+
+  function initBrowseRecordWindow() {
+    recordWindow = $("#recordWindow").kendoWindow({
+      title: "Registro da tabela",
+      modal: true,
+      visible: false,
+      actions: ["Close"]
+    }).data("kendoWindow");
+
+    $("#dataGrid").on("dblclick", "tbody tr", function () {
+      const grid = $("#dataGrid").data("kendoGrid");
+      const row = grid ? grid.dataItem(this) : null;
+      if (!row) return;
+      openBrowseRecordWindow(row);
+    });
+
+    $("#closeRecord").on("click", function () {
+      if (recordWindow) recordWindow.close();
+    });
+  }
+
+  function initBrowseFieldsWindow() {
+    browseFieldsWindow = $("#browseFieldsWindow").kendoWindow({
+      title: "Campos exibidos",
+      modal: true,
+      visible: false,
+      actions: ["Close"],
+      open: renderBrowseFieldDualSelect
+    }).data("kendoWindow");
+
+    $("#addBrowseFieldsBtn").on("click", function () {
+      moveBrowseFieldSelection("#availableBrowseFields", true);
+    });
+    $("#removeBrowseFieldsBtn").on("click", function () {
+      moveBrowseFieldSelection("#selectedBrowseFields", false);
+    });
+    $("#addAllBrowseFieldsBtn").on("click", function () {
+      setBrowseSelectedFields(state.browseFieldOptions.map((item) => item.value));
+    });
+    $("#removeAllBrowseFieldsBtn").on("click", function () {
+      setBrowseSelectedFields([]);
+    });
+    $("#applyBrowseFieldsBtn").on("click", function () {
+      if (browseFieldsWindow) browseFieldsWindow.close();
+      setStatus(`Campos exibidos: ${state.browseSelectedFields.length}.`, "ok");
+    });
+    $("#cancelBrowseFieldsBtn").on("click", function () {
+      if (browseFieldsWindow) browseFieldsWindow.close();
+    });
   }
 
   function initBrowseFilterWindow() {
@@ -1204,6 +1256,7 @@
         loadViewAsOverrides(table, state.currentDatabase)
           .then(function (overrides) {
             state.fields = applyViewAsOverrides(baseFields, overrides);
+            state.fieldOptionLookup = window.SursumViewAsOptions.buildNumericOptionLookup(state.fields);
             renderFieldGrid();
             renderIndexGrid();
             refreshBrowseFieldSelector();
@@ -1245,12 +1298,23 @@
     const byField = {};
     (Array.isArray(overrides) ? overrides : []).forEach(function (row) {
       const field = String(row.field || row.name || "").toLowerCase();
-      if (field) byField[field] = row.viewAs || row.view_as || "";
+      if (field) byField[field] = row;
     });
-    return (fields || []).map(function (field) {
+    return (fields || []).map(function (field, index) {
       const key = String(field.name || "").toLowerCase();
-      if (!Object.prototype.hasOwnProperty.call(byField, key)) return field;
-      return Object.assign({}, field, { viewAs: byField[key], viewAS: byField[key], view_as: byField[key] });
+      if (!Object.prototype.hasOwnProperty.call(byField, key)) {
+        return Object.assign({}, field, { __seq: index });
+      }
+      const override = byField[key] || {};
+      const viewAs = override.viewAs || override.view_as || field.viewAs || field.viewAS || field.view_as || "";
+      return Object.assign({}, field, {
+        __seq: index,
+        viewAs,
+        viewAS: viewAs,
+        view_as: viewAs,
+        listExpression: override.listExpression || field.listExpression || "",
+        options: Array.isArray(override.options) && override.options.length ? override.options : (field.options || [])
+      });
     });
   }
 
@@ -1699,9 +1763,6 @@
   }
 
   function refreshBrowseFieldSelector() {
-    const multi = $("#browseFields").data("kendoMultiSelect");
-    if (!multi) return;
-
     const options = [];
     (state.fields || []).forEach((field) => {
       const name = field.name || "";
@@ -1722,14 +1783,67 @@
       });
     });
 
-    multi.setDataSource(new kendo.data.DataSource({ data: options }));
-    multi.value(options.slice(0, 12).map((item) => item.value));
+    state.browseFieldOptions = options;
+    state.browseSelectedFields = options.slice(0, 12).map((item) => item.value);
+    renderBrowseFieldDualSelect();
   }
 
   function selectedBrowseFields() {
-    const multi = $("#browseFields").data("kendoMultiSelect");
-    const values = multi ? multi.value() : [];
-    return Array.isArray(values) ? values : [];
+    return state.browseSelectedFields.slice();
+  }
+
+  function openBrowseFieldsWindow() {
+    if (!state.currentTable || !state.currentDatabase) {
+      setStatus("Carregue uma tabela antes de selecionar campos.", "error");
+      return;
+    }
+    renderBrowseFieldDualSelect();
+    if (browseFieldsWindow) {
+      browseFieldsWindow.setOptions({
+        width: Math.min($(window).width() - 32, 900),
+        height: Math.min($(window).height() - 32, 620)
+      });
+      browseFieldsWindow.center().open();
+    }
+  }
+
+  function renderBrowseFieldDualSelect() {
+    const selected = new Set(state.browseSelectedFields || []);
+    const available = (state.browseFieldOptions || []).filter((item) => !selected.has(item.value));
+    const selectedOptions = (state.browseFieldOptions || []).filter((item) => selected.has(item.value));
+    fillSelectOptions("#availableBrowseFields", available);
+    fillSelectOptions("#selectedBrowseFields", selectedOptions);
+  }
+
+  function fillSelectOptions(selector, options) {
+    const select = $(selector);
+    if (!select.length) return;
+    select.empty();
+    options.forEach((item) => {
+      $("<option>").val(item.value).text(item.text).appendTo(select);
+    });
+  }
+
+  function moveBrowseFieldSelection(selector, add) {
+    const values = $(selector).find("option:selected").map(function () {
+      return this.value;
+    }).get();
+    if (!values.length) return;
+    const current = new Set(state.browseSelectedFields || []);
+    values.forEach((value) => {
+      if (add) {
+        current.add(value);
+      } else {
+        current.delete(value);
+      }
+    });
+    setBrowseSelectedFields(Array.from(current));
+  }
+
+  function setBrowseSelectedFields(values) {
+    const allowed = new Set((state.browseFieldOptions || []).map((item) => item.value));
+    state.browseSelectedFields = (values || []).filter((value) => allowed.has(value));
+    renderBrowseFieldDualSelect();
   }
 
   function browsePageSize() {
@@ -1830,6 +1944,7 @@
       ? response.fields.filter((item) => item && item.name)
       : Object.keys(rows[0] || {});
     const fields = fieldDefs.map((item) => typeof item === "string" ? item : item.name);
+    const fieldMetaByName = browseFieldMetaByName(fieldDefs);
     const fieldTypes = fieldDefs.reduce((acc, item) => {
       if (item && typeof item === "object" && item.name) {
         acc[item.name] = String(item.type || "").toLowerCase();
@@ -1837,7 +1952,7 @@
       return acc;
     }, {});
     const formattedRows = rows.map((row) => formatBrowseRow(row, fieldTypes));
-    const columns = fields.map((field) => browseColumn(field, fieldTypes[field]));
+    const columns = fields.map((field) => browseColumn(field, fieldTypes[field], fieldMetaByName[field]));
     const columnSignature = fields.map((field) => `${field}:${fieldTypes[field] || ""}`).join("|");
     const nextRows = appendRows
       ? currentBrowseGridRows(grid).concat(formattedRows)
@@ -1882,7 +1997,23 @@
     return out;
   }
 
-  function browseColumn(field, type) {
+  function browseFieldMetaByName(fieldDefs) {
+    const byName = {};
+    (state.fields || []).forEach(function (field) {
+      if (field && field.name) {
+        byName[field.name] = field;
+      }
+    });
+    (fieldDefs || []).forEach(function (field) {
+      if (!field || typeof field !== "object" || !field.name) return;
+      byName[field.name] = Object.assign({}, byName[field.name] || {}, field, {
+        options: byName[field.name] && byName[field.name].options ? byName[field.name].options : field.options
+      });
+    });
+    return byName;
+  }
+
+  function browseColumn(field, type, fieldMeta) {
     const column = { field, title: field, width: 160 };
     if (type === "date") {
       column.format = "{0:dd/MM/yyyy}";
@@ -1890,7 +2021,107 @@
       column.format = "{0:dd/MM/yyyy HH:mm:ss}";
       column.width = 190;
     }
+    if (fieldMeta && (window.SursumViewAsOptions.hasOptions(fieldMeta) || window.SursumViewAsOptions.isLogicalField(fieldMeta))) {
+      column.template = function (dataItem) {
+        return window.SursumViewAsOptions.displayFieldValue(fieldMeta, dataItem ? dataItem[field] : "", state.fieldOptionLookup);
+      };
+    }
     return column;
+  }
+
+  function openBrowseRecordWindow(row) {
+    const container = $("#recordForm");
+    const rowData = row && typeof row.toJSON === "function" ? row.toJSON() : Object.assign({}, row || {});
+
+    if (!window.SursumRecordFormRenderer || typeof SursumRecordFormRenderer.render !== "function") {
+      container.empty().append("<div class='status-box error'>Renderizador de formulario indisponivel.</div>");
+    } else {
+      SursumRecordFormRenderer.render({
+        container,
+        row: rowData,
+        fields: state.fields,
+        joinOptionsByField: {},
+        formatValue: browseRecordDisplayValue,
+        createJoinButton: function () { return null; },
+        applyWidget: applyBrowseRecordFieldWidget,
+        isLongTextField: isBrowseLongTextField
+      });
+    }
+
+    $("#recordInfo").text("Tabela: " + state.currentDatabase + "." + state.currentTable);
+    if (recordWindow) {
+      recordWindow.setOptions({
+        width: Math.min($(window).width() - 32, 980),
+        height: Math.min($(window).height() - 32, 720)
+      });
+      recordWindow.center().open();
+    }
+  }
+
+  function browseRecordDisplayValue(fieldMeta, value) {
+    const type = String((fieldMeta && (fieldMeta.type || fieldMeta.fieldType || fieldMeta.dataType)) || "").toLowerCase();
+    if (value instanceof Date && !isNaN(value.getTime())) {
+      if (type === "datetime" || type === "datetime-tz") {
+        return kendo.toString(value, "dd/MM/yyyy HH:mm:ss");
+      }
+      return kendo.toString(value, "dd/MM/yyyy");
+    }
+    return window.SursumViewAsOptions.describeFieldValue(fieldMeta, value, state.fieldOptionLookup);
+  }
+
+  function normalizeBrowseRecordDate(raw) {
+    if (raw === null || raw === undefined || raw === "") return null;
+    if (raw instanceof Date) return isNaN(raw.getTime()) ? null : raw;
+    const value = String(raw).trim();
+    if (!value) return null;
+    const asDate = new Date(value);
+    return isNaN(asDate.getTime()) ? null : asDate;
+  }
+
+  function applyBrowseRecordFieldWidget(input, fieldMeta, forceText) {
+    if (!input || !input.length) return;
+    const type = String((fieldMeta && (fieldMeta.type || fieldMeta.fieldType || fieldMeta.dataType)) || "").toLowerCase();
+    const rawValue = input.val();
+    const isDate = /(^|[_-]|\.)(date|datetime|timestamp|time)/.test(type);
+    const isNumeric = /(integer|int64|int|decimal|numeric|number|float|double|amount|currency|money|packed)/.test(type);
+
+    if (isDate && typeof input.kendoDatePicker === "function") {
+      const date = normalizeBrowseRecordDate(rawValue);
+      input.val("");
+      input.kendoDatePicker({
+        value: date,
+        format: "dd/MM/yyyy",
+        parseFormats: ["yyyy-MM-dd", "dd/MM/yyyy", "yyyy-MM-ddTHH:mm:ss", "yyyy/MM/dd"]
+      });
+      const widget = input.data("kendoDatePicker");
+      if (widget) widget.readonly(true);
+      return;
+    }
+
+    if (!forceText && isNumeric && typeof input.kendoNumericTextBox === "function") {
+      const decimal = /decimal|numeric|float|double|amount|currency|money/.test(type);
+      const value = Number(String(rawValue).replace(",", "."));
+      input.kendoNumericTextBox({
+        value: Number.isFinite(value) ? value : null,
+        decimals: decimal ? 2 : 0,
+        spinners: false,
+        format: decimal ? "n2" : "n0"
+      });
+      const widget = input.data("kendoNumericTextBox");
+      if (widget) widget.readonly(true);
+      return;
+    }
+
+    if (!input.data("kendoTextBox")) {
+      input.kendoTextBox();
+    }
+    const textWidget = input.data("kendoTextBox");
+    if (textWidget) textWidget.readonly(true);
+  }
+
+  function isBrowseLongTextField(meta, value) {
+    const type = String((meta && (meta.type || meta.fieldType || meta.dataType)) || "").toLowerCase();
+    return /longchar|text|clob/.test(type) || String(value || "").length > 180;
   }
 
   function parseBrowseDateValue(value, type) {
@@ -2031,6 +2262,7 @@
     state.fields = [];
     state.indexes = [];
     state.joins = [];
+    state.fieldOptionLookup = {};
     state.browseCursor = null;
     state.browseHasMore = false;
     state.browseFilters = [];

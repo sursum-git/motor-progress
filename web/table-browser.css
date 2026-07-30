@@ -75,7 +75,7 @@
 
 .browse-toolbar {
   display: grid;
-  grid-template-columns: 130px 150px 150px minmax(260px, 1fr) auto;
+  grid-template-columns: 130px 150px 150px auto;
   gap: 12px;
   align-items: end;
   margin-bottom: 12px;
@@ -117,10 +117,6 @@ body.browse-data-maximized {
   margin-bottom: 10px;
 }
 
-.browse-field-select {
-  min-width: 0;
-}
-
 .browse-actions {
   margin: 0;
   justify-content: flex-end;
@@ -153,6 +149,129 @@ body.browse-data-maximized {
   overflow: hidden;
 }
 
+.browse-fields-dual-select {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 64px minmax(220px, 1fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.browse-fields-dual-select select {
+  width: 100%;
+  min-height: 360px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+}
+
+.browse-fields-transfer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+}
+
+.browse-fields-transfer .k-button,
+.browse-fields-transfer button {
+  width: 48px;
+}
+
+.browse-fields-actions {
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+#browseFieldsWindow {
+  overflow: hidden;
+}
+
+.record-header {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr);
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 12px;
+}
+
+.record-form-grid,
+.record-form-tabs {
+  max-height: calc(92vh - 190px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.record-form-tab-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.record-form-tab {
+  border: 1px solid #c8d3df;
+  background: #f5f8fb;
+  color: #263645;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.record-form-tab.active {
+  background: #1f5a93;
+  border-color: #1f5a93;
+  color: #fff;
+}
+
+.record-form-panel {
+  display: none;
+}
+
+.record-form-panel.active {
+  display: block;
+}
+
+.record-form-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 10px;
+}
+
+.record-field {
+  padding: 10px;
+  border: 1px solid #d9e0e7;
+  border-radius: 6px;
+  background: #fbfcfd;
+}
+
+.record-field.full-row {
+  grid-column: 1 / -1;
+}
+
+.record-field-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.record-field-title-row label {
+  font-weight: 600;
+}
+
+.record-field-input {
+  width: 100%;
+}
+
+.browse-record-actions {
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+#recordWindow {
+  overflow: hidden;
+}
+
 @media (max-width: 900px) {
   .table-browser-toolbar,
   .table-browser-search-card {
@@ -163,7 +282,6 @@ body.browse-data-maximized {
     grid-template-columns: 1fr 1fr;
   }
 
-  .browse-field-select,
   .browse-actions {
     grid-column: 1 / -1;
   }
@@ -179,6 +297,19 @@ body.browse-data-maximized {
   }
 
   .browse-filter-editor {
+    grid-template-columns: 1fr;
+  }
+
+  .browse-fields-dual-select {
+    grid-template-columns: 1fr;
+  }
+
+  .browse-fields-dual-select select {
+    min-height: 180px;
+  }
+
+  .record-header,
+  .record-form-fields {
     grid-template-columns: 1fr;
   }
 

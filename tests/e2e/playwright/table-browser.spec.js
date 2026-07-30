@@ -164,6 +164,136 @@ test('table browser data tab keeps rows when order is inverted and formats dates
   expect(browseRequests.map((item) => item.body.direction)).toEqual(['ASC', 'DESC']);
 });
 
+test('table browser data tab selects displayed fields in dual select window', async ({ page, request }) => {
+  await page.goto('/table-browser.html');
+  await page.locator('#tableName').fill('Customer');
+  await page.locator('#findTableBtn').click();
+  await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
+
+  await page.locator('#metadataTabs li').filter({ hasText: 'Dados' }).click();
+  await expect(page.locator('label[for="browseFields"]')).toHaveCount(0);
+  await expect(page.locator('#browseFields')).toHaveCount(0);
+
+  await page.locator('#openBrowseFieldsBtn').click();
+  await expect(page.locator('.k-window-title').filter({ hasText: 'Campos exibidos' })).toBeVisible();
+  await expect(page.locator('#selectedBrowseFields')).toContainText('CustNum');
+  await expect(page.locator('#selectedBrowseFields')).toContainText('Name');
+
+  await page.locator('#selectedBrowseFields').selectOption('CustNum');
+  await page.locator('#removeBrowseFieldsBtn').click();
+  await expect(page.locator('#availableBrowseFields')).toContainText('CustNum');
+  await expect(page.locator('#selectedBrowseFields')).not.toContainText('CustNum');
+
+  await page.locator('#availableBrowseFields').selectOption('CustNum');
+  await page.locator('#addBrowseFieldsBtn').click();
+  await expect(page.locator('#selectedBrowseFields')).toContainText('CustNum');
+
+  await page.locator('#applyBrowseFieldsBtn').click();
+  await page.locator('#browseFirstBtn').click();
+
+  const payload = await (await request.get('/__requests')).json();
+  const browseRequest = payload.requests.find((item) => item.path.endsWith('/table-browse'));
+  expect(browseRequest.body.fields).toContain('CustNum');
+  expect(browseRequest.body.fields).toContain('Name');
+});
+
+test('table browser data tab displays numeric values with view-as option labels', async ({ page }) => {
+  await page.route(/\/table-browse(\?|$)/, async (route) => {
+    const body = route.request().postDataJSON();
+    await route.fulfill({
+      json: {
+        success: true,
+        database: body.database || 'espec',
+        table: body.table || 'pp-container',
+        direction: body.direction || 'ASC',
+        pageSize: body.pageSize || 50,
+        recordsReturned: 1,
+        hasMore: false,
+        keyFields: [{ name: 'nr-container', type: 'integer', ascending: true }],
+        fields: [
+          { name: 'nr-container', type: 'integer' },
+          { name: 'nr-pedido', type: 'integer' },
+          { name: 'descricao', type: 'character' }
+        ],
+        data: [{ 'nr-container': 1650, 'nr-pedido': 7788, descricao: 'Container E2E' }],
+        nextCursor: { 'nr-container': 1650 },
+        strategy: 'KEYSET_CURSOR'
+      }
+    });
+  });
+
+  await page.goto('/table-browser.html');
+  await page.evaluate(() => {
+    const combo = $("#dbCombo").data("kendoComboBox");
+    combo.value("espec");
+    combo.trigger("change");
+  });
+  await page.locator('#tableName').fill('pp-container');
+  await page.locator('#findTableBtn').click();
+  await expect(page.locator('#fieldsGrid')).toContainText('nr-pedido');
+
+  await page.locator('#metadataTabs li').filter({ hasText: 'Dados' }).click();
+  await page.locator('#browseFirstBtn').click();
+
+  await expect(page.locator('#dataGrid')).toContainText('7788 - Pedido exportacao');
+});
+
+test('table browser data tab opens record form on row double click', async ({ page }) => {
+  await page.route(/\/table-browse(\?|$)/, async (route) => {
+    const body = route.request().postDataJSON();
+    await route.fulfill({
+      json: {
+        success: true,
+        database: body.database || 'espec',
+        table: body.table || 'pp-container',
+        direction: body.direction || 'ASC',
+        pageSize: body.pageSize || 50,
+        recordsReturned: 1,
+        hasMore: false,
+        keyFields: [{ name: 'nr-container', type: 'integer', ascending: true }],
+        fields: [
+          { name: 'nr-container', type: 'integer' },
+          { name: 'nr-pedido', type: 'integer' },
+          { name: 'ativo', type: 'logical' },
+          { name: 'descricao', type: 'character' }
+        ],
+        data: [{ 'nr-container': 1650, 'nr-pedido': 7788, ativo: 'yes', descricao: 'Container E2E' }],
+        nextCursor: { 'nr-container': 1650 },
+        strategy: 'KEYSET_CURSOR'
+      }
+    });
+  });
+
+  await page.goto('/table-browser.html');
+  await page.evaluate(() => {
+    const combo = $("#dbCombo").data("kendoComboBox");
+    combo.value("espec");
+    combo.trigger("change");
+  });
+  await page.locator('#tableName').fill('pp-container');
+  await page.locator('#findTableBtn').click();
+  await expect(page.locator('#fieldsGrid')).toContainText('nr-pedido');
+
+  await page.locator('#metadataTabs li').filter({ hasText: 'Dados' }).click();
+  await page.locator('#browseFirstBtn').click();
+  await expect(page.locator('#dataGrid')).toContainText('Container E2E');
+  await page.locator('#dataGrid tbody tr').first().dblclick();
+
+  await expect(page.locator('.k-window-title').filter({ hasText: 'Registro da tabela' })).toBeVisible();
+  await expect(page.locator('#recordInfo')).toContainText('espec.pp-container');
+  await expect(page.locator('#recordForm')).toContainText('Chave primaria');
+  await expect.poll(async () => page.evaluate(() => {
+    return Array.from(document.querySelectorAll('#recordForm input'))
+      .map((input) => input.value)
+      .filter(Boolean);
+  })).toEqual(expect.arrayContaining([
+    '1.650',
+    '7788 - Pedido exportacao',
+    'Sim',
+    'Container E2E'
+  ]));
+});
+
 test('table browser data tab appends more records and moves to last grid page', async ({ page }) => {
   const requestedPageSizes = [];
   await page.route(/\/table-browse(\?|$)/, async (route) => {

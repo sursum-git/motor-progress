@@ -1,0 +1,5 @@
+{
+  "programs": {
+    "echo-json": "sursum-api/programs/EchoJsonProgram.p"
+  }
+}

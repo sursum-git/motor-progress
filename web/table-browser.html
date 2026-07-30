@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
   <link rel="stylesheet" href="ui-ready.css?v=20260617-grid-center">
   <link rel="stylesheet" href="query-builder.css?v=20260612-table-browser-toolbar">
-  <link rel="stylesheet" href="table-browser.css?v=20260729-grid-page-size">
+  <link rel="stylesheet" href="table-browser.css?v=20260730-record-form">
 </head>
 <body class="sursum-ui-pending">
   <div class="shell">
@@ -99,11 +99,8 @@
                   <label for="browseDirection">Ordem</label>
                   <input id="browseDirection">
                 </div>
-                <div class="endpoint-field browse-field-select">
-                  <label for="browseFields">Campos exibidos</label>
-                  <select id="browseFields" multiple></select>
-                </div>
                 <div class="action-row tight browse-actions">
+                  <button id="openBrowseFieldsBtn">Campos exibidos</button>
                   <button id="openBrowseFilterBtn">Abrir filtros</button>
                   <button id="browseFirstBtn">Carregar primeiros</button>
                   <button id="browseNextBtn">Carregar mais registros</button>
@@ -161,6 +158,42 @@
     <div id="browseFilterGrid"></div>
   </div>
 
+  <div id="browseFieldsWindow" style="display:none">
+    <div class="browse-fields-dual-select">
+      <div class="endpoint-field">
+        <label for="availableBrowseFields">Disponíveis</label>
+        <select id="availableBrowseFields" multiple size="18"></select>
+      </div>
+      <div class="browse-fields-transfer">
+        <button id="addBrowseFieldsBtn" type="button">&gt;</button>
+        <button id="removeBrowseFieldsBtn" type="button">&lt;</button>
+        <button id="addAllBrowseFieldsBtn" type="button">&gt;&gt;</button>
+        <button id="removeAllBrowseFieldsBtn" type="button">&lt;&lt;</button>
+      </div>
+      <div class="endpoint-field">
+        <label for="selectedBrowseFields">Selecionados</label>
+        <select id="selectedBrowseFields" multiple size="18"></select>
+      </div>
+    </div>
+    <div class="action-row tight browse-fields-actions">
+      <button id="applyBrowseFieldsBtn" type="button">Aplicar</button>
+      <button id="cancelBrowseFieldsBtn" type="button">Cancelar</button>
+    </div>
+  </div>
+
+  <div id="recordWindow" style="display:none">
+    <div class="record-header">
+      <div>
+        <h3>Registro da tabela</h3>
+        <div id="recordInfo"></div>
+      </div>
+    </div>
+    <div id="recordForm" class="record-form-grid"></div>
+    <div class="action-row tight browse-record-actions">
+      <button id="closeRecord" type="button">Fechar</button>
+    </div>
+  </div>
+
   <div id="addCompanyWindow" style="display:none">
     <form id="addCompanyForm">
       <div class="endpoint-field">
@@ -195,6 +228,8 @@
   <script src="auth-guard.js"></script>
 
   <script src="context-manager.js"></script>
-  <script src="table-browser.js?v=20260729-unlimited-new-records"></script>
+  <script src="view-as-options-utils.js?v=20260729-shared-view-as-options"></script>
+  <script src="record-form-renderer.js?v=20260729-record-form"></script>
+  <script src="table-browser.js?v=20260730-record-form"></script>
 </body>
 </html>

@@ -5,6 +5,7 @@ URLs esperadas:
   POST /web/SursumDynamicQuery/query
   POST /web/SursumDynamicQuery/query-store
   POST /web/SursumDynamicQuery/table-browse
+  POST /web/SursumDynamicQuery/program/execute
   GET  /web/SursumDynamicQuery/jobs/{jobId}
   GET  /web/SursumDynamicQuery/jobs/{jobId}/result
   POST /web/SursumDynamicQuery/jobs/drain
@@ -64,6 +65,9 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                     END.
                     ELSE IF cPath MATCHES "*/table-browse" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleTableBrowse(cBody).
+                    END.
+                    ELSE IF cPath MATCHES "*/program/execute" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleProgramExecute(cBody).
                     END.
                     ELSE IF cPath MATCHES "*/metadata/view-as/resolve" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleResolveViewAs(cBody).
@@ -294,6 +298,118 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN joRet.
     END METHOD.
 
+    METHOD PRIVATE JsonObject handleProgramExecute(INPUT pcBody AS LONGCHAR):
+        DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joParams AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cProgramCode AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cProgramPath AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cRunPath AS CHARACTER NO-UNDO.
+
+        IF pcBody = "" OR pcBody = ? THEN
+            RETURN THIS-OBJECT:buildError("EMPTY_BODY", "Body JSON obrigatorio", "POST /program/execute").
+
+        ASSIGN joBody = THIS-OBJECT:parseJsonObject(pcBody) NO-ERROR.
+        IF NOT VALID-OBJECT(joBody) THEN
+            RETURN THIS-OBJECT:buildError("INVALID_JSON", "JSON de execucao de programa invalido", "").
+
+        ASSIGN cProgramCode = THIS-OBJECT:getJsonChar(joBody, "program").
+        IF NOT THIS-OBJECT:isProgramCode(cProgramCode) THEN
+            RETURN THIS-OBJECT:buildError("INVALID_PROGRAM_CODE", "Codigo de programa invalido", cProgramCode).
+
+        ASSIGN cProgramPath = THIS-OBJECT:getConfiguredProgramPath(cProgramCode).
+        IF cProgramPath = "" THEN
+            RETURN THIS-OBJECT:buildError("PROGRAM_NOT_ALLOWED", "Programa nao cadastrado para execucao", cProgramCode).
+        IF NOT THIS-OBJECT:isAllowedProgramPath(cProgramPath) THEN
+            RETURN THIS-OBJECT:buildError("INVALID_PROGRAM_PATH", "Caminho de programa invalido no catalogo", cProgramCode + "=" + cProgramPath).
+
+        ASSIGN cRunPath = THIS-OBJECT:resolveProgramRunPath(cProgramPath).
+        IF cRunPath = "" THEN
+            RETURN THIS-OBJECT:buildError("PROGRAM_NOT_FOUND", "Programa cadastrado nao encontrado no PROPATH", cProgramCode + "=" + cProgramPath).
+
+        IF joBody:Has("parameters") AND NOT joBody:IsNull("parameters") THEN DO:
+            ASSIGN joParams = joBody:GetJsonObject("parameters") NO-ERROR.
+            IF NOT VALID-OBJECT(joParams) THEN
+                RETURN THIS-OBJECT:buildError("INVALID_PARAMETERS", "Campo parameters deve ser um objeto JSON", cProgramCode).
+        END.
+        ELSE
+            ASSIGN joParams = NEW JsonObject().
+
+        RUN VALUE(cRunPath) (INPUT joParams, OUTPUT joRet) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN
+            RETURN THIS-OBJECT:buildError("PROGRAM_EXECUTION_ERROR", "Erro ao executar programa Progress", ERROR-STATUS:GET-MESSAGE(1)).
+
+        IF NOT VALID-OBJECT(joRet) THEN
+            RETURN THIS-OBJECT:buildError("PROGRAM_EMPTY_RESPONSE", "Programa nao retornou JsonObject", cProgramCode).
+
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getConfiguredProgramPath(INPUT pcProgramCode AS CHARACTER):
+        DEFINE VARIABLE joConfig AS JsonObject NO-UNDO.
+        DEFINE VARIABLE joPrograms AS JsonObject NO-UNDO.
+
+        ASSIGN joConfig = THIS-OBJECT:readProgramExecutorConfig().
+        IF VALID-OBJECT(joConfig) AND joConfig:Has("programs") AND NOT joConfig:IsNull("programs") THEN
+            ASSIGN joPrograms = joConfig:GetJsonObject("programs") NO-ERROR.
+        RETURN THIS-OBJECT:getJsonChar(joPrograms, pcProgramCode).
+    END METHOD.
+
+    METHOD PRIVATE JsonObject readProgramExecutorConfig():
+        DEFINE VARIABLE cFile AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE joConfig AS JsonObject NO-UNDO.
+
+        ASSIGN cFile = THIS-OBJECT:resolveConfigFile("sursum-conf/program-executor.json").
+        ASSIGN joConfig = THIS-OBJECT:readJsonFile(cFile).
+        IF VALID-OBJECT(joConfig) THEN
+            RETURN joConfig.
+
+        ASSIGN joConfig = THIS-OBJECT:readJsonFile("/dados/pasoe/sursum-api/sursum-conf/program-executor.json").
+        IF VALID-OBJECT(joConfig) THEN
+            RETURN joConfig.
+
+        RETURN THIS-OBJECT:readJsonFile("/mnt/datasul/ERP/sursum/sursum-conf/program-executor.json").
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER resolveProgramRunPath(INPUT pcProgramPath AS CHARACTER):
+        DEFINE VARIABLE cResolved AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cRun AS CHARACTER NO-UNDO.
+
+        ASSIGN cResolved = THIS-OBJECT:resolveConfigFile(pcProgramPath).
+        ASSIGN cRun = THIS-OBJECT:firstExistingProgramArtifact(cResolved).
+        IF cRun <> "" THEN
+            RETURN cRun.
+
+        ASSIGN cResolved = "/mnt/datasul/ERP/sursum/" + THIS-OBJECT:normalizeConfigPath(pcProgramPath)
+               cRun = THIS-OBJECT:firstExistingProgramArtifact(cResolved).
+        IF cRun <> "" THEN
+            RETURN cRun.
+
+        ASSIGN cResolved = "/dados/pasoe/sursum-api/" + THIS-OBJECT:normalizeConfigPath(pcProgramPath)
+               cRun = THIS-OBJECT:firstExistingProgramArtifact(cResolved).
+        IF cRun <> "" THEN
+            RETURN cRun.
+
+        RETURN "".
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER firstExistingProgramArtifact(INPUT pcProgramPath AS CHARACTER):
+        DEFINE VARIABLE cAlt AS CHARACTER NO-UNDO.
+
+        FILE-INFO:FILE-NAME = pcProgramPath.
+        IF FILE-INFO:FULL-PATHNAME <> ? THEN
+            RETURN pcProgramPath.
+
+        IF LENGTH(pcProgramPath) > 2 AND LC(SUBSTRING(pcProgramPath, LENGTH(pcProgramPath) - 1)) = ".p" THEN DO:
+            ASSIGN cAlt = SUBSTRING(pcProgramPath, 1, LENGTH(pcProgramPath) - 2) + ".r".
+            FILE-INFO:FILE-NAME = cAlt.
+            IF FILE-INFO:FULL-PATHNAME <> ? THEN
+                RETURN cAlt.
+        END.
+
+        RETURN "".
+    END METHOD.
+
     METHOD PRIVATE JsonObject handleIndex():
         DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
         DEFINE VARIABLE joEndpoints AS JsonObject NO-UNDO.
@@ -305,6 +421,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         joEndpoints:Add("query", "POST /web/SursumDynamicQuery/query").
         joEndpoints:Add("queryStore", "POST /web/SursumDynamicQuery/query-store").
         joEndpoints:Add("tableBrowse", "POST /web/SursumDynamicQuery/table-browse").
+        joEndpoints:Add("programExecute", "POST /web/SursumDynamicQuery/program/execute").
         joEndpoints:Add("metadataSync", "GET /web/SursumDynamicQuery/metadata/sync?include=banks,aliases,tables,fields&database=:database&table=:table").
         joEndpoints:Add("metadataDatabases", "GET /web/SursumDynamicQuery/metadata/databases").
         joEndpoints:Add("metadataDatabaseCatalog", "GET /web/SursumDynamicQuery/metadata/database-catalog").
@@ -3539,6 +3656,25 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN joValue.
     END METHOD.
 
+    METHOD PRIVATE JsonObject readJsonFile(INPUT pcFile AS CHARACTER):
+        DEFINE VARIABLE lcJson AS LONGCHAR NO-UNDO.
+
+        IF pcFile = ? OR pcFile = "" THEN
+            RETURN ?.
+
+        FILE-INFO:FILE-NAME = pcFile.
+        IF FILE-INFO:FULL-PATHNAME = ? THEN
+            RETURN ?.
+
+        COPY-LOB FROM FILE pcFile TO lcJson NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            RETURN ?.
+        END.
+
+        RETURN THIS-OBJECT:parseJsonObject(lcJson).
+    END METHOD.
+
     METHOD PRIVATE JsonObject readStoredQuery(INPUT pcCode AS CHARACTER):
         DEFINE VARIABLE cFile AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cAltFile AS CHARACTER NO-UNDO.
@@ -3784,6 +3920,29 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
             IF INDEX("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-.", c) = 0 THEN
                 RETURN FALSE.
         END.
+
+        RETURN TRUE.
+    END METHOD.
+
+    METHOD PRIVATE LOGICAL isProgramCode(INPUT pcCode AS CHARACTER):
+        RETURN THIS-OBJECT:isQueryCode(pcCode).
+    END METHOD.
+
+    METHOD PRIVATE LOGICAL isAllowedProgramPath(INPUT pcPath AS CHARACTER):
+        DEFINE VARIABLE cPath AS CHARACTER NO-UNDO.
+
+        IF pcPath = ? OR TRIM(pcPath) = "" THEN
+            RETURN FALSE.
+
+        ASSIGN cPath = THIS-OBJECT:normalizeConfigPath(pcPath).
+        IF INDEX(cPath, "..") > 0 THEN
+            RETURN FALSE.
+        IF INDEX(cPath, ":") > 0 THEN
+            RETURN FALSE.
+        IF LENGTH(cPath) < 3 THEN
+            RETURN FALSE.
+        IF LC(SUBSTRING(cPath, LENGTH(cPath) - 1)) <> ".p" THEN
+            RETURN FALSE.
 
         RETURN TRUE.
     END METHOD.
