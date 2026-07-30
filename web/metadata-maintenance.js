@@ -79,7 +79,7 @@
     if (hasElement("#relationType")) {
       $("#relationType").kendoDropDownList({ dataSource: ["INNER", "LEFT"], value: "INNER" });
     }
-    $("#viewAsTable,#viewAsField,#leftTable,#leftField,#rightTable,#rightField").filter(function () {
+    $("#viewAsTable,#viewAsField,#leftTable,#leftField,#rightTable,#rightField,#descriptionField").filter(function () {
       return this && this.id;
     }).kendoTextBox();
     if (hasElement("#viewAsWindow")) viewAsWindow = $("#viewAsWindow").kendoWindow({
@@ -231,6 +231,7 @@
         { field: "leftField", title: "Campo esq.", width: 150 },
         { field: "rightTable", title: "Tabela dir.", width: 160 },
         { field: "rightField", title: "Campo dir.", width: 150 },
+        { field: "descriptionField", title: "Campo descricao", width: 170 },
         { field: "type", title: "Tipo", width: 90 },
         { field: "source", title: "Origem", width: 110 },
         { field: "updatedAt", title: "Atualizado em", width: 190 },
@@ -1331,6 +1332,7 @@
     setInputValue("#leftField", "");
     setInputValue("#rightTable", "");
     setInputValue("#rightField", "");
+    setInputValue("#descriptionField", "");
     $("#relationType").data("kendoDropDownList").value("INNER");
     if (relationWindow) {
       relationWindow.title("Incluir join");
@@ -1348,6 +1350,7 @@
     setInputValue("#leftField", item.leftField || "");
     setInputValue("#rightTable", item.rightTable || "");
     setInputValue("#rightField", item.rightField || "");
+    setInputValue("#descriptionField", item.descriptionField || "");
     $("#relationType").data("kendoDropDownList").value(item.type || "INNER");
     if (relationWindow) {
       relationWindow.title("Alterar join");
@@ -1361,6 +1364,7 @@
     const rightTable = inputValue("#rightTable");
     const leftField = inputValue("#leftField");
     const rightField = inputValue("#rightField");
+    const descriptionField = inputValue("#descriptionField");
     if (!leftTable || !rightTable || !leftField || !rightField) {
       setStatus("Informe tabelas e campos do join.", "error");
       return;
@@ -1373,6 +1377,7 @@
       rightDatabase: database,
       rightTable,
       rightField,
+      descriptionField,
       type: $("#relationType").data("kendoDropDownList").value() || "INNER",
       source: "manual",
       fields: [{ leftField, rightField }]

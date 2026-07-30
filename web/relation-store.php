@@ -94,6 +94,7 @@ function initializeRelationSchema(PDO $pdo): void
             right_table TEXT NOT NULL,
             right_field TEXT NOT NULL DEFAULT "",
             relation_type TEXT NOT NULL DEFAULT "INNER",
+            description_field TEXT NOT NULL DEFAULT "",
             source TEXT NOT NULL DEFAULT "manual",
             fields_json TEXT NOT NULL DEFAULT "[]",
             raw_json TEXT NOT NULL DEFAULT "{}",
@@ -101,7 +102,19 @@ function initializeRelationSchema(PDO $pdo): void
             UNIQUE(environment_id, company_id, database_name, left_database, left_table, left_field, right_database, right_table, right_field)
         )'
     );
+    ensureRelationColumn($pdo, 'description_field', 'TEXT NOT NULL DEFAULT ""');
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_table_relations_lookup ON table_relations(environment_id, company_id, database_name, left_table, right_table)');
+}
+
+function ensureRelationColumn(PDO $pdo, string $column, string $definition): void
+{
+    $columns = $pdo->query('PRAGMA table_info(table_relations)')->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($columns as $info) {
+        if (($info['name'] ?? '') === $column) {
+            return;
+        }
+    }
+    $pdo->exec('ALTER TABLE table_relations ADD COLUMN ' . $column . ' ' . $definition);
 }
 
 function requestScope(?array $payload = null): array
@@ -147,6 +160,7 @@ function loadRelations(PDO $pdo, array $scope): array
             'rightTable' => $row['right_table'],
             'rightField' => $row['right_field'],
             'type' => $row['relation_type'],
+            'descriptionField' => $row['description_field'] ?? '',
             'source' => $row['source'],
             'fields' => json_decode($row['fields_json'], true) ?: [],
             'updatedAt' => $row['updated_at'],
@@ -185,8 +199,8 @@ function saveRelations(PDO $pdo, array $scope, array $relations, string $source,
 
         $insert = $pdo->prepare(
             'INSERT OR REPLACE INTO table_relations
-             (id, environment_id, company_id, database_name, left_database, left_table, left_field, right_database, right_table, right_field, relation_type, source, fields_json, raw_json, updated_at)
-             VALUES (:id, :environment_id, :company_id, :database_name, :left_database, :left_table, :left_field, :right_database, :right_table, :right_field, :relation_type, :source, :fields_json, :raw_json, :updated_at)'
+             (id, environment_id, company_id, database_name, left_database, left_table, left_field, right_database, right_table, right_field, relation_type, description_field, source, fields_json, raw_json, updated_at)
+             VALUES (:id, :environment_id, :company_id, :database_name, :left_database, :left_table, :left_field, :right_database, :right_table, :right_field, :relation_type, :description_field, :source, :fields_json, :raw_json, :updated_at)'
         );
         $manualLookup = null;
         if (strcasecmp($source, 'manual') !== 0) {
@@ -226,6 +240,7 @@ function saveRelations(PDO $pdo, array $scope, array $relations, string $source,
             if ($manualLookup && manualRelationExists($manualLookup, $scope, $leftDatabase, $leftTable, $leftField, $rightDatabase, $rightTable, $rightField)) {
                 continue;
             }
+            $descriptionField = text($relation['descriptionField'] ?? $relation['description_field'] ?? '');
             $insert->execute([
                 ':id' => relationId($scope, $leftDatabase, $leftTable, $leftField, $rightDatabase, $rightTable, $rightField),
                 ':environment_id' => $scope['environmentId'],
@@ -238,6 +253,7 @@ function saveRelations(PDO $pdo, array $scope, array $relations, string $source,
                 ':right_table' => $rightTable,
                 ':right_field' => $rightField,
                 ':relation_type' => text($relation['type'] ?? 'INNER') ?: 'INNER',
+                ':description_field' => $descriptionField,
                 ':source' => $source,
                 ':fields_json' => json_encode($fields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
                 ':raw_json' => json_encode($relation, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),

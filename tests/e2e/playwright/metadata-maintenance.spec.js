@@ -394,8 +394,10 @@ test('relation maintenance saves manual join', async ({ page }) => {
   await page.locator('#leftField').fill('CustNum');
   await page.locator('#rightTable').fill('Order');
   await page.locator('#rightField').fill('CustNum');
+  await page.locator('#descriptionField').fill('Name');
   await page.locator('#saveRelation').click();
   await expect(page.locator('#relationsGrid')).toContainText('Order');
+  await expect(page.locator('#relationsGrid')).toContainText('Name');
   await expect(page.locator('#relationsGrid')).toContainText('manual');
 });
 

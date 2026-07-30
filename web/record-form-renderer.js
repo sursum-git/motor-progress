@@ -79,7 +79,9 @@
     const fieldMeta = context.fieldsByName[fieldName] || {};
     const value = context.row[fieldName];
     const joinOptions = context.joinOptionsByField[fieldName] || [];
-    const displayValue = context.formatValue(fieldMeta, value);
+    const baseDisplayValue = context.formatValue(fieldMeta, value);
+    const description = context.descriptionForField(fieldName, value);
+    const displayValue = description ? baseDisplayValue + " - " + description : baseDisplayValue;
     const rawValue = normalizeText(value);
     const hasDescribedValue = displayValue !== rawValue;
     const longText = context.isLongTextField(fieldMeta, value);
@@ -111,7 +113,13 @@
       row: row,
       fieldsByName: fieldsByName,
       joinOptionsByField: options.joinOptionsByField || {},
+      descriptionValuesByField: options.descriptionValuesByField || {},
       formatValue: options.formatValue || function (_field, value) { return normalizeText(value); },
+      descriptionForField: function (fieldName, value) {
+        if (!fieldName || value === null || value === undefined || String(value).trim() === "") return "";
+        const lookup = (options.descriptionValuesByField || {})[fieldName];
+        return lookup ? (lookup[String(value)] || "") : "";
+      },
       createJoinButton: options.createJoinButton || function () { return null; },
       applyWidget: options.applyWidget || function () {},
       isLongTextField: options.isLongTextField || function () { return false; }

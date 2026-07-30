@@ -458,6 +458,7 @@ test('query wizard record form lists OF relations for pp-container without field
   await page.locator('#runQuery').click();
   await expect(page.locator('#dataGrid')).toContainText('Container E2E');
   await expect(page.locator('#dataGrid')).toContainText('7788 - Pedido exportacao');
+  await expect(page.locator('#dataGrid')).toContainText('Cliente E2E');
   await expect(page.locator('#dataGrid')).toContainText('Sim');
   await page.locator('#dataGrid tbody tr').first().dblclick();
 
@@ -480,7 +481,7 @@ test('query wizard record form lists OF relations for pp-container without field
   await expect(page.locator('#recordForm')).toContainText('nr-pedido');
   await expect.poll(async () => page.evaluate(() => {
     return Array.from(document.querySelectorAll('#recordForm input')).map((input) => input.value);
-  })).toContain('7788 - Pedido exportacao');
+  })).toContain('7788 - Pedido exportacao - Cliente E2E');
   await expect.poll(async () => page.evaluate(() => {
     return Array.from(document.querySelectorAll('#recordForm input')).map((input) => input.value);
   })).toContain('Sim');

@@ -22,6 +22,8 @@
     currentRecordJoinFieldOptions: {},
     currentRecordJoinOptions: [],
     foreignKeyCache: {},
+    foreignDescriptionCache: {},
+    foreignDescriptionValues: {},
     activeFilterId: 1,
     loadedDatabaseApiBase: "",
     tableLoading: {}
@@ -180,6 +182,7 @@
         { field: "localLabel", title: "Descricao", width: 210 },
         { field: "foreignTable", title: "Tabela FK", width: 220 },
         { field: "localToForeignField", title: "Campo na FK", width: 190 },
+        { field: "foreignDescriptionField", title: "Campo descricao", width: 180 },
         { field: "relationStatus", title: "Status", width: 150 }
       ]
     });
@@ -833,8 +836,10 @@
     state.selectedTable = "";
     state.selectedDatabase = state.selectedDatabase || "TODOS";
     state.fields = [];
+    state.fieldOptionLookup = {};
     state.foreignKeys = [];
     state.foreignKeyCache = {};
+    state.foreignDescriptionValues = {};
     state.filterRows = [];
     $("#selectedTable").val("");
     refreshFilterDynamicSelectors();
@@ -915,8 +920,10 @@
   function applySelectedTableFromStepSearch(done) {
     $("#selectedTable").val(state.selectedTable || "");
     state.fields = [];
+    state.fieldOptionLookup = {};
     state.foreignKeys = [];
     state.foreignKeyCache = {};
+    state.foreignDescriptionValues = {};
     state.filterRows = [];
     refreshFilterGrid();
     clearFilterTabs();
@@ -1002,6 +1009,8 @@
     }
 
     state.fields = [];
+    state.fieldOptionLookup = {};
+    state.foreignDescriptionValues = {};
     state.filterRows = [];
     refreshFilterGrid();
     clearFilterTabs();
@@ -1017,6 +1026,7 @@
       ensureTableFields(function () {
         state.foreignKeys = [];
         state.foreignKeyCache = {};
+        state.foreignDescriptionValues = {};
         setStatus("Tabela relacionada selecionada: " + db + "." + table, "ok");
         showStep(2);
       });
@@ -1072,6 +1082,7 @@
         state.fieldOptionLookup = buildFieldOptionLookup(state.fields);
         state.foreignKeys = [];
         state.foreignKeyCache = {};
+        state.foreignDescriptionValues = {};
         refreshFilterDynamicSelectors();
         setStatus("Campos carregados: " + state.fields.length, "ok");
         state.filterRows = [];
@@ -1167,7 +1178,8 @@
         foreignDatabase: item.rightDatabase || localDatabase,
         foreignTable: item.rightTable || "",
         localToForeignField: item.rightField || "",
-        relationPath: item.updatedAt || item.path || item.fileName || ""
+        relationPath: item.updatedAt || item.path || item.fileName || "",
+        foreignDescriptionField: item.descriptionField || ""
       };
     }
 
@@ -1181,7 +1193,8 @@
       foreignDatabase: item.leftDatabase || localDatabase,
       foreignTable: item.leftTable || "",
       localToForeignField: item.leftField || "",
-      relationPath: item.updatedAt || item.path || item.fileName || ""
+      relationPath: item.updatedAt || item.path || item.fileName || "",
+      foreignDescriptionField: item.descriptionField || ""
     };
   }
 
@@ -1242,6 +1255,7 @@
         candidate.foreignTable = (rel.rightTable === localTable ? rel.leftTable : rel.rightTable) || candidate.foreignTable;
         candidate.foreignDatabase = (rel.rightTable === localTable ? rel.leftDatabase : rel.rightDatabase) || database;
         candidate.localToForeignField = remoteField;
+        candidate.foreignDescriptionField = rel.descriptionField || "";
         resolve(candidate);
       };
 
@@ -1287,7 +1301,8 @@
       rightDatabase: relation.rightDatabase || relation.database || state.selectedDatabase,
       fields: Array.isArray(relation.fields) ? relation.fields : [],
       leftField: relation.leftField || "",
-      rightField: relation.rightField || ""
+      rightField: relation.rightField || "",
+      descriptionField: relation.descriptionField || relation.description_field || ""
     };
   }
 
@@ -2161,75 +2176,44 @@
   }
 
   function normalizeListOptions(options) {
-    return (options || []).map(function (option) {
-      if (option && typeof option === "object") {
-        return {
-          label: option.label || option.name || String(option.value || ""),
-          value: option.value != null ? String(option.value) : String(option)
-        };
-      }
-      return { label: String(option), value: String(option) };
-    });
+    return window.SursumViewAsOptions.normalizeOptions(options);
   }
 
   function isNumericType(fieldMeta) {
-    const type = getFieldType(fieldMeta);
-    return ["integer", "int64", "decimal", "float", "double", "amount"].indexOf(type) >= 0;
+    return window.SursumViewAsOptions.isNumericField(fieldMeta);
   }
 
   function buildFieldOptionLookup(fields) {
-    const lookup = {};
-    (fields || []).forEach(function (field) {
-      if (!field || !field.name || !isNumericType(field) || !Array.isArray(field.options) || !field.options.length) {
-        return;
-      }
-
-      const fieldLookup = {};
-      normalizeListOptions(field.options).forEach(function (option) {
-        const value = normalizeScalarFilterText(option.value);
-        const label = normalizeScalarFilterText(option.label);
-        if (!value || !label) return;
-        fieldLookup[value] = label;
-        const numericValue = Number(value.replace(",", "."));
-        if (!isNaN(numericValue)) {
-          fieldLookup[String(numericValue)] = label;
-        }
-      });
-
-      if (Object.keys(fieldLookup).length) {
-        lookup[field.name] = fieldLookup;
-      }
-    });
-    return lookup;
+    return window.SursumViewAsOptions.buildNumericOptionLookup(fields);
   }
 
   function describeFieldValue(fieldMeta, value, lookupSource) {
-    const raw = normalizeScalarFilterText(value);
-    if (!fieldMeta || !fieldMeta.name || raw === "") return raw;
-    if (isLogicalType(fieldMeta)) {
-      const logical = normalizeLogicalDisplayValue(raw);
-      if (logical) return logical;
-    }
-    const source = lookupSource || state.fieldOptionLookup;
-    const lookup = source[fieldMeta.name];
-    if (!lookup) return raw;
-
-    const numericKey = String(Number(raw.replace(",", ".")));
-    const label = lookup[raw] || (numericKey !== "NaN" ? lookup[numericKey] : "");
-    if (!label || label === raw) return raw;
-    return raw + " - " + label;
+    return window.SursumViewAsOptions.describeFieldValue(fieldMeta, value, lookupSource || state.fieldOptionLookup);
   }
 
   function normalizeLogicalDisplayValue(value) {
-    const normalized = normalizeScalarFilterText(value).toLowerCase();
-    if (["true", "1", "sim", "yes", "y"].indexOf(normalized) >= 0) return "Sim";
-    if (["false", "0", "nao", "não", "no", "n"].indexOf(normalized) >= 0) return "Não";
-    return "";
+    return window.SursumViewAsOptions.normalizeLogicalDisplayValue(value);
   }
 
   function displayFieldValue(fieldMeta, value, lookupSource) {
-    const text = describeFieldValue(fieldMeta, value, lookupSource);
-    return window.kendo && typeof kendo.htmlEncode === "function" ? kendo.htmlEncode(text) : String(text);
+    return window.SursumViewAsOptions.displayFieldValue(fieldMeta, value, lookupSource || state.fieldOptionLookup);
+  }
+
+  function displayFieldValueWithForeignDescription(fieldMeta, value, lookupSource) {
+    const displayValue = displayFieldValue(fieldMeta, value, lookupSource);
+    const fieldName = fieldMeta && fieldMeta.name ? fieldMeta.name : "";
+    const description = foreignDescriptionForValue(fieldName, value);
+    if (!description) return displayValue;
+    return displayValue + " - " + description;
+  }
+
+  function foreignDescriptionForValue(fieldName, value) {
+    if (!fieldName || value === null || value === undefined || String(value).trim() === "") {
+      return "";
+    }
+    const lookup = state.foreignDescriptionValues && state.foreignDescriptionValues[fieldName];
+    if (!lookup) return "";
+    return lookup[String(value)] || "";
   }
 
   function loadFilterTabs() {
@@ -2258,7 +2242,7 @@
       title: field.label || field.name,
       width: Math.min(Math.max(160, (field.label || field.name).length * 8), 280),
       template: function (dataItem) {
-        return displayFieldValue(field, dataItem ? dataItem[field.name] : "");
+        return displayFieldValueWithForeignDescription(field, dataItem ? dataItem[field.name] : "");
       }
     }));
 
@@ -2355,6 +2339,11 @@
     buildResultColumns();
     grid.dataSource.pageSize(getGridPageSize());
     grid.dataSource.data(rows);
+    ensureForeignKeysDiscovered().then(function () {
+      return loadForeignDescriptionValues(rows);
+    }).then(function () {
+      grid.refresh();
+    });
 
     const records = Number(response.recordsReturned || rows.length);
     const hasMore = response.hasMore === undefined ? "-" : response.hasMore;
@@ -2363,6 +2352,133 @@
     if (!rows.length) {
       $("#resultStatus").text($("#resultStatus").text() + " | Sem registros para o filtro atual.");
     }
+  }
+
+  function ensureForeignKeysDiscovered() {
+    if (Array.isArray(state.foreignKeys) && state.foreignKeys.length) {
+      return Promise.resolve(state.foreignKeys);
+    }
+    return new Promise(function (resolve) {
+      discoverForeignKeys(function () {
+        resolve(state.foreignKeys || []);
+      });
+    });
+  }
+
+  function loadForeignDescriptionValues(rows) {
+    const candidates = descriptionRelationCandidates();
+    if (!rows || !rows.length || !candidates.length) {
+      return Promise.resolve();
+    }
+
+    return Promise.all(candidates.map(function (candidate) {
+      const values = uniqueNonEmptyValues(rows.map(function (row) {
+        return row ? row[candidate.localField] : "";
+      }));
+      if (!values.length) return Promise.resolve();
+      return loadForeignDescriptionValuesForCandidate(candidate, values);
+    }));
+  }
+
+  function descriptionRelationCandidates() {
+    const seen = {};
+    return (state.foreignKeys || []).filter(function (fk) {
+      if (!fk || (fk.relationStatus || "").toLowerCase() !== "encontrada") return false;
+      if (!fk.localField || !fk.localToForeignField || !fk.foreignTable || !fk.foreignDescriptionField) return false;
+      const key = [
+        fk.localField,
+        fk.foreignDatabase || state.selectedDatabase,
+        fk.foreignTable,
+        fk.localToForeignField,
+        fk.foreignDescriptionField
+      ].join("|").toLowerCase();
+      if (seen[key]) return false;
+      seen[key] = true;
+      return true;
+    });
+  }
+
+  function uniqueNonEmptyValues(values) {
+    const seen = {};
+    const result = [];
+    (values || []).forEach(function (value) {
+      if (value === null || value === undefined || String(value).trim() === "") return;
+      const key = String(value);
+      if (seen[key]) return;
+      seen[key] = true;
+      result.push(key);
+    });
+    return result;
+  }
+
+  function loadForeignDescriptionValuesForCandidate(candidate, values) {
+    const db = candidate.foreignDatabase || state.selectedDatabase;
+    const cacheKey = [
+      db,
+      candidate.foreignTable,
+      candidate.localToForeignField,
+      candidate.foreignDescriptionField,
+      values.slice().sort().join("\u001f")
+    ].join("|");
+
+    if (state.foreignDescriptionCache[cacheKey]) {
+      mergeForeignDescriptionValues(candidate.localField, state.foreignDescriptionCache[cacheKey]);
+      return Promise.resolve(state.foreignDescriptionCache[cacheKey]);
+    }
+
+    const payload = {
+      execution: "sync",
+      page: 1,
+      pageSize: Math.max(values.length, 1),
+      sources: [{
+        nome: candidate.foreignTable,
+        alias: "d",
+        banco: db,
+        campos: [candidate.localToForeignField, candidate.foreignDescriptionField].filter(Boolean).join(",")
+      }],
+      filters: [{
+        sourceAlias: "d",
+        field: candidate.localToForeignField,
+        operator: values.length === 1 ? "=" : "in",
+        value: values.length === 1 ? values[0] : values.join(",")
+      }],
+      joins: [],
+      orderBy: [],
+      pipeline: []
+    };
+
+    return $.ajax({
+      url: pasoeUrl("/query"),
+      method: "POST",
+      contentType: "application/json",
+      dataType: "json",
+      data: JSON.stringify(payload)
+    }).then(function (response) {
+      if (!response || response.success === false) return {};
+      const lookup = {};
+      (response.data || []).forEach(function (row) {
+        const keyValue = row ? row[candidate.localToForeignField] : "";
+        const description = row ? row[candidate.foreignDescriptionField] : "";
+        if (keyValue === null || keyValue === undefined || String(keyValue).trim() === "") return;
+        if (description === null || description === undefined || String(description).trim() === "") return;
+        lookup[String(keyValue)] = String(description);
+      });
+      state.foreignDescriptionCache[cacheKey] = lookup;
+      mergeForeignDescriptionValues(candidate.localField, lookup);
+      return lookup;
+    }, function () {
+      return {};
+    });
+  }
+
+  function mergeForeignDescriptionValues(localField, lookup) {
+    if (!localField || !lookup) return;
+    if (!state.foreignDescriptionValues[localField]) {
+      state.foreignDescriptionValues[localField] = {};
+    }
+    Object.keys(lookup).forEach(function (key) {
+      state.foreignDescriptionValues[localField][key] = lookup[key];
+    });
   }
 
   function openRecordWindow(row) {
@@ -2389,6 +2505,7 @@
         row: rowData || {},
         fields: state.fields,
         joinOptionsByField: rowJoinOptions || {},
+        descriptionValuesByField: state.foreignDescriptionValues,
         formatValue: describeFieldValue,
         createJoinButton: getRecordFieldJoinButton,
         applyWidget: applyRecordFieldWidget,
@@ -2399,17 +2516,19 @@
     discoverForeignKeys(function () {
       const rowJoinOptions = buildRecordJoinOptionsByField(row || {});
       state.currentRecordJoinFieldOptions = rowJoinOptions;
-      renderRecordFormContent(row || {}, rowJoinOptions);
-      $("#recordInfo").text("Tabela: " + state.selectedDatabase + "." + state.selectedTable);
-      populateRecordJoinDropdown(true);
-      win.center().open();
-      enforceRecordWindowMaximized(win);
-      requestAnimationFrame(function () {
+      loadForeignDescriptionValues([row || {}]).then(function () {
+        renderRecordFormContent(row || {}, rowJoinOptions);
+        $("#recordInfo").text("Tabela: " + state.selectedDatabase + "." + state.selectedTable);
+        populateRecordJoinDropdown(true);
+        win.center().open();
         enforceRecordWindowMaximized(win);
+        requestAnimationFrame(function () {
+          enforceRecordWindowMaximized(win);
+        });
+        if (typeof win.maximize === "function") {
+          win.maximize();
+        }
       });
-      if (typeof win.maximize === "function") {
-        win.maximize();
-      }
     });
   }
 
@@ -2555,6 +2674,7 @@
         foreignField,
         foreignTable: fk.foreignTable,
         foreignDatabase: db,
+        foreignDescriptionField: fk.foreignDescriptionField || "",
         localValue,
         hasValue
       });

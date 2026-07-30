@@ -330,6 +330,7 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
         rightDatabase: database || 'espec',
         rightTable: 'pp-pedido',
         rightField: 'nr-pedido',
+        descriptionField: 'cliente',
         type: 'INNER',
         fileName: 'espec__pp-container__espec__pp-pedido.json'
       }] });
@@ -396,6 +397,9 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
       const firstSource = Array.isArray(body.sources) ? body.sources[0] || {} : {};
       if (firstSource.nome === 'pp-container') {
         return sendJson(res, 200, { success: true, data: [{ 'nr-container': 1650, 'nr-pedido': 7788, ativo: 'yes', descricao: 'Container E2E' }], recordsReturned: 1, directQuery: true });
+      }
+      if (firstSource.nome === 'pp-pedido') {
+        return sendJson(res, 200, { success: true, data: [{ 'nr-pedido': 7788, cliente: 'Cliente E2E' }], recordsReturned: 1, directQuery: true });
       }
       return sendJson(res, 200, { success: true, data: [], directQuery: true });
     }
