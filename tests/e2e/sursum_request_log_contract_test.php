@@ -25,6 +25,9 @@ $page = (string) file_get_contents($root . '/web/request-log.html');
 assertContains($page, 'request-log-store.php', 'pagina consulta endpoint');
 assertContains($page, 'startDateInput', 'pagina tem data inicial');
 assertContains($page, 'endDateInput', 'pagina tem data final');
+assertContains($page, 'setDefaultPeriod', 'pagina inicializa periodo padrao');
+assertContains($page, 'today.setDate(today.getDate() - 30)', 'periodo padrao inicia 30 dias atras');
+assertNotContains($page, 'ready.then(loadList)', 'pagina nao carrega logs automaticamente');
 assertContains($page, 'kendoDatePicker', 'pagina usa datepicker para filtros de periodo');
 assertContains($page, 'filterable: true', 'grid tem filtros por coluna');
 assertContains($page, 'groupable: true', 'grid tem agrupamento');
@@ -47,5 +50,12 @@ function assertContains(string $content, string $needle, string $label): void
 {
     if (strpos($content, $needle) === false) {
         throw new RuntimeException($label . ': trecho nao encontrado: ' . $needle);
+    }
+}
+
+function assertNotContains(string $content, string $needle, string $label): void
+{
+    if (strpos($content, $needle) !== false) {
+        throw new RuntimeException($label . ': trecho encontrado indevidamente: ' . $needle);
     }
 }

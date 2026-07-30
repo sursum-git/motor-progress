@@ -121,7 +121,7 @@
       </label>
       <button id="refreshButton" type="button">Atualizar</button>
     </div>
-    <div id="statusBox" class="status">Carregando.</div>
+    <div id="statusBox" class="status">Informe os filtros e clique em Atualizar.</div>
     <div id="requestLogGrid"></div>
     <div class="detail">
       <section>
@@ -187,6 +187,14 @@
           startedAtDate: parseLogDate(row.startedAt),
           finishedAtDate: parseLogDate(row.finishedAt)
         }));
+      }
+
+      function setDefaultPeriod() {
+        const end = new Date();
+        const today = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+        today.setDate(today.getDate() - 30);
+        $("#startDateInput").data("kendoDatePicker").value(today);
+        $("#endDateInput").data("kendoDatePicker").value(end);
       }
 
       async function getJson(url) {
@@ -290,12 +298,10 @@
           culture: "pt-BR",
           format: "dd/MM/yyyy"
         });
+        setDefaultPeriod();
         initGrid();
         if (window.SursumUiReady) window.SursumUiReady();
-        const ready = window.SursumContext && typeof SursumContext.whenReady === "function"
-          ? SursumContext.whenReady()
-          : Promise.resolve();
-        ready.then(loadList).catch((error) => setStatus(error.message));
+        setStatus("Período padrão: últimos 30 dias. Clique em Atualizar para carregar os logs.");
       });
     })();
   </script>
