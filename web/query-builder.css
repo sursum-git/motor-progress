@@ -99,11 +99,10 @@ h1 {
 
 .endpoint-card {
   display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(150px, 210px) minmax(100px, 130px) minmax(160px, 220px) auto;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
   gap: 10px;
   align-items: end;
-  justify-content: start;
-  width: max-content;
+  width: 100%;
   max-width: 100%;
   padding: 16px;
 }
@@ -113,6 +112,7 @@ h1 {
   flex-direction: column;
   align-self: end;
   gap: 6px;
+  min-width: 0;
 }
 
 .endpoint-field > label {
@@ -120,13 +120,17 @@ h1 {
 }
 
 .endpoint-card > .action-row {
-  grid-column: auto;
+  grid-column: 1 / -1;
   align-self: end;
-  flex-wrap: nowrap;
-  white-space: nowrap;
+  flex-wrap: wrap;
+  white-space: normal;
   margin: 0 0 1px;
   align-items: center;
   min-height: 34px;
+}
+
+.endpoint-card > .action-row .k-button {
+  max-width: 100%;
 }
 
 .context-selector-card {

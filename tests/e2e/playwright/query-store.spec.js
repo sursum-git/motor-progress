@@ -113,3 +113,98 @@ test("frontend builder expands extent fields as selectable indexed fields", asyn
   expect(names).toContain("Phone[1]");
   expect(names).toContain("Phone[2]");
 });
+
+test("frontend builder loads metadata through PHP proxy for cross-origin PASOE", async ({ page }) => {
+  const remoteConfig = {
+    version: 4,
+    clients: [{ id: "cliente-a", name: "Cliente A" }],
+    environments: [{
+      id: "ambiente-a",
+      clientId: "cliente-a",
+      name: "Ambiente A",
+      pasoeBaseUrl: "http://pasoe.internal/web/SursumDynamicQuery",
+      companyIdMode: "query"
+    }],
+    links: [{ id: "link-a", clientId: "cliente-a", environmentId: "ambiente-a" }],
+    paths: {},
+    companies: [{
+      id: "empresa-a",
+      clientId: "cliente-a",
+      environmentId: "ambiente-a",
+      name: "Empresa A",
+      code: "1",
+      pathParam: "empresa-a"
+    }],
+    physicalDatabases: [],
+    aliases: [],
+    selected: { clientId: "cliente-a", environmentId: "ambiente-a", companyId: "empresa-a" }
+  };
+  const proxiedTargets = [];
+
+  await page.route("**/context-store.php", async (route) => {
+    await route.fulfill({ json: { success: true, data: remoteConfig } });
+  });
+  await page.route("**/pasoe-proxy.php?target=*", async (route) => {
+    const target = new URL(route.request().url()).searchParams.get("target") || "";
+    proxiedTargets.push(target);
+    if (target.includes("/metadata/database-catalog")) {
+      await route.fulfill({ json: { success: true, data: [{ name: "DICTDB", displayName: "DICTDB" }] } });
+      return;
+    }
+    if (target.includes("/metadata/tables")) {
+      await route.fulfill({ json: { success: true, data: [{ name: "Customer", label: "Customer", database: "DICTDB" }] } });
+      return;
+    }
+    await route.fulfill({ json: { success: true, data: [] } });
+  });
+
+  await page.goto("/index.html?page=query-builder.html");
+  const frame = page.frameLocator("#contentFrame");
+  await frame.locator("#loadMetadata").click();
+
+  await expect(frame.locator("#statusBox")).toContainText("Lista de tabelas carregada");
+  expect(proxiedTargets.some((target) => target.includes("/metadata/database-catalog"))).toBe(true);
+  expect(proxiedTargets.some((target) => target.includes("/metadata/tables"))).toBe(true);
+});
+
+test("frontend builder renders query name, code and pipeline version as Kendo text boxes", async ({ page }) => {
+  await page.goto("/query-builder.html?new=1");
+
+  await expect(page.locator("#queryName").locator("xpath=ancestor::*[contains(@class, 'k-input')]").first()).toBeVisible();
+  await expect(page.locator("#queryCode").locator("xpath=ancestor::*[contains(@class, 'k-input')]").first()).toBeVisible();
+  await expect(page.locator("#pipelineVersion").locator("xpath=ancestor::*[contains(@class, 'k-input')]").first()).toBeVisible();
+});
+
+test("frontend builder keeps endpoint actions inside the card on narrow viewports", async ({ page }) => {
+  await page.setViewportSize({ width: 760, height: 820 });
+  await page.goto("/index.html?page=query-builder.html");
+  const root = page.frameLocator("#contentFrame");
+
+  const layout = await root.locator(".endpoint-card").evaluate((card) => {
+    const actions = card.querySelector(".action-row");
+    const cardRect = card.getBoundingClientRect();
+    const actionRect = actions.getBoundingClientRect();
+    const actionStyle = getComputedStyle(actions);
+    return {
+      cardClientWidth: card.clientWidth,
+      cardScrollWidth: card.scrollWidth,
+      actionClientWidth: actions.clientWidth,
+      actionScrollWidth: actions.scrollWidth,
+      actionRight: actionRect.right,
+      cardRight: cardRect.right,
+      actionLeft: actionRect.left,
+      cardLeft: cardRect.left,
+      actionFlexWrap: actionStyle.flexWrap,
+      actionGridColumnStart: actionStyle.gridColumnStart,
+      actionGridColumnEnd: actionStyle.gridColumnEnd
+    };
+  });
+
+  expect(layout.cardScrollWidth).toBeLessThanOrEqual(layout.cardClientWidth);
+  expect(layout.actionScrollWidth).toBeLessThanOrEqual(layout.actionClientWidth);
+  expect(layout.actionLeft).toBeGreaterThanOrEqual(layout.cardLeft);
+  expect(layout.actionRight).toBeLessThanOrEqual(layout.cardRight);
+  expect(layout.actionFlexWrap).toBe("wrap");
+  expect(layout.actionGridColumnStart).toBe("1");
+  expect(layout.actionGridColumnEnd).toBe("-1");
+});

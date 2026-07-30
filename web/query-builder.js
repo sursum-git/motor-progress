@@ -3,6 +3,7 @@
   const LIBRARY_KEY = "sursumSavedQueries";
   const API_URL_KEY = "sursumApiBaseUrl";
   const DEFAULT_API = "http://localhost:8890/web/SursumDynamicQuery";
+  const PASOE_PROXY = "pasoe-proxy.php";
   const ENDPOINTS_KEY = "sursumApiEndpoints";
   const SELECTED_COMPANY_KEY = "sursumSelectedCompany";
   const SELECTED_ENDPOINT_KEY = "sursumSelectedApiEndpoint";
@@ -73,6 +74,9 @@
     $("#pipelineFields").kendoTextBox();
     $("#pipelineExpression").kendoTextBox();
     $("#pipelineOutputFormat").kendoDropDownList({ dataSource: ["json"], value: "json", change: buildVisualStepPayload });
+    $("#queryName").kendoTextBox();
+    $("#queryCode").kendoTextBox();
+    $("#pipelineVersion").kendoTextBox();
     $("#queryStoreStatus").kendoDropDownList({ dataSource: ["draft", "ready"], value: "draft" });
 
     $("button").kendoButton();
@@ -333,7 +337,7 @@
       forceSync = false;
     }
     setMetadataProgress(forceSync ? "Sincronizando cadastro de bancos..." : "Carregando cadastro de bancos...", 10);
-    $.getJSON(apiBase() + (forceSync ? "/metadata/databases/sync" : "/metadata/database-catalog"))
+    $.getJSON(pasoeUrl(forceSync ? "/metadata/databases/sync" : "/metadata/database-catalog"))
       .done(function (response) {
         if (!response.success) throw new Error(apiError(response));
         state.databases = response.data && response.data.length ? response.data : [];
@@ -351,7 +355,7 @@
   function loadMetadata(incremental, done) {
     setMetadataProgress((incremental ? "Atualizando alteracoes de metadados" : "Fazendo carga inicial de metadados") + " de todos os bancos conhecidos...", 35);
     setStatus("Carregando lista de tabelas de todos os bancos conhecidos pelo PASOE...", "");
-    $.getJSON(apiBase() + "/metadata/tables?database=" + encodeURIComponent(selectedDatabase()) + "&mode=" + (incremental ? "changed" : "initial"))
+    $.getJSON(pasoeUrl("/metadata/tables?database=" + encodeURIComponent(selectedDatabase()) + "&mode=" + (incremental ? "changed" : "initial")))
       .done(function (response) {
         if (!response.success) throw new Error(apiError(response));
         state.tableRows = response.data || [];
@@ -401,7 +405,7 @@
       return;
     }
     setStatus("Carregando campos de " + sourceDatabase() + "." + table + "...", "");
-    $.getJSON(apiBase() + "/metadata/tables/" + encodeURIComponent(table) + "/fields?database=" + encodeURIComponent(sourceDatabase()))
+    $.getJSON(pasoeUrl("/metadata/tables/" + encodeURIComponent(table) + "/fields?database=" + encodeURIComponent(sourceDatabase())))
       .done(function (response) {
         if (!response.success) throw new Error(apiError(response));
         state.fields = expandFieldOptions(response.fields || response.data || []);
@@ -419,7 +423,7 @@
       return;
     }
     setStatus("Carregando campos de " + source.banco + "." + source.nome + "...", "");
-    $.getJSON(apiBase() + "/metadata/tables/" + encodeURIComponent(source.nome) + "/fields?database=" + encodeURIComponent(source.banco))
+    $.getJSON(pasoeUrl("/metadata/tables/" + encodeURIComponent(source.nome) + "/fields?database=" + encodeURIComponent(source.banco)))
       .done(function (response) {
         if (!response.success) throw new Error(apiError(response));
         state.fields = expandFieldOptions(response.fields || response.data || []);
@@ -1307,7 +1311,7 @@
     $("#queryCode").val(code);
     setStatus("Salvando consulta no PASOE...", "");
     $.ajax({
-      url: apiBase() + "/query-store",
+      url: pasoeUrl("/query-store"),
       method: "POST",
       contentType: "application/json",
       dataType: "json",
@@ -1644,6 +1648,26 @@
     return inputValue("#apiBaseUrl", currentContextApiBase() || "http://localhost:8890/web/SursumDynamicQuery").replace(/\/+$/, "");
   }
 
+  function pasoeUrl(path, options) {
+    const base = apiBase();
+    const suffix = String(path || "").replace(/^\/+/, "");
+    let target = base + "/" + suffix;
+    if (window.SursumContext && typeof window.SursumContext.getRequestConfig === "function") {
+      const request = window.SursumContext.getRequestConfig(target, options || {});
+      target = request && request.url ? request.url : target;
+    }
+    return shouldUsePasoeProxy(target) ? PASOE_PROXY + "?target=" + encodeURIComponent(target) : target;
+  }
+
+  function shouldUsePasoeProxy(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      return /^https?:$/.test(parsed.protocol) && parsed.origin !== window.location.origin;
+    } catch (_) {
+      return false;
+    }
+  }
+
   function currentContextApiBase() {
     if (window.SursumContext) {
       if (typeof SursumContext.getCurrentApiBase === "function") return SursumContext.getCurrentApiBase();
@@ -1705,7 +1729,7 @@
   }
 
   function checkServerMetadataCache(done) {
-    $.getJSON(apiBase() + "/metadata/cache-status?database=" + encodeURIComponent(selectedDatabase()))
+    $.getJSON(pasoeUrl("/metadata/cache-status?database=" + encodeURIComponent(selectedDatabase())))
       .done(function (response) {
         if (typeof done === "function") done(!!(response && response.success && response.hasCache));
       })
