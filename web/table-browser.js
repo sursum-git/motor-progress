@@ -172,6 +172,7 @@
       noRecords: { template: "Carregue uma tabela para listar índices." },
       columns: [
         { field: "name", title: "Índice", width: 210 },
+        { field: "description", title: "Descrição", width: 280 },
         { field: "database", title: "Banco", width: 120 },
         { field: "active", title: "Ativo", width: 90 },
         { field: "unique", title: "Único", width: 90 },
@@ -1245,7 +1246,7 @@
         state.currentTable = table;
         state.currentDatabase = response.database || finalDatabase || "";
         const baseFields = fieldsFromMetadataResponse(response);
-        state.indexes = indexesFromMetadataResponse(response, baseFields);
+        const pasoeIndexes = indexesFromMetadataResponse(response, baseFields);
         state.browseCursor = null;
         state.browseHasMore = false;
         state.browseFilters = [];
@@ -1253,7 +1254,11 @@
         renderBrowseFilterSummary();
         renderBrowseFilterGrid();
 
-        loadViewAsOverrides(table, state.currentDatabase)
+        $.when(loadIndexesFromSqlite(table, state.currentDatabase), loadViewAsOverrides(table, state.currentDatabase))
+          .then(function (sqliteIndexes, overrides) {
+            state.indexes = Array.isArray(sqliteIndexes) && sqliteIndexes.length ? sqliteIndexes : pasoeIndexes;
+            return overrides;
+          })
           .then(function (overrides) {
             state.fields = applyViewAsOverrides(baseFields, overrides);
             state.fieldOptionLookup = window.SursumViewAsOptions.buildNumericOptionLookup(state.fields);
@@ -1284,7 +1289,19 @@
 
   function loadViewAsOverrides(table, database) {
     const deferred = $.Deferred();
-    $.getJSON(metadataStoreUrl(table, database))
+    $.getJSON(metadataStoreUrl("view-as", table, database))
+      .done(function (response) {
+        deferred.resolve(response && response.success && Array.isArray(response.data) ? response.data : []);
+      })
+      .fail(function () {
+        deferred.resolve([]);
+      });
+    return deferred.promise();
+  }
+
+  function loadIndexesFromSqlite(table, database) {
+    const deferred = $.Deferred();
+    $.getJSON(metadataStoreUrl("indices", table, database))
       .done(function (response) {
         deferred.resolve(response && response.success && Array.isArray(response.data) ? response.data : []);
       })
@@ -1318,9 +1335,9 @@
     });
   }
 
-  function metadataStoreUrl(table, database) {
+  function metadataStoreUrl(resource, table, database) {
     const scope = relationScope(table, database);
-    return "metadata-store.php?resource=view-as"
+    return "metadata-store.php?resource=" + encodeURIComponent(resource)
       + "&environmentId=" + encodeURIComponent(scope.environmentId)
       + "&companyId=" + encodeURIComponent(scope.companyId)
       + "&database=" + encodeURIComponent(scope.database)
@@ -1523,6 +1540,7 @@
 
     const rows = (state.indexes || []).map((item) => ({
       name: item.name || "",
+      description: item.description || "",
       database: state.currentDatabase || "",
       active: !!item.active,
       unique: !!item.unique,

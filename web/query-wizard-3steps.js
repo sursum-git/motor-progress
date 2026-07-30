@@ -15,6 +15,7 @@
     tableSearchRows: [],
     fields: [],
     fieldsByName: {},
+    indexDescriptions: {},
     fieldOptionLookup: {},
     foreignKeys: [],
     filterRows: [],
@@ -1097,14 +1098,38 @@
         setStatus("Campos carregados: " + state.fields.length, "ok");
         state.filterRows = [];
         refreshFilterGrid();
-        buildFilterTabs(state.fields);
-        setFieldsLoading(false);
-        if (typeof done === "function") done();
+        loadIndexMetadata(function () {
+          buildFilterTabs(state.fields);
+          setFieldsLoading(false);
+          if (typeof done === "function") done();
+        });
       })
       .fail(function (xhr) {
         setFieldsLoading(false);
         const msg = xhr && (xhr.responseText || xhr.statusText) ? ("Erro " + (xhr.status || "") + " " + (xhr.responseText || xhr.statusText)) : "Erro desconhecido";
         setStatus("Falha ao carregar campos: " + msg, "error");
+      });
+  }
+
+  function loadIndexMetadata(done) {
+    state.indexDescriptions = {};
+    const scope = currentScope();
+    const url = "metadata-store.php?resource=indices"
+      + "&environmentId=" + encodeURIComponent(scope.environmentId || "")
+      + "&companyId=" + encodeURIComponent(scope.companyId || "")
+      + "&database=" + encodeURIComponent(state.selectedDatabase || "")
+      + "&table=" + encodeURIComponent(state.selectedTable || "");
+    getJsonUtf8(url)
+      .done(function (response) {
+        const rows = response && response.success && Array.isArray(response.data) ? response.data : [];
+        rows.forEach(function (row) {
+          const name = String(row.name || row.indexName || "").toLowerCase();
+          const description = String(row.description || "").trim();
+          if (name && description) state.indexDescriptions[name] = description;
+        });
+      })
+      .always(function () {
+        if (typeof done === "function") done();
       });
   }
 
@@ -1597,6 +1622,7 @@
       return {
         name,
         tabId,
+        description: indexDescription(name),
         group: indexKindGroupLabel(groups[name] && groups[name].kind ? groups[name].kind : "normal"),
         kind: groups[name] && groups[name].kind ? groups[name].kind : "normal",
         html: `<section id="${tabId}" class="manual-tab-panel ${index === 0 ? "active" : ""}">
@@ -1624,14 +1650,15 @@
         filter: "contains",
         suggest: true,
         placeholder: "Digite para filtrar índices",
-        template: '#: name # # if (kindLabel) { #<span class="index-kind-badge">#: kindLabel #</span># } #',
+        template: '#: name # # if (description) { #<span class="index-description">#: description #</span># } # # if (kindLabel) { #<span class="index-kind-badge">#: kindLabel #</span># } #',
         groupTemplate: "#= data #",
         dataSource: {
           data: tabs.map(function (tab) {
             return {
               name: tab.name,
-              displayText: tab.name + (tab.kind === "primary" ? " - Primário" : tab.kind === "unique" ? " - Único" : ""),
+              displayText: indexDisplayText(tab.name, tab.kind, tab.description),
               tabId: tab.tabId,
+              description: tab.description,
               kind: tab.kind,
               kindLabel: indexKindText(tab.kind),
               group: tab.group
@@ -1662,6 +1689,22 @@
     initIndexFilterWidgets(tabEl);
 
     return;
+  }
+
+  function indexDescription(name) {
+    return state.indexDescriptions[String(name || "").toLowerCase()] || "";
+  }
+
+  function indexDisplayText(name, kind, description) {
+    const parts = [name];
+    if (description) {
+      parts.push(description);
+    } else if (kind === "primary") {
+      parts.push("Primário");
+    } else if (kind === "unique") {
+      parts.push("Único");
+    }
+    return parts.filter(Boolean).join(" - ");
   }
 
   function activateIndexPanel(tabId) {

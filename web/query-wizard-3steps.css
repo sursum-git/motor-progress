@@ -252,6 +252,13 @@ textarea {
   color: #334155;
 }
 
+.index-description {
+  display: inline-block;
+  margin-left: 8px;
+  color: #475569;
+  font-size: 12px;
+}
+
 .manual-tab-panels,
 .manual-tab-panel.active {
   display: grid;

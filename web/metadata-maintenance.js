@@ -162,6 +162,7 @@
         { field: "table", title: "Tabela", width: 210 },
         { field: "status", title: "Status", width: 110 },
         { field: "relationCount", title: "Joins", width: 90 },
+        { field: "indexCount", title: "Índices", width: 90 },
         { field: "viewAsCount", title: "View-as", width: 90 },
         {
           field: "message",
@@ -507,6 +508,7 @@
         action: "create",
         tables,
         includeRelations: $("#includeRelations").is(":checked"),
+        includeIndices: $("#includeIndices").is(":checked"),
         includeViewAs: $("#includeViewAs").is(":checked"),
         existingMetadataBehavior: existingMetadataBehavior()
       }))
@@ -617,7 +619,7 @@
 
   function reprocessJobItem(table) {
     if (!state.currentJob || !table) return;
-    updateJobItem(table, "pending", "Aguardando reprocessamento", 0, 0)
+    updateJobItem(table, "pending", "Aguardando reprocessamento", 0, 0, 0)
       .then(function () {
         setStatus(`Item ${table} reenfileirado para reprocessamento.`, "ok");
         if (state.running) {
@@ -711,17 +713,17 @@
 
     state.runningTables[table] = true;
     state.activeExecutions += 1;
-    markLocalJobItem(table, "running", "Processando", 0, 0);
+    markLocalJobItem(table, "running", "Processando", 0, 0, 0);
     renderJobItem(table);
 
     const work = processTable(table)
       .then(function (result) {
-        return updateJobItem(table, "done", result.message, result.relationCount, result.viewAsCount);
+        return updateJobItem(table, "done", result.message, result.relationCount, result.indexCount, result.viewAsCount);
       }, function (error) {
-        return updateJobItem(table, "error", normalizeErrorMessage(error), 0, 0);
+        return updateJobItem(table, "error", normalizeErrorMessage(error), 0, 0, 0);
       })
       .then(null, function (error) {
-        markLocalJobItem(table, "error", normalizeErrorMessage(error), 0, 0);
+        markLocalJobItem(table, "error", normalizeErrorMessage(error), 0, 0, 0);
         renderJobItem(table);
         setStatus(`Falha ao atualizar item ${table}: ${normalizeErrorMessage(error)}`, "error");
       });
@@ -737,7 +739,7 @@
     });
   }
 
-  function markLocalJobItem(table, status, message, relationCount, viewAsCount) {
+  function markLocalJobItem(table, status, message, relationCount, indexCount, viewAsCount) {
     const items = state.currentJob && Array.isArray(state.currentJob.items) ? state.currentJob.items : [];
     const item = items.find(function (row) {
       return row && row.table === table;
@@ -746,6 +748,7 @@
     item.status = status;
     item.message = message;
     item.relationCount = relationCount;
+    item.indexCount = indexCount;
     item.viewAsCount = viewAsCount;
   }
 
@@ -794,14 +797,28 @@
       });
   }
 
+  function loadExistingIndices(table, database) {
+    const params = Object.assign(scope(table, database), { resource: "indices" });
+    return $.getJSON("metadata-store.php?" + $.param(params))
+      .then(function (response) {
+        if (!response || response.success === false) {
+          throw new Error(apiError(response));
+        }
+        return Array.isArray(response.data) ? response.data : [];
+      });
+  }
+
   function metadataResultMessage(result) {
     const relations = result.relationsSkipped
       ? `joins existentes ${result.relationCount}`
       : `joins ${result.relationCount}`;
+    const indices = result.indicesSkipped
+      ? `índices existentes ${result.indexCount}`
+      : `índices ${result.indexCount}`;
     const viewAs = result.viewAsSkipped
       ? `view-as existentes ${result.viewAsCount}`
       : `view-as ${result.viewAsCount}`;
-    return `${relations}; ${viewAs}`;
+    return `${relations}; ${indices}; ${viewAs}`;
   }
 
   function processTable(table) {
@@ -812,8 +829,20 @@
         .promise();
     }
     setStatus(`Processando ${database}.${table}...`, "");
-    const result = { relationCount: 0, viewAsCount: 0, relationsSkipped: false, viewAsSkipped: false, message: "" };
-    return updateJobItem(table, "running", "Processando", 0, 0)
+    const result = { relationCount: 0, indexCount: 0, viewAsCount: 0, relationsSkipped: false, indicesSkipped: false, viewAsSkipped: false, message: "" };
+    let fieldsResponse = null;
+    const loadFieldsMetadata = function () {
+      if (fieldsResponse) {
+        return $.Deferred().resolve(fieldsResponse).promise();
+      }
+      const path = `/metadata/tables/${encodeURIComponent(table)}/fields?database=${encodeURIComponent(database)}`;
+      return getPasoeStepJson(path, `Buscar campos/indices/view-as de ${database}.${table}`)
+        .then(function (response) {
+          fieldsResponse = response;
+          return response;
+        });
+    };
+    return updateJobItem(table, "running", "Processando", 0, 0, 0)
       .then(function () {
         if (!state.currentJob.includeRelations) return null;
         return shouldUpdateExistingMetadata() ? [] : loadExistingRelations(table, database);
@@ -834,6 +863,25 @@
           });
       })
       .then(function () {
+        if (!state.currentJob.includeIndices) return null;
+        return shouldUpdateExistingMetadata() ? [] : loadExistingIndices(table, database);
+      })
+      .then(function (existingIndices) {
+        if (!state.currentJob.includeIndices) return null;
+        if (Array.isArray(existingIndices) && existingIndices.length > 0) {
+          result.indexCount = existingIndices.length;
+          result.indicesSkipped = true;
+          return null;
+        }
+        return loadFieldsMetadata()
+          .then(function (response) {
+            const fields = fieldsFromMetadataResponse(response);
+            const rows = indexesFromMetadataResponse(response, fields);
+            result.indexCount = rows.length;
+            return saveIndexRows(table, database, rows, "PASOE");
+          });
+      })
+      .then(function () {
         if (!state.currentJob.includeViewAs) return null;
         return shouldUpdateExistingMetadata() ? [] : loadExistingViewAs(table, database);
       })
@@ -844,10 +892,9 @@
           result.viewAsSkipped = true;
           return null;
         }
-        const path = `/metadata/tables/${encodeURIComponent(table)}/fields?database=${encodeURIComponent(database)}`;
-        return getPasoeStepJson(path, `Buscar campos/view-as de ${database}.${table}`)
+        return loadFieldsMetadata()
           .then(function (response) {
-            const rows = (Array.isArray(response.data) ? response.data : []).map(function (field) {
+            const rows = fieldsFromMetadataResponse(response).map(function (field) {
               return {
                 field: field.name || field.field || "",
                 viewAs: field.viewAs || field.viewAS || field.view_as || "",
@@ -870,7 +917,7 @@
       });
   }
 
-  function updateJobItem(table, status, message, relationCount, viewAsCount) {
+  function updateJobItem(table, status, message, relationCount, indexCount, viewAsCount) {
     return $.ajax({
       url: "metadata-store.php",
       method: "POST",
@@ -884,6 +931,7 @@
         status,
         message,
         relationCount,
+        indexCount,
         viewAsCount
       })
     }).then(function (response) {
@@ -957,6 +1005,105 @@
     }, function (xhr) {
       throw new Error(`Gravar view-as no SQLite para ${database}.${table}. Detalhe: ${ajaxErrorMessage(xhr)}`);
     });
+  }
+
+  function saveIndexRows(table, database, rows, source) {
+    return $.ajax({
+      url: "metadata-store.php",
+      method: "POST",
+      contentType: "application/json; charset=utf-8",
+      dataType: "json",
+      data: JSON.stringify(Object.assign(scope(table, database), {
+        resource: "indices",
+        action: "save",
+        source,
+        rows
+      }))
+    }).then(function (response) {
+      if (!response || response.success === false) {
+        throw new Error(`Gravar indices no SQLite para ${database}.${table}. Detalhe: ${apiError(response)}`);
+      }
+    }, function (xhr) {
+      throw new Error(`Gravar indices no SQLite para ${database}.${table}. Detalhe: ${ajaxErrorMessage(xhr)}`);
+    });
+  }
+
+  function fieldsFromMetadataResponse(response) {
+    if (!response) return [];
+    if (Array.isArray(response.fields)) return response.fields;
+    if (Array.isArray(response.data)) return response.data;
+    if (response.data && Array.isArray(response.data.fields)) return response.data.fields;
+    return [];
+  }
+
+  function indexesFromMetadataResponse(response, fields) {
+    if (response) {
+      if (Array.isArray(response.indices)) return response.indices;
+      if (Array.isArray(response.indexes)) return response.indexes;
+      if (response.data && Array.isArray(response.data.indices)) return response.data.indices;
+      if (response.data && Array.isArray(response.data.indexes)) return response.data.indexes;
+    }
+    return indexesFromFields(fields || []);
+  }
+
+  function indexesFromFields(fields) {
+    const byName = new Map();
+    (fields || []).forEach(function (field) {
+      splitIndexInfos(field.indices || field.indexes || field.index).forEach(function (indexInfo) {
+        const name = indexInfo.name || "";
+        if (!name) return;
+        if (!byName.has(name)) {
+          byName.set(name, Object.assign({
+            name,
+            description: indexInfo.description || "",
+            active: true,
+            unique: false,
+            primary: false,
+            wordIndex: false,
+            wordIndexNumber: 0,
+            fields: []
+          }, indexInfo));
+        }
+        byName.get(name).fields.push({ name: field.name || field.field || "" });
+      });
+    });
+    return Array.from(byName.values());
+  }
+
+  function splitIndexInfos(value) {
+    if (Array.isArray(value)) {
+      return value.map(normalizeIndexInfo).filter(function (item) { return item.name; });
+    }
+    if (typeof value === "object" && value) {
+      return [normalizeIndexInfo(value)].filter(function (item) { return item.name; });
+    }
+    return String(value || "")
+      .split(/[;,|]/)
+      .map(normalizeIndexInfo)
+      .filter(function (item) { return item.name; });
+  }
+
+  function normalizeIndexInfo(value) {
+    if (value && typeof value === "object") {
+      return {
+        name: String(value.name || value.indexName || value.index || "").trim(),
+        description: String(value.description || value.descricao || "").trim(),
+        active: value.active !== false,
+        unique: truthy(value.unique || value.isUnique),
+        primary: truthy(value.primary || value.primaryKey || value.isPrimary),
+        wordIndex: truthy(value.wordIndex || value.word_index),
+        wordIndexNumber: Number(value.wordIndexNumber || value.word_index_number || 0) || 0
+      };
+    }
+    return { name: String(value || "").trim() };
+  }
+
+  function truthy(value) {
+    if (value === true || value === 1) return true;
+    if (typeof value === "string") {
+      return ["1", "true", "yes", "sim", "s"].indexOf(value.trim().toLowerCase()) >= 0;
+    }
+    return false;
   }
 
   function resolveViewAsRows(table, database, rows) {
@@ -1737,6 +1884,7 @@
     updateGridModel(model, "status", row.status);
     updateGridModel(model, "message", row.message);
     updateGridModel(model, "relationCount", row.relationCount);
+    updateGridModel(model, "indexCount", row.indexCount);
     updateGridModel(model, "viewAsCount", row.viewAsCount);
     updateGridModel(model, "updatedAt", row.updatedAt);
   }

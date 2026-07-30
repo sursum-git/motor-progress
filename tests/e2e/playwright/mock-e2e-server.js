@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, '../../..');
 const webRoot = path.join(root, 'web');
 const store = new Map();
 let relationRows = [];
+let indexRows = [];
 let viewAsRows = [];
 let metadataJobs = new Map();
 const requests = [];
@@ -109,7 +110,7 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
   if (req.method === 'OPTIONS') return sendJson(res, 200, { success: true });
   if (pathname === '/__health') return sendJson(res, 200, { ok: true });
   if (pathname === '/__requests') return sendJson(res, 200, { requests });
-  if (pathname === '/__reset' && req.method === 'POST') { store.clear(); relationRows = []; viewAsRows = []; metadataJobs = new Map(); requests.length = 0; return sendJson(res, 200, { success: true }); }
+  if (pathname === '/__reset' && req.method === 'POST') { store.clear(); relationRows = []; indexRows = []; viewAsRows = []; metadataJobs = new Map(); requests.length = 0; return sendJson(res, 200, { success: true }); }
   if (pathname === '/auth.php') return sendJson(res, 200, { authenticated: true, user: 'e2e' });
   if (pathname === '/context-store.php' && req.method === 'GET') {
     return sendJson(res, 200, {
@@ -151,6 +152,26 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
     if (url.searchParams.get('resource') === 'job') {
       return sendJson(res, 200, { success: true, data: metadataJobs.get(url.searchParams.get('id')) || null });
     }
+    if (url.searchParams.get('resource') === 'indices') {
+      const table = url.searchParams.get('table') || '';
+      const database = url.searchParams.get('database') || '';
+      if (!indexRows.length && database === 'ems2med' && table === 'ped-venda') {
+        indexRows = [{
+          database: 'ems2med',
+          table: 'ped-venda',
+          indexName: 'ch-pedido',
+          name: 'ch-pedido',
+          description: 'Pedido por cliente e estabelecimento',
+          unique: true,
+          source: 'manual',
+          updatedAt: '2026-07-30T12:00:00-03:00'
+        }];
+      }
+      return sendJson(res, 200, {
+        success: true,
+        data: indexRows.filter(row => (!database || row.database === database) && (!table || row.table === table))
+      });
+    }
     const table = url.searchParams.get('table') || '';
     const data = table ? viewAsRows.filter(row => row.table === table) : viewAsRows;
     return sendJson(res, 200, { success: true, data });
@@ -171,7 +192,8 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
         failedTables: 0,
         includeRelations: !!body.includeRelations,
         includeViewAs: !!body.includeViewAs,
-        items: (body.tables || []).map(table => ({ table, status: 'pending', message: '', relationCount: 0, viewAsCount: 0 }))
+        includeIndices: !!body.includeIndices,
+        items: (body.tables || []).map(table => ({ table, status: 'pending', message: '', relationCount: 0, viewAsCount: 0, indexCount: 0 }))
       };
       metadataJobs.set(id, job);
       return sendJson(res, 200, { success: true, data: job });
@@ -180,7 +202,7 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
       const job = metadataJobs.get(body.jobId);
       if (job) {
         const item = job.items.find(row => row.table === body.table);
-        if (item) Object.assign(item, { status: body.status, message: body.message || '', relationCount: body.relationCount || 0, viewAsCount: body.viewAsCount || 0 });
+        if (item) Object.assign(item, { status: body.status, message: body.message || '', relationCount: body.relationCount || 0, viewAsCount: body.viewAsCount || 0, indexCount: body.indexCount || 0 });
         job.processedTables = job.items.filter(row => row.status === 'done' || row.status === 'error').length;
         job.failedTables = job.items.filter(row => row.status === 'error').length;
         job.status = 'running';
@@ -235,6 +257,26 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
         });
       }
       return sendJson(res, 200, { success: true, data: viewAsRows });
+    }
+    if (body.resource === 'indices') {
+      const rows = Array.isArray(body.rows) ? body.rows : (Array.isArray(body.indices) ? body.indices : []);
+      const table = body.table || '';
+      const database = body.database || '';
+      indexRows = indexRows.filter(item => !(item.table === table && item.database === database));
+      for (const row of rows) {
+        const name = row.name || row.indexName || '';
+        if (!name) continue;
+        indexRows.push(Object.assign({
+          table,
+          database,
+          indexName: name,
+          name,
+          description: row.description || '',
+          source: body.source || row.source || 'PASOE',
+          updatedAt: '2026-07-30T12:00:00-03:00'
+        }, row));
+      }
+      return sendJson(res, 200, { success: true, data: indexRows.filter(item => item.table === table && item.database === database) });
     }
   }
   if (pathname === '/view-as-resolver.php' && req.method === 'POST') {

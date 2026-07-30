@@ -139,6 +139,37 @@ test('table browser find metadata loads fields indexes view-as and refreshes joi
   await expect(page.locator('#statusBox')).toContainText('Joins OF atualizados');
 });
 
+test('table browser loads table indexes from SQLite metadata before PASOE index data', async ({ page, request }) => {
+  await request.post('/metadata-store.php', {
+    data: {
+      resource: 'indices',
+      action: 'save',
+      environmentId: 'ambiente-a',
+      companyId: 'empresa-a',
+      database: 'DICTDB',
+      table: 'Customer',
+      source: 'manual',
+      rows: [{
+        name: 'SqliteCustIdx',
+        description: 'Índice salvo localmente para navegação',
+        active: true,
+        unique: true,
+        primary: false,
+        fields: [{ name: 'CustNum' }]
+      }]
+    }
+  });
+
+  await page.goto('/table-browser.html');
+  await page.locator('#tableName').fill('Customer');
+  await page.locator('#findTableBtn').click();
+
+  await expect(page.locator('#fieldsGrid')).toContainText('CustNum');
+  await expect(page.locator('#indexesGrid')).toContainText('SqliteCustIdx');
+  await expect(page.locator('#indexesGrid')).toContainText('Índice salvo localmente para navegação');
+  await expect(page.locator('#indexesGrid')).not.toContainText('NameIdx');
+});
+
 test('table browser data tab keeps rows when order is inverted and formats dates as pt-BR', async ({ page, request }) => {
   await page.goto('/table-browser.html');
   await page.locator('#tableName').fill('Customer');

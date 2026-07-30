@@ -52,6 +52,59 @@ test('metadata maintenance creates and runs all-table job without manual tabs', 
   await expect(page.locator('#jobSummary')).toContainText('Processadas: 2/2');
 });
 
+test('metadata maintenance updates indexes into SQLite when requested manually', async ({ page, request }) => {
+  await page.goto('/metadata-maintenance.html');
+  await expect(page.locator('#includeIndices')).toBeChecked();
+  await page.evaluate(() => {
+    const combo = window.$('#dbCombo').data('kendoComboBox');
+    combo.value('DICTDB');
+    combo.trigger('change');
+    window.$('#includeRelations').prop('checked', false);
+    window.$('#includeViewAs').prop('checked', false);
+    window.$('#onlyCurrentTable').prop('checked', true);
+    window.$('#tableName').data('kendoComboBox').value('Customer');
+  });
+
+  await page.route('**/metadata-pasoe.php**', async (route) => {
+    const path = new URL(route.request().url()).searchParams.get('path') || '';
+    if (!path.includes('/metadata/tables/Customer/fields')) {
+      return route.continue();
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json; charset=utf-8',
+      body: JSON.stringify({
+        success: true,
+        data: [
+          { name: 'CustNum', fieldType: 'integer', indices: [{ name: 'CustNumIdx', primary: true }] },
+          { name: 'Name', fieldType: 'character', indices: [{ name: 'NameIdx', unique: true }] }
+        ],
+        indexes: [{
+          name: 'CustNumIdx',
+          description: 'Chave principal de cliente',
+          primary: true,
+          fields: [{ name: 'CustNum' }]
+        }, {
+          name: 'NameIdx',
+          description: 'Busca por nome de cliente',
+          unique: true,
+          fields: [{ name: 'Name' }]
+        }]
+      })
+    });
+  });
+
+  await page.locator('#createJob').click();
+  await page.locator('#runJob').click();
+  await expect(page.locator('#statusBox')).toContainText('Fila concluida');
+
+  const response = await (await request.get('/metadata-store.php?resource=indices&environmentId=ambiente-a&companyId=empresa-a&database=DICTDB&table=Customer')).json();
+  expect(response.data).toEqual(expect.arrayContaining([
+    expect.objectContaining({ name: 'CustNumIdx', description: 'Chave principal de cliente', primary: true }),
+    expect.objectContaining({ name: 'NameIdx', description: 'Busca por nome de cliente', unique: true })
+  ]));
+});
+
 test('metadata batch keeps grid controls interactive while requests are running', async ({ page }) => {
   await page.goto('/metadata-maintenance.html');
   await page.evaluate(() => {

@@ -706,14 +706,17 @@ test('query wizard resolves ped-venda across databases without selecting ems2med
     const combo = window.$('#indexSelector').data('kendoComboBox');
     return combo.dataSource.view().map((group) => ({
       value: group.value,
-      items: group.items.map((item) => item.name)
+      items: group.items.map((item) => ({
+        name: item.name,
+        displayText: item.displayText
+      }))
     }));
   });
 
   expect(comboState).toEqual([
-    { value: 'Chave primária', items: ['ch-pedseq'] },
-    { value: 'Chave única', items: ['ch-pedido'] },
-    { value: 'Demais índices', items: ['nr-pedcli'] }
+    { value: 'Chave primária', items: [{ name: 'ch-pedseq', displayText: 'ch-pedseq - Primário' }] },
+    { value: 'Chave única', items: [{ name: 'ch-pedido', displayText: 'ch-pedido - Pedido por cliente e estabelecimento' }] },
+    { value: 'Demais índices', items: [{ name: 'nr-pedcli', displayText: 'nr-pedcli' }] }
   ]);
 });
 

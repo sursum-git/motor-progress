@@ -18,6 +18,9 @@ try {
             if ($resource === 'job') {
                 return [['success' => true, 'data' => loadJob($pdo, text($_GET['id'] ?? ''))], 200];
             }
+            if ($resource === 'indices' || $resource === 'indexes') {
+                return [['success' => true, 'data' => loadIndexRows($pdo, requestScope())], 200];
+            }
             return [['success' => true, 'data' => loadViewAsRows($pdo, requestScope())], 200];
         }
 
@@ -29,6 +32,9 @@ try {
             $resource = text($requestPayload['resource'] ?? 'view-as');
             if ($resource === 'job') {
                 return [handleJobPost($pdo, $requestPayload), 200];
+            }
+            if ($resource === 'indices' || $resource === 'indexes') {
+                return [handleIndexPost($pdo, $requestPayload), 200];
             }
             return [handleViewAsPost($pdo, $requestPayload), 200];
         }
@@ -99,6 +105,30 @@ function initializeMetadataSchema(PDO $pdo): void
     $pdo->exec('CREATE INDEX IF NOT EXISTS idx_field_view_as_table_field ON field_view_as(table_name, field_name)');
     canonicalizeViewAsRows($pdo);
     $pdo->exec(
+        'CREATE TABLE IF NOT EXISTS table_indices (
+            id TEXT PRIMARY KEY,
+            environment_id TEXT NOT NULL DEFAULT "",
+            company_id TEXT NOT NULL DEFAULT "",
+            database_name TEXT NOT NULL,
+            table_name TEXT NOT NULL,
+            index_name TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT "",
+            active INTEGER NOT NULL DEFAULT 1,
+            unique_index INTEGER NOT NULL DEFAULT 0,
+            primary_index INTEGER NOT NULL DEFAULT 0,
+            word_index INTEGER NOT NULL DEFAULT 0,
+            word_index_number INTEGER NOT NULL DEFAULT 0,
+            source TEXT NOT NULL DEFAULT "manual",
+            fields_json TEXT NOT NULL DEFAULT "[]",
+            raw_json TEXT NOT NULL DEFAULT "{}",
+            updated_at TEXT NOT NULL,
+            UNIQUE(environment_id, company_id, database_name, table_name, index_name)
+        )'
+    );
+    ensureColumn($pdo, 'table_indices', 'description', 'TEXT NOT NULL DEFAULT ""');
+    ensureColumn($pdo, 'table_indices', 'fields_json', 'TEXT NOT NULL DEFAULT "[]"');
+    $pdo->exec('CREATE INDEX IF NOT EXISTS idx_table_indices_lookup ON table_indices(environment_id, company_id, database_name, table_name)');
+    $pdo->exec(
         'CREATE TABLE IF NOT EXISTS field_view_as_options (
             id TEXT PRIMARY KEY,
             view_as_id TEXT NOT NULL,
@@ -129,6 +159,7 @@ function initializeMetadataSchema(PDO $pdo): void
             processed_tables INTEGER NOT NULL DEFAULT 0,
             failed_tables INTEGER NOT NULL DEFAULT 0,
             include_relations INTEGER NOT NULL DEFAULT 1,
+            include_indices INTEGER NOT NULL DEFAULT 1,
             include_view_as INTEGER NOT NULL DEFAULT 1,
             existing_metadata_behavior TEXT NOT NULL DEFAULT "skip",
             current_table TEXT NOT NULL DEFAULT "",
@@ -138,6 +169,7 @@ function initializeMetadataSchema(PDO $pdo): void
         )'
     );
     ensureColumn($pdo, 'metadata_sync_jobs', 'existing_metadata_behavior', 'TEXT NOT NULL DEFAULT "skip"');
+    ensureColumn($pdo, 'metadata_sync_jobs', 'include_indices', 'INTEGER NOT NULL DEFAULT 1');
     $pdo->exec(
         'CREATE TABLE IF NOT EXISTS metadata_sync_items (
             job_id TEXT NOT NULL,
@@ -145,11 +177,13 @@ function initializeMetadataSchema(PDO $pdo): void
             status TEXT NOT NULL DEFAULT "pending",
             message TEXT NOT NULL DEFAULT "",
             relation_count INTEGER NOT NULL DEFAULT 0,
+            index_count INTEGER NOT NULL DEFAULT 0,
             view_as_count INTEGER NOT NULL DEFAULT 0,
             updated_at TEXT NOT NULL,
             PRIMARY KEY(job_id, table_name)
         )'
     );
+    ensureColumn($pdo, 'metadata_sync_items', 'index_count', 'INTEGER NOT NULL DEFAULT 0');
 }
 
 function ensureColumn(PDO $pdo, string $table, string $column, string $definition): void
@@ -208,6 +242,28 @@ function handleViewAsPost(PDO $pdo, array $payload): array
     return ['success' => true, 'data' => loadViewAsRows($pdo, $scope)];
 }
 
+function handleIndexPost(PDO $pdo, array $payload): array
+{
+    $action = text($payload['action'] ?? 'save');
+    $scope = requestScope($payload);
+    if ($action === 'delete') {
+        deleteIndexRow($pdo, $scope, text($payload['indexName'] ?? $payload['name'] ?? ''));
+        return ['success' => true, 'data' => loadIndexRows($pdo, $scope)];
+    }
+    $rows = [];
+    if (isset($payload['rows']) && is_array($payload['rows'])) {
+        $rows = $payload['rows'];
+    } elseif (isset($payload['indices']) && is_array($payload['indices'])) {
+        $rows = $payload['indices'];
+    } elseif (isset($payload['indexes']) && is_array($payload['indexes'])) {
+        $rows = $payload['indexes'];
+    } else {
+        $rows[] = $payload;
+    }
+    saveIndexRows($pdo, $scope, $rows, text($payload['source'] ?? 'manual') ?: 'manual', $action !== 'append');
+    return ['success' => true, 'data' => loadIndexRows($pdo, $scope)];
+}
+
 function handleJobPost(PDO $pdo, array $payload): array
 {
     $action = text($payload['action'] ?? '');
@@ -222,8 +278,8 @@ function handleJobPost(PDO $pdo, array $payload): array
         $existingBehavior = normalizeExistingMetadataBehavior($payload['existingMetadataBehavior'] ?? 'skip');
         $stmt = $pdo->prepare(
             'INSERT INTO metadata_sync_jobs
-             (id, environment_id, company_id, database_name, status, total_tables, include_relations, include_view_as, existing_metadata_behavior, created_at, updated_at)
-             VALUES (:id, :environment_id, :company_id, :database_name, "pending", :total_tables, :include_relations, :include_view_as, :existing_metadata_behavior, :created_at, :updated_at)'
+             (id, environment_id, company_id, database_name, status, total_tables, include_relations, include_indices, include_view_as, existing_metadata_behavior, created_at, updated_at)
+             VALUES (:id, :environment_id, :company_id, :database_name, "pending", :total_tables, :include_relations, :include_indices, :include_view_as, :existing_metadata_behavior, :created_at, :updated_at)'
         );
         $stmt->execute([
             ':id' => $id,
@@ -232,6 +288,7 @@ function handleJobPost(PDO $pdo, array $payload): array
             ':database_name' => $scope['database'],
             ':total_tables' => count($tables),
             ':include_relations' => !empty($payload['includeRelations']) ? 1 : 0,
+            ':include_indices' => array_key_exists('includeIndices', $payload) ? (!empty($payload['includeIndices']) ? 1 : 0) : 1,
             ':include_view_as' => !empty($payload['includeViewAs']) ? 1 : 0,
             ':existing_metadata_behavior' => $existingBehavior,
             ':created_at' => $now,
@@ -362,6 +419,133 @@ function loadViewAsRows(PDO $pdo, array $scope): array
             'updatedAt' => $row['updated_at'],
         ];
     }, $rows);
+}
+
+function loadIndexRows(PDO $pdo, array $scope): array
+{
+    $sql = 'SELECT * FROM table_indices WHERE 1 = 1';
+    $params = [];
+    if ($scope['database'] !== '') {
+        $sql .= ' AND lower(database_name) = lower(:database_name)';
+        $params[':database_name'] = $scope['database'];
+    }
+    if ($scope['table'] !== '') {
+        $sql .= ' AND lower(table_name) = lower(:table_name)';
+        $params[':table_name'] = $scope['table'];
+    } elseif (!empty($scope['tableNames'])) {
+        $tableNames = array_values(array_filter(array_map('text', $scope['tableNames'])));
+        if ($tableNames) {
+            $placeholders = [];
+            foreach ($tableNames as $index => $tableName) {
+                $placeholder = ':index_table_name_' . $index;
+                $placeholders[] = $placeholder;
+                $params[$placeholder] = strtolower($tableName);
+            }
+            $sql .= ' AND lower(table_name) IN (' . implode(',', $placeholders) . ')';
+        }
+    }
+    $sql .= ' ORDER BY table_name, primary_index DESC, unique_index DESC, index_name';
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    return array_map(static function (array $row): array {
+        $fields = json_decode((string) ($row['fields_json'] ?? '[]'), true);
+        if (!is_array($fields)) {
+            $fields = [];
+        }
+        return [
+            'id' => $row['id'],
+            'database' => $row['database_name'],
+            'table' => $row['table_name'],
+            'name' => $row['index_name'],
+            'indexName' => $row['index_name'],
+            'description' => $row['description'] ?? '',
+            'active' => ((int) ($row['active'] ?? 0)) === 1,
+            'unique' => ((int) ($row['unique_index'] ?? 0)) === 1,
+            'primary' => ((int) ($row['primary_index'] ?? 0)) === 1,
+            'wordIndex' => ((int) ($row['word_index'] ?? 0)) === 1,
+            'wordIndexNumber' => (int) ($row['word_index_number'] ?? 0),
+            'fields' => $fields,
+            'source' => $row['source'],
+            'updatedAt' => $row['updated_at'],
+        ];
+    }, $stmt->fetchAll(PDO::FETCH_ASSOC));
+}
+
+function saveIndexRows(PDO $pdo, array $scope, array $rows, string $defaultSource, bool $replaceExisting = true): void
+{
+    if ($scope['database'] === '' || $scope['table'] === '') {
+        throw new InvalidArgumentException('Banco e tabela sao obrigatorios para gravar indices.');
+    }
+    $pdo->beginTransaction();
+    try {
+        if ($replaceExisting) {
+            $delete = $pdo->prepare(
+                'DELETE FROM table_indices
+                 WHERE lower(database_name) = lower(:database_name)
+                   AND lower(table_name) = lower(:table_name)'
+            );
+            $delete->execute([
+                ':database_name' => $scope['database'],
+                ':table_name' => $scope['table'],
+            ]);
+        }
+        $stmt = $pdo->prepare(
+            'INSERT OR REPLACE INTO table_indices
+             (id, environment_id, company_id, database_name, table_name, index_name, description, active, unique_index, primary_index, word_index, word_index_number, source, fields_json, raw_json, updated_at)
+             VALUES (:id, "", "", :database_name, :table_name, :index_name, :description, :active, :unique_index, :primary_index, :word_index, :word_index_number, :source, :fields_json, :raw_json, :updated_at)'
+        );
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $name = text($row['name'] ?? $row['indexName'] ?? $row['index'] ?? '');
+            if ($name === '') {
+                continue;
+            }
+            $rowScope = $scope;
+            $rowScope['database'] = text($row['database'] ?? $row['databaseName'] ?? $row['database_name'] ?? $scope['database']);
+            $rowScope['table'] = text($row['table'] ?? $row['tableName'] ?? $row['table_name'] ?? $scope['table']);
+            $fields = normalizeIndexFields($row['fields'] ?? $row['components'] ?? $row['columns'] ?? []);
+            $stmt->execute([
+                ':id' => indexId($rowScope, $name),
+                ':database_name' => $rowScope['database'],
+                ':table_name' => $rowScope['table'],
+                ':index_name' => $name,
+                ':description' => text($row['description'] ?? $row['descricao'] ?? ''),
+                ':active' => truthy($row['active'] ?? true) ? 1 : 0,
+                ':unique_index' => truthy($row['unique'] ?? $row['isUnique'] ?? false) ? 1 : 0,
+                ':primary_index' => truthy($row['primary'] ?? $row['primaryKey'] ?? $row['isPrimary'] ?? false) ? 1 : 0,
+                ':word_index' => truthy($row['wordIndex'] ?? $row['word_index'] ?? false) ? 1 : 0,
+                ':word_index_number' => (int) ($row['wordIndexNumber'] ?? $row['word_index_number'] ?? 0),
+                ':source' => text($row['source'] ?? $defaultSource) ?: $defaultSource,
+                ':fields_json' => json_encode($fields, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                ':raw_json' => json_encode($row, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                ':updated_at' => date(DATE_ATOM),
+            ]);
+        }
+        $pdo->commit();
+    } catch (Throwable $error) {
+        $pdo->rollBack();
+        throw $error;
+    }
+}
+
+function deleteIndexRow(PDO $pdo, array $scope, string $name): void
+{
+    if ($name === '') {
+        throw new InvalidArgumentException('Indice obrigatorio.');
+    }
+    $stmt = $pdo->prepare(
+        'DELETE FROM table_indices
+         WHERE lower(database_name) = lower(:database_name)
+           AND lower(table_name) = lower(:table_name)
+           AND lower(index_name) = lower(:index_name)'
+    );
+    $stmt->execute([
+        ':database_name' => $scope['database'],
+        ':table_name' => $scope['table'],
+        ':index_name' => $name,
+    ]);
 }
 
 function saveViewAsRows(PDO $pdo, array $scope, array $rows, string $defaultSource): void
@@ -783,13 +967,14 @@ function updateJobItem(PDO $pdo, array $payload): void
     }
     $stmt = $pdo->prepare(
         'UPDATE metadata_sync_items
-         SET status = :status, message = :message, relation_count = :relation_count, view_as_count = :view_as_count, updated_at = :updated_at
+         SET status = :status, message = :message, relation_count = :relation_count, index_count = :index_count, view_as_count = :view_as_count, updated_at = :updated_at
          WHERE job_id = :job_id AND table_name = :table_name'
     );
     $stmt->execute([
         ':status' => in_array($status, ['pending', 'running', 'done', 'error', 'cancelled'], true) ? $status : 'done',
         ':message' => text($payload['message'] ?? ''),
         ':relation_count' => (int) ($payload['relationCount'] ?? 0),
+        ':index_count' => (int) ($payload['indexCount'] ?? 0),
         ':view_as_count' => (int) ($payload['viewAsCount'] ?? 0),
         ':updated_at' => date(DATE_ATOM),
         ':job_id' => $jobId,
@@ -846,6 +1031,7 @@ function reprocessJobErrors(PDO $pdo, array $payload): void
          SET status = "pending",
              message = :message,
              relation_count = 0,
+             index_count = 0,
              view_as_count = 0,
              updated_at = :updated_at
          WHERE job_id = :job_id AND status = "error"'
@@ -945,7 +1131,7 @@ function loadJob(PDO $pdo, string $id): ?array
     }
     $cancelled = $pdo->prepare('SELECT COUNT(*) FROM metadata_sync_items WHERE job_id = :job_id AND status = "cancelled"');
     $cancelled->execute([':job_id' => $id]);
-    $items = $pdo->prepare('SELECT table_name, status, message, relation_count, view_as_count, updated_at FROM metadata_sync_items WHERE job_id = :job_id ORDER BY rowid');
+    $items = $pdo->prepare('SELECT table_name, status, message, relation_count, index_count, view_as_count, updated_at FROM metadata_sync_items WHERE job_id = :job_id ORDER BY rowid');
     $items->execute([':job_id' => $id]);
     return [
         'id' => $job['id'],
@@ -958,6 +1144,7 @@ function loadJob(PDO $pdo, string $id): ?array
         'failedTables' => (int) $job['failed_tables'],
         'cancelledTables' => (int) $cancelled->fetchColumn(),
         'includeRelations' => (bool) $job['include_relations'],
+        'includeIndices' => (bool) $job['include_indices'],
         'includeViewAs' => (bool) $job['include_view_as'],
         'existingMetadataBehavior' => normalizeExistingMetadataBehavior($job['existing_metadata_behavior'] ?? 'skip'),
         'currentTable' => $job['current_table'],
@@ -970,6 +1157,7 @@ function loadJob(PDO $pdo, string $id): ?array
                 'status' => $row['status'],
                 'message' => $row['message'],
                 'relationCount' => (int) $row['relation_count'],
+                'indexCount' => (int) $row['index_count'],
                 'viewAsCount' => (int) $row['view_as_count'],
                 'updatedAt' => $row['updated_at'],
             ];
@@ -984,6 +1172,56 @@ function viewAsId(array $scope, string $field): string
         strtolower($scope['table']),
         strtolower($field),
     ]));
+}
+
+function indexId(array $scope, string $name): string
+{
+    return sha1(implode('|', [
+        strtolower(text($scope['database'] ?? '')),
+        strtolower(text($scope['table'] ?? '')),
+        strtolower($name),
+    ]));
+}
+
+function normalizeIndexFields($fields): array
+{
+    if (is_string($fields)) {
+        $fields = preg_split('/[,;|]/', $fields) ?: [];
+    }
+    if (!is_array($fields)) {
+        return [];
+    }
+    $normalized = [];
+    foreach ($fields as $field) {
+        if (is_array($field)) {
+            $name = text($field['name'] ?? $field['field'] ?? $field['fieldName'] ?? '');
+            if ($name !== '') {
+                $normalized[] = array_filter([
+                    'name' => $name,
+                    'ascending' => array_key_exists('ascending', $field) ? truthy($field['ascending']) : null,
+                ], static function ($value): bool {
+                    return $value !== null && $value !== '';
+                });
+            }
+            continue;
+        }
+        $name = text($field);
+        if ($name !== '') {
+            $normalized[] = ['name' => $name];
+        }
+    }
+    return $normalized;
+}
+
+function truthy($value): bool
+{
+    if ($value === true || $value === 1) {
+        return true;
+    }
+    if (is_string($value)) {
+        return in_array(strtolower(trim($value)), ['1', 'true', 'yes', 'sim', 's'], true);
+    }
+    return false;
 }
 
 function text($value): string
