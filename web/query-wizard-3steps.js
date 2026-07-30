@@ -2,7 +2,7 @@
   const QUERY_COMPANY_KEY = "sursumQueryCompanyId";
   const METADATA_PROXY = "metadata-pasoe.php";
   const PASOE_PROXY = "pasoe-proxy.php";
-  const TABLE_CACHE_PREFIX = "sursumQueryWizardTableCache:";
+  const TABLE_CACHE_PREFIX = "sursumQueryWizardTableCache:v2:";
 
   const state = {
     apiBase: initialApiBase(),
@@ -754,12 +754,17 @@
   }
 
   function normalizeTableRows(rows, defaultDatabase) {
-    return (rows || []).map((item) => ({
-      name: item.name || "",
-      label: item.label || "",
-      dumpName: item.dumpName || "",
-      database: item.database || item.logicalName || defaultDatabase || state.selectedDatabase
-    }));
+    return (rows || []).map((item) => {
+      const name = item.name || item.table || item.tableName || item.dumpName || "";
+      return {
+        name,
+        label: item.label || item.description || item.descricao || name,
+        dumpName: item.dumpName || item.dump_name || "",
+        database: item.database || item.databaseName || item.logicalName || defaultDatabase || state.selectedDatabase
+      };
+    }).filter(function (item) {
+      return item.name;
+    });
   }
 
   function openTableSearch() {

@@ -269,14 +269,17 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
     requests.push({ method: req.method, path: req.url });
     return sendJson(res, 200, { success: true, data: [
       { name: 'DICTDB', displayName: 'DICTDB' },
-      { name: 'espec', displayName: 'espec' }
+      { name: 'espec', displayName: 'espec' },
+      { name: 'ems2med', displayName: 'ems2med' }
     ] });
   }
   if (pathname.endsWith('/metadata/tables')) {
     const database = String(searchParams.get('database') || '').toLowerCase();
     const data = database === 'espec'
       ? [{ name: 'pp-container', label: 'pp-container', database: 'espec' }]
-      : [{ name: 'Customer', label: 'Customer', database: 'DICTDB' }, { name: 'Order', label: 'Order', database: 'DICTDB' }];
+      : database === 'ems2med'
+        ? [{ table: 'ped-venda', description: 'Pedido venda', database: 'ems2med' }]
+        : [{ name: 'Customer', label: 'Customer', database: 'DICTDB' }, { name: 'Order', label: 'Order', database: 'DICTDB' }];
     return sendJson(res, 200, { success: true, data });
   }
   if (pathname.includes('/metadata/tables/') && pathname.endsWith('/fields')) {
@@ -301,6 +304,12 @@ async function handleApi(req, res, pathname, searchParams = new URL(req.url, `ht
       return sendJson(res, 200, { success: true, database: 'espec', table: 'pp-pedido', data: [
         { name: 'nr-pedido', type: 'integer', fieldType: 'integer' },
         { name: 'cliente', type: 'character' }
+      ] });
+    }
+    if (decodedPathname.includes('/metadata/tables/ped-venda/fields')) {
+      return sendJson(res, 200, { success: true, database: 'ems2med', table: 'ped-venda', data: [
+        { name: 'nr-pedcli', type: 'character', fieldType: 'character', indices: 'nr-pedcli' },
+        { name: 'cod-emitente', type: 'integer', fieldType: 'integer' }
       ] });
     }
     return sendJson(res, 200, { success: true, database: 'DICTDB', table: 'Customer', data: [

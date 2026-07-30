@@ -610,6 +610,32 @@ test('query wizard accepts a typed table without database when the table exists 
   await expect(page.locator("[data-step-panel='2']")).toHaveClass(/is-active/);
 });
 
+test('query wizard resolves ped-venda across databases without selecting ems2med first', async ({ page }) => {
+  await page.addInitScript((payload) => {
+    localStorage.clear();
+    localStorage.setItem('sursumContextV4', JSON.stringify(payload.data));
+  }, contextPayload());
+  await page.route('**/context-store.php', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json; charset=utf-8',
+      body: JSON.stringify(contextPayload())
+    });
+  });
+
+  await page.goto('/query-wizard-3steps.html');
+  await expect.poll(async () => page.evaluate(() => {
+    const combo = window.$('#databaseCombo').data('kendoComboBox');
+    return combo ? combo.dataSource.data().map((item) => item.name) : [];
+  })).toContain('ems2med');
+
+  await page.locator('#selectedTable').fill('ped-venda');
+  await page.locator('#selectedTable').press('Enter');
+
+  await expect(page.locator('#tableSelectedInfo')).toContainText('ems2med.ped-venda');
+  await expect(page.locator("[data-step-panel='2']")).toHaveClass(/is-active/);
+});
+
 test('query wizard requires database for a typed table found in more than one database', async ({ page }) => {
   await page.addInitScript((payload) => {
     localStorage.clear();
