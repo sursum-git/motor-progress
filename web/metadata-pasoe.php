@@ -136,11 +136,40 @@ function proxyPasoe(string $target, array $environment): never
         ]);
     }
 
+    $body = normalizeJsonBodyUtf8($body);
+
     http_response_code($status > 0 ? $status : 502);
     header('Cache-Control: no-store');
-    header('Content-Type: ' . ($contentType !== '' ? $contentType : 'application/json; charset=utf-8'));
+    header('Content-Type: ' . jsonContentTypeUtf8($contentType));
     echo $body;
     exit;
+}
+
+function normalizeJsonBodyUtf8(string $body): string
+{
+    if ($body === '' || mb_check_encoding($body, 'UTF-8')) {
+        return $body;
+    }
+
+    $converted = @mb_convert_encoding($body, 'UTF-8', 'Windows-1252,ISO-8859-1');
+    if (is_string($converted) && $converted !== '' && mb_check_encoding($converted, 'UTF-8')) {
+        return $converted;
+    }
+
+    $converted = @iconv('Windows-1252', 'UTF-8//IGNORE', $body);
+    return is_string($converted) && $converted !== '' ? $converted : $body;
+}
+
+function jsonContentTypeUtf8(string $contentType): string
+{
+    $type = trim($contentType);
+    if ($type === '') {
+        return 'application/json; charset=utf-8';
+    }
+    if (stripos($type, 'charset=') !== false) {
+        return preg_replace('/charset\s*=\s*[^;]+/i', 'charset=utf-8', $type) ?: 'application/json; charset=utf-8';
+    }
+    return $type . '; charset=utf-8';
 }
 
 function isPrivateHost(string $host): bool
