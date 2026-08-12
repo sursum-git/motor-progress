@@ -1,0 +1,34 @@
+{
+  "pedido": {
+    "numero": 1001,
+    "cliente": {
+      "codigo": "CLI-01",
+      "enderecos": [
+        {
+          "tipo": "entrega",
+          "cidade": "Sao Paulo"
+        },
+        {
+          "tipo": "cobranca",
+          "cidade": "Campinas",
+          "referencia": {
+            "contato": "Maria"
+          }
+        }
+      ]
+    },
+    "itens": [
+      {
+        "sequencia": 1,
+        "produto": {
+          "codigo": "P-01",
+          "atributos": {
+            "cor": "azul",
+            "grade": ["P", "M", "G"]
+          }
+        }
+      }
+    ]
+  },
+  "status": "aberto"
+}

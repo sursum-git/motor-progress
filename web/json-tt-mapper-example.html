@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Exemplo JSON para Temp-Tables</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="ui-ready.css?v=20260617-grid-center">
+  <style>
+    body {
+      margin: 0;
+      padding: 16px;
+      height: 100vh;
+      overflow: hidden;
+      background: #f4f6f8;
+      color: #1f2933;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    main {
+      display: grid;
+      grid-template-rows: minmax(260px, 38vh) auto minmax(0, 1fr);
+      gap: 12px;
+      height: 100%;
+      min-height: 0;
+    }
+    .workbench {
+      display: grid;
+      grid-template-columns: minmax(320px, 0.58fr) minmax(260px, 0.42fr);
+      gap: 12px;
+      min-height: 0;
+    }
+    .panel,
+    .status {
+      background: #fff;
+      border: 1px solid #d8dee4;
+      border-radius: 8px;
+    }
+    .panel {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-width: 0;
+      min-height: 0;
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 12px;
+      border-bottom: 1px solid #d8dee4;
+    }
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    button {
+      min-height: 34px;
+      padding: 7px 12px;
+      border: 0;
+      border-radius: 6px;
+      background: #1d4ed8;
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.secondary {
+      background: #475569;
+    }
+    button:disabled {
+      background: #8fa4cf;
+      cursor: wait;
+    }
+    textarea,
+    pre {
+      box-sizing: border-box;
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 12px;
+      overflow: auto;
+      border: 0;
+      background: #fbfcfd;
+      color: #111827;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 13px;
+      line-height: 1.45;
+      resize: none;
+      white-space: pre;
+    }
+    textarea:focus {
+      outline: 2px solid #93c5fd;
+      outline-offset: -2px;
+    }
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-left: 4px solid #1d4ed8;
+      color: #344150;
+    }
+    .tabs {
+      min-height: 0;
+      overflow: hidden;
+    }
+    .tab-grid {
+      height: calc(100vh - 520px);
+      min-height: 280px;
+    }
+    @media (max-width: 880px) {
+      body {
+        padding: 10px;
+        overflow: auto;
+        height: auto;
+      }
+      main {
+        height: auto;
+        grid-template-rows: auto auto auto;
+      }
+      .workbench {
+        grid-template-columns: 1fr;
+      }
+      .panel {
+        min-height: 260px;
+      }
+      .status {
+        align-items: stretch;
+        flex-direction: column;
+      }
+      .tab-grid {
+        height: 360px;
+      }
+    }
+  </style>
+</head>
+<body class="sursum-ui-pending">
+  <main>
+    <div class="workbench">
+      <section class="panel">
+        <div class="panel-header">
+          <h1>JSON para Temp-Tables</h1>
+          <div class="actions">
+            <button id="formatButton" class="secondary" type="button">Formatar</button>
+            <button id="runButton" type="button">Executar</button>
+          </div>
+        </div>
+        <textarea id="jsonInput" spellcheck="false">{
+  "pedidos": [
+    {
+      "numero": 45001,
+      "cliente": {
+        "codigo": "CLI-001",
+        "nome": "Cliente São José"
+      },
+      "observacao": "Pedido com observação acentuada: ação, maçã e café.",
+      "itens": [
+        {
+          "sequencia": 1,
+          "produto": "TEC-001",
+          "quantidade": 3.5,
+          "valorUnitario": 10.25
+        },
+        {
+          "sequencia": 2,
+          "produto": "TEC-002",
+          "quantidade": 5,
+          "valorUnitario": 20.5
+        }
+      ]
+    },
+    {
+      "numero": 45002,
+      "cliente": {
+        "codigo": "CLI-002",
+        "nome": "Cliente Ribeirão"
+      },
+      "observacao": "Segundo pedido com item inválido para demonstrar ttJsonErro.",
+      "itens": [
+        {
+          "sequencia": 1,
+          "produto": "TEC-003",
+          "quantidade": "INVALIDO",
+          "valorUnitario": 99.9
+        }
+      ]
+    }
+  ]
+}</textarea>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h1>Requisição</h1>
+        </div>
+        <pre id="requestPreview"></pre>
+      </section>
+    </div>
+
+    <div class="status">
+      <span id="statusBox">Pronto para executar.</span>
+      <span id="summaryBox">Pedidos: 0 | Itens: 0 | Erros: 0</span>
+    </div>
+
+    <section class="tabs">
+      <div id="resultTabs">
+        <ul>
+          <li class="k-active">ttPedido</li>
+          <li>ttItem</li>
+          <li>ttJsonErro</li>
+        </ul>
+        <div><div id="pedidoGrid" class="tab-grid"></div></div>
+        <div><div id="itemGrid" class="tab-grid"></div></div>
+        <div><div id="erroGrid" class="tab-grid"></div></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/examples/content/shared/js/jszip.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/js/cultures/kendo.culture.pt-BR.min.js"></script>
+  <script src="vendor/kendo/js/messages/kendo.messages.pt-BR.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="context-manager.js"></script>
+  <script src="ui-ready.js?v=20260616-grid-loading"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      const DEFAULT_API_BASE = "https://192.168.0.111:9911/med/web/SursumDynamicQuery";
+      const PROGRAM_CODE = "analise-json-object10";
+      const jsonInput = document.getElementById("jsonInput");
+      const requestPreview = document.getElementById("requestPreview");
+      const statusBox = document.getElementById("statusBox");
+      const summaryBox = document.getElementById("summaryBox");
+      const runButton = document.getElementById("runButton");
+      const formatButton = document.getElementById("formatButton");
+
+      function setStatus(message) {
+        statusBox.textContent = message;
+      }
+
+      function pretty(value) {
+        return JSON.stringify(value, null, 2);
+      }
+
+      function jsonTextForProgress(value) {
+        return pretty(value).replace(/[^\x00-\x7F]/g, function (char) {
+          return "\\u" + char.charCodeAt(0).toString(16).padStart(4, "0");
+        });
+      }
+
+      function decodeUnicodeEscapes(value) {
+        if (typeof value !== "string") return value;
+        return value.replace(/\\u([0-9a-fA-F]{4})/g, function (_, hex) {
+          return String.fromCharCode(parseInt(hex, 16));
+        });
+      }
+
+      function decodeRows(rows) {
+        return (Array.isArray(rows) ? rows : []).map(function (row) {
+          const decoded = {};
+          Object.keys(row || {}).forEach(function (key) {
+            decoded[key] = decodeUnicodeEscapes(row[key]);
+          });
+          return decoded;
+        });
+      }
+
+      function currentApiBase() {
+        if (window.SursumContext && typeof SursumContext.getCurrentApiBase === "function") {
+          return String(SursumContext.getCurrentApiBase() || DEFAULT_API_BASE).replace(/\/+$/, "");
+        }
+        return DEFAULT_API_BASE;
+      }
+
+      function pasoeProxyUrl(path) {
+        return "pasoe-proxy.php?target=" + encodeURIComponent(currentApiBase() + path);
+      }
+
+      function parseJsonInput() {
+        const text = String(jsonInput.value || "").trim();
+        if (!text) throw new Error("Informe um JSON.");
+        return JSON.parse(text);
+      }
+
+      function buildRequest() {
+        return {
+          program: PROGRAM_CODE,
+          parameters: {
+            jsonText: jsonTextForProgress(parseJsonInput()),
+            targetCodepage: "ISO8859-1",
+            escapeUnicodeOutput: true,
+            mapTempTablesExample: true
+          }
+        };
+      }
+
+      function refreshPreview() {
+        try {
+          requestPreview.textContent = pretty(buildRequest());
+          setStatus("Pronto para executar.");
+        } catch (error) {
+          requestPreview.textContent = "";
+          setStatus("JSON inválido: " + error.message);
+        }
+      }
+
+      async function postJson(url, body) {
+        const response = await fetch(url, {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const text = await response.text();
+        try {
+          return { status: response.status, payload: JSON.parse(text), raw: text };
+        } catch (error) {
+          return { status: response.status, payload: null, raw: text };
+        }
+      }
+
+      function setGridData(selector, rows) {
+        const grid = $(selector).data("kendoGrid");
+        grid.dataSource.data(rows);
+      }
+
+      function renderPayload(payload) {
+        const pedidos = decodeRows(payload && payload.pedidos);
+        const itens = decodeRows(payload && payload.itens);
+        const erros = decodeRows(payload && payload.erros);
+        setGridData("#pedidoGrid", pedidos);
+        setGridData("#itemGrid", itens);
+        setGridData("#erroGrid", erros);
+        summaryBox.textContent = "Pedidos: " + pedidos.length + " | Itens: " + itens.length + " | Erros: " + erros.length;
+      }
+
+      function renderFailure(message) {
+        setGridData("#pedidoGrid", []);
+        setGridData("#itemGrid", []);
+        setGridData("#erroGrid", [{ mensagem: message }]);
+        summaryBox.textContent = "Pedidos: 0 | Itens: 0 | Erros: 1";
+      }
+
+      async function runExample() {
+        let request;
+        try {
+          request = buildRequest();
+        } catch (error) {
+          setStatus("JSON inválido: " + error.message);
+          return;
+        }
+
+        runButton.disabled = true;
+        requestPreview.textContent = pretty(request);
+        try {
+          setStatus("Executando exemplo no PASOE...");
+          const response = await postJson(pasoeProxyUrl("/program/execute"), request);
+          if (!response.payload) {
+            renderFailure(response.raw || "Resposta não JSON.");
+            setStatus("Resposta não JSON. HTTP " + response.status + ".");
+            return;
+          }
+          if (response.payload.success === false) {
+            renderFailure(response.payload.error || "Programa retornou erro.");
+            setStatus("Programa retornou erro. HTTP " + response.status + ".");
+            return;
+          }
+          renderPayload(response.payload);
+          setStatus("Execução concluída. HTTP " + response.status + ".");
+        } catch (error) {
+          renderFailure(error.message || String(error));
+          setStatus("Falha ao executar exemplo.");
+        } finally {
+          runButton.disabled = false;
+        }
+      }
+
+      function formatJson() {
+        try {
+          jsonInput.value = pretty(parseJsonInput());
+          refreshPreview();
+        } catch (error) {
+          setStatus("JSON inválido: " + error.message);
+        }
+      }
+
+      function initGrid(selector, columns, fileName) {
+        $(selector).kendoGrid({
+          dataSource: { data: [], pageSize: 50 },
+          height: "100%",
+          scrollable: true,
+          toolbar: ["excel"],
+          excel: { fileName: fileName, allPages: true, filterable: true },
+          sortable: true,
+          filterable: true,
+          resizable: true,
+          reorderable: true,
+          pageable: { pageSize: 50, pageSizes: [50, 100, 200] },
+          noRecords: { template: "Nenhum registro." },
+          columns: columns
+        });
+      }
+
+      function initUi() {
+        kendo.culture("pt-BR");
+        $("button").kendoButton();
+        $("#resultTabs").kendoTabStrip({ animation: false });
+        initGrid("#pedidoGrid", [
+          { field: "nrPedido", title: "Pedido", width: 110 },
+          { field: "codCliente", title: "Cliente", width: 130 },
+          { field: "nomeCliente", title: "Nome", width: 220 },
+          { field: "observacao", title: "Observação", width: 420 }
+        ], "tt-pedido-json.xlsx");
+        initGrid("#itemGrid", [
+          { field: "nrPedido", title: "Pedido", width: 110 },
+          { field: "sequencia", title: "Seq.", width: 90 },
+          { field: "itCodigo", title: "Item", width: 150 },
+          { field: "quantidade", title: "Quantidade", width: 130 },
+          { field: "valorUnit", title: "Valor unit.", width: 130 }
+        ], "tt-item-json.xlsx");
+        initGrid("#erroGrid", [
+          { field: "destino", title: "Destino", width: 120 },
+          { field: "campoTabela", title: "Campo", width: 160 },
+          { field: "tagJson", title: "Tag", width: 180 },
+          { field: "caminho", title: "Caminho", width: 320 },
+          { field: "mensagem", title: "Mensagem", width: 420 }
+        ], "tt-json-erros.xlsx");
+      }
+
+      runButton.addEventListener("click", runExample);
+      formatButton.addEventListener("click", formatJson);
+      jsonInput.addEventListener("input", refreshPreview);
+
+      $(function () {
+        initUi();
+        if (window.SursumUiReady) window.SursumUiReady();
+        const ready = window.SursumContext && typeof SursumContext.whenReady === "function"
+          ? SursumContext.whenReady()
+          : Promise.resolve();
+        ready.then(refreshPreview).catch(function (error) { setStatus(error.message); });
+      });
+    })();
+  </script>
+</body>
+</html>

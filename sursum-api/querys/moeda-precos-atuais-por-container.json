@@ -1,0 +1,147 @@
+{
+  "code": "moeda-precos-atuais-por-container",
+  "status": "ready",
+  "query": {
+    "execution": "sync",
+    "page": 1,
+    "pageSize": 5000,
+    "defaultBanco": "espec",
+    "sources": [
+      {
+        "nome": "controle_preco",
+        "alias": "controle_preco",
+        "banco": "espec",
+        "campos": "cod_controle_preco,nr_container,tb_preco_id,tp_preco,it_codigo,cod_refer,vl_real,vl_dolar,dt_inicial,dt_final,log_vencido"
+      },
+      {
+        "nome": "tbs_preco",
+        "alias": "tbs_preco",
+        "banco": "espec",
+        "campos": "tb_preco_id,descricao"
+      }
+    ],
+    "joins": [
+      {
+        "type": "INNER",
+        "leftAlias": "controle_preco",
+        "leftField": "tb_preco_id",
+        "rightAlias": "tbs_preco",
+        "rightField": "tb_preco_id"
+      }
+    ],
+    "select": [
+      {
+        "sourceAlias": "controle_preco",
+        "field": "nr_container",
+        "outputAlias": "nr_container"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "tb_preco_id",
+        "outputAlias": "tb_preco_id"
+      },
+      {
+        "sourceAlias": "tbs_preco",
+        "field": "descricao",
+        "outputAlias": "tb_preco_descricao"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "tp_preco",
+        "outputAlias": "tp_preco"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "it_codigo",
+        "outputAlias": "it_codigo"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "cod_refer",
+        "outputAlias": "cod_refer"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "vl_real",
+        "outputAlias": "vl_real"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "vl_dolar",
+        "outputAlias": "vl_dolar"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "dt_inicial",
+        "outputAlias": "dt_inicial"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "dt_final",
+        "outputAlias": "dt_final"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "log_vencido",
+        "outputAlias": "log_vencido"
+      }
+    ],
+    "filters": [
+      {
+        "sourceAlias": "controle_preco",
+        "field": "log_vencido",
+        "operator": "=",
+        "value": "false"
+      }
+    ],
+    "orderBy": [
+      {
+        "sourceAlias": "controle_preco",
+        "field": "tb_preco_id",
+        "direction": "ASC"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "it_codigo",
+        "direction": "ASC"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "cod_refer",
+        "direction": "ASC"
+      },
+      {
+        "sourceAlias": "controle_preco",
+        "field": "dt_inicial",
+        "direction": "DESC"
+      }
+    ],
+    "pipeline": []
+  },
+  "externalFilters": [
+    {
+      "name": "nr_container",
+      "source": "querystring",
+      "sourceAlias": "controle_preco",
+      "field": "nr_container",
+      "operator": "=",
+      "required": true
+    },
+    {
+      "name": "dt_referencia",
+      "source": "querystring",
+      "sourceAlias": "controle_preco",
+      "field": "dt_inicial",
+      "operator": "<=",
+      "required": false
+    },
+    {
+      "name": "dt_referencia",
+      "source": "querystring",
+      "sourceAlias": "controle_preco",
+      "field": "dt_final",
+      "operator": ">=",
+      "required": false
+    }
+  ]
+}

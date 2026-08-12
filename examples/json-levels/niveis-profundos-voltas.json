@@ -1,0 +1,54 @@
+{
+  "raizA": {
+    "n2a": {
+      "n3a": {
+        "n4a": {
+          "n5a": {
+            "n6a": {
+              "n7a": {
+                "n8a": "fundo-a"
+              },
+              "n7b": "volta-para-7"
+            },
+            "n6b": {
+              "n7c": "volta-para-6-e-desce"
+            }
+          },
+          "n5b": "volta-para-5"
+        },
+        "n4b": {
+          "n5c": {
+            "n6c": "volta-para-4-e-desce"
+          }
+        }
+      },
+      "n3b": "volta-para-3"
+    },
+    "n2b": {
+      "n3c": {
+        "n4c": "volta-para-2-e-desce"
+      }
+    }
+  },
+  "raizB": {
+    "n2c": "novo-ramo-2"
+  },
+  "lista": [
+    {
+      "l2a": {
+        "l3a": {
+          "l4a": [
+            {
+              "l6a": "array-profundo"
+            }
+          ],
+          "l4b": "volta-dentro-array"
+        }
+      }
+    },
+    {
+      "l2b": "segundo-item-volta"
+    }
+  ],
+  "raizC": "volta-final-1"
+}

@@ -1,5 +1,7 @@
 {
   "programs": {
-    "echo-json": "sursum-api/programs/EchoJsonProgram.p"
+    "echo-json": "sursum-api/programs/EchoJsonProgram.p",
+    "analise-json-object10": "esapi/analiseJsonObject10.p",
+    "exemplo-preenche-tt-json10": "esapi/exemploPreencheTempTablesJson10.p"
   }
 }

@@ -1,0 +1,12 @@
+{
+  "a": {
+    "b": {
+      "c": "nivel-3"
+    },
+    "d": "volta-ao-nivel-2"
+  },
+  "e": "volta-ao-nivel-1",
+  "f": {
+    "g": "novo-ramo-nivel-2"
+  }
+}

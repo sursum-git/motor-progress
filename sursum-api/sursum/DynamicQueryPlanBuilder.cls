@@ -15,7 +15,8 @@ CLASS DynamicQueryPlanBuilder:
     DEFINE PRIVATE TEMP-TABLE ttSourceMap NO-UNDO
         FIELD requestAlias AS CHARACTER
         FIELD sourceAlias  AS CHARACTER
-        FIELD tableName    AS CHARACTER.
+        FIELD tableName    AS CHARACTER
+        FIELD tableBanco   AS CHARACTER.
 
     DEFINE PRIVATE TEMP-TABLE ttPlanSource NO-UNDO
         FIELD sourceOrder AS INTEGER
@@ -113,6 +114,7 @@ CLASS DynamicQueryPlanBuilder:
         DEFINE VARIABLE cLeftTable AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cRightAlias AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cRightTable AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE lHasLeftJoin AS LOGICAL NO-UNDO.
 
         EMPTY TEMP-TABLE ttReqSource.
         EMPTY TEMP-TABLE ttReqJoin.
@@ -144,12 +146,9 @@ CLASS DynamicQueryPlanBuilder:
             CREATE ttSourceMap.
             ASSIGN ttSourceMap.requestAlias = ttReqSource.tableAlias
                    ttSourceMap.sourceAlias  = cAlias
-                   ttSourceMap.tableName    = cTable.
+                   ttSourceMap.tableName    = cTable
+                   ttSourceMap.tableBanco   = cBanco.
 
-            IF cFromClause = "" THEN
-                ASSIGN cFromClause = "FOR EACH " + THIS-OBJECT:getSourceExpression(cAlias, cTable, cBanco) + " NO-LOCK".
-            ELSE
-                ASSIGN cFromClause = cFromClause + ", EACH " + THIS-OBJECT:getSourceExpression(cAlias, cTable, cBanco) + " NO-LOCK".
         END.
 
         poRequest:getSelects(OUTPUT TABLE ttReqSelect).
@@ -255,11 +254,17 @@ CLASS DynamicQueryPlanBuilder:
             ASSIGN cExpr = THIS-OBJECT:qualifyField(cLeftTable, ttReqJoin.leftField)
                         + " = "
                         + THIS-OBJECT:qualifyField(cRightTable, ttReqJoin.rightField).
+            IF LC(TRIM(ttReqJoin.joinType)) = "left" THEN DO:
+                ASSIGN lHasLeftJoin = TRUE.
+                NEXT.
+            END.
             IF cWhereClause = "" THEN
                 ASSIGN cWhereClause = cExpr.
             ELSE
                 ASSIGN cWhereClause = cWhereClause + " AND " + cExpr.
         END.
+
+        THIS-OBJECT:buildFromClause(lHasLeftJoin).
 
         poRequest:getOrders(OUTPUT TABLE ttReqOrder).
         FOR EACH ttReqOrder:
@@ -338,6 +343,83 @@ CLASS DynamicQueryPlanBuilder:
         ASSIGN pcBanco = THIS-OBJECT:resolveDatabaseName(pcBanco).
         ASSIGN cSourceExpr = IF pcBanco = "" THEN pcTable ELSE pcBanco + "." + pcTable.
         RETURN cSourceExpr.
+    END METHOD.
+
+    METHOD PRIVATE VOID buildFromClause(INPUT plHasLeftJoin AS LOGICAL):
+        DEFINE VARIABLE cSource AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cPhrase AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cPhraseWhere AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cJoinExpr AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE lLeftJoin AS LOGICAL NO-UNDO.
+
+        ASSIGN cFromClause = "".
+        IF plHasLeftJoin THEN
+            ASSIGN cWhereClause = "".
+
+        FOR EACH ttPlanSource BY ttPlanSource.sourceOrder:
+            ASSIGN cSource = THIS-OBJECT:getSourceExpression(
+                                ttPlanSource.sourceAlias,
+                                ttPlanSource.sourceTable,
+                                ttPlanSource.sourceBanco)
+                   cPhraseWhere = ""
+                   cJoinExpr = ""
+                   lLeftJoin = FALSE.
+
+            IF plHasLeftJoin THEN DO:
+                FOR EACH ttPlanFilter
+                    WHERE ttPlanFilter.sourceAlias = ttPlanSource.sourceAlias
+                    BY ttPlanFilter.filterOrder:
+                    ASSIGN cPhraseWhere = THIS-OBJECT:appendWhereExpression(
+                        cPhraseWhere,
+                        THIS-OBJECT:buildFilterClause(
+                            ttPlanFilter.sourceTable,
+                            ttPlanFilter.sourceField,
+                            ttPlanFilter.operator,
+                            ttPlanFilter.valueChar,
+                            ttPlanFilter.valueToChar,
+                            ttPlanFilter.dataType
+                        )
+                    ).
+                END.
+            END.
+
+            IF plHasLeftJoin THEN DO:
+                FIND FIRST ttPlanJoin
+                    WHERE ttPlanJoin.rightAlias = ttPlanSource.sourceAlias
+                      AND LC(TRIM(ttPlanJoin.joinType)) = "left"
+                    NO-ERROR.
+                IF AVAILABLE ttPlanJoin THEN DO:
+                    ASSIGN lLeftJoin = TRUE
+                           cJoinExpr = THIS-OBJECT:qualifyField(ttPlanJoin.rightTable, ttPlanJoin.rightField)
+                                     + " = "
+                                     + THIS-OBJECT:qualifyField(ttPlanJoin.leftTable, ttPlanJoin.leftField).
+                    ASSIGN cPhraseWhere = THIS-OBJECT:appendWhereExpression(cPhraseWhere, cJoinExpr).
+                END.
+            END.
+
+            IF cFromClause = "" THEN
+                ASSIGN cPhrase = "FOR EACH " + cSource.
+            ELSE IF lLeftJoin THEN
+                ASSIGN cPhrase = ", FIRST " + cSource.
+            ELSE
+                ASSIGN cPhrase = ", EACH " + cSource.
+
+            IF cPhraseWhere <> "" THEN
+                ASSIGN cPhrase = cPhrase + " WHERE " + cPhraseWhere.
+            IF lLeftJoin THEN
+                ASSIGN cPhrase = cPhrase + " OUTER-JOIN".
+            ASSIGN cPhrase = cPhrase + " NO-LOCK".
+
+            ASSIGN cFromClause = cFromClause + cPhrase.
+        END.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER appendWhereExpression(INPUT pcWhere AS CHARACTER, INPUT pcExpr AS CHARACTER):
+        IF pcExpr = "" THEN
+            RETURN pcWhere.
+        IF pcWhere = "" THEN
+            RETURN pcExpr.
+        RETURN pcWhere + " AND " + pcExpr.
     END METHOD.
 
     METHOD PRIVATE CHARACTER resolveDatabaseName(INPUT pcDatabase AS CHARACTER):

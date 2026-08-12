@@ -1,0 +1,129 @@
+{
+  "code": "pp-container-por-container",
+  "status": "ready",
+  "query": {
+    "execution": "sync",
+    "page": 1,
+    "pageSize": 10,
+    "defaultBanco": "espec",
+    "sources": [
+      {
+        "nome": "pp-container",
+        "alias": "pp-container",
+        "banco": "espec",
+        "campos": "nr-container,cod-estabel,cod-estab,cod-depos,nome-ab-forn,comprador,dt-compra,dt-prev-chegada,dt_prev_chegada_loja,dt-recebimento,dt-receb,situacao,num_origem,log_rota_indefinida,log_pagto_final,ptax,vlr-despesas,vlr-frete,vlr-seguro"
+      }
+    ],
+    "joins": [],
+    "select": [
+      {
+        "sourceAlias": "pp-container",
+        "field": "nr-container",
+        "outputAlias": "nr-container"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "cod-estabel",
+        "outputAlias": "cod-estabel"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "cod-estab",
+        "outputAlias": "cod-estab"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "cod-depos",
+        "outputAlias": "cod-depos"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "nome-ab-forn",
+        "outputAlias": "nome-ab-forn"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "comprador",
+        "outputAlias": "comprador"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "dt-compra",
+        "outputAlias": "dt-compra"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "dt-prev-chegada",
+        "outputAlias": "dt-prev-chegada"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "dt_prev_chegada_loja",
+        "outputAlias": "dt_prev_chegada_loja"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "dt-recebimento",
+        "outputAlias": "dt-recebimento"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "dt-receb",
+        "outputAlias": "dt-receb"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "situacao",
+        "outputAlias": "situacao"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "num_origem",
+        "outputAlias": "num_origem"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "log_rota_indefinida",
+        "outputAlias": "log_rota_indefinida"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "log_pagto_final",
+        "outputAlias": "log_pagto_final"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "ptax",
+        "outputAlias": "ptax"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "vlr-despesas",
+        "outputAlias": "vlr-despesas"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "vlr-frete",
+        "outputAlias": "vlr-frete"
+      },
+      {
+        "sourceAlias": "pp-container",
+        "field": "vlr-seguro",
+        "outputAlias": "vlr-seguro"
+      }
+    ],
+    "filters": [],
+    "orderBy": [],
+    "pipeline": []
+  },
+  "externalFilters": [
+    {
+      "name": "nr-container",
+      "source": "querystring",
+      "sourceAlias": "pp-container",
+      "field": "nr-container",
+      "operator": "=",
+      "required": true
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "code": "tabelas-preco-por-container",
+  "status": "ready",
+  "query": {
+    "execution": "sync",
+    "page": 1,
+    "pageSize": 5000,
+    "defaultBanco": "espec",
+    "sources": [
+      {
+        "nome": "controle_preco",
+        "alias": "controle_preco",
+        "banco": "espec",
+        "campos": "nr_container,tb_preco_id"
+      },
+      {
+        "nome": "tbs_preco",
+        "alias": "tbs_preco",
+        "banco": "espec",
+        "campos": "tb_preco_id,descricao"
+      }
+    ],
+    "joins": [
+      {
+        "type": "INNER",
+        "leftAlias": "controle_preco",
+        "leftField": "tb_preco_id",
+        "rightAlias": "tbs_preco",
+        "rightField": "tb_preco_id"
+      }
+    ],
+    "select": [
+      {
+        "sourceAlias": "controle_preco",
+        "field": "tb_preco_id",
+        "outputAlias": "tb_preco_id"
+      },
+      {
+        "sourceAlias": "tbs_preco",
+        "field": "descricao",
+        "outputAlias": "descricao"
+      }
+    ],
+    "filters": [
+      {
+        "sourceAlias": "controle_preco",
+        "field": "tb_preco_id",
+        "operator": ">",
+        "value": "0"
+      }
+    ],
+    "orderBy": [
+      {
+        "sourceAlias": "controle_preco",
+        "field": "tb_preco_id",
+        "direction": "ASC"
+      }
+    ],
+    "pipeline": [
+      {
+        "type": "distinct",
+        "payload": "{\"fields\":[\"tb_preco_id\",\"descricao\"]}"
+      }
+    ]
+  },
+  "externalFilters": [
+    {
+      "name": "nr_container",
+      "source": "querystring",
+      "sourceAlias": "controle_preco",
+      "field": "nr_container",
+      "operator": "=",
+      "required": true
+    }
+  ]
+}

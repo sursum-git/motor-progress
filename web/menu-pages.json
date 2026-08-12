@@ -50,6 +50,16 @@
         "description": "Exemplo de cliente HTML para executar programas .p cadastrados no PASOE."
       },
       {
+        "text": "Analisador JSON Object",
+        "url": "json-object-analyzer.html",
+        "description": "Analise de niveis e caminhos de um JSON em grid Kendo."
+      },
+      {
+        "text": "JSON para Temp-Tables",
+        "url": "json-tt-mapper-example.html",
+        "description": "Exemplo de preenchimento de temp-tables por nivel e de/para de tags JSON."
+      },
+      {
         "text": "Consulta de container",
         "url": "container-client.html",
         "description": "Exemplo de cliente HTML para consultar container por parametro."

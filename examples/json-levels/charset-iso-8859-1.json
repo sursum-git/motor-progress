@@ -1,0 +1,20 @@
+{
+  "descri\u00e7\u00e3o": "A\u00e7\u00e3o, cora\u00e7\u00e3o, ma\u00e7\u00e3, Jo\u00e3o, S\u00e3o Paulo, caf\u00e9",
+  "clientes": [
+    {
+      "nome": "Jos\u00e9 da Concei\u00e7\u00e3o",
+      "cidade": "Ribeir\u00e3o Preto",
+      "observa\u00e7\u00f5es": [
+        "Pre\u00e7o v\u00e1lido at\u00e9 amanh\u00e3",
+        "Pe\u00e7a com numera\u00e7\u00e3o \u00fanica"
+      ]
+    },
+    {
+      "nome": "M\u00e1rcia Gon\u00e7alves",
+      "cidade": "Curitiba",
+      "observa\u00e7\u00f5es": [
+        "Entregar ap\u00f3s confer\u00eancia"
+      ]
+    }
+  ]
+}
