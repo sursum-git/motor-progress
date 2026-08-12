@@ -1,0 +1,33 @@
+#***************************************************************************
+# Parametros de conexao Cliente/Servidor - base teste
+# Baseado em datasul-prod-databases.pf.
+# Na base teste os servicos iniciam com 2, mantendo os mesmos sufixos da producao.
+#***************************************************************************
+
+-mmax 16384
+-l 10248
+-s 1024
+-TB 31
+-TM 32
+-d dmy
+-Bt 16384
+-tmpbsize 8
+-Mr 512
+-Mm 16384
+-cpstream ibm850
+-cpterm iso8859-1
+-inp 32000
+-h 50
+-numsep 46
+-numdec 44
+-T c:\temp
+
+-db ems2adt  -ld mgadt    -S 20002 -H 192.168.0.111 -N tcp
+-db emsfnd   -ld emsfnd   -S 20010 -H 192.168.0.111 -N tcp
+-db espec    -ld espec    -S 20012 -H 192.168.0.111 -N tcp
+-db hcm      -ld hcm      -S 20014 -H 192.168.0.111 -N tcp
+-db mdtcrm   -ld mdtcrm   -S 20015 -H 192.168.0.111 -N tcp
+-db ems2ima  -ld ems2ima  -S 20030 -H 192.168.0.111 -N tcp
+-db ems2med  -ld ems2med  -S 20031 -H 192.168.0.111 -N tcp
+-db ems2cad  -ld ems2cad  -S 20033 -H 192.168.0.111 -N tcp
+-db ems5     -ld ems5     -S 20032 -H 192.168.0.111 -N tcp
