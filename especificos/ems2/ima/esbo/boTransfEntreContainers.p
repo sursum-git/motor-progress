@@ -20,6 +20,7 @@ DEFINE VARIABLE nrContainerDest     AS INTEGER     NO-UNDO.
 DEFINE VARIABLE hBoControlePreco    AS HANDLE      NO-UNDO.
 DEFINE VARIABLE hBoMsg              AS HANDLE      NO-UNDO.
 DEFINE VARIABLE iTransacaoLog       AS INTEGER     NO-UNDO.
+{esbo/boMsg.i}
 DEFINE TEMP-TABLE transfPreco NO-UNDO  LIKE controle_preco.
 DEFINE BUFFER bfTransf FOR transf_container.
 DEFINE TEMP-TABLE ttItemTransfContainer NO-UNDO LIKE item_transf_container.
