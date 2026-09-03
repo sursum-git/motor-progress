@@ -72,6 +72,9 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                     ELSE IF cPath MATCHES "*/actions/execute" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleActionExecute(cBody).
                     END.
+                    ELSE IF cPath MATCHES "*/runtime/screens/*/endpoints/*" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleRuntimeScreenEndpoint(cPath, cBody).
+                    END.
                     ELSE IF cPath MATCHES "*/executions/*/kill-request" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleKillRequest(THIS-OBJECT:getExecutionIdFromPath(cPath), cBody).
                     END.
@@ -126,6 +129,9 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                     END.
                     ELSE IF cPath MATCHES "*/diagnostics/runtime" OR cPath MATCHES "*/diagnostics/agent" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleRuntimeDiagnostics(cMethod, cPath).
+                    END.
+                    ELSE IF cPath MATCHES "*/runtime/screens/*" THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleRuntimeScreenDefinition(cPath).
                     END.
                     ELSE IF cPath MATCHES "*/executions/*" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleGetExecution(THIS-OBJECT:getExecutionIdFromPath(cPath)).
@@ -524,6 +530,8 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         joEndpoints:Add("tableBrowse", "POST /web/SursumDynamicQuery/table-browse").
         joEndpoints:Add("programExecute", "POST /web/SursumDynamicQuery/program/execute").
         joEndpoints:Add("actionExecute", "POST /web/SursumDynamicQuery/actions/execute").
+        joEndpoints:Add("runtimeScreen", "GET /web/SursumDynamicQuery/runtime/screens/:screenId").
+        joEndpoints:Add("runtimeEndpoint", "POST /web/SursumDynamicQuery/runtime/screens/:screenId/endpoints/:endpointId").
         joEndpoints:Add("executions", "GET /web/SursumDynamicQuery/executions?status=:status&pid=:pid&limit=:limit").
         joEndpoints:Add("executionDetail", "GET /web/SursumDynamicQuery/executions/:executionId").
         joEndpoints:Add("executionCancel", "POST /web/SursumDynamicQuery/executions/:executionId/cancel").
@@ -1926,6 +1934,30 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN joRet.
     END METHOD.
 
+    METHOD PRIVATE JsonObject handleRuntimeScreenDefinition(INPUT pcPath AS CHARACTER):
+        DEFINE VARIABLE oRuntime AS RuntimeScreenService NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+
+        ASSIGN oRuntime = NEW RuntimeScreenService()
+               joRet = oRuntime:getScreenDefinition(THIS-OBJECT:getRuntimeScreenIdFromPath(pcPath)).
+        DELETE OBJECT oRuntime NO-ERROR.
+        RETURN joRet.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject handleRuntimeScreenEndpoint(INPUT pcPath AS CHARACTER, INPUT pcBody AS LONGCHAR):
+        DEFINE VARIABLE oRuntime AS RuntimeScreenService NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+
+        ASSIGN oRuntime = NEW RuntimeScreenService()
+               joRet = oRuntime:executeEndpoint(
+                   THIS-OBJECT:getRuntimeScreenIdFromPath(pcPath),
+                   THIS-OBJECT:getRuntimeEndpointIdFromPath(pcPath),
+                   pcBody
+               ).
+        DELETE OBJECT oRuntime NO-ERROR.
+        RETURN joRet.
+    END METHOD.
+
     METHOD PRIVATE JsonObject handleTableBrowse(INPUT pcBody AS LONGCHAR):
         DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
         DEFINE VARIABLE joCursor AS JsonObject NO-UNDO.
@@ -2265,6 +2297,42 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
             RETURN "".
 
         ASSIGN cPath = SUBSTRING(cPath, iExecutions + 12).
+        ASSIGN iSuffix = INDEX(cPath, "/").
+        IF iSuffix > 0 THEN
+            ASSIGN cPath = SUBSTRING(cPath, 1, iSuffix - 1).
+
+        RETURN cPath.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getRuntimeScreenIdFromPath(INPUT pcPath AS CHARACTER):
+        DEFINE VARIABLE cPath AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iScreens AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iSuffix AS INTEGER NO-UNDO.
+
+        ASSIGN cPath = REPLACE(pcPath, "~\", "/").
+        ASSIGN iScreens = INDEX(cPath, "/runtime/screens/").
+        IF iScreens = 0 THEN
+            RETURN "".
+
+        ASSIGN cPath = SUBSTRING(cPath, iScreens + 17).
+        ASSIGN iSuffix = INDEX(cPath, "/").
+        IF iSuffix > 0 THEN
+            ASSIGN cPath = SUBSTRING(cPath, 1, iSuffix - 1).
+
+        RETURN cPath.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getRuntimeEndpointIdFromPath(INPUT pcPath AS CHARACTER):
+        DEFINE VARIABLE cPath AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iEndpoints AS INTEGER NO-UNDO.
+        DEFINE VARIABLE iSuffix AS INTEGER NO-UNDO.
+
+        ASSIGN cPath = REPLACE(pcPath, "~\", "/").
+        ASSIGN iEndpoints = INDEX(cPath, "/endpoints/").
+        IF iEndpoints = 0 THEN
+            RETURN "".
+
+        ASSIGN cPath = SUBSTRING(cPath, iEndpoints + 11).
         ASSIGN iSuffix = INDEX(cPath, "/").
         IF iSuffix > 0 THEN
             ASSIGN cPath = SUBSTRING(cPath, 1, iSuffix - 1).

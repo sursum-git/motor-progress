@@ -1,0 +1,132 @@
+{
+  "schemaVersion": "1.0",
+  "screens": {
+    "cadastros.customer": {
+      "definition": {
+        "schemaVersion": "1.0",
+        "pageType": "crud",
+        "screenId": "cadastros.customer",
+        "program": {
+          "id": "customer",
+          "screenId": "cadastros.customer",
+          "title": "Clientes",
+          "version": "1.0.0"
+        },
+        "api": {
+          "read": { "endpointId": "read", "method": "POST" },
+          "get": { "endpointId": "get", "method": "POST" },
+          "create": { "endpointId": "create", "method": "POST" },
+          "update": { "endpointId": "update", "method": "POST" },
+          "delete": { "endpointId": "delete", "method": "POST" }
+        },
+        "crud": {
+          "idField": "customer",
+          "grid": {
+            "columns": [
+              { "field": "customer", "title": "Codigo", "width": 120, "type": "integer" },
+              { "field": "name", "title": "Nome" },
+              { "field": "city", "title": "Cidade" },
+              { "field": "state", "title": "UF", "width": 80 }
+            ]
+          },
+          "form": {
+            "tabs": [
+              {
+                "id": "geral",
+                "title": "Geral",
+                "fields": [
+                  { "name": "customer", "label": "Codigo", "type": "integer", "readonly": true },
+                  { "name": "name", "label": "Nome", "type": "string", "required": true },
+                  { "name": "city", "label": "Cidade", "type": "string" },
+                  { "name": "state", "label": "UF", "type": "string" }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      "endpoints": {
+        "read": {
+          "type": "query",
+          "method": "POST",
+          "query": {
+            "execution": "sync",
+            "page": 1,
+            "pageSize": 20,
+            "defaultBanco": "DICTDB",
+            "sources": [
+              {
+                "nome": "Customer",
+                "alias": "customer",
+                "banco": "DICTDB",
+                "campos": "CustNum,Name,City,State"
+              }
+            ],
+            "select": [
+              { "sourceAlias": "customer", "field": "CustNum", "outputAlias": "customer" },
+              { "sourceAlias": "customer", "field": "Name", "outputAlias": "name" },
+              { "sourceAlias": "customer", "field": "City", "outputAlias": "city" },
+              { "sourceAlias": "customer", "field": "State", "outputAlias": "state" }
+            ],
+            "filters": [],
+            "orderBy": [
+              { "sourceAlias": "customer", "field": "Name", "direction": "ASC" }
+            ],
+            "pipeline": []
+          },
+          "response": {
+            "mode": "crudRead",
+            "totalFrom": "recordsReturned"
+          }
+        },
+        "get": {
+          "type": "query",
+          "method": "POST",
+          "idField": "customer",
+          "idFilter": { "sourceAlias": "customer", "field": "CustNum", "operator": "=" },
+          "query": {
+            "execution": "sync",
+            "page": 1,
+            "pageSize": 1,
+            "defaultBanco": "DICTDB",
+            "sources": [
+              {
+                "nome": "Customer",
+                "alias": "customer",
+                "banco": "DICTDB",
+                "campos": "CustNum,Name,City,State"
+              }
+            ],
+            "select": [
+              { "sourceAlias": "customer", "field": "CustNum", "outputAlias": "customer" },
+              { "sourceAlias": "customer", "field": "Name", "outputAlias": "name" },
+              { "sourceAlias": "customer", "field": "City", "outputAlias": "city" },
+              { "sourceAlias": "customer", "field": "State", "outputAlias": "state" }
+            ],
+            "filters": [],
+            "orderBy": [],
+            "pipeline": []
+          },
+          "response": {
+            "mode": "crudGet"
+          }
+        },
+        "create": {
+          "type": "program",
+          "method": "POST",
+          "program": "echo-json"
+        },
+        "update": {
+          "type": "program",
+          "method": "POST",
+          "program": "echo-json"
+        },
+        "delete": {
+          "type": "program",
+          "method": "POST",
+          "program": "echo-json"
+        }
+      }
+    }
+  }
+}
