@@ -73,6 +73,11 @@
         "text": "Log de requisicoes",
         "url": "request-log.html",
         "description": "Consulta das requisicoes enviadas ao PASOE pelo proxy PHP."
+      },
+      {
+        "text": "Documentação da API (Swagger)",
+        "url": "query-api-docs.html",
+        "description": "Catálogo atual, filtros, execução com token e coleção Postman para sursum/MED."
       }
     ]
   },
@@ -106,6 +111,11 @@
     "text": "Configuracao",
     "expanded": true,
     "items": [
+      {
+        "text": "Consumidores e tokens",
+        "url": "query-consumers.html",
+        "description": "Administracao de tokens e consultas autorizadas, exclusiva de tadeu.parreiras em sursum-api/MED."
+      },
       {
         "text": "Clientes",
         "url": "client-config.html",

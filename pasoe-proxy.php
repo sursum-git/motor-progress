@@ -3,13 +3,18 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/auth.php';
 requireSursumAuth();
+require_once __DIR__ . '/web/pasoe-consumer-auth.php';
+require_once __DIR__ . '/web/query-consumers-admin-lib.php';
 
 $method = strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET'));
-if (!in_array($method, ['GET', 'POST'], true)) {
+if (!in_array($method, ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'], true)) {
     proxyJson(405, ['success' => false, 'error' => 'Metodo nao suportado pelo proxy PASOE.']);
 }
 
 $target = trim((string) ($_GET['target'] ?? ''));
+if (consumerAdminProxyBlocked($target)) {
+    proxyJson(403, ['success' => false, 'error' => 'Use a pagina de administracao de consumidores.']);
+}
 if ($target === '') {
     proxyJson(400, ['success' => false, 'error' => 'Destino PASOE nao informado.']);
 }
@@ -25,11 +30,19 @@ if ($match === null) {
 }
 
 $headers = ['Accept: application/json'];
-if ($method === 'POST') {
+if ($method !== 'GET') {
     $contentType = trim((string) ($_SERVER['CONTENT_TYPE'] ?? 'application/json; charset=utf-8'));
     $headers[] = 'Content-Type: ' . ($contentType !== '' ? $contentType : 'application/json; charset=utf-8');
 }
-if (($match['auth_mode'] ?? '') === 'header' && trim((string) ($match['authorization'] ?? '')) !== '') {
+try {
+    $consumerAuthorization = sursumQueryProxyAuthorization($target);
+    $consumerTlsOptions = $consumerAuthorization !== null ? sursumQueryProxyTlsOptions($target) : [];
+} catch (RuntimeException $error) {
+    proxyJson(503, ['success' => false, 'error' => 'Credencial do proxy PASOE indisponivel.']);
+}
+if ($consumerAuthorization !== null) {
+    $headers[] = 'X-Sursum-Query-Token: ' . substr($consumerAuthorization, 7);
+} else if (($match['auth_mode'] ?? '') === 'header' && trim((string) ($match['authorization'] ?? '')) !== '') {
     $headers[] = 'Authorization: ' . trim((string) $match['authorization']);
 }
 
@@ -50,8 +63,13 @@ curl_setopt_array($ch, [
     CURLOPT_SSL_VERIFYHOST => $verifySsl ? 2 : 0,
 ]);
 
-if ($method === 'POST') {
+if ($method !== 'GET') {
     curl_setopt($ch, CURLOPT_POSTFIELDS, file_get_contents('php://input') ?: '');
+}
+
+if ($consumerAuthorization !== null && !curl_setopt_array($ch, $consumerTlsOptions)) {
+    curl_close($ch);
+    proxyJson(503, ['success' => false, 'error' => 'Confianca TLS do proxy PASOE indisponivel.']);
 }
 
 $raw = curl_exec($ch);
@@ -66,6 +84,10 @@ $headerSize = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
 $contentType = (string) curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
 curl_close($ch);
 
+$responseHeaders = substr((string) $raw, 0, $headerSize);
+if (preg_match('/^Allow:\s*([^\r\n]+)/mi', $responseHeaders, $allowMatch)) {
+    header('Allow: ' . trim($allowMatch[1]));
+}
 $body = substr((string) $raw, $headerSize);
 if ($status >= 400 && trim($body) === '') {
     proxyJson($status, [

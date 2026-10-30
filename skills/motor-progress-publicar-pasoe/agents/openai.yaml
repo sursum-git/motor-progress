@@ -1,0 +1,6 @@
+interface:
+  display_name: "Motor Progress: publicar e validar"
+  short_description: "Compilar no OE 12.2, publicar e validar no PASOE"
+  default_prompt: "Use $motor-progress-publicar-pasoe para compilar, publicar e validar as alteracoes do projeto motor-progress."
+policy:
+  allow_implicit_invocation: true

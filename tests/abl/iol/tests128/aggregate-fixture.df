@@ -1,0 +1,14 @@
+ADD TABLE "metas_repres"
+  AREA "Schema Area"
+ADD FIELD "cod_repres" OF "metas_repres" AS integer
+ADD FIELD "mes" OF "metas_repres" AS integer
+ADD FIELD "ano" OF "metas_repres" AS integer
+ADD FIELD "vl_meta" OF "metas_repres" AS decimal
+  DECIMALS 10
+ADD FIELD "vl_meta_quinz" OF "metas_repres" AS decimal
+  DECIMALS 10
+ADD TABLE "peds_web"
+  AREA "Schema Area"
+ADD FIELD "login" OF "peds_web" AS character
+ADD FIELD "ind_sit_ped_web" OF "peds_web" AS integer
+.

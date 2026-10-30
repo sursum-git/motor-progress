@@ -1,0 +1,302 @@
+[
+  {
+    "name": "buscarParametroIma",
+    "returns": "CHARACTER",
+    "arguments": "INPUT pcParametro AS CHARACTER, INPUT pcValorPadrao AS CHARACTER"
+  },
+  {
+    "name": "getMinutosVenctoPi",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getHabilitarBonusRepres",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getBase",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getMudancaMoeda",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getParamPrecoTbERP",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getPrecoTbLiquidaIma",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getParamGrupoAvalAdm",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getPercRedTbRubi",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getIdTbRubi",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getAutLogDb",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getUserLogDb",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "credBdConsultas",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getDirArqOutlet",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getCaminhoArqCampanha",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getDirTmpBook",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getUrlServico",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getUserApiTotvs",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getSenhaApiTotvs",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getVersaoApiHomolog",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getApiHistAvalPedVenda",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getApiValidIncItemContainer",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getAprovGerenciaPedWebPe",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getAprovGerenciaPedWebPi",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getConsiderarDepositoFechado",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getEstabDepositoFechado",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getCodDeposDepositoFechado",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getTiposVersaoValidNFMae",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getParamDistrCusto",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getQtDiasCalcPrevChegadaPedImp",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getListaNatOperNotaMae",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getListaNatOperNotaCompl",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getQtDiasBuscaDocManif",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getWSDLManifTSS",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getFuncaoManifTSS",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getNumAmbienteTSS",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getParamBuscarXmlTss",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getSubDirAnexosXml",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getUrlBookPorDemanda",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getTranspRedesp505",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getTranspRedesp5",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getNumModeloRegraFrete",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getDirPV",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getFormaCalculoTipoFrete",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getInstanciaMegaAPi",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getTokenMegaAPi",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getHostMegaApi",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getMinutosVenctoPe",
+    "returns": "CHARACTER",
+    "arguments": "INPUT pcGrupos AS CHARACTER"
+  },
+  {
+    "name": "getVlMinFreteCIFSudeste",
+    "returns": "CHARACTER",
+    "arguments": "INPUT pcMoeda AS CHARACTER"
+  },
+  {
+    "name": "getVlMinFreteCIF",
+    "returns": "CHARACTER",
+    "arguments": "INPUT pcMoeda AS CHARACTER"
+  },
+  {
+    "name": "getAprovGerenciaPedWeb",
+    "returns": "CHARACTER",
+    "arguments": "INPUT pcTipoPed AS CHARACTER"
+  },
+  {
+    "name": "getDirRaizWeb",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getDirAnexosEmail",
+    "returns": "CHARACTER",
+    "arguments": "INPUT pcEstab AS CHARACTER"
+  },
+  {
+    "name": "getDirRelAnexosEmail",
+    "returns": "CHARACTER",
+    "arguments": "INPUT pcEstab AS CHARACTER"
+  },
+  {
+    "name": "getCaixaNFe",
+    "returns": "CHARACTER",
+    "arguments": "INPUT pcEstab AS CHARACTER"
+  },
+  {
+    "name": "getUsuarioCaixaNFe",
+    "returns": "CHARACTER",
+    "arguments": "INPUT pcEstab AS CHARACTER"
+  },
+  {
+    "name": "getSenhaCaixaNFe",
+    "returns": "CHARACTER",
+    "arguments": "INPUT pcEstab AS CHARACTER"
+  },
+  {
+    "name": "getDirArquivoCsvImpPreco",
+    "returns": "CHARACTER",
+    "arguments": ""
+  },
+  {
+    "name": "getParametros",
+    "returns": "Progress.Json.ObjectModel.JsonArray",
+    "arguments": ""
+  },
+  {
+    "name": "limparVar",
+    "returns": "CHARACTER",
+    "arguments": "INPUT pcValor AS CHARACTER, INPUT pcCaracteres AS CHARACTER, INPUT pcSeparador AS CHARACTER"
+  }
+]

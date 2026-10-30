@@ -1,0 +1,22 @@
+DEFINE VARIABLE i AS INTEGER NO-UNDO.
+DEFINE VARIABLE j AS INTEGER NO-UNDO.
+DEFINE VARIABLE cFile AS CHARACTER NO-UNDO.
+DEFINE VARIABLE lFailed AS LOGICAL NO-UNDO.
+OUTPUT TO "compile-auxiliares.log".
+PUT UNFORMATTED "OpenEdge " PROVERSION SKIP.
+DO j = 1 TO 3:
+    cFile = ENTRY(j, "ParametrosImaTest.p,ParametrosImaHelpersTest.p,VerificarParametrosIma.p").
+    COMPILE VALUE(cFile) SAVE NO-ERROR.
+    lFailed = COMPILER:ERROR.
+    PUT UNFORMATTED cFile " COMPILER:ERROR=" lFailed SKIP.
+    DO i = 1 TO ERROR-STATUS:NUM-MESSAGES:
+        PUT UNFORMATTED ERROR-STATUS:GET-MESSAGE(i) SKIP.
+    END.
+    IF lFailed THEN LEAVE.
+END.
+IF NOT lFailed THEN PUT UNFORMATTED "PASS: compile 12.2 auxiliares sem cache" SKIP.
+OUTPUT CLOSE.
+IF NOT lFailed THEN DO:
+    /* Os testes encerram a AVM; executar separadamente no runner externo. */
+END.
+QUIT.

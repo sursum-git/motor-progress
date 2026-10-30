@@ -531,6 +531,16 @@ CLASS DynamicQueryPlanBuilder:
         RETURN cQuery.
     END METHOD.
 
+    METHOD PUBLIC CHARACTER getCursorQuery(INPUT predicateValue AS CHARACTER, INPUT orderValue AS CHARACTER):
+        DEFINE VARIABLE queryValue AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE whereValue AS CHARACTER NO-UNDO.
+        whereValue=cWhereClause.
+        IF predicateValue<>"" THEN whereValue=(IF whereValue="" THEN "" ELSE "(" + whereValue + ") AND ") + "(" + predicateValue + ")".
+        queryValue=cFromClause.
+        IF whereValue<>"" THEN queryValue=queryValue + " WHERE " + whereValue.
+        RETURN queryValue + " BY " + orderValue.
+    END METHOD.
+
     METHOD PUBLIC CHARACTER getSelectClause():
         RETURN cSelectClause.
     END METHOD.

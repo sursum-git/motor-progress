@@ -1,0 +1,338 @@
+[
+  {
+    "snapshot": {
+      "reference_date": "2026-10-16",
+      "monthly": {
+        "sales": 1000,
+        "returns": 150,
+        "target": 1000,
+        "target_fortnight": 500
+      },
+      "store": {
+        "manager_target": 2000,
+        "adjusted_sales": 500
+      },
+      "calendar": {
+        "total": 22,
+        "elapsed": 12
+      },
+      "orders": {
+        "pending": 3,
+        "open": 7
+      },
+      "sellers": [
+        {
+          "id": 7,
+          "name": "Teste",
+          "sales": 500,
+          "sales_discount": 50,
+          "returns": 100,
+          "returns_discount": 10,
+          "target": 1000
+        }
+      ]
+    },
+    "expected": {
+      "faturamento_liquido": 850,
+      "percentual_meta": 85,
+      "percentual_loja_vendido": 50,
+      "percentual_loja_ideal": 55,
+      "dias_uteis_restantes": 10,
+      "pedidos_avaliacao": 3,
+      "pedidos_abertos": 7
+    },
+    "seller_percent": 44
+  },
+  {
+    "snapshot": {
+      "reference_date": "2026-10-16",
+      "monthly": {
+        "sales": 0,
+        "returns": 0,
+        "target": 0,
+        "target_fortnight": 500
+      },
+      "store": {
+        "manager_target": 2000,
+        "adjusted_sales": 500
+      },
+      "calendar": {
+        "total": 22,
+        "elapsed": 12
+      },
+      "orders": {
+        "pending": 3,
+        "open": 7
+      },
+      "sellers": [
+        {
+          "id": 7,
+          "name": "Teste",
+          "sales": 500,
+          "sales_discount": 50,
+          "returns": 100,
+          "returns_discount": 10,
+          "target": 1000
+        }
+      ]
+    },
+    "expected": {
+      "faturamento_liquido": 0,
+      "percentual_meta": 0
+    }
+  },
+  {
+    "snapshot": {
+      "reference_date": "2026-10-16",
+      "monthly": {
+        "sales": 100,
+        "returns": 150,
+        "target": 100,
+        "target_fortnight": 500
+      },
+      "store": {
+        "manager_target": 2000,
+        "adjusted_sales": 500
+      },
+      "calendar": {
+        "total": 22,
+        "elapsed": 12
+      },
+      "orders": {
+        "pending": 3,
+        "open": 7
+      },
+      "sellers": [
+        {
+          "id": 7,
+          "name": "Teste",
+          "sales": 500,
+          "sales_discount": 50,
+          "returns": 100,
+          "returns_discount": 10,
+          "target": 1000
+        }
+      ]
+    },
+    "expected": {
+      "faturamento_liquido": -50,
+      "percentual_meta": -50
+    }
+  },
+  {
+    "snapshot": {
+      "reference_date": "2026-10-16",
+      "monthly": {
+        "sales": -1000,
+        "returns": -150,
+        "target": 1000,
+        "target_fortnight": 500
+      },
+      "store": {
+        "manager_target": 2000,
+        "adjusted_sales": 500
+      },
+      "calendar": {
+        "total": 22,
+        "elapsed": 12
+      },
+      "orders": {
+        "pending": 3,
+        "open": 7
+      },
+      "sellers": [
+        {
+          "id": 7,
+          "name": "Teste",
+          "sales": 500,
+          "sales_discount": 50,
+          "returns": 100,
+          "returns_discount": 10,
+          "target": 1000
+        }
+      ]
+    },
+    "expected": {
+      "faturamento_liquido": 850,
+      "percentual_meta": 85
+    }
+  },
+  {
+    "snapshot": {
+      "reference_date": "2026-10-16",
+      "monthly": {
+        "sales": 100,
+        "returns": 0,
+        "target": -100,
+        "target_fortnight": 500
+      },
+      "store": {
+        "manager_target": 2000,
+        "adjusted_sales": 500
+      },
+      "calendar": {
+        "total": 22,
+        "elapsed": 12
+      },
+      "orders": {
+        "pending": 3,
+        "open": 7
+      },
+      "sellers": [
+        {
+          "id": 7,
+          "name": "Teste",
+          "sales": 500,
+          "sales_discount": 50,
+          "returns": 100,
+          "returns_discount": 10,
+          "target": 1000
+        }
+      ]
+    },
+    "expected": {
+      "faturamento_liquido": 100,
+      "percentual_meta": -100
+    }
+  },
+  {
+    "snapshot": {
+      "reference_date": "2026-10-16",
+      "monthly": {
+        "sales": 1000,
+        "returns": 150,
+        "target": 1000,
+        "target_fortnight": 500
+      },
+      "store": {
+        "manager_target": 2000,
+        "adjusted_sales": 500
+      },
+      "calendar": {
+        "total": 0,
+        "elapsed": 0
+      },
+      "orders": {
+        "pending": 3,
+        "open": 7
+      },
+      "sellers": [
+        {
+          "id": 7,
+          "name": "Teste",
+          "sales": 500,
+          "sales_discount": 50,
+          "returns": 100,
+          "returns_discount": 10,
+          "target": 1000
+        }
+      ]
+    },
+    "error": "IOL_CALENDAR_INVALID"
+  },
+  {
+    "snapshot": {
+      "reference_date": "2026-10-16",
+      "monthly": {
+        "sales": 1000,
+        "returns": 150,
+        "target": 1000,
+        "target_fortnight": 500
+      },
+      "store": {
+        "manager_target": 2000,
+        "adjusted_sales": 500
+      },
+      "calendar": {
+        "total": 10,
+        "elapsed": 11
+      },
+      "orders": {
+        "pending": 3,
+        "open": 7
+      },
+      "sellers": [
+        {
+          "id": 7,
+          "name": "Teste",
+          "sales": 500,
+          "sales_discount": 50,
+          "returns": 100,
+          "returns_discount": 10,
+          "target": 1000
+        }
+      ]
+    },
+    "error": "IOL_CALENDAR_INVALID"
+  },
+  {
+    "snapshot": {
+      "reference_date": "2026-10-16",
+      "monthly": {
+        "sales": 1000,
+        "returns": 150,
+        "target": 1000,
+        "target_fortnight": 500
+      },
+      "store": {
+        "manager_target": 2000,
+        "adjusted_sales": 500
+      },
+      "calendar": {
+        "total": 10,
+        "elapsed": -1
+      },
+      "orders": {
+        "pending": 3,
+        "open": 7
+      },
+      "sellers": [
+        {
+          "id": 7,
+          "name": "Teste",
+          "sales": 500,
+          "sales_discount": 50,
+          "returns": 100,
+          "returns_discount": 10,
+          "target": 1000
+        }
+      ]
+    },
+    "error": "IOL_CALENDAR_INVALID"
+  },
+  {
+    "snapshot": {
+      "reference_date": "2026-10-16",
+      "monthly": {
+        "sales": null,
+        "returns": 150,
+        "target": 1000,
+        "target_fortnight": 500
+      },
+      "store": {
+        "manager_target": 2000,
+        "adjusted_sales": 500
+      },
+      "calendar": {
+        "total": 22,
+        "elapsed": 12
+      },
+      "orders": {
+        "pending": 3,
+        "open": 7
+      },
+      "sellers": [
+        {
+          "id": 7,
+          "name": "Teste",
+          "sales": 500,
+          "sales_discount": 50,
+          "returns": 100,
+          "returns_discount": 10,
+          "target": 1000
+        }
+      ]
+    },
+    "error": "IOL_DATA_INVALID"
+  }
+]

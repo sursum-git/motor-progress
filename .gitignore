@@ -54,3 +54,10 @@ web/sursum-conf/*.sqlite-wal
 web/sursum-conf/*.sqlite.lock
 sursum-conf/auth.json
 web/sursum-conf/auth.json
+
+# Operational consumer security policy (managed outside Git)
+sursum-conf/query-consumers.json
+sursum-conf/query-consumers.json.oauth.json
+sursum-conf/query-consumers.json.oauth.json.lock
+sursum-conf/query-consumers.json.oauth.json.*.tmp
+

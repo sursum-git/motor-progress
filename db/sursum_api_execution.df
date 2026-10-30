@@ -1,216 +1,244 @@
-ADD TABLE "SursumApiExecution"
-  AREA "Schema Area"
-  DUMP-NAME "sursumapiexecution"
+ADD TABLE "sursum_req_pasoe"
+  AREA "dados"
+  DUMP-NAME "sursum_req_pasoe"
 
-ADD FIELD "executionId" OF "SursumApiExecution" AS character
+ADD FIELD "id_execucao" OF "sursum_req_pasoe" AS character
   FORMAT "x(60)"
   INITIAL ""
   POSITION 2
 
-ADD FIELD "requestId" OF "SursumApiExecution" AS character
+ADD FIELD "id_requisicao" OF "sursum_req_pasoe" AS character
   FORMAT "x(60)"
   INITIAL ""
   POSITION 3
 
-ADD FIELD "executionStatus" OF "SursumApiExecution" AS character
+ADD FIELD "status_execucao" OF "sursum_req_pasoe" AS character
   FORMAT "x(30)"
   INITIAL "received"
   POSITION 4
 
-ADD FIELD "executionType" OF "SursumApiExecution" AS character
+ADD FIELD "tipo_execucao" OF "sursum_req_pasoe" AS character
   FORMAT "x(30)"
   INITIAL ""
   POSITION 5
 
-ADD FIELD "entrypoint" OF "SursumApiExecution" AS character
+ADD FIELD "ponto_entrada" OF "sursum_req_pasoe" AS character
   FORMAT "x(40)"
   INITIAL ""
   POSITION 6
 
-ADD FIELD "endpoint" OF "SursumApiExecution" AS character
+ADD FIELD "rota_endpoint" OF "sursum_req_pasoe" AS character
   FORMAT "x(180)"
   INITIAL ""
   POSITION 7
 
-ADD FIELD "companyId" OF "SursumApiExecution" AS character
+ADD FIELD "id_empresa" OF "sursum_req_pasoe" AS character
   FORMAT "x(60)"
   INITIAL ""
   POSITION 8
 
-ADD FIELD "applicationName" OF "SursumApiExecution" AS character
+ADD FIELD "nome_aplicacao" OF "sursum_req_pasoe" AS character
   FORMAT "x(80)"
   INITIAL ""
   POSITION 9
 
-ADD FIELD "actionCode" OF "SursumApiExecution" AS character
+ADD FIELD "codigo_acao" OF "sursum_req_pasoe" AS character
   FORMAT "x(120)"
   INITIAL ""
   POSITION 10
 
-ADD FIELD "programName" OF "SursumApiExecution" AS character
+ADD FIELD "nome_programa" OF "sursum_req_pasoe" AS character
   FORMAT "x(180)"
   INITIAL ""
   POSITION 11
 
-ADD FIELD "queryCode" OF "SursumApiExecution" AS character
+ADD FIELD "codigo_consulta" OF "sursum_req_pasoe" AS character
   FORMAT "x(120)"
   INITIAL ""
   POSITION 12
 
-ADD FIELD "jobId" OF "SursumApiExecution" AS character
+ADD FIELD "id_tarefa" OF "sursum_req_pasoe" AS character
   FORMAT "x(60)"
   INITIAL ""
   POSITION 13
 
-ADD FIELD "startedAt" OF "SursumApiExecution" AS datetime
+ADD FIELD "data_hora_inicio" OF "sursum_req_pasoe" AS datetime
   FORMAT "99/99/9999 HH:MM:SS.SSS"
   POSITION 14
 
-ADD FIELD "lastHeartbeatAt" OF "SursumApiExecution" AS datetime
+ADD FIELD "dt_hr_ult_sinal" OF "sursum_req_pasoe" AS datetime
   FORMAT "99/99/9999 HH:MM:SS.SSS"
   POSITION 15
 
-ADD FIELD "finishedAt" OF "SursumApiExecution" AS datetime
+ADD FIELD "data_hora_fim" OF "sursum_req_pasoe" AS datetime
   FORMAT "99/99/9999 HH:MM:SS.SSS"
   POSITION 16
 
-ADD FIELD "durationMs" OF "SursumApiExecution" AS integer
+ADD FIELD "duracao_ms" OF "sursum_req_pasoe" AS integer
   FORMAT "->,>>>,>>9"
   INITIAL "0"
   POSITION 17
 
-ADD FIELD "pasoePid" OF "SursumApiExecution" AS character
+ADD FIELD "pid_pasoe" OF "sursum_req_pasoe" AS character
   FORMAT "x(40)"
   INITIAL ""
   POSITION 18
 
-ADD FIELD "pasoeAgent" OF "SursumApiExecution" AS character
+ADD FIELD "agente_pasoe" OF "sursum_req_pasoe" AS character
   FORMAT "x(80)"
   INITIAL ""
   POSITION 19
 
-ADD FIELD "pasoeInstance" OF "SursumApiExecution" AS character
+ADD FIELD "instancia_pasoe" OF "sursum_req_pasoe" AS character
   FORMAT "x(80)"
   INITIAL ""
   POSITION 20
 
-ADD FIELD "hostName" OF "SursumApiExecution" AS character
+ADD FIELD "nome_host" OF "sursum_req_pasoe" AS character
   FORMAT "x(120)"
   INITIAL ""
   POSITION 21
 
-ADD FIELD "databaseName" OF "SursumApiExecution" AS character
+ADD FIELD "nome_banco" OF "sursum_req_pasoe" AS character
   FORMAT "x(80)"
   INITIAL ""
   POSITION 22
 
-ADD FIELD "dbTransactionRef" OF "SursumApiExecution" AS character
+ADD FIELD "ref_trans_banco" OF "sursum_req_pasoe" AS character
   FORMAT "x(80)"
   INITIAL ""
   POSITION 23
 
-ADD FIELD "userName" OF "SursumApiExecution" AS character
+ADD FIELD "nome_usuario" OF "sursum_req_pasoe" AS character
   FORMAT "x(120)"
   INITIAL ""
   POSITION 24
 
-ADD FIELD "authType" OF "SursumApiExecution" AS character
+ADD FIELD "tipo_autenticacao" OF "sursum_req_pasoe" AS character
   FORMAT "x(40)"
   INITIAL ""
   POSITION 25
 
-ADD FIELD "requestSummary" OF "SursumApiExecution" AS character
+ADD FIELD "resumo_requisicao" OF "sursum_req_pasoe" AS character
   FORMAT "x(1000)"
   INITIAL ""
   POSITION 26
 
-ADD FIELD "requestContextJson" OF "SursumApiExecution" AS character
+ADD FIELD "ctx_req_json" OF "sursum_req_pasoe" AS character
   FORMAT "x(32000)"
   INITIAL ""
   POSITION 27
 
-ADD FIELD "errorCode" OF "SursumApiExecution" AS character
+ADD FIELD "codigo_erro" OF "sursum_req_pasoe" AS character
   FORMAT "x(80)"
   INITIAL ""
   POSITION 28
 
-ADD FIELD "errorMessage" OF "SursumApiExecution" AS character
+ADD FIELD "mensagem_erro" OF "sursum_req_pasoe" AS character
   FORMAT "x(1000)"
   INITIAL ""
   POSITION 29
 
-ADD FIELD "killRequestedAt" OF "SursumApiExecution" AS datetime
+ADD FIELD "dt_hr_solic_interrupcao" OF "sursum_req_pasoe" AS datetime
   FORMAT "99/99/9999 HH:MM:SS.SSS"
   POSITION 30
 
-ADD FIELD "killRequestedBy" OF "SursumApiExecution" AS character
+ADD FIELD "usuario_solic_interrupcao" OF "sursum_req_pasoe" AS character
   FORMAT "x(120)"
   INITIAL ""
   POSITION 31
 
-ADD FIELD "killReason" OF "SursumApiExecution" AS character
+ADD FIELD "motivo_interrupcao" OF "sursum_req_pasoe" AS character
   FORMAT "x(1000)"
   INITIAL ""
   POSITION 32
 
-ADD INDEX "executionId" ON "SursumApiExecution"
+ADD FIELD "ip_requisitante" OF "sursum_req_pasoe" AS character
+  FORMAT "x(80)"
+  INITIAL ""
+  POSITION 33
+
+ADD FIELD "navegador_requisitante" OF "sursum_req_pasoe" AS character
+  FORMAT "x(1000)"
+  INITIAL ""
+  POSITION 34
+
+ADD FIELD "id_sessao_requisitante" OF "sursum_req_pasoe" AS character
+  FORMAT "x(200)"
+  INITIAL ""
+  POSITION 35
+
+ADD FIELD "dados_envio_json" OF "sursum_req_pasoe" AS clob
+  POSITION 36
+
+ADD FIELD "dados_retorno_json" OF "sursum_req_pasoe" AS clob
+  POSITION 37
+
+ADD INDEX "id_execucao" ON "sursum_req_pasoe"
+  AREA "indice"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "executionId" ASCENDING
+  INDEX-FIELD "id_execucao" ASCENDING
 
-ADD INDEX "executionStatusStarted" ON "SursumApiExecution"
-  INDEX-FIELD "executionStatus" ASCENDING
-  INDEX-FIELD "startedAt" ASCENDING
+ADD INDEX "idx_status_inicio" ON "sursum_req_pasoe"
+  AREA "indice"
+  INDEX-FIELD "status_execucao" ASCENDING
+  INDEX-FIELD "data_hora_inicio" ASCENDING
 
-ADD INDEX "pasoePidStarted" ON "SursumApiExecution"
-  INDEX-FIELD "pasoePid" ASCENDING
-  INDEX-FIELD "startedAt" ASCENDING
+ADD INDEX "idx_pid_inicio" ON "sursum_req_pasoe"
+  AREA "indice"
+  INDEX-FIELD "pid_pasoe" ASCENDING
+  INDEX-FIELD "data_hora_inicio" ASCENDING
 
-ADD INDEX "jobId" ON "SursumApiExecution"
-  INDEX-FIELD "jobId" ASCENDING
+ADD INDEX "id_tarefa" ON "sursum_req_pasoe"
+  AREA "indice"
+  INDEX-FIELD "id_tarefa" ASCENDING
 
-ADD TABLE "SursumApiExecutionEvent"
-  AREA "Schema Area"
-  DUMP-NAME "sursumapiexecutionevent"
+ADD TABLE "sursum_req_pasoe_evento"
+  AREA "dados"
+  DUMP-NAME "sursum_req_pasoe_evento"
 
-ADD FIELD "eventId" OF "SursumApiExecutionEvent" AS character
+ADD FIELD "id_evento" OF "sursum_req_pasoe_evento" AS character
   FORMAT "x(100)"
   INITIAL ""
   POSITION 2
 
-ADD FIELD "executionId" OF "SursumApiExecutionEvent" AS character
+ADD FIELD "id_execucao" OF "sursum_req_pasoe_evento" AS character
   FORMAT "x(60)"
   INITIAL ""
   POSITION 3
 
-ADD FIELD "eventStatus" OF "SursumApiExecutionEvent" AS character
+ADD FIELD "status_evento" OF "sursum_req_pasoe_evento" AS character
   FORMAT "x(30)"
   INITIAL ""
   POSITION 4
 
-ADD FIELD "eventMessage" OF "SursumApiExecutionEvent" AS character
+ADD FIELD "mensagem_evento" OF "sursum_req_pasoe_evento" AS character
   FORMAT "x(1000)"
   INITIAL ""
   POSITION 5
 
-ADD FIELD "eventContextJson" OF "SursumApiExecutionEvent" AS character
+ADD FIELD "contexto_evento_json" OF "sursum_req_pasoe_evento" AS character
   FORMAT "x(32000)"
   INITIAL ""
   POSITION 6
 
-ADD FIELD "eventTime" OF "SursumApiExecutionEvent" AS datetime
+ADD FIELD "data_hora_evento" OF "sursum_req_pasoe_evento" AS datetime
   FORMAT "99/99/9999 HH:MM:SS.SSS"
   POSITION 7
 
-ADD INDEX "eventId" ON "SursumApiExecutionEvent"
+ADD INDEX "id_evento" ON "sursum_req_pasoe_evento"
+  AREA "indice"
   UNIQUE
   PRIMARY
-  INDEX-FIELD "eventId" ASCENDING
+  INDEX-FIELD "id_evento" ASCENDING
 
-ADD INDEX "executionEventTime" ON "SursumApiExecutionEvent"
-  INDEX-FIELD "executionId" ASCENDING
-  INDEX-FIELD "eventTime" ASCENDING
+ADD INDEX "idx_exec_evento_hora" ON "sursum_req_pasoe_evento"
+  AREA "indice"
+  INDEX-FIELD "id_execucao" ASCENDING
+  INDEX-FIELD "data_hora_evento" ASCENDING
 
 .
 PSC
 cpstream=ISO8859-1
+

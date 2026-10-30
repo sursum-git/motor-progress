@@ -13,6 +13,16 @@ CLASS DynamicMultiTableQueryService:
     DEFINE PRIVATE VARIABLE oValidator AS DynamicQueryValidationService NO-UNDO.
     DEFINE PRIVATE VARIABLE oBuilder  AS DynamicQueryPlanBuilder NO-UNDO.
     DEFINE PRIVATE VARIABLE iMaxSyncRecords AS INTEGER NO-UNDO INIT 5000.
+    DEFINE PRIVATE VARIABLE lPaginationEnabled AS LOGICAL NO-UNDO INIT TRUE.
+    /* A consumer parallel worker can bound an unpaged partition before the
+       response JsonArray is materialized. Zero means the legacy unbounded mode. */
+    DEFINE PRIVATE VARIABLE iUnpagedRecordLimit AS INTEGER NO-UNDO INIT 0.
+    DEFINE PRIVATE VARIABLE cursorValue AS DynamicQueryCursor NO-UNDO.
+    DEFINE PRIVATE VARIABLE cursorSecret AS CHARACTER NO-UNDO.
+    DEFINE PRIVATE VARIABLE cursorToken AS CHARACTER NO-UNDO.
+    DEFINE PRIVATE VARIABLE cursorBinding AS LONGCHAR NO-UNDO.
+    DEFINE PRIVATE VARIABLE cursorEpoch AS INT64 NO-UNDO.
+    DEFINE PRIVATE VARIABLE hCursorQuery AS HANDLE NO-UNDO.
 
     DEFINE PRIVATE TEMP-TABLE ttPlanSource NO-UNDO
         FIELD sourceOrder AS INTEGER
@@ -129,6 +139,101 @@ CLASS DynamicMultiTableQueryService:
         RETURN THIS-OBJECT:executeSync(poRequest).
     END METHOD.
 
+    METHOD PUBLIC JsonObject validateConsumerAsync(INPUT poRequest AS DynamicQueryRequestModel):
+        RETURN THIS-OBJECT:preparePlan(poRequest).
+    END METHOD.
+
+    METHOD PUBLIC JsonObject executeCursor(INPUT poRequest AS DynamicQueryRequestModel, INPUT bodyValue AS JsonObject, INPUT definitionValue AS JsonObject,
+        INPUT consumerValue AS CHARACTER, INPUT generationValue AS CHARACTER, INPUT keyFile AS CHARACTER, INPUT epochValue AS INT64):
+        DEFINE VARIABLE serializerValue AS DynamicQueryRequestSerializer NO-UNDO.
+        DEFINE VARIABLE modelValue AS JsonObject NO-UNDO.
+        DEFINE VARIABLE contextValue AS JsonObject NO-UNDO.
+        DEFINE VARIABLE resultValue AS JsonObject NO-UNDO.
+        DEFINE VARIABLE textValue AS LONGCHAR NO-UNDO.
+        DEFINE VARIABLE codeValue AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE pipelineCount AS INTEGER NO-UNDO.
+        DO ON ERROR UNDO, THROW:
+            poRequest:getPipelineSteps(OUTPUT TABLE ttPipelineStep).
+            FOR EACH ttPipelineStep:
+                pipelineCount=pipelineCount + 1.
+                IF LOOKUP(LC(ttPipelineStep.stepType),"source,join,select,filter,sort,limit,map")=0 THEN UNDO,THROW NEW Progress.Lang.AppError("CURSOR_UNSUPPORTED",0).
+            END.
+            IF definitionValue:Has("pipeline") THEN IF NOT definitionValue:IsNull("pipeline") THEN
+                IF definitionValue:GetJsonArray("pipeline"):Length<>pipelineCount THEN UNDO,THROW NEW Progress.Lang.AppError("CURSOR_UNSUPPORTED",0).
+            resultValue=THIS-OBJECT:preparePlan(poRequest).
+            IF NOT resultValue:GetLogical("success") THEN DO: DELETE OBJECT resultValue. RETURN THIS-OBJECT:cursorError("CURSOR_UNSUPPORTED",400). END.
+            DELETE OBJECT resultValue.
+            FOR EACH ttPlanJoin:
+                IF LC(ttPlanJoin.joinType)<>"inner" THEN UNDO,THROW NEW Progress.Lang.AppError("CURSOR_UNSUPPORTED",0).
+            END.
+            cursorValue=NEW DynamicQueryCursor(). cursorSecret=cursorValue:readKey(keyFile). cursorEpoch=epochValue.
+            cursorToken="". IF bodyValue:Has("cursor") THEN cursorToken=bodyValue:GetCharacter("cursor").
+            serializerValue=NEW DynamicQueryRequestSerializer(). modelValue=serializerValue:toJsonObject(poRequest).
+            FIX-CODEPAGE(textValue)="UTF-8". modelValue:Write(textValue,FALSE).
+            contextValue=NEW JsonObject(). contextValue:Add("code",bodyValue:GetCharacter("code")).
+            contextValue:Add("consumer",consumerValue). contextValue:Add("generation",generationValue).
+            contextValue:Add("model",LC(HEX-ENCODE(MESSAGE-DIGEST("SHA-256",textValue)))). contextValue:Add("pageSize",poRequest:getPageSize()).
+            definitionValue:Write(textValue,FALSE).
+            contextValue:Add("definition",LC(HEX-ENCODE(MESSAGE-DIGEST("SHA-256",textValue)))).
+            FIX-CODEPAGE(cursorBinding)="UTF-8". contextValue:Write(cursorBinding,FALSE).
+            lPaginationEnabled=TRUE.
+            resultValue=THIS-OBJECT:executeSync(poRequest).
+            IF NOT resultValue:GetLogical("success") THEN DO:
+                IF resultValue:Has("error") THEN DO:
+                    codeValue=resultValue:GetJsonObject("error"):GetCharacter("code").
+                    IF LOOKUP(codeValue,"CURSOR_INVALID,CURSOR_EXPIRED,CURSOR_UNSUPPORTED")>0 THEN RETURN resultValue.
+                END.
+                DELETE OBJECT resultValue. RETURN THIS-OBJECT:cursorError("CURSOR_UNAVAILABLE",503).
+            END.
+            RETURN resultValue.
+            CATCH err AS Progress.Lang.Error:
+                codeValue=err:GetMessage(1).
+                IF LOOKUP(codeValue,"CURSOR_INVALID,CURSOR_EXPIRED,CURSOR_UNSUPPORTED")=0 THEN codeValue="CURSOR_UNAVAILABLE".
+                RETURN THIS-OBJECT:cursorError(codeValue,IF codeValue="CURSOR_UNAVAILABLE" THEN 503 ELSE 400).
+            END CATCH.
+            FINALLY:
+                IF VALID-HANDLE(hCursorQuery) THEN DO:
+                    IF hCursorQuery:IS-OPEN THEN hCursorQuery:QUERY-CLOSE().
+                    DELETE OBJECT hCursorQuery NO-ERROR.
+                END.
+                hCursorQuery=?. THIS-OBJECT:releaseBuffers().
+                IF VALID-OBJECT(cursorValue) THEN DELETE OBJECT cursorValue.
+                IF VALID-OBJECT(serializerValue) THEN DELETE OBJECT serializerValue.
+                IF VALID-OBJECT(modelValue) THEN DELETE OBJECT modelValue.
+                IF VALID-OBJECT(contextValue) THEN DELETE OBJECT contextValue.
+                cursorSecret="". cursorToken="". cursorBinding="". lPaginationEnabled=TRUE.
+            END FINALLY.
+        END.
+    END METHOD.
+
+    METHOD PRIVATE JsonObject cursorError(INPUT codeValue AS CHARACTER, INPUT statusValue AS INTEGER):
+        DEFINE VARIABLE resultValue AS JsonObject NO-UNDO.
+        DEFINE VARIABLE errorValue AS JsonObject NO-UNDO.
+        resultValue=NEW JsonObject(). errorValue=NEW JsonObject(). resultValue:Add("success",FALSE).
+        errorValue:Add("code",codeValue). errorValue:Add("status",statusValue).
+        errorValue:Add("message",IF codeValue="CURSOR_UNSUPPORTED" THEN "Consulta sem chave unica ou com transformacao incompativel com cursor." ELSE IF codeValue="CURSOR_EXPIRED" THEN "Cursor expirado. Reinicie a navegacao." ELSE IF codeValue="CURSOR_INVALID" THEN "Cursor invalido ou contexto alterado. Reinicie a navegacao." ELSE "Paginacao por cursor indisponivel.").
+        resultValue:Add("error",errorValue). RETURN resultValue.
+    END METHOD.
+
+    METHOD PUBLIC JsonObject executeUnpaged(INPUT poRequest AS DynamicQueryRequestModel):
+        RETURN THIS-OBJECT:executeUnpagedLimited(poRequest,0).
+    END METHOD.
+
+    METHOD PUBLIC JsonObject executeUnpagedLimited(INPUT poRequest AS DynamicQueryRequestModel, INPUT piRecordLimit AS INTEGER):
+        /* Called only by the secured consumer entrypoint; ordinary executions remain paginated.
+           The limit never truncates a result silently: executeSync exposes hasMore=TRUE
+           and the parallel worker converts that state into a failed partition. */
+        DO ON ERROR UNDO, THROW:
+            lPaginationEnabled=FALSE.
+            iUnpagedRecordLimit=MAXIMUM(0,piRecordLimit).
+            RETURN THIS-OBJECT:executeSyncNow(poRequest).
+            FINALLY:
+                lPaginationEnabled=TRUE.
+                iUnpagedRecordLimit=0.
+            END FINALLY.
+        END.
+    END METHOD.
+
     METHOD PUBLIC JsonObject executeSyncNow(INPUT poRequest AS DynamicQueryRequestModel):
         DEFINE VARIABLE joPrepared AS JsonObject NO-UNDO.
 
@@ -205,6 +310,10 @@ CLASS DynamicMultiTableQueryService:
         DEFINE VARIABLE joRet      AS JsonObject NO-UNDO.
         DEFINE VARIABLE joData     AS JsonArray NO-UNDO.
         DEFINE VARIABLE joRow      AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cursorKeys AS JsonArray NO-UNDO.
+        DEFINE VARIABLE nextKeys AS JsonArray NO-UNDO.
+        DEFINE VARIABLE cursorBuffer AS HANDLE NO-UNDO.
+        DEFINE VARIABLE seenTables AS CHARACTER NO-UNDO.
 
         EMPTY TEMP-TABLE ttExecSource.
 
@@ -212,6 +321,7 @@ CLASS DynamicMultiTableQueryService:
                iPageSize = poRequest:getPageSize()
                iSkip = (iPage - 1) * iPageSize
                iSkip = MAX(0, iSkip).
+        IF NOT lPaginationEnabled OR VALID-OBJECT(cursorValue) THEN iSkip=0.
 
         FOR EACH ttPlanSource:
             ASSIGN cTableName = THIS-OBJECT:buildPhysicalTableName(ttPlanSource.sourceBanco, ttPlanSource.sourceTable).
@@ -230,7 +340,29 @@ CLASS DynamicMultiTableQueryService:
         END.
 
         ASSIGN cQuery = oBuilder:getQuery().
+        IF VALID-OBJECT(cursorValue) THEN DO ON ERROR UNDO, THROW:
+            FOR EACH ttPlanOrder BY orderOrder:
+                FIND FIRST ttExecSource WHERE ttExecSource.sourceAlias=ttPlanOrder.sourceAlias NO-ERROR.
+                IF NOT AVAILABLE ttExecSource THEN UNDO,THROW NEW Progress.Lang.AppError("CURSOR_UNSUPPORTED",0).
+                cursorValue:addOrder(ttExecSource.hBuffer,ttExecSource.sourceTable,ttPlanOrder.sourceField,LC(ttPlanOrder.direction)="descending",FALSE).
+            END.
+            FOR EACH ttExecSource BY ttExecSource.sourceOrder:
+                IF LOOKUP(ttExecSource.sourceTable,seenTables)>0 THEN UNDO,THROW NEW Progress.Lang.AppError("CURSOR_UNSUPPORTED",0).
+                seenTables=seenTables + (IF seenTables="" THEN "" ELSE ",") + ttExecSource.sourceTable.
+                cursorValue:addSource(ttExecSource.hBuffer,ttExecSource.sourceTable).
+            END.
+            cursorValue:initialize(cursorSecret,cursorBinding,cursorEpoch).
+            cursorKeys=cursorValue:resume(cursorToken).
+            cQuery=oBuilder:getCursorQuery(cursorValue:predicate(cursorKeys),cursorValue:orderClause()).
+            IF VALID-OBJECT(cursorKeys) THEN DELETE OBJECT cursorKeys.
+            CATCH cursorError AS Progress.Lang.Error:
+                seenTables=cursorError:GetMessage(1).
+                IF LOOKUP(seenTables,"CURSOR_INVALID,CURSOR_EXPIRED,CURSOR_UNSUPPORTED")=0 THEN seenTables="CURSOR_UNAVAILABLE".
+                RETURN THIS-OBJECT:cursorError(seenTables,IF seenTables="CURSOR_UNAVAILABLE" THEN 503 ELSE 400).
+            END CATCH.
+        END.
         CREATE QUERY hQuery.
+        IF VALID-OBJECT(cursorValue) THEN hCursorQuery=hQuery.
         FOR EACH ttExecSource:
             hQuery:ADD-BUFFER(ttExecSource.hBuffer).
         END.
@@ -260,7 +392,11 @@ CLASS DynamicMultiTableQueryService:
 
         REPEAT:
             IF hQuery:QUERY-OFF-END THEN LEAVE.
-            IF iReturned >= iPageSize THEN DO:
+            IF lPaginationEnabled AND iReturned >= iPageSize THEN DO:
+                ASSIGN lHasMore = YES.
+                LEAVE.
+            END.
+            IF NOT lPaginationEnabled AND iUnpagedRecordLimit > 0 AND iReturned >= iUnpagedRecordLimit THEN DO:
                 ASSIGN lHasMore = YES.
                 LEAVE.
             END.
@@ -286,12 +422,17 @@ CLASS DynamicMultiTableQueryService:
             END.
             joData:ADD(joRow).
             ASSIGN iReturned = iReturned + 1.
+            IF VALID-OBJECT(cursorValue) THEN DO:
+                IF VALID-OBJECT(nextKeys) THEN DELETE OBJECT nextKeys.
+                nextKeys=cursorValue:capture().
+            END.
 
             hQuery:GET-NEXT().
         END.
 
         hQuery:QUERY-CLOSE().
         DELETE OBJECT hQuery.
+        IF VALID-OBJECT(cursorValue) THEN hCursorQuery=?.
         THIS-OBJECT:releaseBuffers().
 
         ASSIGN joData = THIS-OBJECT:applyPostQueryPipeline(poRequest, joData).
@@ -301,8 +442,14 @@ CLASS DynamicMultiTableQueryService:
         joRet:Add("success", TRUE).
         joRet:Add("execution", "sync").
         joRet:Add("status", "completed").
-        joRet:Add("page", poRequest:getPage()).
-        joRet:Add("pageSize", poRequest:getPageSize()).
+        IF VALID-OBJECT(cursorValue) THEN DO:
+            joRet:AddNull("page"). joRet:Add("paginationMode","cursor"). joRet:Add("cursorExpiresIn",900).
+            IF lHasMore THEN joRet:Add("nextCursor",cursorValue:issue(nextKeys)). ELSE joRet:AddNull("nextCursor").
+            IF VALID-OBJECT(nextKeys) THEN DELETE OBJECT nextKeys.
+        END.
+        ELSE joRet:Add("page", poRequest:getPage()).
+        IF lPaginationEnabled THEN joRet:Add("pageSize", poRequest:getPageSize()).
+        ELSE DO: joRet:AddNull("pageSize"). joRet:Add("paginate",FALSE). END.
         joRet:Add("recordsReturned", iReturned).
         joRet:Add("hasMore", lHasMore).
         joRet:Add("data", joData).

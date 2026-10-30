@@ -1,0 +1,90 @@
+{
+  "routes": [
+    {
+      "route": "/SursumPrograms/echo",
+      "method": "POST",
+      "program": "sursum-api/programs/JsonEcho.p"
+    },
+    {
+      "route": "/SursumPrograms/echo",
+      "method": "GET",
+      "program": "sursum-api/programs/JsonEcho.p"
+    },
+    {
+      "route": "/SursumPrograms/consulta-pedidos-venda",
+      "method": "POST",
+      "program": "especificos/ems2/ima/http-api/api_cons_ped_venda.p"
+    },
+    {
+      "route": "/SursumPrograms/consulta-pedidos-venda-wp",
+      "method": "POST",
+      "program": "especificos/ems2/ima/http-api/api_cons_ped_venda_wp.p"
+    },
+    {
+      "route": "/SursumPrograms/consulta-pedidos-venda-stream",
+      "method": "POST",
+      "program": "especificos/ems2/ima/http-api/api_cons_ped_venda_stream.p",
+      "response": "raw-longchar"
+    },
+    {
+      "route": "/SursumPrograms/empresas",
+      "method": "POST",
+      "program": "sursum-api/programs/EmpresasCrud.p"
+    },
+    {
+      "route": "/SursumPrograms/coloracoes-consulta-manual",
+      "method": "POST",
+      "program": "sursum-api/programs/ConsultarColoracoesManual.p"
+    },
+    {
+      "method": "POST",
+      "program": "sursum-api/programs/VerificarParametrosIma.p",
+      "route": "/SursumPrograms/parametros-ima-verificar"
+    },
+    {
+      "method": "POST",
+      "route": "/SursumPrograms/tipos-anexo",
+      "program": "sursum-api/programs/TiposAnexoCrud.p"
+    },
+    {
+      "method": "POST",
+      "program": "sursum-api/programs/DespesasCrud.p",
+      "route": "/SursumPrograms/despesas"
+    },
+    {
+      "route": "/SursumPrograms/ciw-access",
+      "method": "POST",
+      "program": "sursum-api/programs/CiwAccessRead.p"
+    },
+    {
+      "route": "/SursumPrograms/containers-pagamentos",
+      "method": "POST",
+      "program": "sursum-api/programs/ContainersPagamentosCrud.p"
+    },
+    {
+      "route": "/SursumPrograms/ciw-identity",
+      "method": "POST",
+      "program": "sursum-api/programs/CiwIdentityRead.p"
+    },
+    {
+      "route": "/SursumPrograms/ciw-cadastros",
+      "method": "POST",
+      "program": "sursum-api/programs/CiwCadastrosCrud.p"
+    },
+    {
+      "route": "/SursumPrograms/consulta-notas-fiscais-wp",
+      "method": "POST",
+      "program": "especificos/ems2/ima/http-api/api_cons_nota_fiscal_wp.p"
+    },
+    {
+      "route": "/SursumPrograms/consulta-estoque",
+      "method": "POST",
+      "program": "especificos/ems2/ima/http-api/api_cons_estoque.p"
+    },
+    {
+      "route": "/SursumPrograms/containers-despesas-lote",
+      "method": "POST",
+      "program": "sursum-api/programs/ContainersDespesasBatchApi.p"
+    }
+  ]
+}

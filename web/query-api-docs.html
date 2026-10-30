@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Documentação da API · Sursum MED</title>
+  <link rel="stylesheet" href="vendor/swagger-ui/swagger-ui.css">
+  <link rel="stylesheet" href="query-api-docs.css">
+</head>
+<body>
+  <main class="intro">
+    <p class="eyebrow">Sursum / MED · API de consultas</p>
+    <h1>Documentação e execução</h1>
+    <p>Escolha uma consulta em <strong>POST /api/query.php</strong>, clique em <strong>Try it out</strong>, selecione o exemplo, informe os filtros no JSON e clique em <strong>Execute</strong>. O retorno aparece em <strong>Server response</strong>.</p>
+    <p><strong>Paginação:</strong> informe <code>page</code> (1 a 1.000.000) e <code>pageSize</code> (1 a 1.000) na raiz do JSON. Enquanto <code>hasMore</code> for verdadeiro, avance <code>page</code>, mantendo os filtros e o tamanho. O limite vale para toda a API externa, incluindo Postman e integrações.</p>
+    <p>Para retornar todos os registros filtrados em uma resposta, use <code>"paginate": false</code>. Nesse modo, <code>page</code> e <code>pageSize</code> não controlam o resultado; <code>hasMore</code> retorna falso e <code>pageSize</code> retorna nulo. Permanecem os limites de tempo e tamanho da resposta do serviço.</p>
+    <p><strong>Cursor:</strong> escolha um exemplo “cursor” e envie <code>"paginationMode": "cursor"</code>, <code>pageSize</code> e os filtros, sem <code>page</code> ou <code>paginate</code>. Na próxima chamada, copie <code>nextCursor</code> para <code>cursor</code>, mantendo consulta, filtros e tamanho. Termine quando <code>hasMore</code> for falso. O cursor vence em 15 minutos; após vencer, reinicie a navegação. O modo exige chave única e não oferece uma fotografia dos dados durante alterações.</p>
+    <p>No Postman, a pasta <strong>Consultas por cursor</strong> salva automaticamente a continuação em uma variável por consulta. Execute novamente a mesma requisição para avançar. Ao terminar ou mudar filtros/consumidor, limpe essa variável para reiniciar. Consultas com agregação ou <code>distinct</code> continuam usando os modos por página ou sem paginação.</p>
+    <p><strong>Assíncrono:</strong> selecione o exemplo com sufixo <code>async</code> e envie <code>"execution": "async"</code>, sem cursor. O HTTP 202 devolve <code>jobId</code>. Informe esse valor no GET <code>/api/jobs.php</code> até o estado <code>completed</code>; depois execute o GET <code>/api/job-result.php</code> para obter o JSON. Ambos exigem o token do mesmo consumidor e sua permissão atual. No Postman, a pasta <strong>Consultas assincronas</strong> guarda o <code>job_id</code> automaticamente. O worker é acionado a cada minuto; o job processa a página solicitada, ou o conjunto completo com <code>paginate:false</code>. Limites: cinco jobs pendentes por consumidor, resultado de até 64 MiB, disponível por 24 horas desde o envio.</p>
+    <nav aria-label="Arquivos da API">
+      <a href="query-api-docs.php?format=postman&amp;download=1">Baixar coleção Postman</a>
+      <a href="query-api-docs.php?format=openapi&amp;download=1">Baixar OpenAPI JSON</a>
+    </nav>
+    <section class="credentials" aria-labelledby="credentialsTitle">
+      <h2 id="credentialsTitle">Autenticar consumidor</h2>
+      <p>Use a credencial gerada na página de tokens. O acesso continua limitado às consultas autorizadas. O token dura 15 minutos; esta tela o renova enquanto estiver aberta.</p>
+      <form id="consumerAuth" autocomplete="off">
+        <label>client_id<input id="clientId" required autocomplete="off" spellcheck="false" maxlength="128"></label>
+        <label>client_secret<input id="clientSecret" type="password" required autocomplete="new-password" spellcheck="false" maxlength="256"></label>
+        <button type="submit" id="obtainToken">Obter token</button>
+        <button type="button" id="clearCredentials" class="secondary">Limpar credenciais e resultados</button>
+      </form>
+      <p>Também é possível informar um token já emitido no botão <strong>Authorize</strong>, sem o prefixo Bearer. As credenciais ficam apenas na memória desta página e são limpas ao sair ou recarregar.</p>
+      <p id="authStatus" role="status" aria-live="polite">Aguardando autenticação do consumidor.</p>
+    </section>
+    <p id="docsStatus" role="alert">Carregando catálogo…</p>
+  </main>
+  <div id="swagger-ui"></div>
+  <script src="vendor/swagger-ui/swagger-ui-bundle.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="query-api-docs.js"></script>
+</body>
+</html>

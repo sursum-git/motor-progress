@@ -1,0 +1,19 @@
+/* Pure selection policy. No parameter cache, database writes, or implicit fallback. */
+BLOCK-LEVEL ON ERROR UNDO, THROW.
+DEFINE INPUT PARAMETER pcEngine AS CHARACTER NO-UNDO.
+DEFINE INPUT PARAMETER pcRuntime AS CHARACTER NO-UNDO.
+DEFINE INPUT PARAMETER pcRestrictions AS CHARACTER NO-UNDO.
+DEFINE INPUT PARAMETER plArtifact AS LOGICAL NO-UNDO.
+DEFINE OUTPUT PARAMETER pcSelected AS CHARACTER NO-UNDO.
+DEFINE VARIABLE iMajor AS INTEGER NO-UNDO.
+DEFINE VARIABLE iMinor AS INTEGER NO-UNDO.
+IF pcEngine=? OR LOOKUP(pcEngine,"12.2,12.8")=0 THEN
+ UNDO, THROW NEW Progress.Lang.AppError("IOL_ENGINE_INVALID",1).
+IF pcEngine="12.2" THEN DO: pcSelected="12.2". RETURN. END.
+ASSIGN iMajor=INTEGER(ENTRY(1,pcRuntime,".")) iMinor=INTEGER(ENTRY(2,pcRuntime,".")) NO-ERROR.
+IF ERROR-STATUS:ERROR OR iMajor=? OR iMinor=? THEN
+ UNDO, THROW NEW Progress.Lang.AppError("IOL_ENGINE_UNAVAILABLE",1).
+IF iMajor<12 OR (iMajor=12 AND iMinor<8) OR pcRestrictions=? OR
+ LOOKUP("AGGREGATE",CAPS(REPLACE(pcRestrictions," ","")))>0 OR plArtifact<>TRUE THEN
+ UNDO, THROW NEW Progress.Lang.AppError("IOL_ENGINE_UNAVAILABLE",1).
+pcSelected="12.8".

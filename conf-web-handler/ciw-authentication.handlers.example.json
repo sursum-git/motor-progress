@@ -1,0 +1,9 @@
+{
+  "handlers": [
+    {
+      "uri": "/CiwAuthentication",
+      "class": "CiwAuthenticationWebHandler",
+      "enabled": true
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+ADD TABLE "estoque_termo_busca"
+ AREA "dados"
+ DESCRIPTION "Equivalencias para segunda selecao de itens da consulta de estoque"
+ADD FIELD "termo_digitado" OF "estoque_termo_busca" AS character
+ FORMAT "x(50)"
+ INITIAL ""
+ MANDATORY
+ADD FIELD "termo_pesquisa" OF "estoque_termo_busca" AS character
+ FORMAT "x(100)"
+ INITIAL ""
+ MANDATORY
+ADD FIELD "ativo" OF "estoque_termo_busca" AS logical
+ INITIAL "yes"
+ MANDATORY
+ADD INDEX "primario" ON "estoque_termo_busca"
+ UNIQUE
+ PRIMARY
+ INDEX-FIELD "termo_digitado" ASCENDING
+.

@@ -1,0 +1,79 @@
+{
+  "code": "movimentacoes-estoque",
+  "status": "ready",
+  "name": "Movimentacoes de estoque",
+  "asyncParallel": {
+    "enabled": true,
+    "partition": {
+      "strategy": "date-day",
+      "source": "querystring",
+      "startParameter": "dataInicial",
+      "endParameter": "dataFinal",
+      "sourceAlias": "movto",
+      "field": "dt-trans",
+      "indexedField": "movto-estoq.dt-trans",
+      "filterField": "movto-estoq.dt-trans"
+    },
+    "maxWorkers": 2,
+    "maxPartitions": 2000,
+    "maxPartitionRecords": 100000,
+    "maxPartitionBytes": 268435456,
+    "maxResultBytes": 10737418240,
+    "mergeOrder": ["data", "nr-trans"]
+  },
+  "query": {
+    "asyncParallel": {
+      "enabled": true,
+      "partition": {
+        "strategy": "date-day",
+        "source": "querystring",
+        "startParameter": "dataInicial",
+        "endParameter": "dataFinal",
+        "sourceAlias": "movto",
+        "field": "dt-trans",
+        "indexedField": "movto-estoq.dt-trans",
+        "filterField": "movto-estoq.dt-trans"
+      },
+      "maxWorkers": 2,
+      "maxPartitions": 2000,
+      "maxPartitionRecords": 100000,
+      "maxPartitionBytes": 268435456,
+      "maxResultBytes": 10737418240,
+      "mergeOrder": ["data", "nr-trans"]
+    },
+    "execution": "sync",
+    "page": 1,
+    "pageSize": 100,
+    "defaultBanco": "ems2med",
+    "sources": [{"nome":"movto-estoq","alias":"movto","banco":"ems2med","campos":"cod-estabel,cod-depos,it-codigo,lote,tipo-trans,dt-trans,esp-docto,num-sequen,serie-docto,nro-docto,quantidade,un,referencia,cod-refer,cod-emitente,nat-operacao,valor-nota,valor-icm,valor-ipi,cod-localiz,nr-trans,dt-contab,usuario"}],
+    "select": [
+      {"sourceAlias":"movto","field":"dt-trans","outputAlias":"data"},
+      {"sourceAlias":"movto","field":"cod-estabel","outputAlias":"estabelecimento"},
+      {"sourceAlias":"movto","field":"cod-depos","outputAlias":"deposito"},
+      {"sourceAlias":"movto","field":"it-codigo","outputAlias":"produto"},
+      {"sourceAlias":"movto","field":"referencia","outputAlias":"referencia"},
+      {"sourceAlias":"movto","field":"cod-refer","outputAlias":"cod-refer"},
+      {"sourceAlias":"movto","field":"tipo-trans","outputAlias":"tipo-trans"},
+      {"sourceAlias":"movto","field":"quantidade","outputAlias":"quantidade"},
+      {"sourceAlias":"movto","field":"un","outputAlias":"un"},
+      {"sourceAlias":"movto","field":"nro-docto","outputAlias":"documento"},
+      {"sourceAlias":"movto","field":"serie-docto","outputAlias":"serie"},
+      {"sourceAlias":"movto","field":"num-sequen","outputAlias":"sequencia"},
+      {"sourceAlias":"movto","field":"nat-operacao","outputAlias":"natureza-operacao"},
+      {"sourceAlias":"movto","field":"valor-nota","outputAlias":"valor-nota"},
+      {"sourceAlias":"movto","field":"cod-localiz","outputAlias":"localizacao"},
+      {"sourceAlias":"movto","field":"nr-trans","outputAlias":"nr-trans"}
+    ],
+    "filters": [],
+    "orderBy": [{"sourceAlias":"movto","field":"dt-trans","direction":"asc"},{"sourceAlias":"movto","field":"nr-trans","direction":"asc"}],
+    "pipeline": []
+  },
+  "externalFilters": [
+    {"name":"dataInicial","source":"querystring","sourceAlias":"movto","field":"dt-trans","operator":">=","required":false},
+    {"name":"dataFinal","source":"querystring","sourceAlias":"movto","field":"dt-trans","operator":"<=","required":false},
+    {"name":"produto","source":"querystring","sourceAlias":"movto","field":"it-codigo","operator":"=","required":false},
+    {"name":"referencia","source":"querystring","sourceAlias":"movto","field":"referencia","operator":"=","required":false},
+    {"name":"estabelecimento","source":"querystring","sourceAlias":"movto","field":"cod-estabel","operator":"=","required":false},
+    {"name":"deposito","source":"querystring","sourceAlias":"movto","field":"cod-depos","operator":"=","required":false}
+  ]
+}

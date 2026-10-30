@@ -12,4 +12,5 @@ Regra operacional:
 Arquivos previstos:
 
 - `companies.json`: mapeamento de empresas para aplicacoes/endpoints.
+- `program-routes.json`: rotas e metodos do JsonProgramWebHandler independente.
 - `authentication.json`: modo de autenticacao, JWT e usuarios locais quando aplicavel.

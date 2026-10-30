@@ -47,6 +47,7 @@
       color: #344150;
     }
     input,
+    select,
     textarea {
       box-sizing: border-box;
       width: 100%;
@@ -55,7 +56,7 @@
       border-radius: 6px;
       font: inherit;
     }
-    input {
+    input, select {
       min-height: 38px;
     }
     textarea {
@@ -147,6 +148,12 @@
         Programa
         <input id="programInput" value="echo-json">
       </label>
+      <label>
+        Método HTTP
+        <select id="methodInput">
+          <option>POST</option><option>GET</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+        </select>
+      </label>
       <button id="runButton" type="button">Executar</button>
     </div>
 
@@ -186,6 +193,7 @@
       const requestBox = document.getElementById("requestBox");
       const responseBox = document.getElementById("responseBox");
       const runButton = document.getElementById("runButton");
+      const methodInput = document.getElementById("methodInput");
       const programInput = document.getElementById("programInput");
       const parametersInput = document.getElementById("parametersInput");
 
@@ -226,6 +234,8 @@
       }
 
       function refreshFromQueryString() {
+        const method = String(qs("method") || "POST").toUpperCase();
+        if (["GET", "POST", "PUT", "PATCH", "DELETE"].includes(method)) methodInput.value = method;
         const program = qs("program");
         const parameters = qs("parameters");
         if (program) programInput.value = program;
@@ -286,14 +296,16 @@
         requestBox.textContent = pretty(request);
         try {
           setStatus("Executando programa no PASOE...");
-          const response = await fetch(pasoeProxyUrl("/program/execute"), {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept": "application/json"
-            },
-            body: JSON.stringify(request)
-          });
+          const method = methodInput.value;
+          let path = "/program/execute";
+          const options = { method, headers: { "Accept": "application/json" } };
+          if (method === "GET") {
+            path += "?" + new URLSearchParams({ program: request.program, parameters: JSON.stringify(request.parameters) });
+          } else {
+            options.headers["Content-Type"] = "application/json";
+            options.body = JSON.stringify(request);
+          }
+          const response = await fetch(pasoeProxyUrl(path), options);
           renderResponse(response, await readResponsePayload(response));
         } catch (error) {
           setStatus("Falha ao executar programa: " + error.message);
@@ -303,6 +315,7 @@
       }
 
       runButton.addEventListener("click", run);
+      methodInput.addEventListener("change", refreshPreview);
       programInput.addEventListener("input", refreshPreview);
       parametersInput.addEventListener("input", refreshPreview);
       refreshFromQueryString();

@@ -57,3 +57,31 @@ test.describe("PASOE backend program executor", () => {
     });
   });
 });
+
+// Requires the updated handler, policy class, and sample program-executor.json on PASOE.
+test.describe('PASOE backend program executor methods', () => {
+  let api;
+  test.beforeAll(async () => { api = await playwrightRequest.newContext({ ignoreHTTPSErrors: true }); });
+  test.afterAll(async () => { if (api) await api.dispose(); });
+  test('GET decodes JSON parameters without executing a body', async () => {
+    const response = await api.get(pasoeBase + '/program/execute', {
+      params: { program: 'echo-json', parameters: JSON.stringify({ texto: 'ação & + ?', nested: { id: 7 } }) }
+    });
+    expect(response.status()).toBe(200);
+    expect(await readJson(response)).toMatchObject({ success: true, parameters: { texto: 'ação & + ?', nested: { id: 7 } } });
+  });
+  for (const method of ['PUT', 'PATCH', 'DELETE']) {
+    test(`${method} is rejected before running echo-json`, async () => {
+      const response = await api.fetch(pasoeBase + '/program/execute', { method, data: { program: 'echo-json', parameters: {} } });
+      expect(response.status()).toBe(405);
+      expect(response.headers().allow).toContain('GET');
+      expect(await readJson(response)).toMatchObject({ success: false, error: { code: 'METHOD_NOT_ALLOWED' } });
+    });
+  }
+  test('GET to a legacy POST-only entry returns 405 before parsing invalid parameters', async () => {
+    const response = await api.get(pasoeBase + '/program/execute', { params: { program: 'analise-json-object10', parameters: 'not-json' } });
+    expect(response.status()).toBe(405);
+    expect(response.headers().allow).toBe('POST,OPTIONS');
+    expect(await readJson(response)).toMatchObject({ success: false, error: { code: 'METHOD_NOT_ALLOWED' } });
+  });
+});

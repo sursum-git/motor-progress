@@ -1,0 +1,130 @@
+/* Autorizacao IMA por chamada. Handles e policy sao exclusivamente privados. */
+BLOCK-LEVEL ON ERROR UNDO, THROW.
+USING Progress.Json.ObjectModel.*.
+DEFINE INPUT PARAMETER phUser AS HANDLE NO-UNDO.
+DEFINE INPUT PARAMETER poIdentity AS JsonObject NO-UNDO.
+DEFINE INPUT PARAMETER poPolicy AS JsonObject NO-UNDO.
+DEFINE OUTPUT PARAMETER poResponse AS JsonObject NO-UNDO.
+DEFINE VARIABLE hu AS HANDLE NO-UNDO.
+DEFINE VARIABLE hm AS HANDLE NO-UNDO.
+DEFINE VARIABLE hg AS HANDLE NO-UNDO.
+DEFINE VARIABLE qu AS HANDLE NO-UNDO.
+DEFINE VARIABLE qm AS HANDLE NO-UNDO.
+DEFINE VARIABLE qg AS HANDLE NO-UNDO.
+DEFINE VARIABLE cLogin AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cProvider AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cApp AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cAction AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cFlag AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cFields AS CHARACTER NO-UNDO.
+DEFINE VARIABLE cTypes AS CHARACTER NO-UNDO.
+DEFINE VARIABLE h AS HANDLE NO-UNDO.
+DEFINE VARIABLE f AS HANDLE NO-UNDO.
+DEFINE VARIABLE n AS INTEGER NO-UNDO.
+DEFINE VARIABLE j AS INTEGER NO-UNDO.
+DEFINE VARIABLE iMatches AS INTEGER NO-UNDO.
+DEFINE VARIABLE lSource AS LOGICAL NO-UNDO.
+DEFINE VARIABLE lAccess AS LOGICAL NO-UNDO.
+DEFINE VARIABLE lAction AS LOGICAL NO-UNDO.
+DEFINE VARIABLE lActive AS LOGICAL NO-UNDO.
+DEFINE VARIABLE lValidAction AS LOGICAL NO-UNDO.
+DEFINE VARIABLE oSources AS JsonArray NO-UNDO.
+DEFINE VARIABLE oData AS JsonArray NO-UNDO.
+DEFINE VARIABLE oRow AS JsonObject NO-UNDO.
+DEFINE VARIABLE oError AS JsonObject NO-UNDO.
+
+FUNCTION Exact RETURNS LOGICAL (a AS CHARACTER,b AS CHARACTER):
+ IF a=? OR b=? THEN RETURN FALSE.
+ RETURN LENGTH(a,"RAW")=LENGTH(b,"RAW") AND COMPARE(a,"EQ",b,"RAW").
+END FUNCTION.
+FUNCTION TextValue RETURNS CHARACTER (o AS JsonObject,k AS CHARACTER):
+ IF NOT VALID-OBJECT(o) THEN RETURN ?.
+ IF NOT o:Has(k) THEN RETURN ?.
+ IF o:GetType(k)<>JsonDataType:STRING THEN RETURN ?.
+ RETURN o:GetCharacter(k).
+END FUNCTION.
+FUNCTION Required RETURNS LOGICAL (v AS CHARACTER):
+ IF v=? THEN RETURN FALSE.
+ RETURN LENGTH(TRIM(v))>0.
+END FUNCTION.
+
+DO ON ERROR UNDO, THROW:
+ cLogin=TextValue(poIdentity,"login"). cProvider=TextValue(poIdentity,"auth_provider").
+ IF NOT Required(cLogin) OR NOT Required(cProvider) OR NOT Required(TextValue(poIdentity,"session_id")) THEN DO:
+  RUN Deny("CIW_IDENTITY_REQUIRED",401). RETURN.
+ END.
+ IF NOT VALID-OBJECT(poPolicy) THEN DO: RUN Deny("CIW_ACCESS_CONFIGURATION",500). RETURN. END.
+ IF NOT poPolicy:Has("allowed_auth_providers") THEN DO: RUN Deny("CIW_AUTH_SOURCE_DENIED",403). RETURN. END.
+ IF poPolicy:GetType("allowed_auth_providers")<>JsonDataType:ARRAY THEN DO: RUN Deny("CIW_AUTH_SOURCE_DENIED",403). RETURN. END.
+ oSources=poPolicy:GetJsonArray("allowed_auth_providers").
+ DO n=1 TO oSources:Length:
+  IF oSources:GetType(n)<>JsonDataType:STRING THEN DO: RUN Deny("CIW_AUTH_SOURCE_DENIED",403). RETURN. END.
+  IF NOT Required(oSources:GetCharacter(n)) THEN DO: RUN Deny("CIW_AUTH_SOURCE_DENIED",403). RETURN. END.
+  IF Exact(cProvider,oSources:GetCharacter(n)) THEN lSource=TRUE.
+ END.
+ IF NOT lSource THEN DO: RUN Deny("CIW_AUTH_SOURCE_DENIED",403). RETURN. END.
+ /* Validar todos os campos antes de ler; nunca usar um nome do cliente. */
+ DO j=1 TO 1:
+  h=phUser.
+  IF NOT VALID-HANDLE(h) THEN DO: RUN Deny("CIW_ACCESS_CONFIGURATION",500). RETURN. END.
+  IF h:TYPE<>"BUFFER" THEN DO: RUN Deny("CIW_ACCESS_CONFIGURATION",500). RETURN. END.
+  cFields=IF j=1 THEN "Login,ativo,id,usuario,tp-usuario" ELSE IF j=2 THEN "login_usuario,cod_grupo"
+   ELSE "cod_grupo,nome_aplicacao,acesso_permitido,insercao_permitida,alteracao_permitida,exclusao_permitida,exportacao_permitida,impressao_permitida".
+  cTypes=IF j=1 THEN "CHARACTER,LOGICAL,INTEGER,CHARACTER,INTEGER" ELSE IF j=2 THEN "CHARACTER,INTEGER"
+   ELSE "INTEGER,CHARACTER,CHARACTER,CHARACTER,CHARACTER,CHARACTER,CHARACTER,CHARACTER".
+  DO n=1 TO NUM-ENTRIES(cFields):
+   f=h:BUFFER-FIELD(ENTRY(n,cFields)) NO-ERROR.
+   IF NOT VALID-HANDLE(f) THEN DO: RUN Deny("CIW_ACCESS_CONFIGURATION",500). RETURN. END.
+   IF f:DATA-TYPE<>ENTRY(n,cTypes) OR f:EXTENT<>0 THEN DO: RUN Deny("CIW_ACCESS_CONFIGURATION",500). RETURN. END.
+  END.
+ END.
+ CREATE BUFFER hu FOR TABLE phUser.
+ CREATE QUERY qu. qu:SET-BUFFERS(hu).
+ qu:QUERY-PREPARE("FOR EACH " + hu:NAME + " WHERE CAPS(Login) = " + QUOTER(CAPS(cLogin)) + " NO-LOCK").
+ qu:QUERY-OPEN(). qu:GET-FIRST(NO-LOCK).
+ DO WHILE NOT qu:QUERY-OFF-END:
+  IF Exact(CAPS(hu:BUFFER-FIELD("Login"):BUFFER-VALUE),CAPS(cLogin)) THEN DO:
+   iMatches = iMatches + 1.
+   IF iMatches>1 THEN DO: RUN Deny("CIW_IDENTITY_AMBIGUOUS",409). RETURN. END.
+   oRow=NEW JsonObject().
+   oRow:Add("login",STRING(hu:BUFFER-FIELD("Login"):BUFFER-VALUE)).
+   RUN AddAttribute("ima_user_id",hu:BUFFER-FIELD("id")).
+   RUN AddAttribute("usuario",hu:BUFFER-FIELD("usuario")).
+   RUN AddAttribute("tp_usuario",hu:BUFFER-FIELD("tp-usuario")).
+   lActive=hu:BUFFER-FIELD("ativo"):BUFFER-VALUE.
+  END.
+  qu:GET-NEXT(NO-LOCK).
+ END.
+ IF iMatches=0 THEN DO: RUN Deny("CIW_IDENTITY_NOT_LINKED",403). RETURN. END.
+ IF lActive<>TRUE OR lActive=? THEN DO: RUN Deny("CIW_IDENTITY_INACTIVE",403). RETURN. END.
+ oData=NEW JsonArray(). oData:Add(oRow).
+ poResponse=NEW JsonObject(). poResponse:Add("success",TRUE). poResponse:Add("data",oData).
+ CATCH e AS Progress.Lang.Error:
+  RUN Deny("CIW_ACCESS_CONFIGURATION",500).
+ END CATCH.
+ FINALLY:
+  IF VALID-HANDLE(qu) THEN DELETE OBJECT qu.
+  IF VALID-HANDLE(qm) THEN DELETE OBJECT qm.
+  IF VALID-HANDLE(qg) THEN DELETE OBJECT qg.
+  IF VALID-HANDLE(hu) THEN DELETE OBJECT hu.
+  IF VALID-HANDLE(hm) THEN DELETE OBJECT hm.
+  IF VALID-HANDLE(hg) THEN DELETE OBJECT hg.
+  /* JSON filho pertence ao envelope de saida; nao apagar sucesso. */
+  IF VALID-OBJECT(oRow) AND NOT VALID-OBJECT(oData) THEN DELETE OBJECT oRow.
+ END FINALLY.
+END.
+PROCEDURE AddAttribute:
+ DEFINE INPUT PARAMETER k AS CHARACTER NO-UNDO.
+ DEFINE INPUT PARAMETER hf AS HANDLE NO-UNDO.
+ IF hf:BUFFER-VALUE=? THEN oRow:AddNull(k).
+ ELSE IF hf:DATA-TYPE="INTEGER" THEN oRow:Add(k,INTEGER(hf:BUFFER-VALUE)).
+ ELSE oRow:Add(k,STRING(hf:BUFFER-VALUE)).
+END PROCEDURE.
+PROCEDURE Deny:
+ DEFINE INPUT PARAMETER cCode AS CHARACTER NO-UNDO.
+ DEFINE INPUT PARAMETER iStatus AS INTEGER NO-UNDO.
+ IF VALID-OBJECT(poResponse) THEN DELETE OBJECT poResponse.
+ oError=NEW JsonObject(). oError:Add("code",cCode). oError:Add("status",iStatus).
+ oError:Add("message","Solicitacao nao autorizada ou configuracao indisponivel.").
+ poResponse=NEW JsonObject(). poResponse:Add("success",FALSE). poResponse:Add("error",oError).
+END PROCEDURE.

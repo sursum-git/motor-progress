@@ -1,0 +1,248 @@
+{
+  "code": "saldo-estoque-por-referencia",
+  "status": "ready",
+  "query": {
+    "execution": "sync",
+    "page": 1,
+    "pageSize": 100,
+    "defaultBanco": "ems2med",
+    "sources": [
+      {
+        "nome": "saldo-estoq",
+        "alias": "saldo",
+        "banco": "ems2med",
+        "campos": "cd-referencia,cod-depos,cod-estabel,cod-localiz,cod-refer,dt-vali-lote,it-codigo,lote,qt-aloc-ped,qt-aloc-prod,qt-alocada,qtidade-atu,qtidade-fin,qtidade-ini"
+      },
+      {
+        "nome": "item",
+        "alias": "item",
+        "banco": "ems2med",
+        "campos": "it-codigo,ge-codigo,desc-item,un"
+      }
+    ],
+    "joins": [
+      {
+        "type": "inner",
+        "leftAlias": "saldo",
+        "leftField": "it-codigo",
+        "rightAlias": "item",
+        "rightField": "it-codigo"
+      },
+      {
+        "type": "inner",
+        "leftAlias": "saldo",
+        "leftField": "lote",
+        "rightAlias": "saldo",
+        "rightField": "cod-refer"
+      }
+    ],
+    "select": [
+      {
+        "sourceAlias": "saldo",
+        "field": "cd-referencia",
+        "outputAlias": "cd-referencia"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "ge-codigo",
+        "outputAlias": "ge-codigo"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "desc-item",
+        "outputAlias": "desc-item"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "un",
+        "outputAlias": "un"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "cod-depos",
+        "outputAlias": "cod-depos"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "cod-estabel",
+        "outputAlias": "cod-estabel"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "cod-localiz",
+        "outputAlias": "cod-localiz"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "cod-refer",
+        "outputAlias": "cod-refer"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "dt-vali-lote",
+        "outputAlias": "dt-vali-lote"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "it-codigo",
+        "outputAlias": "it-codigo"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "lote",
+        "outputAlias": "lote"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "qt-aloc-ped",
+        "outputAlias": "qt-aloc-ped"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "qt-aloc-prod",
+        "outputAlias": "qt-aloc-prod"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "qt-alocada",
+        "outputAlias": "qt-alocada"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "qtidade-atu",
+        "outputAlias": "qtidade-atu"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "qtidade-fin",
+        "outputAlias": "qtidade-fin"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "qtidade-ini",
+        "outputAlias": "qtidade-ini"
+      }
+    ],
+    "filters": [
+      {
+        "sourceAlias": "saldo",
+        "field": "qtidade-atu",
+        "operator": ">",
+        "value": "0"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "ge-codigo",
+        "operator": ">=",
+        "value": "50"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "ge-codigo",
+        "operator": "<=",
+        "value": "60"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "ge-codigo",
+        "operator": "<>",
+        "value": "51"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "ge-codigo",
+        "operator": "<>",
+        "value": "52"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "ge-codigo",
+        "operator": "<>",
+        "value": "53"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "ge-codigo",
+        "operator": "<>",
+        "value": "54"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "ge-codigo",
+        "operator": "<>",
+        "value": "55"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "ge-codigo",
+        "operator": "<>",
+        "value": "56"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "ge-codigo",
+        "operator": "<>",
+        "value": "57"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "ge-codigo",
+        "operator": "<>",
+        "value": "58"
+      },
+      {
+        "sourceAlias": "item",
+        "field": "ge-codigo",
+        "operator": "<>",
+        "value": "59"
+      }
+    ],
+    "orderBy": [
+      {
+        "sourceAlias": "saldo",
+        "field": "it-codigo",
+        "direction": "asc"
+      },
+      {
+        "sourceAlias": "saldo",
+        "field": "cod-refer",
+        "direction": "asc"
+      }
+    ],
+    "pipeline": []
+  },
+  "externalFilters": [
+    {
+      "name": "estabelecimento",
+      "source": "querystring",
+      "sourceAlias": "saldo",
+      "field": "cod-estabel",
+      "operator": "=",
+      "required": false
+    },
+    {
+      "name": "deposito",
+      "source": "querystring",
+      "sourceAlias": "saldo",
+      "field": "cod-depos",
+      "operator": "=",
+      "required": false
+    },
+    {
+      "name": "item",
+      "source": "querystring",
+      "sourceAlias": "saldo",
+      "field": "it-codigo",
+      "operator": "=",
+      "required": false
+    },
+    {
+      "name": "referencia",
+      "source": "querystring",
+      "sourceAlias": "saldo",
+      "field": "cod-refer",
+      "operator": "=",
+      "required": false
+    }
+  ]
+}

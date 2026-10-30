@@ -1,0 +1,11 @@
+# Consumo externo de consultas salvas por token
+
+Formato autorizado diretamente pelo usuário: publicar no domínio iol.imatextil.com.br uma rota de execução com token do consumidor, somente para sursum-api/MED, preservando administração protegida e validando os quatro filtros da consulta de estoque.
+
+Rota escolhida: POST https://iol.imatextil.com.br/query-progress/api/query.php. Gateway PHP no site existente, sem sessão LDAP e sem credencial administrativa. Destino constante https://192.168.0.111:9911/med/web/SursumDynamicQuery/query, sem target/ambiente/rota configurável pelo cliente. Recebe X-Sursum-Query-Token e JSON com somente code e parameters; mantém no PASOE a autenticação, expiração, revogação e autorização exata por consulta. Não altera ABL, handlers, PROPATH, configurações Apache/PHP ou outros PASOEs.
+
+Essa abordagem reaproveita HTTPS, acesso interno e pin TLS já existentes no servidor web. Reverse proxy genérico exigiria configuração adicional de caminhos/credenciais e ampliaria a superfície; não se aplica ao escopo fechado pedido. A rota PHP explícita dispensa rewrite ou alteração de vhost.
+
+HTTPS obrigatório: HTTPS nativo ou X-Forwarded-Proto=https apenas de loopback, conforme SSL proxy inspecionado. Não recebe cookies como autenticação, não carrega token do serviço web e não encaminha identidade/Authorization/headers arbitrários. Somente POST; OPTIONS sem dados; PATH_INFO extra e querystring de URL rejeitados. JSON UTF8 até64KiB e resposta até16MiB, timeout120s, sem redirects, TLS obrigatório com pin existente. Somente headers JSON/cache-control/challenge próprios são devolvidos. Não registrar corpo, token ou respostas no registrador genérico. Erros de transporte não expõem URLs internas ou detalhes de cURL.
+
+Administração permanece no gateway LDAP/CSRF já exclusivo de tadeu.parreiras, e o proxy interno mantém seu login. Negativas de tokens e propriedades extras devem falhar antes de executar; não criar rota de administração pública. Validar pela URL HTTPS publicada: quatro filtros em conjunto e individualmente, token inválido/ausente, consulta não autorizada, tentativa de consulta livre/override/admin/target/IMA/outroPASOE, métodos/HTTPS e preservação dos handlers/política. Reusar consumidor de integração autorizado sem exibir seu token; não alterar dados de negócio.

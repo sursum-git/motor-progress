@@ -1,0 +1,10 @@
+/* Incremental schema candidate. Apply only after explicit authorization.
+   Initialize CURRENT-VALUE from the reviewed persistent high-water mark before
+   enabling create. Never lower or reset an existing sequence. */
+ADD SEQUENCE "seq_envios_amostras_repres"
+  INITIAL 0
+  INCREMENT 1
+  MIN-VAL 0
+  MAX-VAL 2147483647
+  CYCLE-ON-LIMIT no
+.

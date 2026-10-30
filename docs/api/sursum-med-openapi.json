@@ -1,0 +1,2551 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Consultas Sursum / MED",
+        "version": "1.4.0",
+        "description": "7 consultas salvas do catalogo atual. Todas usam POST /api/query.php com code e parameters; os filtros ficam no JSON, nao na URL. Somente sursum/MED. A documentacao nao concede permissoes. Para consultas de container, substitua INFORME_O_CONTAINER por um valor real. Tokens duram 900s e nao estendem a autorizacao do consumidor."
+    },
+    "servers": [
+        {
+            "url": "https://iol.imatextil.com.br/query-progress"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Autenticacao"
+        },
+        {
+            "name": "Consultas salvas"
+        },
+        {
+            "name": "Jobs"
+        },
+        {
+            "name": "Webhooks"
+        }
+    ],
+    "paths": {
+        "/api/token.php": {
+            "post": {
+                "tags": [
+                    "Autenticacao"
+                ],
+                "operationId": "obterToken",
+                "summary": "Obter token de 15 minutos",
+                "security": [],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "grant_type",
+                                    "client_id",
+                                    "client_secret"
+                                ],
+                                "properties": {
+                                    "grant_type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "client_credentials"
+                                        ],
+                                        "default": "client_credentials"
+                                    },
+                                    "client_id": {
+                                        "type": "string"
+                                    },
+                                    "client_secret": {
+                                        "type": "string",
+                                        "format": "password"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Token opaco valido por900segundos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "access_token",
+                                        "token_type",
+                                        "expires_in"
+                                    ],
+                                    "properties": {
+                                        "access_token": {
+                                            "type": "string",
+                                            "pattern": "^[a-f0-9]{64}$"
+                                        },
+                                        "token_type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "Bearer"
+                                            ]
+                                        },
+                                        "expires_in": {
+                                            "type": "integer",
+                                            "enum": [
+                                                900
+                                            ]
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "JSON ou parametros invalidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Token ausente, vencido ou revogado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "203": {
+                        "description": "Consulta sem permissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "Corpo muito grande",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "205": {
+                        "description": "Content-Type invalido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "206": {
+                        "description": "HTTPS obrigatorio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "207": {
+                        "description": "Limite de emissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "208": {
+                        "description": "Falha no gateway",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "209": {
+                        "description": "Servico indisponivel",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "210": {
+                        "description": "Tempo excedido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/query.php": {
+            "post": {
+                "tags": [
+                    "Consultas salvas"
+                ],
+                "operationId": "executarConsultaSalva",
+                "summary": "Executar uma das 7 consultas salvas",
+                "description": "Escolha a consulta no seletor de exemplos e altere os filtros antes de clicar Execute. O token deve autorizar exatamente o code solicitado. Referencia significa cod-refer. page(1..1000000) e pageSize(1..1000) sao opcionais na raiz do JSON. Use hasMore para avancar page; sem total ou snapshot. Mantenha filtros e pageSize ao navegar. Dados podem mudar entre requisicoes. Para desativar paginacao use paginate:false; retorna pageSize:null e hasMore:false. Cursor: escolha exemplo com sufixo cursor; copie nextCursor para cursor e mantenha filtros/pageSize. Sem page ou paginate:false. Permissao atual e token valido exigidos em cada chamada; cursor assinado expira em900s e e vinculado ao consumidor, credencial, consulta, definicao e filtros. A ordenacao recebe chaves unicas para desempate, semROWID e sem descarte de offset. Nao e snapshot. Distinct/group/aggregate/LEFT nao suportados. Para processamento assincrono envie execution:async (sem cursor). Retorna202. A consulta movimentacoes-estoque, quando paginate:false e os filtros de quebra configurados sao informados, usa particoes privadas e consolida em NDJSON gzip. Nao e snapshot transacional. O download exige o mesmo consumidor/permissao atual; manifest e full sao modos opcionais de webhook. Limites da definicao: 2000 particoes, 2 workers, 100000 registros e 268435456 bytes por particao, 10737418240 bytes por exportacao e24h de retencao. Se uma particao atingir qualquer teto, o job falha sem entregar exportacao parcial; ajuste a quebra no JSON da consulta. Consultas comuns mantem o limite64MiB.",
+                "security": [
+                    {
+                        "consumerToken": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "oneOf": [
+                                    {
+                                        "$ref": "#/components/schemas/controle-preco-por-pedido-container"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/moeda-precos-atuais-por-container"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/movimentacoes-estoque"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/pp-container-por-container"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/pp-it-container-por-container"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/saldo-estoque-por-referencia"
+                                    },
+                                    {
+                                        "$ref": "#/components/schemas/tabelas-preco-por-container"
+                                    }
+                                ],
+                                "discriminator": {
+                                    "propertyName": "code"
+                                }
+                            },
+                            "examples": {
+                                "controle-preco-por-pedido-container": {
+                                    "summary": "controle-preco-por-pedido-container",
+                                    "value": {
+                                        "code": "controle-preco-por-pedido-container",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr_container": "INFORME_O_CONTAINER"
+                                            }
+                                        }
+                                    }
+                                },
+                                "controle-preco-por-pedido-container-cursor": {
+                                    "summary": "controle-preco-por-pedido-container — cursor",
+                                    "value": {
+                                        "code": "controle-preco-por-pedido-container",
+                                        "paginationMode": "cursor",
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr_container": "INFORME_O_CONTAINER"
+                                            }
+                                        },
+                                        "cursor": ""
+                                    }
+                                },
+                                "moeda-precos-atuais-por-container": {
+                                    "summary": "moeda-precos-atuais-por-container",
+                                    "value": {
+                                        "code": "moeda-precos-atuais-por-container",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr_container": "INFORME_O_CONTAINER",
+                                                "dt_referencia": "2026-10-30"
+                                            }
+                                        }
+                                    }
+                                },
+                                "moeda-precos-atuais-por-container-cursor": {
+                                    "summary": "moeda-precos-atuais-por-container — cursor",
+                                    "value": {
+                                        "code": "moeda-precos-atuais-por-container",
+                                        "paginationMode": "cursor",
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr_container": "INFORME_O_CONTAINER",
+                                                "dt_referencia": "2026-10-30"
+                                            }
+                                        },
+                                        "cursor": ""
+                                    }
+                                },
+                                "movimentacoes-estoque": {
+                                    "summary": "Movimentacoes de estoque",
+                                    "value": {
+                                        "code": "movimentacoes-estoque",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "dataInicial": "2021-01-01",
+                                                "dataFinal": "2025-12-31",
+                                                "produto": "130062",
+                                                "referencia": "004",
+                                                "estabelecimento": "502",
+                                                "deposito": "ARM"
+                                            }
+                                        }
+                                    }
+                                },
+                                "movimentacoes-estoque-cursor": {
+                                    "summary": "Movimentacoes de estoque — cursor",
+                                    "value": {
+                                        "code": "movimentacoes-estoque",
+                                        "paginationMode": "cursor",
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "dataInicial": "2021-01-01",
+                                                "dataFinal": "2025-12-31",
+                                                "produto": "130062",
+                                                "referencia": "004",
+                                                "estabelecimento": "502",
+                                                "deposito": "ARM"
+                                            }
+                                        },
+                                        "cursor": ""
+                                    }
+                                },
+                                "pp-container-por-container": {
+                                    "summary": "pp-container-por-container",
+                                    "value": {
+                                        "code": "pp-container-por-container",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr-container": "INFORME_O_CONTAINER"
+                                            }
+                                        }
+                                    }
+                                },
+                                "pp-container-por-container-cursor": {
+                                    "summary": "pp-container-por-container — cursor",
+                                    "value": {
+                                        "code": "pp-container-por-container",
+                                        "paginationMode": "cursor",
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr-container": "INFORME_O_CONTAINER"
+                                            }
+                                        },
+                                        "cursor": ""
+                                    }
+                                },
+                                "pp-it-container-por-container": {
+                                    "summary": "pp-it-container-por-container",
+                                    "value": {
+                                        "code": "pp-it-container-por-container",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr-container": "INFORME_O_CONTAINER"
+                                            }
+                                        }
+                                    }
+                                },
+                                "pp-it-container-por-container-cursor": {
+                                    "summary": "pp-it-container-por-container — cursor",
+                                    "value": {
+                                        "code": "pp-it-container-por-container",
+                                        "paginationMode": "cursor",
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr-container": "INFORME_O_CONTAINER"
+                                            }
+                                        },
+                                        "cursor": ""
+                                    }
+                                },
+                                "saldo-estoque-por-referencia": {
+                                    "summary": "saldo-estoque-por-referencia",
+                                    "value": {
+                                        "code": "saldo-estoque-por-referencia",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "estabelecimento": "502",
+                                                "deposito": "ARM",
+                                                "item": "130062",
+                                                "referencia": "004"
+                                            }
+                                        }
+                                    }
+                                },
+                                "saldo-estoque-por-referencia-cursor": {
+                                    "summary": "saldo-estoque-por-referencia — cursor",
+                                    "value": {
+                                        "code": "saldo-estoque-por-referencia",
+                                        "paginationMode": "cursor",
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "estabelecimento": "502",
+                                                "deposito": "ARM",
+                                                "item": "130062",
+                                                "referencia": "004"
+                                            }
+                                        },
+                                        "cursor": ""
+                                    }
+                                },
+                                "tabelas-preco-por-container": {
+                                    "summary": "tabelas-preco-por-container",
+                                    "value": {
+                                        "code": "tabelas-preco-por-container",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr_container": "INFORME_O_CONTAINER"
+                                            }
+                                        }
+                                    }
+                                },
+                                "controle-preco-por-pedido-container-async": {
+                                    "summary": "controle-preco-por-pedido-container — assincrono",
+                                    "value": {
+                                        "code": "controle-preco-por-pedido-container",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr_container": "INFORME_O_CONTAINER"
+                                            }
+                                        },
+                                        "execution": "async"
+                                    }
+                                },
+                                "moeda-precos-atuais-por-container-async": {
+                                    "summary": "moeda-precos-atuais-por-container — assincrono",
+                                    "value": {
+                                        "code": "moeda-precos-atuais-por-container",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr_container": "INFORME_O_CONTAINER",
+                                                "dt_referencia": "2026-10-30"
+                                            }
+                                        },
+                                        "execution": "async"
+                                    }
+                                },
+                                "movimentacoes-estoque-async": {
+                                    "summary": "Movimentacoes de estoque — assincrono",
+                                    "value": {
+                                        "code": "movimentacoes-estoque",
+                                        "paginationMode": "offset",
+                                        "paginate": false,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "dataInicial": "2021-01-01",
+                                                "dataFinal": "2025-12-31",
+                                                "produto": "130062",
+                                                "referencia": "004",
+                                                "estabelecimento": "502",
+                                                "deposito": "ARM"
+                                            }
+                                        },
+                                        "execution": "async",
+                                        "webhookDelivery": "manifest"
+                                    }
+                                },
+                                "pp-container-por-container-async": {
+                                    "summary": "pp-container-por-container — assincrono",
+                                    "value": {
+                                        "code": "pp-container-por-container",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr-container": "INFORME_O_CONTAINER"
+                                            }
+                                        },
+                                        "execution": "async"
+                                    }
+                                },
+                                "pp-it-container-por-container-async": {
+                                    "summary": "pp-it-container-por-container — assincrono",
+                                    "value": {
+                                        "code": "pp-it-container-por-container",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr-container": "INFORME_O_CONTAINER"
+                                            }
+                                        },
+                                        "execution": "async"
+                                    }
+                                },
+                                "saldo-estoque-por-referencia-async": {
+                                    "summary": "saldo-estoque-por-referencia — assincrono",
+                                    "value": {
+                                        "code": "saldo-estoque-por-referencia",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "estabelecimento": "502",
+                                                "deposito": "ARM",
+                                                "item": "130062",
+                                                "referencia": "004"
+                                            }
+                                        },
+                                        "execution": "async"
+                                    }
+                                },
+                                "tabelas-preco-por-container-async": {
+                                    "summary": "tabelas-preco-por-container — assincrono",
+                                    "value": {
+                                        "code": "tabelas-preco-por-container",
+                                        "paginationMode": "offset",
+                                        "paginate": true,
+                                        "page": 1,
+                                        "pageSize": 100,
+                                        "parameters": {
+                                            "querystring": {
+                                                "nr_container": "INFORME_O_CONTAINER"
+                                            }
+                                        },
+                                        "execution": "async"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Resultado JSON do motor, incluindo dados e metadados/paginacao quando retornados. Os campos dependem da consulta.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "success"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "page": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        },
+                                        "nextCursor": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "cursorExpiresIn": {
+                                            "type": "integer",
+                                            "enum": [
+                                                900
+                                            ]
+                                        },
+                                        "paginationMode": {
+                                            "type": "string",
+                                            "enum": [
+                                                "offset",
+                                                "cursor"
+                                            ]
+                                        },
+                                        "pageSize": {
+                                            "type": "integer",
+                                            "nullable": true
+                                        },
+                                        "paginate": {
+                                            "type": "boolean"
+                                        },
+                                        "recordsReturned": {
+                                            "type": "integer"
+                                        },
+                                        "hasMore": {
+                                            "type": "boolean"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object",
+                                                "additionalProperties": true
+                                            }
+                                        }
+                                    },
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "201": {
+                        "description": "JSON ou parametros invalidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Job persistido; use jobId nas rotas autenticadas de acompanhamento/download. Worker dedicado verifica permissao antes de executar.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "success",
+                                        "jobId",
+                                        "status"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "execution": {
+                                            "type": "string",
+                                            "enum": [
+                                                "async"
+                                            ]
+                                        },
+                                        "jobId": {
+                                            "type": "string"
+                                        },
+                                        "code": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "queued",
+                                                "parallel",
+                                                "consolidating",
+                                                "running",
+                                                "completed",
+                                                "failed",
+                                                "cancelled"
+                                            ]
+                                        },
+                                        "resultAvailable": {
+                                            "type": "boolean"
+                                        },
+                                        "resultFormat": {
+                                            "type": "string",
+                                            "enum": [
+                                                "ndjson+gzip"
+                                            ]
+                                        },
+                                        "statusUrl": {
+                                            "type": "string"
+                                        },
+                                        "resultUrl": {
+                                            "type": "string"
+                                        },
+                                        "parallel": {
+                                            "type": "object",
+                                            "properties": {
+                                                "enabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "totalPartitions": {
+                                                    "type": "integer"
+                                                },
+                                                "completedPartitions": {
+                                                    "type": "integer"
+                                                },
+                                                "runningPartitions": {
+                                                    "type": "integer"
+                                                },
+                                                "failedPartitions": {
+                                                    "type": "integer"
+                                                },
+                                                "maxWorkers": {
+                                                    "type": "integer",
+                                                    "maximum": 10
+                                                },
+                                                "lastFailureCode": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "PARALLEL_PARTITION_RECORD_LIMIT",
+                                                        "PARALLEL_PARTITION_BYTE_LIMIT",
+                                                        "PARALLEL_PARTITION_LIMIT_CONFIG_INVALID"
+                                                    ],
+                                                    "description": "Causa sanitizada da ultima particao que atingiu limite."
+                                                }
+                                            }
+                                        },
+                                        "resultExpiresAtEpoch": {
+                                            "type": "integer",
+                                            "format": "int64"
+                                        }
+                                    },
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "203": {
+                        "description": "Consulta sem permissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "204": {
+                        "description": "Corpo muito grande",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "205": {
+                        "description": "Content-Type invalido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "206": {
+                        "description": "HTTPS obrigatorio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "207": {
+                        "description": "Limite de emissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "208": {
+                        "description": "Falha no gateway",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "209": {
+                        "description": "Servico indisponivel",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "210": {
+                        "description": "Tempo excedido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/jobs.php": {
+            "get": {
+                "tags": [
+                    "Jobs"
+                ],
+                "operationId": "acompanharJob",
+                "summary": "Consultar situacao do job",
+                "description": "Somente o consumidor que criou o job, com token valido e permissao atual para a consulta. Outro consumidor/job inexistente retorna404. Novo token do mesmo consumidor continua acesso. Download pendente409; expirado410. Nenhum caminho interno ou plano e publicado.",
+                "security": [
+                    {
+                        "consumerToken": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "jobId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^JOB-[0-9]{8}-[0-9]{6}-[0-9]{6}$"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado atual do job.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "success",
+                                        "jobId",
+                                        "status"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "execution": {
+                                            "type": "string",
+                                            "enum": [
+                                                "async"
+                                            ]
+                                        },
+                                        "jobId": {
+                                            "type": "string"
+                                        },
+                                        "code": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "enum": [
+                                                "queued",
+                                                "parallel",
+                                                "consolidating",
+                                                "running",
+                                                "completed",
+                                                "failed",
+                                                "cancelled"
+                                            ]
+                                        },
+                                        "resultAvailable": {
+                                            "type": "boolean"
+                                        },
+                                        "resultFormat": {
+                                            "type": "string",
+                                            "enum": [
+                                                "ndjson+gzip"
+                                            ]
+                                        },
+                                        "statusUrl": {
+                                            "type": "string"
+                                        },
+                                        "resultUrl": {
+                                            "type": "string"
+                                        },
+                                        "parallel": {
+                                            "type": "object",
+                                            "properties": {
+                                                "enabled": {
+                                                    "type": "boolean"
+                                                },
+                                                "totalPartitions": {
+                                                    "type": "integer"
+                                                },
+                                                "completedPartitions": {
+                                                    "type": "integer"
+                                                },
+                                                "runningPartitions": {
+                                                    "type": "integer"
+                                                },
+                                                "failedPartitions": {
+                                                    "type": "integer"
+                                                },
+                                                "maxWorkers": {
+                                                    "type": "integer",
+                                                    "maximum": 10
+                                                },
+                                                "lastFailureCode": {
+                                                    "type": "string",
+                                                    "enum": [
+                                                        "PARALLEL_PARTITION_RECORD_LIMIT",
+                                                        "PARALLEL_PARTITION_BYTE_LIMIT",
+                                                        "PARALLEL_PARTITION_LIMIT_CONFIG_INVALID"
+                                                    ],
+                                                    "description": "Causa sanitizada da ultima particao que atingiu limite."
+                                                }
+                                            }
+                                        },
+                                        "resultExpiresAtEpoch": {
+                                            "type": "integer",
+                                            "format": "int64"
+                                        }
+                                    },
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Job nao encontrado ou de outro consumidor"
+                    },
+                    "409": {
+                        "description": "Resultado ainda nao disponivel"
+                    },
+                    "410": {
+                        "description": "Resultado expirado"
+                    },
+                    "411": {
+                        "description": "JSON ou parametros invalidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Token ausente, vencido ou revogado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "Consulta sem permissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "414": {
+                        "description": "Corpo muito grande",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "Content-Type invalido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "416": {
+                        "description": "HTTPS obrigatorio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "417": {
+                        "description": "Limite de emissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "418": {
+                        "description": "Falha no gateway",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "419": {
+                        "description": "Servico indisponivel",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "420": {
+                        "description": "Tempo excedido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/job-result.php": {
+            "get": {
+                "tags": [
+                    "Jobs"
+                ],
+                "operationId": "baixarResultadoJob",
+                "summary": "Baixar resultado",
+                "description": "Somente o consumidor que criou o job, com token valido e permissao atual para a consulta. Outro consumidor/job inexistente retorna404. Novo token do mesmo consumidor continua acesso. Download pendente409; expirado410. Nenhum caminho interno ou plano e publicado.",
+                "security": [
+                    {
+                        "consumerToken": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "jobId",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "pattern": "^JOB-[0-9]{8}-[0-9]{6}-[0-9]{6}$"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Jobs comuns retornam JSON; exportacoes paralelas retornam attachment NDJSON gzip.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "success"
+                                    ],
+                                    "additionalProperties": true
+                                }
+                            },
+                            "application/x-ndjson": {
+                                "schema": {
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Job nao encontrado ou de outro consumidor"
+                    },
+                    "409": {
+                        "description": "Resultado ainda nao disponivel"
+                    },
+                    "410": {
+                        "description": "Resultado expirado"
+                    },
+                    "411": {
+                        "description": "JSON ou parametros invalidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "412": {
+                        "description": "Token ausente, vencido ou revogado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "Consulta sem permissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "414": {
+                        "description": "Corpo muito grande",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "Content-Type invalido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "416": {
+                        "description": "HTTPS obrigatorio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "417": {
+                        "description": "Limite de emissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "418": {
+                        "description": "Falha no gateway",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "419": {
+                        "description": "Servico indisponivel",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "420": {
+                        "description": "Tempo excedido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/webhook.php": {
+            "get": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "operationId": "consultarWebhook",
+                "summary": "Consultar o webhook da propria aplicacao e consulta",
+                "description": "A configuracao e identificada pelo consumidor autenticado e code. Nunca retorna webhook_secret. O consumidor precisa ter permissao atual para o codigo.",
+                "security": [
+                    {
+                        "consumerToken": []
+                    }
+                ],
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "saldo-estoque-por-referencia"
+                        },
+                        "description": "Codigo de consulta autorizado para o consumidor."
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Configuracao atual.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": [
+                                        "success",
+                                        "code",
+                                        "url",
+                                        "version",
+                                        "active"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean"
+                                        },
+                                        "code": {
+                                            "type": "string"
+                                        },
+                                        "url": {
+                                            "type": "string"
+                                        },
+                                        "version": {
+                                            "type": "integer"
+                                        },
+                                        "active": {
+                                            "type": "boolean"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Webhook nao cadastrado"
+                    },
+                    "400": {
+                        "description": "JSON ou parametros invalidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token ausente, vencido ou revogado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Consulta sem permissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "Corpo muito grande",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "Content-Type invalido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "426": {
+                        "description": "HTTPS obrigatorio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Limite de emissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Falha no gateway",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Servico indisponivel",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "504": {
+                        "description": "Tempo excedido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "operationId": "configurarWebhook",
+                "summary": "Cadastrar ou rotacionar o webhook da propria aplicacao e consulta",
+                "description": "Aceita somente URL HTTPS na porta 443. A resposta devolve webhook_secret uma vez; guarde-a para validar HMAC-SHA-256 de timestamp.raw-body. Uma nova configuracao invalida pendencias da versao anterior.",
+                "security": [
+                    {
+                        "consumerToken": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "code",
+                                    "url"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "saldo-estoque-por-referencia"
+                                    },
+                                    "url": {
+                                        "type": "string",
+                                        "format": "uri",
+                                        "example": "https://integracao.example.com/webhooks/sursum-estoque"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Configuracao salva; webhook_secret aparece apenas nesta resposta.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "allOf": [
+                                        {
+                                            "type": "object",
+                                            "required": [
+                                                "success",
+                                                "code",
+                                                "url",
+                                                "version",
+                                                "active"
+                                            ],
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean"
+                                                },
+                                                "code": {
+                                                    "type": "string"
+                                                },
+                                                "url": {
+                                                    "type": "string"
+                                                },
+                                                "version": {
+                                                    "type": "integer"
+                                                },
+                                                "active": {
+                                                    "type": "boolean"
+                                                }
+                                            }
+                                        },
+                                        {
+                                            "type": "object",
+                                            "required": [
+                                                "webhook_secret"
+                                            ],
+                                            "properties": {
+                                                "webhook_secret": {
+                                                    "type": "string",
+                                                    "format": "password"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "JSON ou parametros invalidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token ausente, vencido ou revogado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Consulta sem permissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "Corpo muito grande",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "Content-Type invalido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "426": {
+                        "description": "HTTPS obrigatorio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Limite de emissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Falha no gateway",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Servico indisponivel",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "504": {
+                        "description": "Tempo excedido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "Webhooks"
+                ],
+                "operationId": "removerWebhook",
+                "summary": "Remover o webhook da propria aplicacao e consulta",
+                "security": [
+                    {
+                        "consumerToken": []
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "required": [
+                                    "code"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "saldo-estoque-por-referencia"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "204": {
+                        "description": "Webhook removido."
+                    },
+                    "404": {
+                        "description": "Webhook nao cadastrado"
+                    },
+                    "400": {
+                        "description": "JSON ou parametros invalidos",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Token ausente, vencido ou revogado",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Consulta sem permissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "Corpo muito grande",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "415": {
+                        "description": "Content-Type invalido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "426": {
+                        "description": "HTTPS obrigatorio",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Limite de emissao",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "502": {
+                        "description": "Falha no gateway",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Servico indisponivel",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    },
+                    "504": {
+                        "description": "Tempo excedido",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "additionalProperties": true
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "consumerToken": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "X-Sursum-Query-Token",
+                "description": "Informe apenas o token, sem prefixo Bearer. O adaptador usa este cabecalho."
+            }
+        },
+        "schemas": {
+            "controle-preco-por-pedido-container": {
+                "type": "object",
+                "title": "controle-preco-por-pedido-container",
+                "description": "Consulta salva controle-preco-por-pedido-container. Estado: ready. Exige permissao do consumidor para este codigo. Campos de saida: cod_controle_preco, tp_preco, dt_inicial, dt_final, it_codigo, cod_refer, nr_container, vl_dolar, vl_real, cod_usuario_criacao, cod_usuario_alteracao, dt_hr_criacao, dt_hr_alteracao, log_vencido, tb_preco_id, num_nivel, campanha_id, qtd_max_venda, classe_comissao_id, teste.",
+                "additionalProperties": false,
+                "required": [
+                    "code",
+                    "parameters"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "enum": [
+                            "controle-preco-por-pedido-container"
+                        ]
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "querystring": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "nr_container": {
+                                        "type": "string",
+                                        "description": "Filtro nr_container. Informe como texto.",
+                                        "example": "INFORME_O_CONTAINER"
+                                    }
+                                },
+                                "required": [
+                                    "nr_container"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "querystring"
+                        ]
+                    },
+                    "paginationMode": {
+                        "type": "string",
+                        "enum": [
+                            "offset",
+                            "cursor"
+                        ],
+                        "default": "offset",
+                        "description": "Cursor exige chave unica validada em runtime; nao envie page nem paginate:false."
+                    },
+                    "cursor": {
+                        "type": "string",
+                        "maxLength": 16384,
+                        "description": "Somente no modo cursor. Omita ou deixe vazio na primeira chamada; depois envie nextCursor, mantendo filtros e pageSize. Validade900s."
+                    },
+                    "paginate": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "false retorna todos os registros filtrados, sem limite de pagina. page/pageSize sao ignorados; limites de tempo/tamanho continuam."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000,
+                        "description": "Pagina a partir de 1. Opcional: usa o valor salvo quando omitido."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000,
+                        "description": "Registros por pagina, maximo1000. Opcional: tamanho salvo limitado a1000."
+                    },
+                    "webhookDelivery": {
+                        "type": "string",
+                        "enum": [
+                            "full",
+                            "manifest"
+                        ],
+                        "description": "Somente com execution:async. full envia o resultado ao webhook; manifest envia metadados e URL de download autenticado."
+                    },
+                    "execution": {
+                        "type": "string",
+                        "enum": [
+                            "sync",
+                            "async"
+                        ],
+                        "default": "sync",
+                        "description": "async enfileira e retorna202/jobId. Nao combina com cursor. Uma pagina ou conjunto completo se paginate:false."
+                    }
+                },
+                "example": {
+                    "code": "controle-preco-por-pedido-container",
+                    "paginationMode": "offset",
+                    "paginate": true,
+                    "page": 1,
+                    "pageSize": 100,
+                    "parameters": {
+                        "querystring": {
+                            "nr_container": "INFORME_O_CONTAINER"
+                        }
+                    }
+                }
+            },
+            "moeda-precos-atuais-por-container": {
+                "type": "object",
+                "title": "moeda-precos-atuais-por-container",
+                "description": "Consulta salva moeda-precos-atuais-por-container. Estado: ready. Exige permissao do consumidor para este codigo. Campos de saida: nr_container, tb_preco_id, tb_preco_descricao, tp_preco, it_codigo, cod_refer, vl_real, vl_dolar, dt_inicial, dt_final, log_vencido.",
+                "additionalProperties": false,
+                "required": [
+                    "code",
+                    "parameters"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "enum": [
+                            "moeda-precos-atuais-por-container"
+                        ]
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "querystring": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "nr_container": {
+                                        "type": "string",
+                                        "description": "Filtro nr_container. Informe como texto.",
+                                        "example": "INFORME_O_CONTAINER"
+                                    },
+                                    "dt_referencia": {
+                                        "type": "string",
+                                        "description": "Filtro dt_referencia. Informe como texto.",
+                                        "example": "2026-10-30"
+                                    }
+                                },
+                                "required": [
+                                    "nr_container"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "querystring"
+                        ]
+                    },
+                    "paginationMode": {
+                        "type": "string",
+                        "enum": [
+                            "offset",
+                            "cursor"
+                        ],
+                        "default": "offset",
+                        "description": "Cursor exige chave unica validada em runtime; nao envie page nem paginate:false."
+                    },
+                    "cursor": {
+                        "type": "string",
+                        "maxLength": 16384,
+                        "description": "Somente no modo cursor. Omita ou deixe vazio na primeira chamada; depois envie nextCursor, mantendo filtros e pageSize. Validade900s."
+                    },
+                    "paginate": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "false retorna todos os registros filtrados, sem limite de pagina. page/pageSize sao ignorados; limites de tempo/tamanho continuam."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000,
+                        "description": "Pagina a partir de 1. Opcional: usa o valor salvo quando omitido."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000,
+                        "description": "Registros por pagina, maximo1000. Opcional: tamanho salvo limitado a1000."
+                    },
+                    "webhookDelivery": {
+                        "type": "string",
+                        "enum": [
+                            "full",
+                            "manifest"
+                        ],
+                        "description": "Somente com execution:async. full envia o resultado ao webhook; manifest envia metadados e URL de download autenticado."
+                    },
+                    "execution": {
+                        "type": "string",
+                        "enum": [
+                            "sync",
+                            "async"
+                        ],
+                        "default": "sync",
+                        "description": "async enfileira e retorna202/jobId. Nao combina com cursor. Uma pagina ou conjunto completo se paginate:false."
+                    }
+                },
+                "example": {
+                    "code": "moeda-precos-atuais-por-container",
+                    "paginationMode": "offset",
+                    "paginate": true,
+                    "page": 1,
+                    "pageSize": 100,
+                    "parameters": {
+                        "querystring": {
+                            "nr_container": "INFORME_O_CONTAINER",
+                            "dt_referencia": "2026-10-30"
+                        }
+                    }
+                }
+            },
+            "movimentacoes-estoque": {
+                "type": "object",
+                "title": "movimentacoes-estoque",
+                "description": "Consulta salva movimentacoes-estoque. Estado: ready. Exige permissao do consumidor para este codigo. Campos de saida: data, estabelecimento, deposito, produto, referencia, cod-refer, tipo-trans, quantidade, un, documento, serie, sequencia, natureza-operacao, valor-nota, localizacao, nr-trans.",
+                "additionalProperties": false,
+                "required": [
+                    "code"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "enum": [
+                            "movimentacoes-estoque"
+                        ]
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "querystring": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "dataInicial": {
+                                        "type": "string",
+                                        "description": "Filtro dataInicial. Informe como texto.",
+                                        "example": "2021-01-01"
+                                    },
+                                    "dataFinal": {
+                                        "type": "string",
+                                        "description": "Filtro dataFinal. Informe como texto.",
+                                        "example": "2025-12-31"
+                                    },
+                                    "produto": {
+                                        "type": "string",
+                                        "description": "Filtro produto. Informe como texto.",
+                                        "example": "130062"
+                                    },
+                                    "referencia": {
+                                        "type": "string",
+                                        "description": "Referencia do estoque (cod-refer). Preserve zeros a esquerda.",
+                                        "example": "004"
+                                    },
+                                    "estabelecimento": {
+                                        "type": "string",
+                                        "description": "Filtro estabelecimento. Informe como texto.",
+                                        "example": "502"
+                                    },
+                                    "deposito": {
+                                        "type": "string",
+                                        "description": "Filtro deposito. Informe como texto.",
+                                        "example": "ARM"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "paginationMode": {
+                        "type": "string",
+                        "enum": [
+                            "offset",
+                            "cursor"
+                        ],
+                        "default": "offset",
+                        "description": "Cursor exige chave unica validada em runtime; nao envie page nem paginate:false."
+                    },
+                    "cursor": {
+                        "type": "string",
+                        "maxLength": 16384,
+                        "description": "Somente no modo cursor. Omita ou deixe vazio na primeira chamada; depois envie nextCursor, mantendo filtros e pageSize. Validade900s."
+                    },
+                    "paginate": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "false retorna todos os registros filtrados, sem limite de pagina. page/pageSize sao ignorados; limites de tempo/tamanho continuam."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000,
+                        "description": "Pagina a partir de 1. Opcional: usa o valor salvo quando omitido."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000,
+                        "description": "Registros por pagina, maximo1000. Opcional: tamanho salvo limitado a1000."
+                    },
+                    "webhookDelivery": {
+                        "type": "string",
+                        "enum": [
+                            "full",
+                            "manifest"
+                        ],
+                        "description": "Somente com execution:async. full envia o resultado ao webhook; manifest envia metadados e URL de download autenticado."
+                    },
+                    "execution": {
+                        "type": "string",
+                        "enum": [
+                            "sync",
+                            "async"
+                        ],
+                        "default": "sync",
+                        "description": "async enfileira e retorna202/jobId. Nao combina com cursor. Uma pagina ou conjunto completo se paginate:false."
+                    }
+                },
+                "example": {
+                    "code": "movimentacoes-estoque",
+                    "paginationMode": "offset",
+                    "paginate": true,
+                    "page": 1,
+                    "pageSize": 100,
+                    "parameters": {
+                        "querystring": {
+                            "dataInicial": "2021-01-01",
+                            "dataFinal": "2025-12-31",
+                            "produto": "130062",
+                            "referencia": "004",
+                            "estabelecimento": "502",
+                            "deposito": "ARM"
+                        }
+                    }
+                }
+            },
+            "pp-container-por-container": {
+                "type": "object",
+                "title": "pp-container-por-container",
+                "description": "Consulta salva pp-container-por-container. Estado: ready. Exige permissao do consumidor para este codigo. Campos de saida: nr-container, cod-estabel, cod-estab, cod-depos, nome-ab-forn, comprador, dt-compra, dt-prev-chegada, dt_prev_chegada_loja, dt-recebimento, dt-receb, situacao, num_origem, log_rota_indefinida, log_pagto_final, ptax, vlr-despesas, vlr-frete, vlr-seguro.",
+                "additionalProperties": false,
+                "required": [
+                    "code",
+                    "parameters"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "enum": [
+                            "pp-container-por-container"
+                        ]
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "querystring": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "nr-container": {
+                                        "type": "string",
+                                        "description": "Filtro nr-container. Informe como texto.",
+                                        "example": "INFORME_O_CONTAINER"
+                                    }
+                                },
+                                "required": [
+                                    "nr-container"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "querystring"
+                        ]
+                    },
+                    "paginationMode": {
+                        "type": "string",
+                        "enum": [
+                            "offset",
+                            "cursor"
+                        ],
+                        "default": "offset",
+                        "description": "Cursor exige chave unica validada em runtime; nao envie page nem paginate:false."
+                    },
+                    "cursor": {
+                        "type": "string",
+                        "maxLength": 16384,
+                        "description": "Somente no modo cursor. Omita ou deixe vazio na primeira chamada; depois envie nextCursor, mantendo filtros e pageSize. Validade900s."
+                    },
+                    "paginate": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "false retorna todos os registros filtrados, sem limite de pagina. page/pageSize sao ignorados; limites de tempo/tamanho continuam."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000,
+                        "description": "Pagina a partir de 1. Opcional: usa o valor salvo quando omitido."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000,
+                        "description": "Registros por pagina, maximo1000. Opcional: tamanho salvo limitado a1000."
+                    },
+                    "webhookDelivery": {
+                        "type": "string",
+                        "enum": [
+                            "full",
+                            "manifest"
+                        ],
+                        "description": "Somente com execution:async. full envia o resultado ao webhook; manifest envia metadados e URL de download autenticado."
+                    },
+                    "execution": {
+                        "type": "string",
+                        "enum": [
+                            "sync",
+                            "async"
+                        ],
+                        "default": "sync",
+                        "description": "async enfileira e retorna202/jobId. Nao combina com cursor. Uma pagina ou conjunto completo se paginate:false."
+                    }
+                },
+                "example": {
+                    "code": "pp-container-por-container",
+                    "paginationMode": "offset",
+                    "paginate": true,
+                    "page": 1,
+                    "pageSize": 100,
+                    "parameters": {
+                        "querystring": {
+                            "nr-container": "INFORME_O_CONTAINER"
+                        }
+                    }
+                }
+            },
+            "pp-it-container-por-container": {
+                "type": "object",
+                "title": "pp-it-container-por-container",
+                "description": "Consulta salva pp-it-container-por-container. Estado: ready. Exige permissao do consumidor para este codigo. Campos de saida: nr-container, it-comprado, desc-item, ref-comprada, qt-pedida, qt-vendida, qt-recebida, preco-compra, it-codigo, cod-refer, char-1, dec-1, int-1, log-1, data-1, preco-venda, narrativa, class-fiscal, perc-dsp-venda, mo-codigo, preco-vd-real, preco-vd-dolar, qt_faturada, vl_preco_medio, qt_prazo_medio, dt_hr_atu_fat, transacao_id_qt_fat, qt_devolvida, preco_medio_atu, preco_medio_meta, item_proc_compra_id, cod_estab_definido.",
+                "additionalProperties": false,
+                "required": [
+                    "code",
+                    "parameters"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "enum": [
+                            "pp-it-container-por-container"
+                        ]
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "querystring": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "nr-container": {
+                                        "type": "string",
+                                        "description": "Filtro nr-container. Informe como texto.",
+                                        "example": "INFORME_O_CONTAINER"
+                                    }
+                                },
+                                "required": [
+                                    "nr-container"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "querystring"
+                        ]
+                    },
+                    "paginationMode": {
+                        "type": "string",
+                        "enum": [
+                            "offset",
+                            "cursor"
+                        ],
+                        "default": "offset",
+                        "description": "Cursor exige chave unica validada em runtime; nao envie page nem paginate:false."
+                    },
+                    "cursor": {
+                        "type": "string",
+                        "maxLength": 16384,
+                        "description": "Somente no modo cursor. Omita ou deixe vazio na primeira chamada; depois envie nextCursor, mantendo filtros e pageSize. Validade900s."
+                    },
+                    "paginate": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "false retorna todos os registros filtrados, sem limite de pagina. page/pageSize sao ignorados; limites de tempo/tamanho continuam."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000,
+                        "description": "Pagina a partir de 1. Opcional: usa o valor salvo quando omitido."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000,
+                        "description": "Registros por pagina, maximo1000. Opcional: tamanho salvo limitado a1000."
+                    },
+                    "webhookDelivery": {
+                        "type": "string",
+                        "enum": [
+                            "full",
+                            "manifest"
+                        ],
+                        "description": "Somente com execution:async. full envia o resultado ao webhook; manifest envia metadados e URL de download autenticado."
+                    },
+                    "execution": {
+                        "type": "string",
+                        "enum": [
+                            "sync",
+                            "async"
+                        ],
+                        "default": "sync",
+                        "description": "async enfileira e retorna202/jobId. Nao combina com cursor. Uma pagina ou conjunto completo se paginate:false."
+                    }
+                },
+                "example": {
+                    "code": "pp-it-container-por-container",
+                    "paginationMode": "offset",
+                    "paginate": true,
+                    "page": 1,
+                    "pageSize": 100,
+                    "parameters": {
+                        "querystring": {
+                            "nr-container": "INFORME_O_CONTAINER"
+                        }
+                    }
+                }
+            },
+            "saldo-estoque-por-referencia": {
+                "type": "object",
+                "title": "saldo-estoque-por-referencia",
+                "description": "Consulta salva saldo-estoque-por-referencia. Estado: ready. Exige permissao do consumidor para este codigo. Campos de saida: cd-referencia, ge-codigo, desc-item, un, cod-depos, cod-estabel, cod-localiz, cod-refer, dt-vali-lote, it-codigo, lote, qt-aloc-ped, qt-aloc-prod, qt-alocada, qtidade-atu, qtidade-fin, qtidade-ini.",
+                "additionalProperties": false,
+                "required": [
+                    "code"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "enum": [
+                            "saldo-estoque-por-referencia"
+                        ]
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "querystring": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "estabelecimento": {
+                                        "type": "string",
+                                        "description": "Filtro estabelecimento. Informe como texto.",
+                                        "example": "502"
+                                    },
+                                    "deposito": {
+                                        "type": "string",
+                                        "description": "Filtro deposito. Informe como texto.",
+                                        "example": "ARM"
+                                    },
+                                    "item": {
+                                        "type": "string",
+                                        "description": "Filtro item. Informe como texto.",
+                                        "example": "130062"
+                                    },
+                                    "referencia": {
+                                        "type": "string",
+                                        "description": "Referencia do estoque (cod-refer). Preserve zeros a esquerda.",
+                                        "example": "004"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "paginationMode": {
+                        "type": "string",
+                        "enum": [
+                            "offset",
+                            "cursor"
+                        ],
+                        "default": "offset",
+                        "description": "Cursor exige chave unica validada em runtime; nao envie page nem paginate:false."
+                    },
+                    "cursor": {
+                        "type": "string",
+                        "maxLength": 16384,
+                        "description": "Somente no modo cursor. Omita ou deixe vazio na primeira chamada; depois envie nextCursor, mantendo filtros e pageSize. Validade900s."
+                    },
+                    "paginate": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "false retorna todos os registros filtrados, sem limite de pagina. page/pageSize sao ignorados; limites de tempo/tamanho continuam."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000,
+                        "description": "Pagina a partir de 1. Opcional: usa o valor salvo quando omitido."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000,
+                        "description": "Registros por pagina, maximo1000. Opcional: tamanho salvo limitado a1000."
+                    },
+                    "webhookDelivery": {
+                        "type": "string",
+                        "enum": [
+                            "full",
+                            "manifest"
+                        ],
+                        "description": "Somente com execution:async. full envia o resultado ao webhook; manifest envia metadados e URL de download autenticado."
+                    },
+                    "execution": {
+                        "type": "string",
+                        "enum": [
+                            "sync",
+                            "async"
+                        ],
+                        "default": "sync",
+                        "description": "async enfileira e retorna202/jobId. Nao combina com cursor. Uma pagina ou conjunto completo se paginate:false."
+                    }
+                },
+                "example": {
+                    "code": "saldo-estoque-por-referencia",
+                    "paginationMode": "offset",
+                    "paginate": true,
+                    "page": 1,
+                    "pageSize": 100,
+                    "parameters": {
+                        "querystring": {
+                            "estabelecimento": "502",
+                            "deposito": "ARM",
+                            "item": "130062",
+                            "referencia": "004"
+                        }
+                    }
+                }
+            },
+            "tabelas-preco-por-container": {
+                "type": "object",
+                "title": "tabelas-preco-por-container",
+                "description": "Consulta salva tabelas-preco-por-container. Estado: ready. Exige permissao do consumidor para este codigo. Campos de saida: tb_preco_id, descricao.",
+                "additionalProperties": false,
+                "required": [
+                    "code",
+                    "parameters"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "enum": [
+                            "tabelas-preco-por-container"
+                        ]
+                    },
+                    "parameters": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "querystring": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "nr_container": {
+                                        "type": "string",
+                                        "description": "Filtro nr_container. Informe como texto.",
+                                        "example": "INFORME_O_CONTAINER"
+                                    }
+                                },
+                                "required": [
+                                    "nr_container"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "querystring"
+                        ]
+                    },
+                    "paginationMode": {
+                        "type": "string",
+                        "enum": [
+                            "offset"
+                        ],
+                        "default": "offset",
+                        "description": "Cursor indisponivel nesta consulta com transformacao/joins incompativeis."
+                    },
+                    "cursor": {
+                        "type": "string",
+                        "maxLength": 16384,
+                        "description": "Somente no modo cursor. Omita ou deixe vazio na primeira chamada; depois envie nextCursor, mantendo filtros e pageSize. Validade900s."
+                    },
+                    "paginate": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "false retorna todos os registros filtrados, sem limite de pagina. page/pageSize sao ignorados; limites de tempo/tamanho continuam."
+                    },
+                    "page": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000000,
+                        "description": "Pagina a partir de 1. Opcional: usa o valor salvo quando omitido."
+                    },
+                    "pageSize": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 1000,
+                        "description": "Registros por pagina, maximo1000. Opcional: tamanho salvo limitado a1000."
+                    },
+                    "webhookDelivery": {
+                        "type": "string",
+                        "enum": [
+                            "full",
+                            "manifest"
+                        ],
+                        "description": "Somente com execution:async. full envia o resultado ao webhook; manifest envia metadados e URL de download autenticado."
+                    },
+                    "execution": {
+                        "type": "string",
+                        "enum": [
+                            "sync",
+                            "async"
+                        ],
+                        "default": "sync",
+                        "description": "async enfileira e retorna202/jobId. Nao combina com cursor. Uma pagina ou conjunto completo se paginate:false."
+                    }
+                },
+                "example": {
+                    "code": "tabelas-preco-por-container",
+                    "paginationMode": "offset",
+                    "paginate": true,
+                    "page": 1,
+                    "pageSize": 100,
+                    "parameters": {
+                        "querystring": {
+                            "nr_container": "INFORME_O_CONTAINER"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

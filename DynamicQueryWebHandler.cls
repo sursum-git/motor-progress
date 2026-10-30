@@ -5,7 +5,7 @@ URLs esperadas:
   POST /web/SursumDynamicQuery/query
   POST /web/SursumDynamicQuery/query-store
   POST /web/SursumDynamicQuery/table-browse
-  POST /web/SursumDynamicQuery/program/execute
+  GET|POST|PUT|PATCH|DELETE /web/SursumDynamicQuery/program/execute
   GET  /web/SursumDynamicQuery/jobs/{jobId}
   GET  /web/SursumDynamicQuery/jobs/{jobId}/result
   POST /web/SursumDynamicQuery/jobs/drain
@@ -24,6 +24,10 @@ USING OpenEdge.Web.WebResponse.
 USING OpenEdge.Web.WebResponseWriter.
 
 CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
+    DEFINE PRIVATE VARIABLE iResponseStatus AS INTEGER NO-UNDO INITIAL 200.
+    DEFINE PRIVATE VARIABLE cResponseAllow AS CHARACTER NO-UNDO.
+    DEFINE PROTECTED VARIABLE cAuthenticatedConsumer AS CHARACTER NO-UNDO.
+    DEFINE PROTECTED VARIABLE cAuthenticatedConsumerRole AS CHARACTER NO-UNDO.
 
     DEFINE PRIVATE TEMP-TABLE ttBrowseKey NO-UNDO
         FIELD fieldOrder AS INTEGER
@@ -51,7 +55,11 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         ASSIGN cPath = WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "PATH_INFO":U) NO-ERROR.
         ASSIGN cBody = WEB-CONTEXT:FORM-INPUT NO-ERROR.
 
+        ASSIGN iResponseStatus = 200 cResponseAllow = "".
         DO ON ERROR UNDO, THROW:
+            IF cPath MATCHES "*/program/execute" AND cMethod <> "OPTIONS" THEN
+                ASSIGN joRet = THIS-OBJECT:handleProgramExecute(cBody, cMethod).
+            ELSE DO:
             CASE cMethod:
                 WHEN "POST" THEN DO:
                     IF cPath MATCHES "*/context/config" THEN DO:
@@ -65,9 +73,6 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                     END.
                     ELSE IF cPath MATCHES "*/table-browse" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleTableBrowse(cBody).
-                    END.
-                    ELSE IF cPath MATCHES "*/program/execute" THEN DO:
-                        ASSIGN joRet = THIS-OBJECT:handleProgramExecute(cBody).
                     END.
                     ELSE IF cPath MATCHES "*/actions/execute" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleActionExecute(cBody).
@@ -127,6 +132,9 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                     ELSE IF cPath MATCHES "*/diagnostics/runtime" OR cPath MATCHES "*/diagnostics/agent" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleRuntimeDiagnostics(cMethod, cPath).
                     END.
+                    ELSE IF cPath MATCHES "*/executions/*" AND INDEX(cPath, "/events") > 0 THEN DO:
+                        ASSIGN joRet = THIS-OBJECT:handleListExecutionEvents(THIS-OBJECT:getExecutionIdFromPath(cPath)).
+                    END.
                     ELSE IF cPath MATCHES "*/executions/*" THEN DO:
                         ASSIGN joRet = THIS-OBJECT:handleGetExecution(THIS-OBJECT:getExecutionIdFromPath(cPath)).
                     END.
@@ -158,6 +166,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
                 OTHERWISE
                     ASSIGN joRet = THIS-OBJECT:buildError("METHOD_NOT_ALLOWED", "Metodo nao suportado", cMethod).
             END CASE.
+            END.
 
             THIS-OBJECT:writeJson(joRet).
 
@@ -199,6 +208,8 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
 
         oContext:setCustomField("entrypoint", "WEB").
         oContext:setCustomField("transport", "PASOE-WEB").
+        THIS-OBJECT:applyCallerUser(oContext, joBody).
+        THIS-OBJECT:applyRequestMetadata(oContext).
 
         ASSIGN oExec = NEW ApiExecutionRepository()
                joExecution = oExec:startExecution(oContext, "query", "POST /query", "running", SUBSTRING(STRING(pcBody), 1, 1000)).
@@ -332,6 +343,8 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         oContext:setCustomField("entrypoint", "WEB").
         oContext:setCustomField("transport", "PASOE-WEB").
         oContext:setCustomField("queryCode", cCode).
+        THIS-OBJECT:applyCallerUser(oContext, poBody).
+        THIS-OBJECT:applyRequestMetadata(oContext).
 
         ASSIGN oExec = NEW ApiExecutionRepository()
                joExecution = oExec:startExecution(oContext, "stored-query", "POST /query", "running", "queryCode=" + cCode).
@@ -365,7 +378,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN joRet.
     END METHOD.
 
-    METHOD PRIVATE JsonObject handleProgramExecute(INPUT pcBody AS LONGCHAR):
+    METHOD PRIVATE JsonObject handleProgramExecute(INPUT pcBody AS LONGCHAR, INPUT pcMethod AS CHARACTER):
         DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
         DEFINE VARIABLE joParams AS JsonObject NO-UNDO.
         DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
@@ -376,11 +389,25 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         DEFINE VARIABLE cProgramPath AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cRunPath AS CHARACTER NO-UNDO.
         DEFINE VARIABLE cExecutionId AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cQuery AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cParameters AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE oPolicy AS ProgramExecutionPolicy NO-UNDO.
 
-        IF pcBody = "" OR pcBody = ? THEN
-            RETURN THIS-OBJECT:buildError("EMPTY_BODY", "Body JSON obrigatorio", "POST /program/execute").
-
-        ASSIGN joBody = THIS-OBJECT:parseJsonObject(pcBody) NO-ERROR.
+        IF LOOKUP(pcMethod, "GET,POST,PUT,PATCH,DELETE") = 0 THEN DO:
+            ASSIGN iResponseStatus = 405 cResponseAllow = "GET,POST,PUT,PATCH,DELETE".
+            RETURN THIS-OBJECT:buildError("METHOD_NOT_ALLOWED", "Metodo nao suportado pelo executor", pcMethod).
+        END.
+        IF pcMethod = "GET" THEN DO:
+            ASSIGN cQuery = WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "QUERY_STRING":U)
+                   joBody = NEW JsonObject().
+            joBody:Add("program", OpenEdge.Net.URI:Decode(REPLACE(THIS-OBJECT:getQueryValue(cQuery, "program"), "+", " "))).
+            ASSIGN cParameters = THIS-OBJECT:getQueryValue(cQuery, "parameters").
+        END.
+        ELSE DO:
+            IF pcBody = "" OR pcBody = ? THEN
+                RETURN THIS-OBJECT:buildError("EMPTY_BODY", "Body JSON obrigatorio", pcMethod + " /program/execute").
+            ASSIGN joBody = THIS-OBJECT:parseJsonObject(pcBody) NO-ERROR.
+        END.
         IF NOT VALID-OBJECT(joBody) THEN
             RETURN THIS-OBJECT:buildError("INVALID_JSON", "JSON de execucao de programa invalido", "").
 
@@ -388,9 +415,30 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         IF NOT THIS-OBJECT:isProgramCode(cProgramCode) THEN
             RETURN THIS-OBJECT:buildError("INVALID_PROGRAM_CODE", "Codigo de programa invalido", cProgramCode).
 
-        ASSIGN cProgramPath = THIS-OBJECT:getConfiguredProgramPath(cProgramCode).
-        IF cProgramPath = "" THEN
+        ASSIGN oPolicy = THIS-OBJECT:getConfiguredProgramPolicy(cProgramCode).
+        IF NOT oPolicy:IsConfigured THEN DO:
+            DELETE OBJECT oPolicy.
             RETURN THIS-OBJECT:buildError("PROGRAM_NOT_ALLOWED", "Programa nao cadastrado para execucao", cProgramCode).
+        END.
+        IF NOT oPolicy:IsValid THEN DO:
+            DELETE OBJECT oPolicy.
+            RETURN THIS-OBJECT:buildError("PROGRAM_CONFIG_INVALID", "Cadastro de programa exige path e methods validos", cProgramCode).
+        END.
+        ASSIGN cProgramPath = oPolicy:ProgramPath
+               cResponseAllow = oPolicy:AllowedMethods.
+        DELETE OBJECT oPolicy.
+        IF LOOKUP(pcMethod, cResponseAllow) = 0 THEN DO:
+            ASSIGN iResponseStatus = 405.
+            RETURN THIS-OBJECT:buildError("METHOD_NOT_ALLOWED", "Metodo nao permitido para este programa", cResponseAllow).
+        END.
+        ASSIGN cResponseAllow = "".
+        IF pcMethod = "GET" AND cParameters <> "" THEN DO:
+            ASSIGN cParameters = OpenEdge.Net.URI:Decode(REPLACE(cParameters, "+", " "))
+                   joParams = THIS-OBJECT:parseJsonObject(cParameters) NO-ERROR.
+            IF NOT VALID-OBJECT(joParams) THEN
+                RETURN THIS-OBJECT:buildError("INVALID_PARAMETERS", "Campo parameters deve ser um objeto JSON", "GET /program/execute").
+            joBody:Add("parameters", joParams).
+        END.
         IF NOT THIS-OBJECT:isAllowedProgramPath(cProgramPath) THEN
             RETURN THIS-OBJECT:buildError("INVALID_PROGRAM_PATH", "Caminho de programa invalido no catalogo", cProgramCode + "=" + cProgramPath).
 
@@ -411,7 +459,9 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         oContext:setCustomField("entrypoint", "WEB").
         oContext:setCustomField("transport", "PASOE-WEB").
         oContext:setCustomField("programName", cProgramCode).
-        ASSIGN joExecution = oExec:startExecution(oContext, "program", "POST /program/execute", "running", "program=" + cProgramCode).
+        THIS-OBJECT:applyCallerUser(oContext, joBody).
+        THIS-OBJECT:applyRequestMetadata(oContext).
+        ASSIGN joExecution = oExec:startExecution(oContext, "program", pcMethod + " /program/execute", "running", "program=" + cProgramCode).
         IF VALID-OBJECT(joExecution) AND joExecution:Has("success") AND joExecution:GetLogical("success") THEN DO:
             ASSIGN cExecutionId = THIS-OBJECT:getJsonChar(joExecution, "executionId").
             oContext:setCustomField("executionId", cExecutionId).
@@ -446,14 +496,16 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN joRet.
     END METHOD.
 
-    METHOD PRIVATE CHARACTER getConfiguredProgramPath(INPUT pcProgramCode AS CHARACTER):
+    METHOD PRIVATE ProgramExecutionPolicy getConfiguredProgramPolicy(INPUT pcProgramCode AS CHARACTER):
         DEFINE VARIABLE joConfig AS JsonObject NO-UNDO.
         DEFINE VARIABLE joPrograms AS JsonObject NO-UNDO.
-
+        DEFINE VARIABLE oPolicy AS ProgramExecutionPolicy NO-UNDO.
         ASSIGN joConfig = THIS-OBJECT:readProgramExecutorConfig().
         IF VALID-OBJECT(joConfig) AND joConfig:Has("programs") AND NOT joConfig:IsNull("programs") THEN
             ASSIGN joPrograms = joConfig:GetJsonObject("programs") NO-ERROR.
-        RETURN THIS-OBJECT:getJsonChar(joPrograms, pcProgramCode).
+        ASSIGN oPolicy = NEW ProgramExecutionPolicy(joPrograms, pcProgramCode).
+        DELETE OBJECT joConfig NO-ERROR.
+        RETURN oPolicy.
     END METHOD.
 
     METHOD PRIVATE JsonObject readProgramExecutorConfig():
@@ -526,6 +578,7 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         joEndpoints:Add("actionExecute", "POST /web/SursumDynamicQuery/actions/execute").
         joEndpoints:Add("executions", "GET /web/SursumDynamicQuery/executions?status=:status&pid=:pid&limit=:limit").
         joEndpoints:Add("executionDetail", "GET /web/SursumDynamicQuery/executions/:executionId").
+        joEndpoints:Add("executionEvents", "GET /web/SursumDynamicQuery/executions/:executionId/events?limit=:limit").
         joEndpoints:Add("executionCancel", "POST /web/SursumDynamicQuery/executions/:executionId/cancel").
         joEndpoints:Add("executionKillRequest", "POST /web/SursumDynamicQuery/executions/:executionId/kill-request").
         joEndpoints:Add("metadataSync", "GET /web/SursumDynamicQuery/metadata/sync?include=banks,aliases,tables,fields&database=:database&table=:table").
@@ -1799,6 +1852,8 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         oContext:setCustomField("entrypoint", "WEB").
         oContext:setCustomField("transport", "PASOE-WEB").
         oContext:setCustomField("actionCode", cActionCode).
+        THIS-OBJECT:applyCallerUser(oContext, joBody).
+        THIS-OBJECT:applyRequestMetadata(oContext).
 
         ASSIGN joExecution = oExec:startExecution(oContext, "action", "POST /actions/execute", "validating", "actionCode=" + cActionCode + ";mode=" + cMode).
         IF VALID-OBJECT(joExecution) AND joExecution:Has("success") AND joExecution:GetLogical("success") THEN DO:
@@ -1851,6 +1906,24 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN joRet.
     END METHOD.
 
+    METHOD PRIVATE JsonObject handleListExecutionEvents(INPUT pcExecutionId AS CHARACTER):
+        DEFINE VARIABLE oExec AS ApiExecutionRepository NO-UNDO.
+        DEFINE VARIABLE joRet AS JsonObject NO-UNDO.
+        DEFINE VARIABLE cQuery AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iLimit AS INTEGER NO-UNDO.
+
+        ASSIGN cQuery = WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "QUERY_STRING":U) NO-ERROR.
+        ASSIGN iLimit = INTEGER(THIS-OBJECT:getQueryValue(cQuery, "limit")) NO-ERROR.
+        IF ERROR-STATUS:ERROR THEN DO:
+            ERROR-STATUS:ERROR = FALSE.
+            ASSIGN iLimit = 200.
+        END.
+
+        ASSIGN oExec = NEW ApiExecutionRepository()
+               joRet = oExec:listExecutionEvents(pcExecutionId, iLimit).
+        DELETE OBJECT oExec NO-ERROR.
+        RETURN joRet.
+    END METHOD.
     METHOD PRIVATE JsonObject handleKillRequest(INPUT pcExecutionId AS CHARACTER, INPUT pcBody AS LONGCHAR):
         DEFINE VARIABLE joBody AS JsonObject NO-UNDO.
         DEFINE VARIABLE oContext AS PasoeExecutionContext NO-UNDO.
@@ -4222,6 +4295,14 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN pcB.
     END METHOD.
 
+    METHOD PRIVATE CHARACTER firstNonEmpty(INPUT pcA AS CHARACTER, INPUT pcB AS CHARACTER, INPUT pcC AS CHARACTER, INPUT pcD AS CHARACTER):
+        IF pcA <> "" AND pcA <> ? THEN RETURN pcA.
+        IF pcB <> "" AND pcB <> ? THEN RETURN pcB.
+        IF pcC <> "" AND pcC <> ? THEN RETURN pcC.
+        IF pcD <> "" AND pcD <> ? THEN RETURN pcD.
+        RETURN "".
+    END METHOD.
+
     METHOD PRIVATE CHARACTER getContextConfigFile():
         RETURN THIS-OBJECT:resolveConfigFile("sursum-conf/context.json").
     END METHOD.
@@ -4344,6 +4425,118 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         RETURN cValue.
     END METHOD.
 
+    METHOD PRIVATE VOID applyCallerUser(INPUT poContext AS PasoeExecutionContext, INPUT poBody AS JsonObject):
+        DEFINE VARIABLE cUser AS CHARACTER NO-UNDO.
+        IF NOT VALID-OBJECT(poContext) THEN
+            RETURN.
+        IF cAuthenticatedConsumerRole = "consumer" THEN
+            ASSIGN cUser = "consumer:" + cAuthenticatedConsumer.
+        ELSE
+            ASSIGN cUser = THIS-OBJECT:getCallerUser(poBody).
+        IF cUser <> "" AND cUser <> ? THEN
+            poContext:setCurrentUser(cUser).
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getCallerUser(INPUT poBody AS JsonObject):
+        DEFINE VARIABLE cUser AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cQuery AS CHARACTER NO-UNDO.
+
+        ASSIGN cUser = THIS-OBJECT:firstNonEmpty(
+            WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "HTTP_X_SURSUM_USER":U),
+            WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "X-Sursum-User":U),
+            WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "X_SURSUM_USER":U),
+            ""
+        ) NO-ERROR.
+        IF cUser <> "" AND cUser <> ? THEN
+            RETURN cUser.
+
+        ASSIGN cQuery = WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "QUERY_STRING":U) NO-ERROR.
+        ASSIGN cUser = THIS-OBJECT:firstNonEmpty(
+            THIS-OBJECT:getQueryValue(cQuery, "usuario"),
+            THIS-OBJECT:getQueryValue(cQuery, "userName"),
+            THIS-OBJECT:getQueryValue(cQuery, "requestUser"),
+            ""
+        ).
+        IF cUser <> "" AND cUser <> ? THEN
+            RETURN OpenEdge.Net.URI:Decode(REPLACE(cUser, "+", " ")).
+
+        IF VALID-OBJECT(poBody) THEN
+            ASSIGN cUser = THIS-OBJECT:firstNonEmpty(
+                THIS-OBJECT:getJsonChar(poBody, "usuario"),
+                THIS-OBJECT:getJsonChar(poBody, "userName"),
+                THIS-OBJECT:getJsonChar(poBody, "requestUser"),
+                ""
+            ).
+        RETURN cUser.
+    END METHOD.
+    METHOD PRIVATE VOID applyRequestMetadata(INPUT poContext AS PasoeExecutionContext):
+        IF NOT VALID-OBJECT(poContext) THEN
+            RETURN.
+        poContext:setRequesterInfo(THIS-OBJECT:getRequesterIp(), THIS-OBJECT:getRequesterBrowser(), THIS-OBJECT:getRequesterSessionId()).
+        IF cAuthenticatedConsumer <> "" THEN DO:
+            poContext:setCustomField("consumerId", cAuthenticatedConsumer).
+            poContext:setCustomField("consumerRole", cAuthenticatedConsumerRole).
+        END.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getRequesterIp():
+        DEFINE VARIABLE cIp AS CHARACTER NO-UNDO.
+        ASSIGN cIp = THIS-OBJECT:firstNonEmpty(
+            WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "HTTP_X_FORWARDED_FOR":U),
+            WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "HTTP_X_REAL_IP":U),
+            WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "REMOTE_ADDR":U),
+            ""
+        ) NO-ERROR.
+        IF cIp <> "" AND cIp <> ? AND INDEX(cIp, ",") > 0 THEN
+            ASSIGN cIp = TRIM(ENTRY(1, cIp)).
+        RETURN cIp.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getRequesterBrowser():
+        RETURN THIS-OBJECT:firstNonEmpty(
+            WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "HTTP_USER_AGENT":U),
+            WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "User-Agent":U),
+            WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "USER_AGENT":U),
+            ""
+        ) NO-ERROR.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getRequesterSessionId():
+        DEFINE VARIABLE cSession AS CHARACTER NO-UNDO.
+        ASSIGN cSession = THIS-OBJECT:firstNonEmpty(
+            WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "HTTP_X_SESSION_ID":U),
+            WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "X-Session-Id":U),
+            WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "X_SESSION_ID":U),
+            ""
+        ) NO-ERROR.
+        IF cSession <> "" AND cSession <> ? THEN
+            RETURN cSession.
+        RETURN THIS-OBJECT:getCookieValue("JSESSIONID").
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER getCookieValue(INPUT pcCookieName AS CHARACTER):
+        DEFINE VARIABLE cCookie AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cPair AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE i AS INTEGER NO-UNDO.
+        ASSIGN cCookie = WEB-CONTEXT:GET-CGI-VALUE("ENV":U, "HTTP_COOKIE":U) NO-ERROR.
+        IF cCookie = "" OR cCookie = ? THEN
+            RETURN "".
+        DO i = 1 TO NUM-ENTRIES(cCookie, ";"):
+            ASSIGN cPair = TRIM(ENTRY(i, cCookie, ";")).
+            IF ENTRY(1, cPair + "=", "=") = pcCookieName THEN
+                RETURN ENTRY(2, cPair + "=", "=").
+        END.
+        RETURN "".
+    END METHOD.
+
+    METHOD PRIVATE LONGCHAR jsonObjectToLongchar(INPUT poJson AS JsonObject):
+        DEFINE VARIABLE lcJson AS LONGCHAR NO-UNDO.
+        IF NOT VALID-OBJECT(poJson) THEN
+            RETURN "".
+        FIX-CODEPAGE(lcJson) = "UTF-8".
+        poJson:Write(lcJson, TRUE).
+        RETURN lcJson.
+    END METHOD.
     METHOD PRIVATE CHARACTER getQueryValue(INPUT pcQuery AS CHARACTER, INPUT pcName AS CHARACTER):
         DEFINE VARIABLE i AS INTEGER NO-UNDO.
         DEFINE VARIABLE cPair AS CHARACTER NO-UNDO.
@@ -4431,14 +4624,16 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
         FIX-CODEPAGE(lcJson) = "UTF-8".
         poJson:Write(lcJson, TRUE).
 
-        ASSIGN oResponse = NEW WebResponse()
+        ASSIGN oResponse = NEW WebResponse(iResponseStatus)
                oWriter = NEW WebResponseWriter(oResponse).
 
         oResponse:SetHeader("Content-Type":U, "application/json; charset=UTF-8":U).
         oResponse:SetHeader("Cache-Control":U, "no-store":U).
-        oResponse:SetHeader("Access-Control-Allow-Methods":U, "GET, POST, OPTIONS":U).
-        oResponse:SetHeader("Access-Control-Allow-Headers":U, "Content-Type, Accept, Origin":U).
+        oResponse:SetHeader("Access-Control-Allow-Methods":U, "GET, POST, PUT, PATCH, DELETE, OPTIONS":U).
+        oResponse:SetHeader("Access-Control-Allow-Headers":U, "Content-Type, Accept, Origin, X-Sursum-User, X-Session-Id":U).
 
+        IF cResponseAllow <> "" THEN
+            oResponse:SetHeader("Allow":U, cResponseAllow + ",OPTIONS").
         oWriter:Open().
         oWriter:Write(lcJson).
         oWriter:Flush().
@@ -4463,3 +4658,9 @@ CLASS DynamicQueryWebHandler IMPLEMENTS IWebHandler:
     END METHOD.
 
 END CLASS.
+
+
+
+
+
+

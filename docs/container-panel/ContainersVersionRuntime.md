@@ -1,0 +1,32 @@
+# Provider privado de versões
+
+## Atualização coordenada12.2 —16/10/2026
+
+Os registros12.8/RED abaixo são históricos. Lote coerente `.runtime/container-panel-coherent-compiled-20261016-v2/` compilou52fontes12.2 sem erro;24suites e1962checks por cultura passaram. Composição34 e MissingActual7 passaram após correção separada do coletor: histórico opcional unknown fica JSONnull, sem mudar D() nos obrigatórios. Inputs/Close175, Context11 e Runtime12 também passaram no12.2. Apenas a correção do coletor de leitura foi publicada/validada no PASOE; helpers de escrita continuam privados, sem rota, sequência ou negócio real executado. Ver memória de retomada para manifests atuais.
+
+
+ABI aprovada: `ContainersVersionRuntime.p` persistente recebe HeaderRules, HeaderRuntime, `HANDLE[25]` na ordem do Collector, quatro sources (`pagtos_container,tit_ap,val_tit_ap,situacoes_container`), cinco targets (`tipos_versao_custo,item_container_custo_despesas,item_container_custo_nfs,item_container_custo_pgtos,item_container_custo_descontos`), privateContext e policy autenticada. Versões e itens de versão já são collector15/14. Nenhum argumento é obtido do navegador como nome de programa/tabela/SQL/URL.
+
+Último argumento adicional aprovado: `phSequenceProvider HANDLE`. **Produção obrigatoriamente passa `?`**; fixtures TT podem fornecer os quatro callbacks de sequência para testar composição sem consumir IDs reais. O provider não pode ser recebido de HTTP ou metadados externos. `company_policy` produtiva é a constante interna `container_company`, conforme decisão do usuário.
+
+`PrepareVersionFiscal(master,outJSON)` delega `HeaderRules.OnUpdate` com contexto update/container; preserva pending changes/warnings, sem confirmar commit. HeaderRuntime é a dependência já usada pelo HeaderRules, não uma segunda implementação fiscal.
+
+`CollectVersionSnapshot(master,outJSON)` obtém políticas atuais por privateContext.GetVersionContext, que consulta parâmetros IMA pela include oficial NO-LOCK sem cache. Chama PagamentoTotalsService uma vez com flag privada capture_rows=true; usa os mesmos CurrencyValue do agregado e recebe payment_rows. Coleta fontes físicas pelo único `ContainersVersionAuxSnapshotService`, chama o único ContainersVersaoCostAdapter com os25buffers e finaliza o DTO físico/custo. Sem fórmula financeira dentro de Runtime.
+
+AuxSnapshot é o dono do perfil específico de snapshots: despesas agrupadas por despesa/calculo/log_custo, NFs por identidade física completa, pagamentos já selecionados pelo helper e descontos por ID. Crédito filho usa a razão autorizada `vl_real_autorizado/vl_dolar_autorizado*valor_utilizado` observada em `bl_item_custos/index.php:16496–16514`; header/custo mantém a cotação de `buscarDescontosCreditosUtiliz` (`:16642–16651`). São regras diferentes; denominador zero/unknown não recebe fallback. Essa conversão não é copiada no Runtime ou nas telas.
+
+Distribuição: ApplyVersionDistribution(master,versionId,itemMappings,snapshot,outEffects) chama serviço central com operação privada version; GenerateFollowupVersion(master,context{expected_latest_version_id,reason},outJSON) chama o mesmo VersionService com allow_nested privado. Um contador privado limita um followup; no segundo passo chama version_check sem efeitos e exige delta **persistível** zero, senão UNSTABLE_DISTRIBUTION. Nada confirma audit/commit antes da transação raiz. A ativação exige enable_distribution boolean privado e GetStatus confirmado; default false. O followup só pode ser chamado durante a composição ativa e para seu ID esperado; invocação isolada não habilita geração. A política de companhia produtiva é fixa container_company, conforme decisão humana.
+
+NextVersionId e NextVersionItemId usam somente nomes fixos `seq_versao_item_container_custo` e `seq_item_container_custos` em espec, dentro de transação. Existência física deve ser comprovada pelo responsável pela integração antes de publicar; nunca MAX+1/CURRVAL ou sequência do JSON.
+
+Root confirmou no dicionário a existência dessas sequências e de `seq_cta_corren_custo_distr`. `NextDespesaId` reutiliza HeaderRuntime quando não há fixture de sequência.
+
+Limites: locks do domínio não criam snapshot distribuído de ERP/financeiro. O contexto/parent lock e validações de cardinalidade são obrigatórios; registrar origem e instante, sem prometer atomicidade entre bancos. Helpers de teste não são programas publicáveis. Nesta etapa não há frontend/HTTP, execução de sequência real ou gravação de negócio.
+
+Validação retomada em16/10/2026: VersionService186, Aux22, Runtime12, Context11 e Composition34 checks por cultura AMERICAN/EUROPEAN, diagnóstico12.8 local. Context preserva NAT-OPERACAO-IMP e natureza alfanumérica31201M, padrão vazio. A include corrigida foi copiada de integration-src/parametros-ima/parametros_ima.i somente para stagingTT; nenhuma include canônica foi modificada por este trabalho.
+
+Composition34 usa o Runtime, VersionService, DistributionService/Calculator, Totals, Aux, Adapter e Collector/Math reais em TT undoable, com callbacks TT apenas para sequência, contexto e borda fiscal. Comprova duas fotografias, residual subcentavo sem terceira versão, instabilidade na segunda com rollback de todos os filhos/ledger/despesa/mestre, nova tentativa no mesmo Runtime, bloqueio de terceiro followup antes de consumir ID e transação ancestral sópending. Sem log/audit confirmado intermediário. O serviço de distribuição libera buffers no FINALLY; Runtime readquire o mestre antes de chamar o mesmo writer novamente. Não se copia cálculo ou persistência para o driver.
+
+Context agora produz distribution_policy com gerar_distr_custo e despesa_distr_custo consultados a cada chamada pela include IMA oficial. Flag inválida/ID ausente fica null explícito para rejeição pelo serviço central quando solicitado; versão sem distribuição não ganha obrigação fiscal alheia. Não há escolha de empresa no JSON externo.
+
+**Pendência bloqueante fora deste provider:** Collector:463 usa D(vl_unit_realiz) ao anexar histórico. Se a primeira versão preservou realizado null, segunda coleta falha. Regressão separada ContainersVersionCompositionMissingActualTest.p permanece RED conhecido, com reprodução e comando em ContainersVersionComposition.md. Não declarar geração distribuída com realizado ausente pronta. Compilação12.2 e integração PASOE ainda pertencem à próxima etapa coordenada; nenhuma publicação/GUI/HTTP/gravação real foi feita aqui. Fechamento unitário segue serviço separado.

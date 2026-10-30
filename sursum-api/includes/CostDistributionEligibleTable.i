@@ -1,0 +1,13 @@
+DEFINE TEMP-TABLE ttCostDistributionEligible NO-UNDO
+ FIELD pedido_imp AS INTEGER INITIAL ?
+ FIELD processo_fornec AS CHARACTER INITIAL ?
+ FIELD fornec_pi AS INTEGER INITIAL ?
+ FIELD item_pedido AS INTEGER INITIAL ?
+ FIELD container AS INTEGER INITIAL ?
+ FIELD fornec AS INTEGER INITIAL ?
+ FIELD item_container AS INTEGER INITIAL ?
+ FIELD descricao AS CHARACTER INITIAL ?
+ FIELD codigo_erp AS CHARACTER INITIAL ?
+ FIELD fornec_pi_nome_abrev_atual AS CHARACTER INITIAL ?
+ FIELD fornec_nome_abrev_atual AS CHARACTER INITIAL ?
+ INDEX pk IS UNIQUE PRIMARY item_container.

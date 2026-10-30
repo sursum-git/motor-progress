@@ -1,5 +1,9 @@
 # Roadmap - Consultas Salvas e Execucao Controlada
 
+## Entrega de segurança — 27/10/2026
+
+Tokens por consumidor, hashes SHA-256 em JSON operacional, validade UTC, revogação e permissão exata por consulta implementados para **sursum-api/MED/9911 somente**. Endpoints administrativos do handler dinâmico exigem perfil admin. Proxy com credencial privada e pin TLS, sem ativar a política nos demais PASOEs. Sem migração de banco. Ver [contrato e administração](SEGURANCA_CONSULTAS_CONSUMIDORES.md). Os itens planejados abaixo permanecem como histórico/evolução; controle de IP e limitação de requisições não foram adicionados por esta entrega.
+
 ## Contexto
 
 Este arquivo registra itens planejados para consultas salvas por codigo, execucao controlada por client e evolucoes assíncronas. Ele existe para manter o roadmap no contexto do projeto, nao apenas no historico de uma sessao.

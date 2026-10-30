@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="same-origin">
+  <title>Consumidores e tokens</title>
+  <link rel="stylesheet" href="vendor/kendo/styles/default-main.css">
+  <link rel="stylesheet" href="query-consumers.css?v=20261027-client-credentials">
+</head>
+<body>
+  <main>
+    <header><div><h1>Consumidores e tokens</h1><p>Permissões de integração · PASOE sursum-api / MED · HTTPS 9911</p></div><a href="request-log.html">Ver requisições</a></header>
+    <div id="status" role="status" aria-live="polite">Verificando acesso administrativo…</div>
+    <section id="adminPanel" hidden>
+      <div class="toolbar"><button id="refresh" type="button">Atualizar</button><button id="new" type="button">Novo consumidor</button><span>Acesso exclusivo: tadeu.parreiras</span></div>
+      <div id="consumersGrid"></div>
+      <div class="toolbar"><button id="edit" type="button" disabled>Editar permissões</button><button id="rotate" type="button" disabled>Rotacionar token</button><button id="enableCredentials" type="button" disabled>Ativar renovação automática</button><button id="revoke" type="button" class="danger" disabled>Revogar acesso</button></div>
+      <p class="help">Selecione um consumidor para administrar. Credenciais administrativas são protegidas. Tokens existentes não podem ser consultados; gere outro quando necessário.</p>
+    </section>
+  </main>
+  <dialog id="editor"><form id="consumerForm">
+    <h2 id="editorTitle">Novo consumidor</h2>
+    <label>Identificador<input id="consumerId" required maxlength="128" pattern="[A-Za-z0-9_.-]+" autocomplete="off"></label>
+    <label>Validade da autorização a partir de hoje (dias)<input id="consumerDays" type="number" min="1" max="365" value="90" required></label>
+    <p id="clientModeHint" class="help">Novo consumidor usa client_id e client_secret para obter tokens de 15 minutos automaticamente. A autorização acima limita por quanto tempo poderá obter e usar tokens.</p>
+    <label for="consumerQueries">Consultas permitidas</label><select id="consumerQueries" multiple aria-label="Consultas permitidas"></select>
+    <p class="help">Escolha pelo menos uma consulta. Editar permissões preserva o token e o estado de revogação.</p>
+    <p id="formError" class="error" role="alert"></p>
+    <div class="actions"><button type="button" id="cancelEdit" class="secondary">Cancelar</button><button type="submit" id="saveConsumer">Salvar</button></div>
+  </form></dialog>
+  <dialog id="confirmDialog"><form id="confirmationForm">
+    <h2 id="confirmationTitle"></h2><p id="confirmationText"></p>
+    <label id="rotationDaysLabel">Validade da autorização a partir de hoje (dias)<input id="rotationDays" type="number" min="1" max="365" value="90"></label>
+    <p id="confirmationError" class="error" role="alert"></p>
+    <div class="actions"><button id="cancelConfirm" type="button" class="secondary">Cancelar</button><button id="confirmAction" type="submit">Confirmar</button></div>
+  </form></dialog>
+  <dialog id="tokenDialog">
+    <h2>Guarde o novo token</h2><p>Esta é a única exibição. Copie para o cofre do consumidor antes de fechar.</p>
+    <label>Token<input id="issuedToken" readonly autocomplete="off" spellcheck="false"></label>
+    <p class="help">Enviar no cabeçalho <code>X-Sursum-Query-Token</code>. Não inserir em URLs ou páginas públicas.</p>
+    <label for="issuedCurl">Exemplo curl · Bash · URL externa</label>
+    <textarea id="issuedCurl" rows="15" readonly autocomplete="off" spellcheck="false" wrap="off"></textarea>
+    <p class="help">Ajuste estabelecimento, depósito, item e referência (cod-refer). O consumidor precisa ter permissão para <code>saldo-estoque-por-referencia</code>. O exemplo contém o token e também será limpo ao fechar.</p>
+    <p id="copyStatus" role="status" aria-live="polite"></p>
+    <div class="actions"><button id="copyToken" type="button">Copiar token</button><button id="copyCurl" type="button">Copiar curl</button><button id="closeToken" type="button" class="secondary">Fechar e limpar</button></div>
+  </dialog>
+  <dialog id="credentialDialog">
+    <h2>Guarde a credencial do consumidor</h2>
+    <p>O segredo aparece uma única vez. Armazene no cofre do servidor da integração.</p>
+    <label>client_id<input id="issuedClientId" readonly autocomplete="off" spellcheck="false"></label>
+    <label>client_secret<input id="issuedClientSecret" readonly autocomplete="off" spellcheck="false"></label>
+    <p class="help">Tokens de acesso duram 15 minutos. Solicite outro antes de vencer; as permissões e a validade da autorização continuam controladas aqui. O segredo não pode executar consultas diretamente.</p>
+    <label for="issuedCredentialCurl">Exemplo Bash · obter token e consultar · requer jq</label>
+    <textarea id="issuedCredentialCurl" rows="16" readonly autocomplete="off" spellcheck="false" wrap="off"></textarea>
+    <p class="help">Ajuste os quatro filtros; requer permissão para saldo-estoque-por-referencia. O exemplo contém o segredo. Fechar limpa os campos e o exemplo.</p>
+    <p id="credentialCopyStatus" role="status" aria-live="polite"></p>
+    <div class="actions"><button id="copyClientSecret" type="button">Copiar segredo</button><button id="copyCredentialCurl" type="button">Copiar exemplo</button><button id="closeCredential" type="button" class="secondary">Fechar e limpar</button></div>
+  </dialog>
+  <script src="vendor/jquery/jquery-4.0.0.min.js"></script>
+  <script src="vendor/kendo/js/kendo.all.min.js"></script>
+  <script src="vendor/kendo/js/cultures/kendo.culture.pt-BR.min.js"></script>
+  <script src="vendor/kendo/js/messages/kendo.messages.pt-BR.min.js"></script>
+  <script src="vendor/kendo/kendo-license.js"></script>
+  <script src="auth-guard.js"></script>
+  <script src="query-consumers.js?v=20261027-client-credentials"></script>
+</body>
+</html>

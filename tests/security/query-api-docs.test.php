@@ -1,0 +1,48 @@
+<?php
+declare(strict_types=1);
+require __DIR__.'/../../web/query-api-docs-lib.php';
+$count=0;
+function docsCheck(bool $value,string $label):void{global $count;if(!$value)throw new RuntimeException($label);$count++;}
+$catalog=queryApiCatalog([__DIR__.'/../../sursum-api/querys']);
+docsCheck(count($catalog)===7,'seven saved queries');
+$spec=queryApiOpenApi($catalog);
+docsCheck($spec['openapi']==='3.0.3','OpenAPI version');
+docsCheck(array_keys($spec['paths'])===['/api/token.php','/api/query.php','/api/jobs.php','/api/job-result.php','/api/webhook.php'],'only real external routes');
+docsCheck(isset($spec['paths']['/api/query.php']['post']['responses']['202']),'async accepted');
+docsCheck($spec['paths']['/api/jobs.php']['get']['security']===[['consumerToken'=>[]]],'jobs token required');
+docsCheck(array_keys($spec['paths']['/api/webhook.php'])===['get','put','delete'],'webhook self-service methods');
+docsCheck($spec['paths']['/api/webhook.php']['put']['security']===[['consumerToken'=>[]]],'webhook token required');
+docsCheck($spec['components']['schemas']['saldo-estoque-por-referencia']['properties']['execution']['enum']===['sync','async'],'explicit execution modes');
+docsCheck($spec['components']['securitySchemes']['consumerToken']['name']==='X-Sursum-Query-Token','actual token transport');
+docsCheck(count($spec['paths']['/api/query.php']['post']['requestBody']['content']['application/json']['examples'])===20,'offset cursor and async examples');
+$stock=$spec['components']['schemas']['saldo-estoque-por-referencia'];
+docsCheck($stock['properties']['page']['minimum']===1&&$stock['properties']['page']['maximum']===1000000,'bounded page');
+docsCheck($stock['properties']['pageSize']['minimum']===1&&$stock['properties']['pageSize']['maximum']===1000,'bounded page size');
+docsCheck($stock['example']['page']===1&&$stock['example']['pageSize']===100,'pagination example');
+docsCheck($stock['properties']['paginate']['type']==='boolean'&&$stock['example']['paginate']===true,'optional full response');
+docsCheck($stock['properties']['paginationMode']['enum']===['offset','cursor'],'cursor mode');
+docsCheck(isset($stock['properties']['cursor']),'cursor continuation field');
+docsCheck($stock['properties']['code']['enum']===['saldo-estoque-por-referencia'],'fixed saved code');
+docsCheck(count($stock['properties']['parameters']['properties']['querystring']['properties'])===4,'four filters');
+docsCheck($stock['example']['parameters']['querystring']['referencia']==='004','preserve leading zeros');
+$price=$spec['components']['schemas']['moeda-precos-atuais-por-container']['properties']['parameters']['properties']['querystring'];
+docsCheck(count($price['properties'])===2,'duplicate date normalized');
+docsCheck($price['required']===['nr_container'],'required filter');
+$raw=json_encode($spec,JSON_THROW_ON_ERROR);
+foreach($spec['paths'] as $path)foreach($path as $operation)foreach(array_keys($operation['responses']) as $status)docsCheck(preg_match('/^[1-5][0-9]{2}$/',(string)$status)===1,'valid HTTP response key');
+foreach(['sourceAlias','defaultBanco','ems2med','192.168.0.111','tokenSha256','clientSecretSha256'] as $secret)docsCheck(!str_contains($raw,$secret),'no private definition '.$secret);
+$collection=queryApiPostman($catalog);
+docsCheck(str_contains($collection['info']['schema'],'v2.1.0'),'Postman version');
+docsCheck(count($collection['item'][1]['item'])===7,'Postman query count');
+docsCheck(count($collection['item'][2]['item'])===6,'Postman eligible cursor queries');
+docsCheck(count($collection['item'][3]['item'])===9,'Postman async examples plus status and download');
+docsCheck($collection['item'][4]['name']==='Webhooks'&&count($collection['item'][4]['item'])===3,'Postman webhook requests');
+docsCheck($spec['components']['schemas']['tabelas-preco-por-container']['properties']['paginationMode']['enum']===['offset'],'distinct refuses cursor');
+foreach($collection['variable'] as $variable)if(in_array($variable['key'],['client_id','client_secret','access_token'],true))docsCheck($variable['value']==='','empty credentials');
+foreach($collection['item'][1]['item'] as $request){
+ docsCheck($request['request']['url']===QUERY_API_BASE.'/api/query.php','fixed query route');
+ $body=json_decode($request['request']['body']['raw'],true,32,JSON_THROW_ON_ERROR);
+ docsCheck($body['code']===$request['name'],'code matches request');
+}
+docsCheck($collection['item'][0]['item'][0]['request']['url']===QUERY_API_BASE.'/api/token.php','token route');
+echo 'PASS '.$count." API documentation checks\n";

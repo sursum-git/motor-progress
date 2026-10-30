@@ -10,6 +10,62 @@ USING Progress.Json.ObjectModel.JsonObject.
 
 CLASS PasoeExecutionContext:
 
+    /* Escopo da request ABL, preenchido/limpo pelo handler; nunca pelo JSON. */
+    DEFINE PUBLIC STATIC PROPERTY Current AS PasoeExecutionContext NO-UNDO GET. PRIVATE SET.
+    DEFINE PRIVATE VARIABLE logSequence AS INTEGER NO-UNDO.
+    DEFINE PRIVATE TEMP-TABLE ttProgramLog NO-UNDO
+        FIELD sequenceId AS INTEGER
+        FIELD logLevel AS CHARACTER
+        FIELD logMessage AS CHARACTER
+        FIELD occurredAt AS DATETIME
+        INDEX seq IS PRIMARY UNIQUE sequenceId.
+
+    METHOD PUBLIC STATIC VOID setCurrent(INPUT poContext AS PasoeExecutionContext):
+        PasoeExecutionContext:Current = poContext.
+    END METHOD.
+
+    METHOD PUBLIC STATIC VOID clearCurrent():
+        PasoeExecutionContext:Current = ?.
+    END METHOD.
+
+    METHOD PUBLIC LOGICAL queueLogMessage(INPUT pcLevel AS CHARACTER, INPUT pcMessage AS CHARACTER):
+        DEFINE VARIABLE levelName AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE executionId AS CHARACTER NO-UNDO.
+        executionId = THIS-OBJECT:getCustomField("executionId").
+        IF executionId = "" OR executionId = ? OR pcLevel = ? OR pcMessage = ? THEN RETURN FALSE.
+        /* Mensagem de log, nao payload: impede truncamento do contexto JSON. */
+        IF LENGTH(pcMessage) > 4000 THEN RETURN FALSE.
+        levelName = LC(TRIM(pcLevel)).
+        IF LOOKUP(levelName,"debug,info,warning,error") = 0 THEN RETURN FALSE.
+        logSequence = logSequence + 1.
+        CREATE ttProgramLog.
+        ASSIGN ttProgramLog.sequenceId = logSequence
+               ttProgramLog.logLevel = levelName
+               ttProgramLog.logMessage = pcMessage
+               ttProgramLog.occurredAt = NOW.
+        RETURN TRUE.
+    END METHOD.
+
+    METHOD PUBLIC Progress.Json.ObjectModel.JsonArray getLogMessages():
+        DEFINE VARIABLE items AS Progress.Json.ObjectModel.JsonArray NO-UNDO.
+        DEFINE VARIABLE item AS JsonObject NO-UNDO.
+        items = NEW Progress.Json.ObjectModel.JsonArray().
+        FOR EACH ttProgramLog BY sequenceId:
+            item = NEW JsonObject().
+            item:Add("level",ttProgramLog.logLevel).
+            item:Add("message",ttProgramLog.logMessage).
+            item:Add("occurredAt",ttProgramLog.occurredAt).
+            items:Add(item).
+        END.
+        RETURN items.
+    END METHOD.
+
+    METHOD PUBLIC VOID clearLogMessages():
+        EMPTY TEMP-TABLE ttProgramLog.
+    END METHOD.
+
+
+
     DEFINE PRIVATE VARIABLE cRequestId          AS CHARACTER NO-UNDO.
     DEFINE PRIVATE VARIABLE cCapturedAt         AS DATETIME NO-UNDO.
     DEFINE PRIVATE VARIABLE cRuntimeVersion     AS CHARACTER NO-UNDO.
@@ -24,6 +80,9 @@ CLASS PasoeExecutionContext:
     DEFINE PRIVATE VARIABLE cPasoeThread        AS CHARACTER NO-UNDO.
     DEFINE PRIVATE VARIABLE cDatabaseName       AS CHARACTER NO-UNDO.
     DEFINE PRIVATE VARIABLE cDbTransactionId    AS CHARACTER NO-UNDO.
+    DEFINE PRIVATE VARIABLE cRequesterIp        AS CHARACTER NO-UNDO.
+    DEFINE PRIVATE VARIABLE cRequesterBrowser   AS CHARACTER NO-UNDO.
+    DEFINE PRIVATE VARIABLE cRequesterSessionId AS CHARACTER NO-UNDO.
 
     DEFINE PRIVATE TEMP-TABLE ttCustom NO-UNDO
         FIELD customKey   AS CHARACTER
@@ -61,13 +120,13 @@ CLASS PasoeExecutionContext:
             OS-GETENV("APPSERVER_AGENT_NAME"),
             OS-GETENV("PASOE_AGENT"),
             OS-GETENV("APPSERVER_NAME"),
-            ""
+            PasoeRuntimeIdentity:AgentName(SESSION:STARTUP-PARAMETERS)
         ).
 
         ASSIGN cPasoeInstance = THIS-OBJECT:firstNonEmpty(
             OS-GETENV("PASOE_INSTANCE"),
             OS-GETENV("APPSERVER_INSTANCE_NAME"),
-            OS-GETENV("DLC_DEFAULT"), /* fallback ambiente de execucao */
+            PasoeRuntimeIdentity:InstanceName(OS-GETENV("CATALINA_BASE")),
             ""
         ).
 
@@ -78,6 +137,8 @@ CLASS PasoeExecutionContext:
             OS-GETENV("PID"),
             ""
         ).
+        IF cPasoePid = "" OR cPasoePid = ? THEN
+            ASSIGN cPasoePid = THIS-OBJECT:tryReadProcessPid().
 
         ASSIGN cPasoeThread = THIS-OBJECT:firstNonEmpty(
             OS-GETENV("TID"),
@@ -96,6 +157,38 @@ CLASS PasoeExecutionContext:
         IF cDb = ? OR cDb = "" THEN
             RETURN "nao-disponivel".
         RETURN cDb.
+    END METHOD.
+
+    METHOD PRIVATE CHARACTER tryReadProcessPid():
+        DEFINE VARIABLE cPid AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE cCommand AS CHARACTER NO-UNDO.
+        DEFINE VARIABLE iPid AS INTEGER NO-UNDO.
+
+        IF OPSYS <> "UNIX" THEN
+            RETURN "".
+
+        ASSIGN cCommand = "sh -c " + QUOTER("echo $PPID").
+        DO ON ERROR UNDO, LEAVE:
+            INPUT THROUGH VALUE(cCommand) NO-ECHO.
+            IMPORT UNFORMATTED cPid.
+            INPUT CLOSE.
+        END.
+        IF ERROR-STATUS:ERROR THEN DO:
+            INPUT CLOSE.
+            RETURN "".
+        END.
+
+        ASSIGN cPid = TRIM(cPid).
+        IF cPid = "" OR cPid = ? THEN
+            RETURN "".
+
+        DO ON ERROR UNDO, LEAVE:
+            ASSIGN iPid = INTEGER(cPid).
+        END.
+        IF ERROR-STATUS:ERROR OR iPid <= 0 THEN
+            RETURN "".
+
+        RETURN STRING(iPid).
     END METHOD.
 
     METHOD PRIVATE CHARACTER createRequestId():
@@ -141,6 +234,16 @@ CLASS PasoeExecutionContext:
         IF pcValue = ? OR TRIM(pcValue) = "" THEN
             RETURN pcDefault.
         RETURN pcValue.
+    END METHOD.
+
+    METHOD PUBLIC VOID setCurrentUser(INPUT pcUserName AS CHARACTER):
+        ASSIGN cCurrentUser = THIS-OBJECT:coalesce(pcUserName, cCurrentUser).
+    END METHOD.
+
+    METHOD PUBLIC VOID setRequesterInfo(INPUT pcIp AS CHARACTER, INPUT pcBrowser AS CHARACTER, INPUT pcSessionId AS CHARACTER):
+        ASSIGN cRequesterIp = THIS-OBJECT:coalesce(pcIp, cRequesterIp)
+               cRequesterBrowser = THIS-OBJECT:coalesce(pcBrowser, cRequesterBrowser)
+               cRequesterSessionId = THIS-OBJECT:coalesce(pcSessionId, cRequesterSessionId).
     END METHOD.
 
     METHOD PUBLIC VOID setDatabaseTransactionId(INPUT pcTransactionId AS CHARACTER):
@@ -227,6 +330,9 @@ CLASS PasoeExecutionContext:
         joContext:Add("databaseName", cDatabaseName).
         joContext:Add("dbTransactionId", cDbTransactionId).
         joContext:Add("databaseTransaction", cDbTransactionId).
+        joContext:Add("requesterIp", cRequesterIp).
+        joContext:Add("requesterBrowser", cRequesterBrowser).
+        joContext:Add("requesterSessionId", cRequesterSessionId).
 
         FOR EACH ttCustom:
             joCustom:Add(ttCustom.customKey, ttCustom.customValue).
@@ -245,3 +351,4 @@ CLASS PasoeExecutionContext:
     END METHOD.
 
 END CLASS.
+

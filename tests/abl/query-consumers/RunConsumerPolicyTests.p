@@ -1,0 +1,12 @@
+DEFINE VARIABLE i AS INTEGER NO-UNDO.
+PROPATH = "sursum-api/sursum,sursum-api/rest," + PROPATH.
+OUTPUT TO "temp/query-consumers-20261027/compile-policy.log".
+COMPILE "tests/abl/query-consumers/ConsumerPolicyTests.p" SAVE NO-ERROR.
+DO i=1 TO ERROR-STATUS:NUM-MESSAGES:
+ PUT UNFORMATTED ERROR-STATUS:GET-MESSAGE(i) SKIP.
+END.
+PUT UNFORMATTED "COMPILER_ERROR=" COMPILER:ERROR SKIP.
+IF COMPILER:ERROR THEN DO: OUTPUT CLOSE. QUIT. END.
+OUTPUT CLOSE.
+RUN tests/abl/query-consumers/ConsumerPolicyTests.p.
+QUIT.

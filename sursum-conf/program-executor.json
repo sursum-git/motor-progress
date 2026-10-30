@@ -1,6 +1,12 @@
 {
   "programs": {
-    "echo-json": "sursum-api/programs/EchoJsonProgram.p",
+    "echo-json": {
+      "path": "sursum-api/programs/EchoJsonProgram.p",
+      "methods": [
+        "POST",
+        "GET"
+      ]
+    },
     "analise-json-object10": "esapi/analiseJsonObject10.p",
     "exemplo-preenche-tt-json10": "esapi/exemploPreencheTempTablesJson10.p",
     "api-transf-container-v2": "especificos/ems2/ima/http-api/api_transf_container_v2.p"

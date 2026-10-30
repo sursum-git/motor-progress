@@ -4,25 +4,31 @@ declare(strict_types=1);
 $root = dirname(__DIR__, 2);
 
 $schema = readFileRequired($root . '/db/sursum_api_execution.df');
-assertContains($schema, 'ADD TABLE "SursumApiExecution"', 'schema cria SursumApiExecution');
-assertContains($schema, 'ADD TABLE "SursumApiExecutionEvent"', 'schema cria SursumApiExecutionEvent');
+assertContains($schema, 'ADD TABLE "sursum_req_pasoe"', 'schema cria sursum_req_pasoe');
+assertContains($schema, 'ADD TABLE "sursum_req_pasoe_evento"', 'schema cria sursum_req_pasoe_evento');
 foreach ([
-    '"executionId"',
-    '"requestId"',
-    '"executionStatus"',
-    '"executionType"',
-    '"actionCode"',
-    '"programName"',
-    '"jobId"',
-    '"startedAt"',
-    '"lastHeartbeatAt"',
-    '"finishedAt"',
-    '"durationMs"',
-    '"pasoePid"',
-    '"pasoeAgent"',
-    '"dbTransactionRef"',
-    '"killRequestedAt"',
-    '"killRequestedBy"',
+    '"id_execucao"',
+    '"id_requisicao"',
+    '"status_execucao"',
+    '"tipo_execucao"',
+    '"codigo_acao"',
+    '"nome_programa"',
+    '"id_tarefa"',
+    '"data_hora_inicio"',
+    '"dt_hr_ult_sinal"',
+    '"data_hora_fim"',
+    '"duracao_ms"',
+    '"pid_pasoe"',
+    '"agente_pasoe"',
+    '"ref_trans_banco"',
+    '"nome_usuario"',
+    '"dt_hr_solic_interrupcao"',
+    '"usuario_solic_interrupcao"',
+    '"dados_retorno_json"',
+    '"dados_envio_json"',
+    '"id_sessao_requisitante"',
+    '"navegador_requisitante"',
+    '"ip_requisitante"',
 ] as $field) {
     assertContains($schema, $field, 'campo de schema ' . $field);
 }
@@ -36,12 +42,24 @@ foreach ([
     'METHOD PUBLIC JsonObject requestKill',
     'METHOD PUBLIC JsonObject listExecutions',
     'METHOD PUBLIC JsonObject getExecution',
-    'SursumApiExecution',
-    'SursumApiExecutionEvent',
+    'METHOD PUBLIC JsonObject listExecutionEvents',
+    'METHOD PUBLIC JsonObject updateExecutionPayloads',
+    'espec.sursum_req_pasoe',
+    'espec.sursum_req_pasoe_evento',
     'poContext:getPasoePid()',
     'poContext:getPasoeAgent()',
+    'setLongcharField(hExecution, "dados_retorno_json"',
+    'setLongcharField(hExecution, "dados_envio_json"',
 ] as $needle) {
     assertContains($repository, $needle, 'repositorio contem ' . $needle);
+}
+
+$context = readFileRequired($root . '/sursum-api/sursum/PasoeExecutionContext.cls');
+foreach ([
+    'METHOD PUBLIC VOID setCurrentUser',
+    'cCurrentUser = THIS-OBJECT:coalesce(pcUserName, cCurrentUser)',
+] as $needle) {
+    assertContains($context, $needle, 'contexto permite usuario informado: ' . $needle);
 }
 
 $handler = readFileRequired($root . '/sursum-api/rest/DynamicQueryWebHandler.cls');
@@ -52,6 +70,8 @@ foreach ([
     '*/executions',
     'handleListExecutions',
     'handleGetExecution',
+    'handleListExecutionEvents',
+    'INDEX(cPath, "/events")',
     'handleKillRequest',
     'handleCancelExecution',
     'handleActionExecute',
@@ -59,8 +79,35 @@ foreach ([
     'startExecution',
     'finishExecution',
     'failExecution',
+    'applyCallerUser',
+    'X-Sursum-User',
+    'JSESSIONID',
+    'HTTP_X_FORWARDED_FOR',
+    'HTTP_USER_AGENT',
+    'getRequesterIp',
+    'applyRequestMetadata',
 ] as $needle) {
     assertContains($handler, $needle, 'webhandler contem ' . $needle);
+}
+
+$jsonProgramHandler = readFileRequired($root . '/sursum-api/rest/JsonProgramWebHandler.cls');
+foreach ([
+    'ApiExecutionRepository',
+    'PasoeExecutionContext',
+    'startExecution',
+    'finishExecution',
+    'failExecution',
+    'applyCallerUser',
+    'X-Sursum-User',
+    'JSESSIONID',
+    'HTTP_X_FORWARDED_FOR',
+    'HTTP_USER_AGENT',
+    'getRequesterIp',
+    'applyRequestMetadata',
+    'JsonProgramRouter',
+    'applyRequestMetadata',
+    'updateExecutionPayloads',] as $needle) {
+    assertContains($jsonProgramHandler, $needle, 'json program handler registra execucao: ' . $needle);
 }
 
 $jobDf = readFileRequired($root . '/db/sursum_async_queue.df');
@@ -86,3 +133,11 @@ function assertContains(string $content, string $needle, string $label): void
         throw new RuntimeException($label . ': trecho nao encontrado: ' . $needle);
     }
 }
+
+
+
+
+
+
+
+

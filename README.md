@@ -1,4 +1,4 @@
-﻿# Motor Progress - Dynamic Query API
+# Motor Progress - Dynamic Query API
 
 Projeto ABL/OOABL para consulta dinamica segura em banco Progress/OpenEdge, com suporte a:
 
@@ -113,6 +113,8 @@ Invoke-RestMethod `
 
 - [Arquitetura](docs/ARCHITECTURE.md)
 - [Contrato da API](docs/API_CONTRACT.md)
+- [Executor de programas e métodos HTTP](docs/PROGRAM_EXECUTOR.md)
+- [Roteador independente JSON para programas](docs/JSON_PROGRAM_ROUTER.md)
 - [Executor por arquivo JSON](docs/JSON_EXTRACTION_RUNNER.md)
 - [Interfaces web Kendo UI](docs/WEB_UI.md)
 - [Fila async e workers](docs/ASYNC_QUEUE.md)

@@ -1,0 +1,937 @@
+{
+    "info": {
+        "name": "Sursum MED — consultas salvas",
+        "description": "Configure client_id/client_secret no ambiente local do Postman. Colecao sem credenciais exportadas. Consultas renovam tokens automaticamente com margem de30s. Permissoes e autorizacao permanecem no PASOE. Ao rotacionar segredo, execute Obter token para substituir o cache. Nao compartilhe exportacoes com segredos preenchidos.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "client_id",
+            "value": ""
+        },
+        {
+            "key": "client_secret",
+            "value": ""
+        },
+        {
+            "key": "access_token",
+            "value": ""
+        },
+        {
+            "key": "expires_at",
+            "value": "0"
+        },
+        {
+            "key": "cached_client_id",
+            "value": ""
+        },
+        {
+            "key": "job_id",
+            "value": ""
+        },
+        {
+            "key": "cursor_controle-preco-por-pedido-container",
+            "value": ""
+        },
+        {
+            "key": "cursor_moeda-precos-atuais-por-container",
+            "value": ""
+        },
+        {
+            "key": "cursor_movimentacoes-estoque",
+            "value": ""
+        },
+        {
+            "key": "cursor_pp-container-por-container",
+            "value": ""
+        },
+        {
+            "key": "cursor_pp-it-container-por-container",
+            "value": ""
+        },
+        {
+            "key": "cursor_saldo-estoque-por-referencia",
+            "value": ""
+        }
+    ],
+    "item": [
+        {
+            "name": "Autenticacao",
+            "item": [
+                {
+                    "name": "Obter token",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/x-www-form-urlencoded"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/token.php",
+                        "body": {
+                            "mode": "urlencoded",
+                            "urlencoded": [
+                                {
+                                    "key": "grant_type",
+                                    "value": "client_credentials"
+                                },
+                                {
+                                    "key": "client_id",
+                                    "value": "{{client_id}}"
+                                },
+                                {
+                                    "key": "client_secret",
+                                    "value": "{{client_secret}}"
+                                }
+                            ]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Token emitido', function () { pm.response.to.have.status(200); });\r",
+                                    "if (pm.response.code === 200) {\r",
+                                    "  const data = pm.response.json();\r",
+                                    "  if (!/^[a-f0-9]{64}$/.test(data.access_token) || data.expires_in !== 900) throw new Error('Resposta de token invalida');\r",
+                                    "  pm.collectionVariables.set('access_token', data.access_token);\r",
+                                    "  pm.collectionVariables.set('expires_at', Date.now() + 870000);\r",
+                                    "  pm.collectionVariables.set('cached_client_id', pm.variables.get('client_id'));\r",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Consultas",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "const base = 'https://iol.imatextil.com.br/query-progress';\r",
+                            "const id = pm.variables.get('client_id');\r",
+                            "const token = pm.collectionVariables.get('access_token');\r",
+                            "function applyToken(value) { pm.request.headers.upsert({key:'X-Sursum-Query-Token',value:value}); }\r",
+                            "if (token && Number(pm.collectionVariables.get('expires_at')) > Date.now() && pm.collectionVariables.get('cached_client_id') === id) {\r",
+                            "  applyToken(token);\r",
+                            "} else {\r",
+                            "  const secret = pm.variables.get('client_secret');\r",
+                            "  if (!id || !secret) { pm.execution.skipRequest(); throw new Error('Preencha client_id e client_secret no ambiente local do Postman'); }\r",
+                            "  pm.sendRequest({url:base+'/api/token.php',method:'POST',header:{'Content-Type':'application/x-www-form-urlencoded'},body:{mode:'urlencoded',urlencoded:[{key:'grant_type',value:'client_credentials'},{key:'client_id',value:id},{key:'client_secret',value:secret}]}},function(error,response){\r",
+                            "    if (error || response.code !== 200) { pm.execution.skipRequest(); throw new Error('Nao foi possivel obter token do consumidor'); }\r",
+                            "    let data;\r",
+                            "    try { data=response.json(); if (!/^[a-f0-9]{64}$/.test(data.access_token) || data.expires_in !== 900) throw new Error('invalid'); }\r",
+                            "    catch (invalid) { pm.execution.skipRequest(); throw new Error('Resposta de token invalida'); }\r",
+                            "    pm.collectionVariables.set('access_token',data.access_token);\r",
+                            "    pm.collectionVariables.set('expires_at',Date.now()+870000);\r",
+                            "    pm.collectionVariables.set('cached_client_id',id);\r",
+                            "    applyToken(data.access_token);\r",
+                            "  });\r",
+                            "}"
+                        ]
+                    }
+                }
+            ],
+            "item": [
+                {
+                    "name": "controle-preco-por-pedido-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "controle-preco-por-pedido-container. Exige permissao para controle-preco-por-pedido-container. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"controle-preco-por-pedido-container\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr_container\": \"INFORME_O_CONTAINER\"\n        }\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "moeda-precos-atuais-por-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "moeda-precos-atuais-por-container. Exige permissao para moeda-precos-atuais-por-container. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"moeda-precos-atuais-por-container\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr_container\": \"INFORME_O_CONTAINER\",\n            \"dt_referencia\": \"2026-10-30\"\n        }\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "movimentacoes-estoque",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "Movimentacoes de estoque. Exige permissao para movimentacoes-estoque. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"movimentacoes-estoque\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"dataInicial\": \"2021-01-01\",\n            \"dataFinal\": \"2025-12-31\",\n            \"produto\": \"130062\",\n            \"referencia\": \"004\",\n            \"estabelecimento\": \"502\",\n            \"deposito\": \"ARM\"\n        }\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "pp-container-por-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "pp-container-por-container. Exige permissao para pp-container-por-container. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"pp-container-por-container\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr-container\": \"INFORME_O_CONTAINER\"\n        }\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "pp-it-container-por-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "pp-it-container-por-container. Exige permissao para pp-it-container-por-container. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"pp-it-container-por-container\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr-container\": \"INFORME_O_CONTAINER\"\n        }\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "saldo-estoque-por-referencia",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "saldo-estoque-por-referencia. Exige permissao para saldo-estoque-por-referencia. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"saldo-estoque-por-referencia\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"estabelecimento\": \"502\",\n            \"deposito\": \"ARM\",\n            \"item\": \"130062\",\n            \"referencia\": \"004\"\n        }\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "tabelas-preco-por-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "tabelas-preco-por-container. Exige permissao para tabelas-preco-por-container. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"tabelas-preco-por-container\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr_container\": \"INFORME_O_CONTAINER\"\n        }\n    }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Consultas por cursor",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "const cursorKey='cursor_'+pm.info.requestName;\r",
+                            "if (pm.collectionVariables.get(cursorKey)==='__END__') { pm.execution.skipRequest(); throw new Error('Fim da navegacao. Limpe '+cursorKey+' para reiniciar.'); }",
+                            "const base = 'https://iol.imatextil.com.br/query-progress';\r",
+                            "const id = pm.variables.get('client_id');\r",
+                            "const token = pm.collectionVariables.get('access_token');\r",
+                            "function applyToken(value) { pm.request.headers.upsert({key:'X-Sursum-Query-Token',value:value}); }\r",
+                            "if (token && Number(pm.collectionVariables.get('expires_at')) > Date.now() && pm.collectionVariables.get('cached_client_id') === id) {\r",
+                            "  applyToken(token);\r",
+                            "} else {\r",
+                            "  const secret = pm.variables.get('client_secret');\r",
+                            "  if (!id || !secret) { pm.execution.skipRequest(); throw new Error('Preencha client_id e client_secret no ambiente local do Postman'); }\r",
+                            "  pm.sendRequest({url:base+'/api/token.php',method:'POST',header:{'Content-Type':'application/x-www-form-urlencoded'},body:{mode:'urlencoded',urlencoded:[{key:'grant_type',value:'client_credentials'},{key:'client_id',value:id},{key:'client_secret',value:secret}]}},function(error,response){\r",
+                            "    if (error || response.code !== 200) { pm.execution.skipRequest(); throw new Error('Nao foi possivel obter token do consumidor'); }\r",
+                            "    let data;\r",
+                            "    try { data=response.json(); if (!/^[a-f0-9]{64}$/.test(data.access_token) || data.expires_in !== 900) throw new Error('invalid'); }\r",
+                            "    catch (invalid) { pm.execution.skipRequest(); throw new Error('Resposta de token invalida'); }\r",
+                            "    pm.collectionVariables.set('access_token',data.access_token);\r",
+                            "    pm.collectionVariables.set('expires_at',Date.now()+870000);\r",
+                            "    pm.collectionVariables.set('cached_client_id',id);\r",
+                            "    applyToken(data.access_token);\r",
+                            "  });\r",
+                            "}"
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "if (pm.response.code===200) {\r",
+                            "  const data=pm.response.json();\r",
+                            "  if(data.success && data.paginationMode==='cursor') {\r",
+                            "    pm.collectionVariables.set('cursor_'+pm.info.requestName,data.hasMore?data.nextCursor:'__END__');\r",
+                            "    pm.test('Continuacao de cursor consistente',function(){pm.expect(data.hasMore?typeof data.nextCursor==='string':data.nextCursor===null).to.eql(true);});\r",
+                            "  }\r",
+                            "}"
+                        ]
+                    }
+                }
+            ],
+            "item": [
+                {
+                    "name": "controle-preco-por-pedido-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "controle-preco-por-pedido-container. Exige permissao para controle-preco-por-pedido-container. Altere os filtros no Body; valores de container sao exemplos a preencher. Modo cursor: Send avanca automaticamente usando nextCursor. Ao terminar, limpe a variavel cursor_controle-preco-por-pedido-container para reiniciar. Ao mudar filtros/tamanho/consumidor, limpe esta variavel. Cursor900s, semsnapshot.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"controle-preco-por-pedido-container\",\n    \"paginationMode\": \"cursor\",\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr_container\": \"INFORME_O_CONTAINER\"\n        }\n    },\n    \"cursor\": \"{{cursor_controle-preco-por-pedido-container}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "moeda-precos-atuais-por-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "moeda-precos-atuais-por-container. Exige permissao para moeda-precos-atuais-por-container. Altere os filtros no Body; valores de container sao exemplos a preencher. Modo cursor: Send avanca automaticamente usando nextCursor. Ao terminar, limpe a variavel cursor_moeda-precos-atuais-por-container para reiniciar. Ao mudar filtros/tamanho/consumidor, limpe esta variavel. Cursor900s, semsnapshot.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"moeda-precos-atuais-por-container\",\n    \"paginationMode\": \"cursor\",\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr_container\": \"INFORME_O_CONTAINER\",\n            \"dt_referencia\": \"2026-10-30\"\n        }\n    },\n    \"cursor\": \"{{cursor_moeda-precos-atuais-por-container}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "movimentacoes-estoque",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "Movimentacoes de estoque. Exige permissao para movimentacoes-estoque. Altere os filtros no Body; valores de container sao exemplos a preencher. Modo cursor: Send avanca automaticamente usando nextCursor. Ao terminar, limpe a variavel cursor_movimentacoes-estoque para reiniciar. Ao mudar filtros/tamanho/consumidor, limpe esta variavel. Cursor900s, semsnapshot.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"movimentacoes-estoque\",\n    \"paginationMode\": \"cursor\",\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"dataInicial\": \"2021-01-01\",\n            \"dataFinal\": \"2025-12-31\",\n            \"produto\": \"130062\",\n            \"referencia\": \"004\",\n            \"estabelecimento\": \"502\",\n            \"deposito\": \"ARM\"\n        }\n    },\n    \"cursor\": \"{{cursor_movimentacoes-estoque}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "pp-container-por-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "pp-container-por-container. Exige permissao para pp-container-por-container. Altere os filtros no Body; valores de container sao exemplos a preencher. Modo cursor: Send avanca automaticamente usando nextCursor. Ao terminar, limpe a variavel cursor_pp-container-por-container para reiniciar. Ao mudar filtros/tamanho/consumidor, limpe esta variavel. Cursor900s, semsnapshot.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"pp-container-por-container\",\n    \"paginationMode\": \"cursor\",\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr-container\": \"INFORME_O_CONTAINER\"\n        }\n    },\n    \"cursor\": \"{{cursor_pp-container-por-container}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "pp-it-container-por-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "pp-it-container-por-container. Exige permissao para pp-it-container-por-container. Altere os filtros no Body; valores de container sao exemplos a preencher. Modo cursor: Send avanca automaticamente usando nextCursor. Ao terminar, limpe a variavel cursor_pp-it-container-por-container para reiniciar. Ao mudar filtros/tamanho/consumidor, limpe esta variavel. Cursor900s, semsnapshot.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"pp-it-container-por-container\",\n    \"paginationMode\": \"cursor\",\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr-container\": \"INFORME_O_CONTAINER\"\n        }\n    },\n    \"cursor\": \"{{cursor_pp-it-container-por-container}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "saldo-estoque-por-referencia",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "saldo-estoque-por-referencia. Exige permissao para saldo-estoque-por-referencia. Altere os filtros no Body; valores de container sao exemplos a preencher. Modo cursor: Send avanca automaticamente usando nextCursor. Ao terminar, limpe a variavel cursor_saldo-estoque-por-referencia para reiniciar. Ao mudar filtros/tamanho/consumidor, limpe esta variavel. Cursor900s, semsnapshot.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"saldo-estoque-por-referencia\",\n    \"paginationMode\": \"cursor\",\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"estabelecimento\": \"502\",\n            \"deposito\": \"ARM\",\n            \"item\": \"130062\",\n            \"referencia\": \"004\"\n        }\n    },\n    \"cursor\": \"{{cursor_saldo-estoque-por-referencia}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Consultas assincronas",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "const base = 'https://iol.imatextil.com.br/query-progress';\r",
+                            "const id = pm.variables.get('client_id');\r",
+                            "const token = pm.collectionVariables.get('access_token');\r",
+                            "function applyToken(value) { pm.request.headers.upsert({key:'X-Sursum-Query-Token',value:value}); }\r",
+                            "if (token && Number(pm.collectionVariables.get('expires_at')) > Date.now() && pm.collectionVariables.get('cached_client_id') === id) {\r",
+                            "  applyToken(token);\r",
+                            "} else {\r",
+                            "  const secret = pm.variables.get('client_secret');\r",
+                            "  if (!id || !secret) { pm.execution.skipRequest(); throw new Error('Preencha client_id e client_secret no ambiente local do Postman'); }\r",
+                            "  pm.sendRequest({url:base+'/api/token.php',method:'POST',header:{'Content-Type':'application/x-www-form-urlencoded'},body:{mode:'urlencoded',urlencoded:[{key:'grant_type',value:'client_credentials'},{key:'client_id',value:id},{key:'client_secret',value:secret}]}},function(error,response){\r",
+                            "    if (error || response.code !== 200) { pm.execution.skipRequest(); throw new Error('Nao foi possivel obter token do consumidor'); }\r",
+                            "    let data;\r",
+                            "    try { data=response.json(); if (!/^[a-f0-9]{64}$/.test(data.access_token) || data.expires_in !== 900) throw new Error('invalid'); }\r",
+                            "    catch (invalid) { pm.execution.skipRequest(); throw new Error('Resposta de token invalida'); }\r",
+                            "    pm.collectionVariables.set('access_token',data.access_token);\r",
+                            "    pm.collectionVariables.set('expires_at',Date.now()+870000);\r",
+                            "    pm.collectionVariables.set('cached_client_id',id);\r",
+                            "    applyToken(data.access_token);\r",
+                            "  });\r",
+                            "}"
+                        ]
+                    }
+                },
+                {
+                    "listen": "test",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "if(pm.response.code===202){const data=pm.response.json();if(!data.success||!/^JOB-[0-9]{8}-[0-9]{6}-[0-9]{6}$/.test(data.jobId))throw new Error('Job invalido');pm.collectionVariables.set('job_id',data.jobId);}"
+                        ]
+                    }
+                }
+            ],
+            "item": [
+                {
+                    "name": "controle-preco-por-pedido-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "controle-preco-por-pedido-container. Exige permissao para controle-preco-por-pedido-container. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"controle-preco-por-pedido-container\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr_container\": \"INFORME_O_CONTAINER\"\n        }\n    },\n    \"execution\": \"async\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "moeda-precos-atuais-por-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "moeda-precos-atuais-por-container. Exige permissao para moeda-precos-atuais-por-container. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"moeda-precos-atuais-por-container\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr_container\": \"INFORME_O_CONTAINER\",\n            \"dt_referencia\": \"2026-10-30\"\n        }\n    },\n    \"execution\": \"async\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "movimentacoes-estoque",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "Movimentacoes de estoque. Exige permissao para movimentacoes-estoque. Altere os filtros no Body; valores de container sao exemplos a preencher. Exportacao paralela por data: 2 workers, 2000 particoes, 100000 registros e 268435456 bytes por particao; se uma particao atingir o teto, o job falha sem truncamento.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"movimentacoes-estoque\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": false,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"dataInicial\": \"2021-01-01\",\n            \"dataFinal\": \"2025-12-31\",\n            \"produto\": \"130062\",\n            \"referencia\": \"004\",\n            \"estabelecimento\": \"502\",\n            \"deposito\": \"ARM\"\n        }\n    },\n    \"execution\": \"async\",\n    \"webhookDelivery\": \"manifest\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "pp-container-por-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "pp-container-por-container. Exige permissao para pp-container-por-container. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"pp-container-por-container\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr-container\": \"INFORME_O_CONTAINER\"\n        }\n    },\n    \"execution\": \"async\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "pp-it-container-por-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "pp-it-container-por-container. Exige permissao para pp-it-container-por-container. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"pp-it-container-por-container\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr-container\": \"INFORME_O_CONTAINER\"\n        }\n    },\n    \"execution\": \"async\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "saldo-estoque-por-referencia",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "saldo-estoque-por-referencia. Exige permissao para saldo-estoque-por-referencia. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"saldo-estoque-por-referencia\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"estabelecimento\": \"502\",\n            \"deposito\": \"ARM\",\n            \"item\": \"130062\",\n            \"referencia\": \"004\"\n        }\n    },\n    \"execution\": \"async\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "tabelas-preco-por-container",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
+                        "description": "tabelas-preco-por-container. Exige permissao para tabelas-preco-por-container. Altere os filtros no Body; valores de container sao exemplos a preencher.",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"tabelas-preco-por-container\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": true,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"nr_container\": \"INFORME_O_CONTAINER\"\n        }\n    },\n    \"execution\": \"async\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Acompanhar job",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/jobs.php?jobId={{job_id}}",
+                        "description": "Usa job_id salvo pelo envio assincrono anterior. Repita acompanhamento ate completed; depois baixe. Token e permissao atual sempre exigidos."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Baixar resultado",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/job-result.php?jobId={{job_id}}",
+                        "description": "Usa job_id salvo pelo envio assincrono anterior. Repita acompanhamento ate completed; depois baixe. Token e permissao atual sempre exigidos."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Webhooks",
+            "description": "Cada consumidor configura somente o destino de cada consulta autorizada. O segredo aparece uma unica vez ao cadastrar/rotacionar; valide HMAC-SHA-256 de timestamp.raw-body e deduplique por X-Sursum-Webhook-Id.",
+            "event": [
+                {
+                    "listen": "prerequest",
+                    "script": {
+                        "type": "text/javascript",
+                        "exec": [
+                            "const base = 'https://iol.imatextil.com.br/query-progress';\r",
+                            "const id = pm.variables.get('client_id');\r",
+                            "const token = pm.collectionVariables.get('access_token');\r",
+                            "function applyToken(value) { pm.request.headers.upsert({key:'X-Sursum-Query-Token',value:value}); }\r",
+                            "if (token && Number(pm.collectionVariables.get('expires_at')) > Date.now() && pm.collectionVariables.get('cached_client_id') === id) {\r",
+                            "  applyToken(token);\r",
+                            "} else {\r",
+                            "  const secret = pm.variables.get('client_secret');\r",
+                            "  if (!id || !secret) { pm.execution.skipRequest(); throw new Error('Preencha client_id e client_secret no ambiente local do Postman'); }\r",
+                            "  pm.sendRequest({url:base+'/api/token.php',method:'POST',header:{'Content-Type':'application/x-www-form-urlencoded'},body:{mode:'urlencoded',urlencoded:[{key:'grant_type',value:'client_credentials'},{key:'client_id',value:id},{key:'client_secret',value:secret}]}},function(error,response){\r",
+                            "    if (error || response.code !== 200) { pm.execution.skipRequest(); throw new Error('Nao foi possivel obter token do consumidor'); }\r",
+                            "    let data;\r",
+                            "    try { data=response.json(); if (!/^[a-f0-9]{64}$/.test(data.access_token) || data.expires_in !== 900) throw new Error('invalid'); }\r",
+                            "    catch (invalid) { pm.execution.skipRequest(); throw new Error('Resposta de token invalida'); }\r",
+                            "    pm.collectionVariables.set('access_token',data.access_token);\r",
+                            "    pm.collectionVariables.set('expires_at',Date.now()+870000);\r",
+                            "    pm.collectionVariables.set('cached_client_id',id);\r",
+                            "    applyToken(data.access_token);\r",
+                            "  });\r",
+                            "}"
+                        ]
+                    }
+                }
+            ],
+            "item": [
+                {
+                    "name": "Consultar webhook",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/webhook.php?code=saldo-estoque-por-referencia"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Cadastrar ou rotacionar webhook",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/webhook.php",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"saldo-estoque-por-referencia\",\n    \"url\": \"https:\\/\\/integracao.example.com\\/webhooks\\/sursum-estoque\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Remover webhook",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "X-Sursum-Query-Token",
+                                "value": "{{access_token}}"
+                            }
+                        ],
+                        "url": "https://iol.imatextil.com.br/query-progress/api/webhook.php",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"code\": \"saldo-estoque-por-referencia\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}

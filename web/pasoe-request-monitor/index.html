@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Requisições PASOE</title>
+  <link rel="stylesheet" href="assets/kendo.default-main.css">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <main class="monitor-shell">
+    <section class="toolbar" aria-label="Filtros">
+      <label>Base PASOE<input id="baseUrlInput" value="../../web/SursumDynamicQuery"></label>
+      <label>Status<input id="statusInput"></label>
+      <label>Usuário<input id="userInput"></label>
+      <label>Endpoint<input id="endpointInput"></label>
+      <label>PID<input id="pidInput"></label>
+      <label>Limite<input id="limitInput" type="number" min="1" max="500" value="100"></label>
+      <button id="refreshButton" type="button">Atualizar</button>
+    </section>
+
+    <section class="summary" aria-label="Resumo">
+      <div><span>Registros</span><strong id="recordCount">0</strong></div>
+      <div><span>Concluídas</span><strong id="completedCount">0</strong></div>
+      <div><span>Falhas</span><strong id="failedCount">0</strong></div>
+      <div><span>Maior duração</span><strong id="maxDuration">0 ms</strong></div>
+      <p id="statusBox">Pronto.</p>
+    </section>
+
+    <section class="grid-section" aria-label="Requisições">
+      <div id="executionGrid"></div>
+    </section>
+
+    <section class="detail-section" aria-label="Detalhe da requisição">
+      <div class="detail-header">
+        <h2>Detalhe</h2>
+        <button id="copyIdButton" type="button">Copiar ID</button>
+      </div>
+      <dl id="detailList"></dl>
+    </section>
+  </main>
+
+
+  <div id="eventsWindow" class="events-window" aria-label="Eventos da requisição">
+    <div class="events-header">
+      <strong id="eventsExecutionId"></strong>
+      <span id="eventsStatus"></span>
+    </div>
+    <div id="eventsGrid"></div>
+    <pre id="eventContext"></pre>
+  </div>
+  <script src="assets/vendor.bundle.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
+
+
