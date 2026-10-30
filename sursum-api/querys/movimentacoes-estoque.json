@@ -14,7 +14,14 @@
       "indexedField": "movto-estoq.dt-trans",
       "filterField": "movto-estoq.dt-trans"
     },
-    "maxWorkers": 2,
+    "maxWorkers": 8,
+    "workerSchedule": {
+      "timezone": "America/Sao_Paulo",
+      "windows": [
+        {"start": "20:00", "end": "05:00", "maxWorkers": 8},
+        {"start": "05:00", "end": "20:00", "maxWorkers": 4}
+      ]
+    },
     "maxPartitions": 2000,
     "maxPartitionRecords": 100000,
     "maxPartitionBytes": 268435456,
@@ -34,7 +41,14 @@
         "indexedField": "movto-estoq.dt-trans",
         "filterField": "movto-estoq.dt-trans"
       },
-      "maxWorkers": 2,
+      "maxWorkers": 8,
+      "workerSchedule": {
+        "timezone": "America/Sao_Paulo",
+        "windows": [
+          {"start": "20:00", "end": "05:00", "maxWorkers": 8},
+          {"start": "05:00", "end": "20:00", "maxWorkers": 4}
+        ]
+      },
       "maxPartitions": 2000,
       "maxPartitionRecords": 100000,
       "maxPartitionBytes": 268435456,

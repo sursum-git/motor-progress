@@ -672,7 +672,7 @@
                             }
                         ],
                         "url": "https://iol.imatextil.com.br/query-progress/api/query.php",
-                        "description": "Movimentacoes de estoque. Exige permissao para movimentacoes-estoque. Altere os filtros no Body; valores de container sao exemplos a preencher. Exportacao paralela por data: 2 workers, 2000 particoes, 100000 registros e 268435456 bytes por particao; se uma particao atingir o teto, o job falha sem truncamento.",
+                        "description": "Movimentacoes de estoque. Exige permissao para movimentacoes-estoque. Altere os filtros no Body; valores de container sao exemplos a preencher. Exportacao paralela por data: ate 8 workers, 2000 particoes, 100000 registros e 268435456 bytes por particao. Agenda America/Sao_Paulo: 20:00–05:00: 8 workers; 05:00–20:00: 4 workers; o limite e capturado no enfileiramento. Se uma particao atingir o teto, o job falha sem truncamento.",
                         "body": {
                             "mode": "raw",
                             "raw": "{\n    \"code\": \"movimentacoes-estoque\",\n    \"paginationMode\": \"offset\",\n    \"paginate\": false,\n    \"page\": 1,\n    \"pageSize\": 100,\n    \"parameters\": {\n        \"querystring\": {\n            \"dataInicial\": \"2021-01-01\",\n            \"dataFinal\": \"2025-12-31\",\n            \"produto\": \"130062\",\n            \"referencia\": \"004\",\n            \"estabelecimento\": \"502\",\n            \"deposito\": \"ARM\"\n        }\n    },\n    \"execution\": \"async\",\n    \"webhookDelivery\": \"manifest\"\n}",

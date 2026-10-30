@@ -16,6 +16,13 @@ docsCheck($spec['components']['schemas']['saldo-estoque-por-referencia']['proper
 docsCheck($spec['components']['securitySchemes']['consumerToken']['name']==='X-Sursum-Query-Token','actual token transport');
 docsCheck(count($spec['paths']['/api/query.php']['post']['requestBody']['content']['application/json']['examples'])===20,'offset cursor and async examples');
 $stock=$spec['components']['schemas']['saldo-estoque-por-referencia'];
+$movement=null;foreach($catalog as $entry)if($entry['code']==='movimentacoes-estoque')$movement=$entry;
+docsCheck($movement!==null,'movement query is cataloged');
+docsCheck(isset($movement['parallel']['workerSchedule']),'parallel schedule is cataloged');
+docsCheck($movement['parallel']['workerSchedule']['timezone']==='America/Sao_Paulo','parallel schedule exposes its fixed timezone');
+docsCheck($movement['parallel']['workerSchedule']['windows'][0]['start']==='20:00'&&$movement['parallel']['workerSchedule']['windows'][0]['end']==='05:00'&&$movement['parallel']['workerSchedule']['windows'][0]['maxWorkers']===8,'night worker schedule');
+docsCheck($movement['parallel']['workerSchedule']['windows'][1]['start']==='05:00'&&$movement['parallel']['workerSchedule']['windows'][1]['end']==='20:00'&&$movement['parallel']['workerSchedule']['windows'][1]['maxWorkers']===4,'daytime worker schedule');
+docsCheck(str_contains($spec['paths']['/api/query.php']['post']['description'],'capturado no enfileiramento'),'OpenAPI describes the immutable worker snapshot');
 docsCheck($stock['properties']['page']['minimum']===1&&$stock['properties']['page']['maximum']===1000000,'bounded page');
 docsCheck($stock['properties']['pageSize']['minimum']===1&&$stock['properties']['pageSize']['maximum']===1000,'bounded page size');
 docsCheck($stock['example']['page']===1&&$stock['example']['pageSize']===100,'pagination example');

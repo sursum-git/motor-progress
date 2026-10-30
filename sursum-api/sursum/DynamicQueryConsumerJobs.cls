@@ -74,6 +74,7 @@ CLASS DynamicQueryConsumerJobs:
   DEFINE VARIABLE postSteps AS JsonArray NO-UNDO.
   DEFINE VARIABLE stepValue AS JsonObject NO-UNDO.
   DEFINE VARIABLE parallelConfigValue AS JsonObject NO-UNDO.
+  DEFINE VARIABLE parallelSnapshotConfigValue AS JsonObject NO-UNDO.
   DEFINE VARIABLE parallelStatusValue AS JsonObject NO-UNDO.
   DEFINE VARIABLE parametersValue AS JsonObject NO-UNDO.
   DEFINE VARIABLE querystringValue AS JsonObject NO-UNDO.
@@ -81,6 +82,7 @@ CLASS DynamicQueryConsumerJobs:
   DEFINE VARIABLE partitionsValue AS JsonArray NO-UNDO.
   DEFINE VARIABLE reservedIdValue AS CHARACTER NO-UNDO.
   DEFINE VARIABLE parallelPlanCreated AS LOGICAL NO-UNDO.
+  DEFINE VARIABLE resolvedWorkerLimitValue AS INTEGER NO-UNDO.
   DEFINE VARIABLE parallelStageValue AS CHARACTER NO-UNDO INITIAL 'prepare'.
   DEFINE VARIABLE n AS INTEGER NO-UNDO.
   DO ON ERROR UNDO, THROW:
@@ -124,6 +126,8 @@ CLASS DynamicQueryConsumerJobs:
      IF paginated THEN RETURN THIS-OBJECT:failure('ASYNC_PARALLEL_REQUIRES_UNPAGED',400).
      plannerValue=NEW DynamicQueryConsumerParallelJobs().
      IF NOT plannerValue:hasSafePartitionLimits(parallelConfigValue) THEN RETURN THIS-OBJECT:failure('PARALLEL_PARTITION_LIMIT_CONFIG_INVALID',503).
+     resolvedWorkerLimitValue=plannerValue:currentWorkerLimit(parallelConfigValue).
+     IF resolvedWorkerLimitValue=? THEN RETURN THIS-OBJECT:failure('PARALLEL_PARTITION_LIMIT_CONFIG_INVALID',503).
      IF NOT bodyValue:Has('webhookDelivery') THEN webhookDeliveryValue='manifest'.
      IF NOT bodyValue:Has('parameters') OR bodyValue:GetType('parameters')<>JsonDataType:OBJECT THEN RETURN THIS-OBJECT:failure('PARALLEL_DATE_RANGE_REQUIRED',400).
      parametersValue=bodyValue:GetJsonObject('parameters').
@@ -133,7 +137,7 @@ CLASS DynamicQueryConsumerJobs:
      parallelStageValue='reserve'. reservedIdValue=repositoryValue:reserveJobId().
      IF reservedIdValue='' THEN RETURN THIS-OBJECT:failure('QUEUE_BUSY',409).
      parallelStageValue='plan-write'.
-     IF NOT plannerValue:initializePlan(THIS-OBJECT:jobRoot(configValue),reservedIdValue,partitionsValue,parallelConfigValue:GetInteger('maxWorkers')) THEN RETURN THIS-OBJECT:failure('QUEUE_UNAVAILABLE',503).
+     IF NOT plannerValue:initializePlan(THIS-OBJECT:jobRoot(configValue),reservedIdValue,partitionsValue,resolvedWorkerLimitValue) THEN RETURN THIS-OBJECT:failure('QUEUE_UNAVAILABLE',503).
      parallelPlanCreated=TRUE.
     END.
    END.
@@ -145,10 +149,12 @@ CLASS DynamicQueryConsumerJobs:
     parallelStatusValue=NEW JsonObject(). parallelStatusValue:Add('enabled',TRUE).
     parallelStatusValue:Add('totalPartitions',partitionsValue:Length). parallelStatusValue:Add('completedPartitions',0).
     parallelStatusValue:Add('runningPartitions',0). parallelStatusValue:Add('failedPartitions',0).
-    parallelStatusValue:Add('maxWorkers',parallelConfigValue:GetInteger('maxWorkers')).
+    parallelStatusValue:Add('maxWorkers',resolvedWorkerLimitValue).
     parallelStatusValue:Add('resultFormat','ndjson+gzip').
     metadataValue:Add('parallel',parallelStatusValue).
-    metadataValue:Add('parallelConfig',CAST(parallelConfigValue:Clone(),JsonObject)).
+    parallelSnapshotConfigValue=CAST(parallelConfigValue:Clone(),JsonObject).
+    parallelSnapshotConfigValue:Set('maxWorkers',resolvedWorkerLimitValue).
+    metadataValue:Add('parallelConfig',parallelSnapshotConfigValue).
    END.
    metadataValue:Write(metadataText,FALSE).
    parallelStageValue='job-create'.
@@ -178,6 +184,7 @@ CLASS DynamicQueryConsumerJobs:
     IF VALID-OBJECT(snapshotValue) THEN DELETE OBJECT snapshotValue.
     IF VALID-OBJECT(postSteps) THEN DELETE OBJECT postSteps.
     IF VALID-OBJECT(parallelConfigValue) THEN DELETE OBJECT parallelConfigValue.
+    IF VALID-OBJECT(parallelSnapshotConfigValue) THEN DELETE OBJECT parallelSnapshotConfigValue.
     IF VALID-OBJECT(parallelStatusValue) THEN DELETE OBJECT parallelStatusValue.
     IF VALID-OBJECT(parametersValue) THEN DELETE OBJECT parametersValue.
     IF VALID-OBJECT(querystringValue) THEN DELETE OBJECT querystringValue.

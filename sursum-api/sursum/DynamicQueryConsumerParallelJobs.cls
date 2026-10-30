@@ -3,19 +3,82 @@ BLOCK-LEVEL ON ERROR UNDO, THROW.
 
 /* Builds server-configured partitions. Consumer input never selects the strategy or worker count. */
 CLASS DynamicQueryConsumerParallelJobs:
+ METHOD PRIVATE INTEGER scheduleMinute(INPUT valueText AS CHARACTER):
+  DEFINE VARIABLE hourValue AS INTEGER NO-UNDO.
+  DEFINE VARIABLE minuteValue AS INTEGER NO-UNDO.
+  IF valueText=? OR LENGTH(valueText)<>5 OR SUBSTRING(valueText,3,1)<>':' THEN RETURN ?.
+  IF INDEX('0123456789',SUBSTRING(valueText,1,1))=0 OR INDEX('0123456789',SUBSTRING(valueText,2,1))=0 OR INDEX('0123456789',SUBSTRING(valueText,4,1))=0 OR INDEX('0123456789',SUBSTRING(valueText,5,1))=0 THEN RETURN ?.
+  hourValue=INTEGER(SUBSTRING(valueText,1,2)). minuteValue=INTEGER(SUBSTRING(valueText,4,2)).
+  IF hourValue<0 OR hourValue>23 OR minuteValue<0 OR minuteValue>59 THEN RETURN ?.
+  RETURN (hourValue * 60) + minuteValue.
+ END METHOD.
+ METHOD PRIVATE INTEGER saoPauloMinuteNow():
+  DEFINE VARIABLE offsetValue AS INTEGER NO-UNDO.
+  DEFINE VARIABLE secondsValue AS INTEGER NO-UNDO.
+  offsetValue=IF SESSION:TIMEZONE=? THEN TIMEZONE(NOW) ELSE SESSION:TIMEZONE.
+  /* America/Sao_Paulo has used UTC-03:00 since the end of Brazilian DST.
+     Normalize the runtime session clock rather than relying on host TZ. */
+  secondsValue=TIME + ((-180 - offsetValue) * 60).
+  DO WHILE secondsValue<0: secondsValue=secondsValue + 86400. END.
+  DO WHILE secondsValue>=86400: secondsValue=secondsValue - 86400. END.
+  RETURN INTEGER(secondsValue / 60).
+ END METHOD.
+ METHOD PUBLIC INTEGER workerLimitAtMinute(INPUT parallelValue AS JsonObject,INPUT minuteValue AS INTEGER):
+  DEFINE VARIABLE scheduleValue AS JsonObject NO-UNDO.
+  DEFINE VARIABLE windowsValue AS JsonArray NO-UNDO.
+  DEFINE VARIABLE windowValue AS JsonObject NO-UNDO.
+  DEFINE VARIABLE startValue AS INTEGER NO-UNDO.
+  DEFINE VARIABLE endValue AS INTEGER NO-UNDO.
+  DEFINE VARIABLE limitValue AS INTEGER NO-UNDO.
+  DEFINE VARIABLE resolvedValue AS INTEGER NO-UNDO.
+  DEFINE VARIABLE n AS INTEGER NO-UNDO.
+  DEFINE VARIABLE matchCount AS INTEGER NO-UNDO.
+  DEFINE VARIABLE matches AS LOGICAL NO-UNDO.
+  DO ON ERROR UNDO, THROW:
+   IF minuteValue<0 OR minuteValue>=1440 THEN RETURN ?.
+   IF NOT parallelValue:Has('workerSchedule') THEN RETURN parallelValue:GetInteger('maxWorkers').
+   IF parallelValue:GetType('workerSchedule')<>JsonDataType:OBJECT THEN RETURN ?.
+   scheduleValue=parallelValue:GetJsonObject('workerSchedule').
+   IF scheduleValue:GetCharacter('timezone')<>'America/Sao_Paulo' OR NOT scheduleValue:Has('windows') OR scheduleValue:GetType('windows')<>JsonDataType:ARRAY THEN RETURN ?.
+   windowsValue=scheduleValue:GetJsonArray('windows').
+   DO n=1 TO windowsValue:Length:
+    windowValue=windowsValue:GetJsonObject(n).
+    startValue=THIS-OBJECT:scheduleMinute(windowValue:GetCharacter('start')). endValue=THIS-OBJECT:scheduleMinute(windowValue:GetCharacter('end')). limitValue=windowValue:GetInteger('maxWorkers').
+    IF startValue=? OR endValue=? OR startValue=endValue OR limitValue<1 OR limitValue>10 THEN RETURN ?.
+    matches=IF startValue<endValue THEN minuteValue>=startValue AND minuteValue<endValue ELSE minuteValue>=startValue OR minuteValue<endValue.
+    IF matches THEN DO:
+     matchCount=matchCount + 1.
+     IF matchCount>1 THEN RETURN ?.
+     resolvedValue=limitValue.
+    END.
+   END.
+   RETURN resolvedValue.
+   CATCH err AS Progress.Lang.Error: RETURN ?. END CATCH.
+  END.
+ END METHOD.
+ METHOD PUBLIC INTEGER currentWorkerLimit(INPUT parallelValue AS JsonObject):
+  RETURN THIS-OBJECT:workerLimitAtMinute(parallelValue,THIS-OBJECT:saoPauloMinuteNow()).
+ END METHOD.
  METHOD PUBLIC LOGICAL hasSafePartitionLimits(INPUT parallelValue AS JsonObject):
   DEFINE VARIABLE recordLimitValue AS INTEGER NO-UNDO.
   DEFINE VARIABLE partitionBytesValue AS INT64 NO-UNDO.
   DEFINE VARIABLE resultBytesValue AS INT64 NO-UNDO.
+  DEFINE VARIABLE workerLimitValue AS INTEGER NO-UNDO.
+  DEFINE VARIABLE minuteValue AS INTEGER NO-UNDO.
   DO ON ERROR UNDO, THROW:
    IF NOT VALID-OBJECT(parallelValue) THEN RETURN FALSE.
-   IF NOT parallelValue:Has('maxPartitionRecords') OR NOT parallelValue:Has('maxPartitionBytes') OR NOT parallelValue:Has('maxResultBytes') THEN RETURN FALSE.
+   IF NOT parallelValue:Has('maxWorkers') OR NOT parallelValue:Has('maxPartitionRecords') OR NOT parallelValue:Has('maxPartitionBytes') OR NOT parallelValue:Has('maxResultBytes') THEN RETURN FALSE.
+   workerLimitValue=parallelValue:GetInteger('maxWorkers').
    recordLimitValue=parallelValue:GetInteger('maxPartitionRecords').
    partitionBytesValue=parallelValue:GetInt64('maxPartitionBytes').
    resultBytesValue=parallelValue:GetInt64('maxResultBytes').
-   IF recordLimitValue<1 OR recordLimitValue>1000000 THEN RETURN FALSE.
+   IF workerLimitValue<1 OR workerLimitValue>10 OR recordLimitValue<1 OR recordLimitValue>1000000 THEN RETURN FALSE.
    IF partitionBytesValue<1048576 OR partitionBytesValue>1073741824 THEN RETURN FALSE.
    IF resultBytesValue<partitionBytesValue OR resultBytesValue>10737418240 THEN RETURN FALSE.
+   IF parallelValue:Has('workerSchedule') THEN DO minuteValue=0 TO 1439:
+    workerLimitValue=THIS-OBJECT:workerLimitAtMinute(parallelValue,minuteValue).
+    IF workerLimitValue=? OR workerLimitValue<1 OR workerLimitValue>10 THEN RETURN FALSE.
+   END.
    RETURN TRUE.
    CATCH err AS Progress.Lang.Error: RETURN FALSE. END CATCH.
   END.
