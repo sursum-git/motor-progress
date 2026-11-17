@@ -71,6 +71,8 @@ DO ON ERROR UNDO, THROW:
  DO n=1 TO 5: hTargets[n]=FixedBuffer("espec." + ENTRY(n,tables)). END.
  ASSIGN hVersion[1]=hCollector[1] hVersion[2]=hTargets[1] hVersion[3]=hCollector[15] hVersion[4]=hCollector[14].
  DO n=1 TO 4: hVersion[n + 4]=hTargets[n + 1]. END.
+ /* NF commands reuse the root service slot with the physical nfs_container buffer. */
+ IF poRequest:GetCharacter("resource")="nfs" THEN hVersion[4]=hCollector[16].
  hFiscal[1]=hCollector[1]. DO n=1 TO 10: hFiscal[n + 1]=hHeader[n]. END.
  IF op="gerar" OR op="fechar" THEN DO:
   IF NOT CONNECTED("ems2med") THEN UNDO, THROW NEW Progress.Lang.AppError("Banco MED indisponivel.",1).

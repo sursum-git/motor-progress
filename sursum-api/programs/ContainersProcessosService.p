@@ -40,7 +40,7 @@ DO ON ERROR UNDO, THROW:
  IF NOT VALID-OBJECT(poHeaderPolicy) THEN UNDO, THROW NEW Progress.Lang.AppError("Politica autenticada ausente.",1).
  IF poHeaderPolicy:GetType("actor")<>JsonDataType:OBJECT OR NOT VALID-HANDLE(phVersion[1]) THEN UNDO, THROW NEW Progress.Lang.AppError("Contexto privado indisponivel.",1).
  master=phVersion[1].
- clean=CAST(poRequest:Clone(),JsonObject). clean:Remove("resource").
+ clean=CAST(poRequest:Clone(),JsonObject). IF poRequest:GetCharacter("resource")<>"nfs" THEN clean:Remove("resource").
  policy=CAST(poHeaderPolicy:Clone(),JsonObject).
  IF op="gerar" THEN DO:
   IF policy:Has("allow_nested") THEN policy:Set("allow_nested",TRUE). ELSE policy:Add("allow_nested",TRUE).
@@ -124,7 +124,7 @@ DO ON ERROR UNDO, THROW:
  ELSE IF op="fechar" THEN messageValue=messageValue + "versao " + STRING(poRequest:GetInteger("versao_id")) + "; custos gravados: " + idsValue + ".".
  ELSE IF poRequest:GetCharacter("resource")="nfs" THEN messageValue=messageValue + STRING(resultValue:GetJsonObject("data"):GetInteger("count")) + " nota(s) " + (IF op="associar" THEN "associada(s)." ELSE "desassociada(s). ").
  ELSE messageValue=messageValue + (IF op="calcular_impostos" THEN "impostos calculados; memoria " ELSE IF op="selecionar_despesas" THEN "defaults e despesas selecionadas processados; memoria " ELSE "impostos sincronizados; memoria ") + STRING(resultValue:GetJsonObject("data"):GetInteger("calc_imp_container_id")) + ".".
- poResponse=NEW JsonObject(). IF op="calcular_impostos" OR op="selecionar_despesas" THEN poResponse:Add("committed",TRUE). dataValue=NEW JsonObject(). dataValue:Add("type","message"). dataValue:Add("message",messageValue). poResponse:Add("success",TRUE). poResponse:Add("data",dataValue).
+ poResponse=NEW JsonObject(). IF op="calcular_impostos" OR op="selecionar_despesas" OR poRequest:GetCharacter("resource")="nfs" THEN poResponse:Add("committed",TRUE). dataValue=NEW JsonObject(). dataValue:Add("type","message"). dataValue:Add("message",messageValue). poResponse:Add("success",TRUE). poResponse:Add("data",dataValue).
  auditValue=NEW JsonObject(). auditValue:Add("version",1). auditValue:Add("source","progress-transaction"). auditValue:Add("resource","container_processes"). auditValue:Add("operation",op).
  actorValue=NEW JsonObject(). actorValue:Add("login",poHeaderPolicy:GetJsonObject("actor"):GetCharacter("login")).
  auditValue:Add("recordId",cid). auditValue:Add("container_id",cid). auditValue:Add("before",beforeValue). auditValue:Add("after",afterValue). auditValue:Add("changes",changes). auditValue:Add("actor",actorValue).
